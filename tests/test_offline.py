@@ -127,6 +127,16 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn("'[class*=\"move-list\"] button'", overlay)
         self.assertNotIn("if(!roots.some(startsAtMoveOne))return ''", overlay)
 
+    def test_overlay_reads_separate_chesscom_figurine(self):
+        result = subprocess.run(
+            ['node', str(ROOT / 'tests/test_overlay_parser.js')],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_arrow_roles_have_the_same_exact_colors_in_both_clients(self):
         expected = {
             'ownTop1': '#16c784',

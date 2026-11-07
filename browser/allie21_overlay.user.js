@@ -73,8 +73,9 @@
   let value=String(text||'').trim().replace(/^\d+\.(?:\.\.)?/,'').replace(/[!?]+/g,'').replace(/\s+/g,'');
   value=value.replace(/^[♔♕♖♗♘♚♛♜♝♞]/,piece=>figurines[piece]);
   if(/^[a-h][1-8](?:x[a-h][1-8])?(?:=[QRBN])?[+#]?$/.test(value)&&node){
-   const descendants=Array.from(node.querySelectorAll?.('[data-figurine],[data-piece],[class*="knight"],[class*="bishop"],[class*="rook"],[class*="queen"],[class*="king"]')||[]).slice(0,5);
-   const signature=[node,...descendants].map(n=>`${n.getAttribute?.('data-figurine')||''} ${n.getAttribute?.('data-piece')||''} ${String(n.className||'')}`).join(' ').toLowerCase();
+   const owner=node.closest?.('button,[data-ply],[data-san],move,l4,.main-line-ply,.move')||node;
+   const descendants=Array.from(owner.querySelectorAll?.('[data-figurine],[data-piece],[class*="knight"],[class*="bishop"],[class*="rook"],[class*="queen"],[class*="king"]')||[]).slice(0,5);
+   const signature=[owner,node,...descendants].map(n=>`${n.getAttribute?.('data-figurine')||''} ${n.getAttribute?.('data-piece')||''} ${String(n.className||'')}`).join(' ').toLowerCase();
    const tokens=signature.split(/\s+/).map(part=>part.replace(/[^a-z]/g,'')).filter(Boolean);
    const coded=tokens.map(part=>/^(?:[wb])?([nbrqk])$/.exec(part)?.[1]).find(Boolean);
    const piece=/knight/.test(signature)||coded==='n'?'N':/bishop/.test(signature)||coded==='b'?'B':/rook/.test(signature)||coded==='r'?'R':/queen/.test(signature)||coded==='q'?'Q':/king/.test(signature)||coded==='k'?'K':'';
