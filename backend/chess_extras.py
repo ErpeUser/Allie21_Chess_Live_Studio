@@ -1,7 +1,7 @@
 """Offline opening lookup, cautious chess observations and optional Stockfish analysis.
 
-The opening collection can be expanded from the public-domain lichess-org/chess-openings
-TSV files (see download_openings.py). All explanations are transparent heuristics;
+Opening names come from the bundled public-domain lichess-org/chess-openings TSV files.
+All explanations are transparent heuristics;
 the objective candidate lines come from a real UCI Stockfish executable when available.
 """
 from __future__ import annotations
@@ -23,56 +23,6 @@ import chess.engine
 
 BASE = Path(__file__).resolve().parent
 
-# Fallback common opening lines. For the full ECO database, run download_openings.py.
-SEEDS = [
-    ('A10', 'English Opening', '1. c4'),
-    ('A04', 'Reti Opening', '1. Nf3'),
-    ('A00', 'Van\'t Kruijs Opening', '1. e3'),
-    ('A40', "Queen's Pawn Game", '1. d4'),
-    ('A45', 'Indian Defense', '1. d4 Nf6'),
-    ('A80', 'Dutch Defense', '1. d4 f5'),
-    ('A46', 'Torre Attack', '1. d4 Nf6 2. Nf3 e6 3. Bg5'),
-    ('A48', "King's Indian Attack", '1. d4 Nf6 2. Nf3 g6'),
-    ('A57', 'Benko Gambit', '1. d4 Nf6 2. c4 c5 3. d5 b5'),
-    ('B00', "King's Pawn Game", '1. e4'),
-    ('B00', 'Nimzowitsch Defense', '1. e4 Nc6'),
-    ('B01', 'Scandinavian Defense', '1. e4 d5'),
-    ('B06', 'Modern Defense', '1. e4 g6'),
-    ('B07', 'Pirc Defense', '1. e4 d6 2. d4 Nf6 3. Nc3 g6'),
-    ('B10', 'Caro-Kann Defense', '1. e4 c6'),
-    ('B12', 'Caro-Kann: Advance Variation', '1. e4 c6 2. d4 d5 3. e5'),
-    ('B20', 'Sicilian Defense', '1. e4 c5'),
-    ('B23', 'Sicilian Defense: Closed', '1. e4 c5 2. Nc3'),
-    ('B30', 'Sicilian Defense: Rossolimo', '1. e4 c5 2. Nf3 Nc6 3. Bb5'),
-    ('B90', 'Sicilian Defense: Najdorf', '1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6'),
-    ('C00', 'French Defense', '1. e4 e6'),
-    ('C02', 'French Defense: Advance Variation', '1. e4 e6 2. d4 d5 3. e5'),
-    ('C10', 'French Defense: Rubinstein', '1. e4 e6 2. d4 d5 3. Nc3 dxe4'),
-    ('C20', 'Open Game', '1. e4 e5'),
-    ('C23', "Bishop's Opening", '1. e4 e5 2. Bc4'),
-    ('C30', "King's Gambit", '1. e4 e5 2. f4'),
-    ('C40', "King's Knight Opening", '1. e4 e5 2. Nf3'),
-    ('C42', 'Petrov Defense', '1. e4 e5 2. Nf3 Nf6'),
-    ('C44', 'Scotch Game', '1. e4 e5 2. Nf3 Nc6 3. d4'),
-    ('C50', 'Italian Game', '1. e4 e5 2. Nf3 Nc6 3. Bc4'),
-    ('C54', 'Italian Game: Giuoco Piano', '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5'),
-    ('C55', 'Two Knights Defense', '1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6'),
-    ('C60', 'Ruy Lopez', '1. e4 e5 2. Nf3 Nc6 3. Bb5'),
-    ('C65', 'Ruy Lopez: Berlin Defense', '1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6'),
-    ('C68', 'Ruy Lopez: Exchange Variation', '1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Bxc6'),
-    ('D00', "Queen's Pawn Game", '1. d4 d5'),
-    ('D02', 'London System', '1. d4 d5 2. Nf3 Nf6 3. Bf4'),
-    ('D06', "Queen's Gambit", '1. d4 d5 2. c4'),
-    ('D10', 'Slav Defense', '1. d4 d5 2. c4 c6'),
-    ('D20', "Queen's Gambit Accepted", '1. d4 d5 2. c4 dxc4'),
-    ('D30', "Queen's Gambit Declined", '1. d4 d5 2. c4 e6'),
-    ('E20', 'Nimzo-Indian Defense', '1. d4 Nf6 2. c4 e6 3. Nc3 Bb4'),
-    ('E60', "King's Indian Defense", '1. d4 Nf6 2. c4 g6 3. Nc3 Bg7'),
-    ('E01', 'Catalan Opening', '1. d4 Nf6 2. c4 e6 3. g3'),
-    ('E90', "King's Indian: Classical", '1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O'),
-]
-
-
 def epd_key(board: chess.Board) -> str:
     return board.epd(en_passant='legal')
 
@@ -88,7 +38,7 @@ def _position_from_pgn(pgn: str) -> tuple[chess.Board, int] | None:
 @functools.lru_cache(maxsize=1)
 def opening_indexes() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Parse each opening only once. Exact EPD and cautious placement fallback."""
-    rows = list(SEEDS)
+    rows = []
     for file in sorted((BASE / 'openings').glob('?.tsv')):
         with file.open(encoding='utf-8-sig', newline='') as handle:
             rows.extend((x['eco'], x['name'], x['pgn']) for x in csv.DictReader(handle, delimiter='\t')
@@ -219,19 +169,6 @@ def position_facts(board: chess.Board) -> list[str]:
         if unmoved >= 2:
             facts.append('Entwicklung: Mehrere Leichtfiguren stehen noch auf ihren Ausgangsfeldern.')
     return facts[:5]
-
-
-def adaptive_stockfish_seconds(tc: str) -> float:
-    """Automatic per-position thinking budget. This is not an Elo setting."""
-    base, inc = [int(value) for value in tc.split('+')]
-    effective = base + inc * 40
-    return .25 if effective < 180 else .65 if effective < 600 else 1.1 if effective < 1800 else 2.0
-
-
-def progressive_budgets(tc: str) -> tuple[float, ...]:
-    base, inc = [int(value) for value in tc.split('+')]
-    effective = base + inc * 40
-    return (.5, .9) if effective < 180 else (1.3, 2.2) if effective < 600 else (2.0, 3.0) if effective < 1800 else (3.5, 5.0)
 
 
 def find_stockfish() -> str | None:

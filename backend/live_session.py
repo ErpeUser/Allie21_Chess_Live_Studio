@@ -10,22 +10,13 @@ from threading import Event, RLock, Thread
 import json
 import time
 
-import chess
-from allie_local_server import analyse_position
-from chess_extras import stockfish_lines, describe_candidate, make_brief, progressive_budgets
-from config import CONFIG
+from allie_local_server import analyse_position, merge_results
+from chess_extras import make_brief
+from config import CONFIG, parse_time_control
 from position_tracker import PositionTracker
 from vision import BoardVision
 
 MAX_JPEG = 3_500_000
-ALLIE_FIELDS = (
-    'model', 'moves', 'wdl', 'expected_think_time_s',
-    'tactical_warnings', 'allie_skip_reason',
-    'player_side', 'player_to_move', 'my_moves', 'opponent_moves',
-    'premove', 'plan_messages',
-)
-
-
 class LiveSession:
     def __init__(self):
         self.lock = RLock()
@@ -66,12 +57,10 @@ class LiveSession:
         tc = str(settings.get('time_control', CONFIG['time_control']))
         if not 600 <= white <= 2800 or not 600 <= black <= 2800:
             raise ValueError('Elo muss zwischen 600 und 2800 liegen')
-        import re
-        if not re.fullmatch(r'\d{1,5}\+\d{1,4}', tc):
-            raise ValueError('Zeitkontrolle: z.B. 180+2')
-        base, inc = map(int, tc.split('+'))
-        if not (1 <= base <= 86400 and 0 <= inc <= 3600):
-            raise ValueError('Ungültige Zeitkontrolle')
+        parse_time_control(tc)
+        player_side = str(settings.get('player_side', CONFIG['player_side']))
+        if player_side not in ('white', 'black'):
+            raise ValueError('Spielerfarbe muss white oder black sein')
         with self.lock:
             self.generation += 1
             self.session_id += 1
@@ -84,11 +73,9 @@ class LiveSession:
             self.allie_event.clear()
             self.stable_placement, self.stable_count = None, 0
             self.unmatched_frames = 0
-            self.settings = {'white_elo': white, 'black_elo': black, 'time_control': tc,
-                             'stockfish_time': CONFIG['stockfish_seconds'],
-                             'auto_tune': CONFIG['auto_tune_by_time_control'],
+            self.settings = {'white_elo': white, 'black_elo': black,
+                             'player_side': player_side, 'time_control': tc,
                              'preview': CONFIG['preview_opponent_replies'],
-                             'progressive': CONFIG['progressive_engine'],
                              'ocr_history': bool(settings.get('ocr_history', CONFIG['ocr_history'])),
                              'recommendations_enabled': bool(settings.get('recommendations_enabled', True))}
             self._reset_state(True)
@@ -132,9 +119,6 @@ class LiveSession:
         text = self.tracker.pgn_uci if self.tracker.complete_history else board.fen()
         payload = dict(self.settings)
         payload[field] = text
-        detection = self.state.get('detection') or {}
-        if detection.get('orientation') in ('white', 'black'):
-            payload['player_side'] = detection['orientation']
         job_key = (field, text)
         if job_key == self.failed_key:
             return
@@ -314,16 +298,6 @@ class LiveSession:
             result['brief'] = make_brief(result)
         return result
 
-    @staticmethod
-    def _merge_allie(engine_result, allie_result):
-        if not engine_result or engine_result.get('fen') != allie_result.get('fen'):
-            return allie_result
-        combined = dict(engine_result)
-        for key in ALLIE_FIELDS:
-            combined[key] = allie_result.get(key)
-        combined['brief'] = make_brief(combined)
-        return combined
-
     def _engine_worker(self):
         while True:
             self.engine_event.wait()
@@ -344,7 +318,7 @@ class LiveSession:
                 result = self._with_stream_warning(result, payload)
                 current = self.state.get('result')
                 if result and current and (current.get('moves') or current.get('allie_skip_reason')):
-                    result = self._merge_human(result, current)
+                    result = merge_results(result, current)
                 self.state['result'] = result
                 self.state['engine_analysing'] = False
                 self.state['analysing'] = self.state['allie_analysing']
@@ -357,30 +331,6 @@ class LiveSession:
                     self.state['message'] = 'Stockfish aktuell · Allie benötigt die Zugfolge ab Zug 1'
                 else:
                     self.state['message'] = 'Analyse aktuell'
-            # Two progressive levels while the same board stays visible. Stale jobs
-            # are ignored; a new board is always more important than depth.
-            if result and payload.get('progressive') and (result.get('stockfish') or {}).get('available'):
-                for limit in progressive_budgets(payload['time_control']):
-                    with self.lock:
-                        if not self.state['running'] or revision != self.generation:
-                            break
-                    extra = stockfish_lines(chess.Board(result['fen']), limit)
-                    if not extra.get('available'):
-                        break
-                    for line in extra.get('lines', []):
-                        line['explanation'] = describe_candidate(chess.Board(result['fen']), line['uci'])
-                    with self.lock:
-                        if not self.state['running'] or revision != self.generation:
-                            break
-                        current = self.state.get('result')
-                        updated = dict(current) if current and current.get('fen') == result.get('fen') else dict(result)
-                        updated['stockfish'] = extra
-                        updated['brief'] = make_brief(updated)
-                        self.state['result'] = updated
-                        result = updated
-                        suffix = ' · Allie rechnet parallel' if self.state['allie_analysing'] else ''
-                        self.state['message'] = f'Stockfish vertieft: {limit:g} s{suffix}'
-
     def _allie_worker(self):
         while True:
             self.allie_event.wait()
@@ -400,7 +350,7 @@ class LiveSession:
                     continue
                 current = self.state.get('result')
                 if result:
-                    result = self._merge_allie(current, result) if current else result
+                    result = merge_results(current, result)
                     result['brief'] = make_brief(result)
                     self.state['result'] = result
                 self.state['allie_analysing'] = False

@@ -1,12 +1,19 @@
-# Verwendete fertige Komponenten (keine kopierten Modellgewichte)
+# Quellen und Fremdlizenzen
 
-- Allie 2.1 – Originalgewichte und API (MIT): https://huggingface.co/yimingzhang/allie-2.1 und https://github.com/y0mingzhang/allie
-- `chessvision` 0.13.1 – Python-BoardDetector/BoardPredictor (GPL-3.0): https://github.com/harshitpawar64/chessvision
-- `python-chess` – PGN, Legalität und UCI: https://python-chess.readthedocs.io/
-- Stockfish 19 – UCI-Schachengine (GPL-3.0, separater Download): https://github.com/official-stockfish/Stockfish/releases/tag/sf_19
-- `rapidocr` – OCR (Apache-2.0) plus ONNX Runtime: https://github.com/RapidAI/RapidOCR
-- Lichess Chess Openings – ECO-Tabellen (CC0): https://github.com/lichess-org/chess-openings
-- Hugging Face Transformers – Modellruntime (Apache-2.0): https://github.com/huggingface/transformers
-- HTML5 `getDisplayMedia` – standardisierte Browser-API (integriert, ohne extra npm/Browser-Plugin): https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia
+Das Projekt steht unter GPL-3.0, siehe `LICENSE.txt`. Abhängigkeiten behalten ihre eigenen Lizenzen.
 
-Projekt-Quelltexte unter GPL-3.0, siehe `LICENSE.txt`. Installierte Pakete behalten ihre jeweiligen Lizenzen. Die Originalpakete werden per pip und offiziellem Download bezogen, nicht als kopierte Fremd-Implementierungen eingebettet.
+- Allie 2.1, Modell und API, MIT: https://huggingface.co/yimingzhang/allie-2.1 und https://github.com/y0mingzhang/allie
+- `chess` / python-chess, GPL-3.0+: https://python-chess.readthedocs.io/
+- Stockfish 19, GPL-3.0: https://github.com/official-stockfish/Stockfish/releases/tag/sf_19
+- Lichess Chess Openings, CC0: https://github.com/lichess-org/chess-openings
+- FastAPI, MIT: https://github.com/fastapi/fastapi
+- Pydantic, MIT: https://github.com/pydantic/pydantic
+- Uvicorn, BSD-3-Clause: https://github.com/Kludex/uvicorn
+- `chessvision`, GPL-3.0: https://github.com/harshitpawar64/chessvision
+- RapidOCR, Apache-2.0: https://github.com/RapidAI/RapidOCR
+- ONNX Runtime, MIT: https://github.com/microsoft/onnxruntime
+- Transformers, Apache-2.0: https://github.com/huggingface/transformers
+- PyTorch, BSD-style: https://github.com/pytorch/pytorch
+- Pillow, HPND: https://python-pillow.org/
+- uv, Apache-2.0 oder MIT: https://github.com/astral-sh/uv
+- Browser-`getDisplayMedia`, integrierte Web-API: https://developer.mozilla.org/docs/Web/API/MediaDevices/getDisplayMedia

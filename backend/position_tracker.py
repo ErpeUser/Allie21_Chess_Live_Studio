@@ -88,43 +88,6 @@ class PositionTracker:
             board.pop()
         return found
 
-    @staticmethod
-    def _opening_from_start(target_placement: str, max_depth: int = 3) -> tuple[chess.Move, ...] | None:
-        """Recover a just-started game even when the first browser frame was late.
-
-        Three halfmoves are deliberately enough for page reloads at the start of
-        a game while keeping the legal search small.  Only one shortest move
-        sequence is accepted; transpositions are never guessed.
-        """
-        board = chess.Board()
-        target_count = len(chess.Board(f"{target_placement} w - - 0 1").piece_map())
-
-        def search(remaining: int, line: tuple[chess.Move, ...]) -> list[tuple[chess.Move, ...]]:
-            if board.board_fen() == target_placement:
-                return [line]
-            if remaining == 0 or len(board.piece_map()) < target_count:
-                return []
-            found: list[tuple[chess.Move, ...]] = []
-            for move in board.legal_moves:
-                # A capture cannot lead to a target with more remaining pieces.
-                if board.is_capture(move) and len(board.piece_map()) - 1 < target_count:
-                    continue
-                board.push(move)
-                found.extend(search(remaining - 1, line + (move,)))
-                board.pop()
-                if len(found) > 1:
-                    break
-            return found
-
-        for depth in range(1, max_depth + 1):
-            matches = search(depth, ())
-            unique = {tuple(move.uci() for move in line): line for line in matches}
-            if len(unique) == 1:
-                return next(iter(unique.values()))
-            if len(unique) > 1:
-                return None
-        return None
-
     def observe(self, fen: str) -> Change:
         try:
             observed = chess.Board(fen)
@@ -140,19 +103,6 @@ class PositionTracker:
         if self.board is None or placement == chess.STARTING_BOARD_FEN and (
             self.board.board_fen() != chess.STARTING_BOARD_FEN and len(self.moves) > 0
         ):
-            if self.board is None and placement != chess.STARTING_BOARD_FEN:
-                recovered = self._opening_from_start(placement)
-                if recovered:
-                    self.board = chess.Board()
-                    self.moves = []
-                    for move in recovered:
-                        self.board.push(move)
-                        self.moves.append(move.uci())
-                    self.complete_history = True
-                    self.turn_verified = True
-                    self.history_origin = "reconstructed-opening"
-                    return Change(True, "Frühe Zugfolge legal rekonstruiert: " +
-                                  " ".join(self.moves), tuple(self.moves))
             self.board = chess.Board() if placement == chess.STARTING_BOARD_FEN else observed
             if placement != chess.STARTING_BOARD_FEN:
                 # A screenshot cannot establish historic castling/en-passant rights;

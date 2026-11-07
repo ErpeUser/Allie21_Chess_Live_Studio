@@ -3,10 +3,10 @@ from importlib import import_module
 from pathlib import Path
 import platform
 
-print('Allie 2.1 Live Studio v10')
+print('Allie 2.1 Live Studio v11')
 print('System:', platform.platform(), '\nPython:', platform.python_version())
-for name in ('chess', 'chessvision', 'PIL', 'rapidocr', 'onnxruntime',
-             'transformers', 'torch'):
+for name in ('chess', 'fastapi', 'pydantic', 'uvicorn', 'chessvision', 'PIL',
+             'rapidocr', 'onnxruntime', 'transformers', 'torch'):
     try:
         mod = import_module(name)
         print('[OK]  ', name, getattr(mod, '__version__', ''))

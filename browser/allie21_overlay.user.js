@@ -1,9 +1,10 @@
 // ==UserScript==
-// @name         Allie 2.1 Live Studio v10 (Manuelles Live-Overlay)
+// @name         Allie 2.1 Live Studio v11 (Manuelles Live-Overlay)
 // @namespace    local.allie21.study
-// @version      10.7.0
+// @version      11.0.0
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
-// @match        *://*/*
+// @match        https://*.chess.com/*
+// @match        https://lichess.org/*
 // @run-at       document-idle
 // @noframes
 // @grant        GM_getValue
@@ -18,8 +19,8 @@
 (() => {
  'use strict';
  if (window.top !== window.self || document.getElementById('allie21-auto-study-root')) return;
- const STORE='allie21.auto.v10';
- const cfg=Object.assign({elo:1950,tc:'600+0',enabled:true,orientation:'auto'}, GM_getValue(STORE,{}));
+ const STORE='allie21.auto.v11';
+ const cfg=Object.assign({elo:1950,tc:'600+0',enabled:true,orientation:'auto',playerSide:'white'}, GM_getValue(STORE,{}));
  const save=()=>GM_setValue(STORE,cfg);
  const wrapper=document.createElement('div');
  wrapper.id='allie21-auto-study-root';
@@ -38,7 +39,8 @@
  <p class='small'>Allie wählt menschlich passend zu Elo und Zeit; Stockfish bleibt nur der objektive Vergleich.</p>
  <div class='row'><div><label>Elo</label><input id='elo' type='number' min='600' max='2800'/></div>
  <div><label>Zeitkontrolle</label><input id='tc' placeholder='600+0'/></div></div>
- <label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select>
+ <div class='row'><div><label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select></div>
+ <div><label>Deine Farbe</label><select id='playerSide'><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <p id='status' class='stat'>Lokalen Server starten; die Analyse verbindet sich automatisch.</p>
  <div id='results'></div><p class='small'>Rot = Gegner · Grün = du · Blau = Pre-Move. Allie klickt nie selbst.</p>
@@ -47,11 +49,12 @@
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  el('bubble').onclick=()=>{el('panel').classList.toggle('open');el('bubble').style.display=el('panel').classList.contains('open')?'none':''};
  el('close').onclick=()=>{el('panel').classList.remove('open');el('bubble').style.display=''};
- const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'600+0';cfg.orientation=el('orientation').value;save()};
- for(const field of ['elo','tc','orientation'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
- el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();if(!cfg.enabled)clearOverlay()};
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackingPending=false,currentBoard=null;
+ const invalidate=()=>{lastPGN='';analysisKey='';currentResult=null;clearOverlay();show({})};
+ const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'600+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;save();invalidate();scheduleTick(true)};
+ for(const field of ['elo','tc','orientation','playerSide'])el(field).addEventListener('change',updateSettings);
+ const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
+ el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0;
  const sessionSeed=location.hostname+location.pathname;
  let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
  const boardSessionId='web-'+(sessionHash>>>0).toString(36);
@@ -260,22 +263,17 @@
   lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';
   return{pgn:trackedPGN,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,moves_seen:state.moves_seen};
  }
- function analyze(pgn,orientation,placement=''){
+ function analyze(pgn,placement=''){
    if(pending||!cfg.enabled)return;
-   pending=true;el('status').textContent='Stockfish startet sofort · Allie rechnet parallel...';
-   const base={pgn,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:orientation||boardOrientation(boardElement())};
-   const request=(data,timeout,onload,onfail)=>GM_xmlhttpRequest({method:'POST',url:'http://127.0.0.1:8765/analyze',timeout,
+   const key=JSON.stringify([pgn,placement,cfg.elo,cfg.tc,cfg.playerSide]);analysisKey=key;
+   pending=true;el('status').textContent='Allie und Stockfish analysieren...';
+   const data={pgn,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:cfg.playerSide,analysis_source:'both',preview:true};
+   const current=()=>analysisKey===key&&lastPGN===pgn&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
+   GM_xmlhttpRequest({method:'POST',url:'http://127.0.0.1:8765/analyze',timeout:240000,
     headers:{'Content-Type':'application/json','X-Allie-Overlay':'1'},data:JSON.stringify(data),
-    onload:r=>{try{const parsed=JSON.parse(r.responseText);if(r.status!==200)throw Error(parsed.error||String(r.status));onload(parsed)}catch(e){onfail(e.message)}},
-    onerror:()=>onfail('Backend nicht erreichbar. Python-Server starten.'),ontimeout:()=>onfail('Backend-Zeitlimit.')});
-   const current=()=>lastPGN===pgn&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
-   let allieDone=false;
-   request({...base,analysis_source:'stockfish',stockfish_time:.35,preview:false},30000,data=>{
-     if(!current()||allieDone)return;currentResult=data;el('status').textContent='Stockfish sichtbar · Allie rechnet parallel...';show(data);paint(data);
-   },message=>{if(current())el('status').textContent='Stockfish: '+message});
-   request({...base,analysis_source:'allie',preview:true},240000,data=>{
-     allieDone=true;pending=false;if(!current()){lastPGN='';clearOverlay();return}currentResult=data;el('status').textContent=`Allie aktuell: ${data.move_count} Halbzuege`;show(data);paint(data);
-   },message=>{allieDone=true;pending=false;retryAfter=Date.now()+30000;if(!current()){lastPGN='';clearOverlay();return}el('status').textContent='Allie: '+message;if(!currentResult)lastPGN=''});
+    onload:r=>{pending=false;try{const parsed=JSON.parse(r.responseText);if(r.status!==200)throw Error(parsed.error||String(r.status));if(!current()){lastPGN='';return scheduleTick()}currentResult=parsed;el('status').textContent=`Analyse aktuell: ${parsed.move_count} Halbzuege`;show(parsed);paint(parsed)}catch(e){retryAfter=Date.now()+30000;if(current())el('status').textContent='Analyse: '+e.message;scheduleTick()}},
+    onerror:()=>{pending=false;retryAfter=Date.now()+30000;if(current())el('status').textContent='Backend nicht erreichbar. Python-Server starten.';scheduleTick()},
+    ontimeout:()=>{pending=false;retryAfter=Date.now()+30000;if(current())el('status').textContent='Backend-Zeitlimit.';scheduleTick()}});
  }
  el('now').onclick=async()=>{updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';await tick(true)};
  async function tick(manual=false){
@@ -291,14 +289,20 @@
     if(manual||history.message)el('status').textContent=history.message||'Brett erkannt – warte auf eine vollständige Zugfolge ab der Startstellung.';
     return;
    }
-   if(pgn!==lastPGN){
-    currentResult=null;clearOverlay();show({});
-    if(pending){lastPGN='';return}
-    if(Date.now()>=retryAfter){lastPGN=pgn;analyze(pgn,history.orientation,history.placement)}
-   }else if(currentResult)paint(currentResult);
+    const wanted=JSON.stringify([pgn,history.placement,cfg.elo,cfg.tc,cfg.playerSide]);
+    if(pgn!==lastPGN||wanted!==analysisKey){
+     currentResult=null;clearOverlay();show({});
+     if(pending){lastPGN='';return}
+     if(Date.now()>=retryAfter){lastPGN=pgn;analyze(pgn,history.placement)}
+    }
   }catch(error){if(manual)el('status').textContent=error.message||String(error)}finally{trackingPending=false}
  }
  window.addEventListener('resize',()=>currentResult&&paint(currentResult));
  window.addEventListener('scroll',()=>currentResult&&paint(currentResult),true);
- setInterval(tick,2200);tick();
+ function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),250)}
+ new MutationObserver(changes=>{
+   if(changes.every(change=>wrapper.contains(change.target)||layer.contains(change.target)))return;
+   scheduleTick();
+ }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','data-ply','data-piece','data-orientation']});
+ setInterval(scheduleTick,5000);tick();
 })();

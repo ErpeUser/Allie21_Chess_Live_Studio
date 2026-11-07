@@ -1,64 +1,79 @@
-"""Small, validated configuration. Official Allie 2.1 is never silently replaced."""
+"""Validated configuration and the single time-control definition."""
 from __future__ import annotations
+
 import json
 import re
 from pathlib import Path
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ROOT = Path(__file__).resolve().parents[1]
-PATH = ROOT / 'config.json'
-MODEL_ID = 'yimingzhang/allie-2.1'
-DEFAULTS = {
-    'white_elo': 1950, 'black_elo': 1950, 'time_control': '600+0',
-    'auto_tune_by_time_control': True,
-    'stockfish_seconds': 0.35, 'stockfish_threads': 2,
-    'stockfish_hash_mb': 128, 'stockfish_path': '',
-    'recognition_interval_ms': 750, 'recognition_max_width': 1280,
-    'stability_frames': 2, 'ocr_history': True,
-    'preview_opponent_replies': True, 'progressive_engine': True,
-    'model_id': MODEL_ID, 'auto_download_stockfish': True,
-    'auto_download_openings': True, 'prefetch_allie_weights': False,
-}
+PATH = ROOT / "config.json"
+MODEL_ID = "yimingzhang/allie-2.1"
+MODEL_REVISION = "d2545701ff5af46a51ac947911844f779b355a08"
+TIME_CONTROL_RE = re.compile(r"\d{1,5}\+\d{1,4}")
+
+
+def parse_time_control(value: str) -> tuple[int, int]:
+    value = str(value).strip()
+    if not TIME_CONTROL_RE.fullmatch(value):
+        raise ValueError("Zeitkontrolle muss wie 600+0 aussehen (Sekunden+Inkrement)")
+    base, increment = map(int, value.split("+"))
+    if not 1 <= base <= 86_400 or not 0 <= increment <= 3_600:
+        raise ValueError("Ungültige Zeitkontrolle")
+    return base, increment
+
+
+def time_profile(value: str) -> tuple[str, float]:
+    """Class and one Stockfish budget, using base + 40 increments everywhere."""
+    base, increment = parse_time_control(value)
+    effective = base + 40 * increment
+    if effective < 180:
+        return "Bullet", 0.25
+    if effective < 600:
+        return "Blitz", 0.65
+    if effective < 1_800:
+        return "Rapid", 1.1
+    return "Classical", 2.0
+
+
+class AppConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    white_elo: int = Field(1950, ge=600, le=2800)
+    black_elo: int = Field(1950, ge=600, le=2800)
+    player_side: Literal["white", "black"] = "white"
+    time_control: str = "600+0"
+    stockfish_threads: int = Field(2, ge=1, le=32)
+    stockfish_hash_mb: int = Field(128, ge=16, le=4096)
+    stockfish_path: str = Field("", max_length=1024)
+    recognition_interval_ms: int = Field(750, ge=400, le=12_000)
+    recognition_max_width: int = Field(1280, ge=480, le=1920)
+    stability_frames: int = Field(2, ge=1, le=5)
+    ocr_history: bool = True
+    preview_opponent_replies: bool = True
+    model_id: Literal[MODEL_ID] = MODEL_ID
+    model_revision: Literal[MODEL_REVISION] = MODEL_REVISION
+    auto_download_stockfish: bool = True
+    prefetch_allie_weights: bool = False
+
+    @field_validator("time_control")
+    @classmethod
+    def valid_time_control(cls, value: str) -> str:
+        parse_time_control(value)
+        return value
 
 
 def load_config() -> dict:
     try:
-        raw = json.loads(PATH.read_text(encoding='utf-8-sig'))
-        if not isinstance(raw, dict):
-            raise ValueError('Expected JSON object')
+        raw = json.loads(PATH.read_text(encoding="utf-8-sig"))
+        return AppConfig.model_validate(raw).model_dump()
     except FileNotFoundError:
-        raw = {}
+        return AppConfig().model_dump()
     except (OSError, ValueError) as exc:
-        print(f'WARNING: config.json is invalid ({exc}); using defaults')
-        raw = {}
-    config = dict(DEFAULTS)
-    for k, default in DEFAULTS.items():
-        if k not in raw or k == 'model_id':
-            continue
-        value = raw[k]
-        if type(default) is bool and type(value) is bool:
-            config[k] = value
-        elif type(default) is int and type(value) is int:
-            limits = {
-                'white_elo': (600, 2800), 'black_elo': (600, 2800),
-                'stockfish_threads': (1, 32), 'stockfish_hash_mb': (16, 4096),
-                'recognition_interval_ms': (400, 12000),
-                'recognition_max_width': (480, 1920), 'stability_frames': (1, 5),
-            }
-            lo, hi = limits.get(k, (0, 100000))
-            if lo <= value <= hi:
-                config[k] = value
-        elif type(default) is float and type(value) in (float, int):
-            if 0.15 <= value <= 12:
-                config[k] = float(value)
-        elif type(default) is str and isinstance(value, str):
-            if k == 'time_control':
-                if re.fullmatch(r'\d{1,5}\+\d{1,4}', value):
-                    base, inc = map(int, value.split('+'))
-                    if 1 <= base <= 86400 and 0 <= inc <= 3600:
-                        config[k] = value
-            elif len(value) < 1024:
-                config[k] = value
-    return config
+        print(f"WARNING: config.json ist ungültig ({exc}); verwende Standardwerte")
+        return AppConfig().model_dump()
 
 
 CONFIG = load_config()

@@ -1,6 +1,8 @@
-.venv/
+.venv*/
+.uv-cache/
 __pycache__/
 *.py[cod]
 backend/engines/*.exe
-backend/openings/*.tsv
 *.log
+tests/tmp*/
+.pytest_cache/

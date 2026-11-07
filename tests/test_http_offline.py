@@ -1,38 +1,41 @@
-"""HTTP boundary tests without installing chess/ONNX/Allie or starting a real model.
-
-This verifies security and routes, not engine correctness or Discord capture.
-"""
-import importlib.util
+"""Exercise the real FastAPI/Uvicorn boundary without loading chess models."""
 import json
+import socket
 import sys
 import threading
-import types
+import time
 import unittest
-from contextlib import ExitStack
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
 from pathlib import Path
-from unittest.mock import patch
+
+import uvicorn
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
+import live_server as app
 
 
 class FakeSession:
     def __init__(self):
         self.running = False
+
     def get_state(self):
         return {'running': self.running}
-    def start(self, settings):
+
+    def start(self, _settings):
         self.running = True
         return self.get_state()
+
     def stop(self):
         self.running = False
         return self.get_state()
-    def import_pgn(self, pgn):
+
+    def import_pgn(self, _pgn):
         return {'accepted': True}
+
     def set_recommendations(self, enabled):
         return {'running': self.running, 'recommendations_enabled': enabled}
+
     def submit_frame(self, raw):
         return {'bytes': len(raw)}
 
@@ -46,32 +49,36 @@ class FakeBrowserTrackerPool:
 class HTTPBoundaryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.stack = ExitStack()
-        cls.addClassCleanup(cls.stack.close)
-        allie = types.ModuleType('allie_local_server')
-        allie.HOST = '127.0.0.1'; allie.PORT = 8765
-        allie.MODEL_NAME = 'yimingzhang/allie-2.1'; allie._model = None
-        allie.analyse_position = lambda payload: {'fen': payload.get('fen', ''), 'moves': []}
-        live = types.ModuleType('live_session'); live.LiveSession = FakeSession; live.MAX_JPEG = 3500000
-        extras = types.ModuleType('chess_extras'); extras.find_stockfish = lambda: None
-        browser_session = types.ModuleType('browser_session')
-        browser_session.BrowserTrackerPool = FakeBrowserTrackerPool
-        cls.stack.enter_context(patch.dict(sys.modules, {
-            'allie_local_server': allie, 'live_session': live, 'chess_extras': extras,
-            'browser_session': browser_session,
-        }))
-        spec = importlib.util.spec_from_file_location('allie_v10_test_http', ROOT / 'backend' / 'live_server.py')
-        app = importlib.util.module_from_spec(spec); spec.loader.exec_module(app)
-        cls.app = app
-        cls.server = ThreadingHTTPServer(('127.0.0.1', 0), app.Handler)
-        cls.app.PORT = cls.server.server_port
-        cls.addClassCleanup(cls.server.server_close)
-        cls.server_thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
-        cls.server_thread.start()
-        cls.addClassCleanup(cls.server.shutdown)
+        cls.originals = (app.SESSION, app.BROWSER_TRACKERS, app.analyse_position,
+                         app.find_stockfish)
+        app.SESSION = FakeSession()
+        app.BROWSER_TRACKERS = FakeBrowserTrackerPool()
+        app.analyse_position = lambda payload: {'fen': payload.get('fen', ''), 'moves': []}
+        app.find_stockfish = lambda: None
+        with socket.socket() as probe:
+            probe.bind(('127.0.0.1', 0))
+            cls.port = probe.getsockname()[1]
+        config = uvicorn.Config(app.app, host='127.0.0.1', port=cls.port,
+                                log_level='critical', access_log=False)
+        cls.server = uvicorn.Server(config)
+        cls.server.install_signal_handlers = lambda: None
+        cls.thread = threading.Thread(target=cls.server.run, daemon=True)
+        cls.thread.start()
+        deadline = time.monotonic() + 5
+        while not cls.server.started and time.monotonic() < deadline:
+            time.sleep(.02)
+        if not cls.server.started:
+            raise RuntimeError('Uvicorn test server did not start')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.should_exit = True
+        cls.thread.join(5)
+        (app.SESSION, app.BROWSER_TRACKERS, app.analyse_position,
+         app.find_stockfish) = cls.originals
 
     def call(self, method, path, origin='', host=None, payload=None, overlay=False):
-        client = HTTPConnection('127.0.0.1', self.server.server_port, timeout=5)
+        client = HTTPConnection('127.0.0.1', self.port, timeout=5)
         headers = {}
         if origin:
             headers['Origin'] = origin
@@ -81,10 +88,10 @@ class HTTPBoundaryTests(unittest.TestCase):
             headers['Content-Type'] = 'application/json'
         if overlay:
             headers['X-Allie-Overlay'] = '1'
-        client.request(method, path, body=json.dumps(payload).encode() if payload is not None else None, headers=headers)
+        body = json.dumps(payload).encode() if payload is not None else None
+        client.request(method, path, body=body, headers=headers)
         response = client.getresponse()
-        status = response.status
-        data = response.read()
+        status, data = response.status, response.read()
         client.close()
         return status, data
 
@@ -103,26 +110,33 @@ class HTTPBoundaryTests(unittest.TestCase):
                                    origin='https://attacker.example', payload={})[0], 403)
         self.assertEqual(self.call('GET', '/viewer', host='attacker.example')[0], 403)
 
-    def test_generic_chess_site_overlay_can_submit_visible_board(self):
-        status, data = self.call(
-            'POST', '/api/browser-position', origin='https://chess.example', overlay=True,
-            payload={'session_id': 'web-test', 'placement': 'board', 'pgn': '*'},
-        )
+    def test_overlay_request_must_explicitly_identify_itself(self):
+        payload = {'session_id': 'web-test', 'placement': '8/8/8/3k4/8/8/4K3/8', 'pgn': '*'}
+        self.assertEqual(self.call('POST', '/api/browser-position',
+                                   origin='https://chess.example', payload=payload)[0], 403)
+        status, data = self.call('POST', '/api/browser-position',
+                                 origin='https://chess.example', overlay=True, payload=payload)
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(data)['session_id'], 'web-test')
 
     def test_start_stop_and_analyze_are_separate(self):
-        self.assertEqual(self.call('POST','/api/start',payload={})[0],200)
-        status, data = self.call('POST','/api/recommendations',payload={'enabled':False})
+        self.assertEqual(self.call('POST', '/api/start', payload={})[0], 200)
+        status, data = self.call('POST', '/api/recommendations', payload={'enabled': False})
         self.assertEqual(status, 200)
         self.assertFalse(json.loads(data)['recommendations_enabled'])
-        self.assertEqual(json.loads(self.call('POST','/analyze',payload={'fen':'test'})[1])['fen'],'test')
-        self.assertEqual(self.call('POST','/api/stop',payload={})[0],200)
+        response = self.call('POST', '/analyze', payload={'fen': 'test'})
+        self.assertEqual(json.loads(response[1])['fen'], 'test')
+        self.assertEqual(self.call('POST', '/api/stop', payload={})[0], 200)
+
+    def test_size_validation_and_unknown_fields(self):
+        self.assertEqual(self.call('POST', '/api/start', payload={'unknown': True})[0], 400)
+        self.assertEqual(self.call('POST', '/api/start')[0], 413)
 
     def test_userscript_download_needs_no_ticket(self):
-        status,data = self.call('GET','/install/allie21_overlay.user.js')
-        self.assertEqual(status,200)
-        self.assertNotIn(b'__ALLIE_INSTALL_TOKEN__',data)
+        status, data = self.call('GET', '/install/allie21_overlay.user.js')
+        self.assertEqual(status, 200)
+        self.assertNotIn(b'__ALLIE_INSTALL_TOKEN__', data)
+
 
 if __name__ == '__main__':
     unittest.main()

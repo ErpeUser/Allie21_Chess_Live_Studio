@@ -7,17 +7,17 @@ hard-coded fake 'human move' distribution. Requires standard chess move history.
 from __future__ import annotations
 
 import io
-import json
 import os
 import re
 import threading
 import math
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import chess
 import chess.pgn
-from chess_extras import opening_for_position, opening_note, position_facts, stockfish_lines, find_stockfish, describe_candidate, make_brief, adaptive_stockfish_seconds
-from config import CONFIG, MODEL_ID
+from chess_extras import opening_for_position, opening_note, position_facts, stockfish_lines, describe_candidate, make_brief
+from config import CONFIG, MODEL_ID, MODEL_REVISION, time_profile
 
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("ALLIE_PORT", "8765"))
@@ -25,6 +25,7 @@ MODEL_NAME = MODEL_ID
 MAX_BODY = 64 * 1024
 _model = None
 _model_lock = threading.RLock()
+_stockfish_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='stockfish-request')
 
 
 def get_model():
@@ -35,7 +36,9 @@ def get_model():
             # Review Hugging Face repository source before enabling remote code.
             from transformers import AutoModel
             print(f"Loading actual model {MODEL_NAME} (first use may download ~18.4 GB)...", flush=True)
-            _model = AutoModel.from_pretrained(MODEL_NAME, trust_remote_code=True)
+            _model = AutoModel.from_pretrained(
+                MODEL_NAME, revision=MODEL_REVISION, trust_remote_code=True
+            )
         return _model
 
 
@@ -112,11 +115,6 @@ def describe_move(board: chess.Board, uci: str, probability: float) -> dict[str,
         "flags": flags,
         "explanation": describe_candidate(board, uci),
     }
-
-
-def allie_move_order(move_probabilities):
-    """Keep the five most probable Allie moves in deterministic order."""
-    return sorted(move_probabilities.items(), key=lambda item: -float(item[1]))[:5]
 
 
 def risk_weighted_premove(branches: list[tuple[float, list[dict[str, Any]]]]) -> dict[str, Any] | None:
@@ -245,14 +243,7 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     if not (600 <= white_elo <= 2800 and 600 <= black_elo <= 2800):
         raise ValueError("Elo must be between 600 and 2800")
     tc = str(payload.get("time_control", "180+2")).strip()
-    if not re.fullmatch(r"\d{1,5}\+\d{1,4}", tc):
-        raise ValueError("Time control must look like 180+2 (seconds)")
-    base, increment = (int(part) for part in tc.split("+"))
-    if base < 1 or base > 86400 or increment > 3600:
-        raise ValueError("Invalid time control")
-    effective_seconds = base + 40 * increment
-    mode = ("Bullet" if effective_seconds < 180 else "Blitz" if effective_seconds < 600
-            else "Rapid" if effective_seconds < 1800 else "Classical")
+    mode, stockfish_budget = time_profile(tc)
     selection = str(payload.get('analysis_source', 'both'))
     if selection not in ('allie', 'stockfish', 'both'):
         raise ValueError('analysis_source must be allie, stockfish or both')
@@ -260,13 +251,18 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     opening = opening_for_position(board, moves)
     if opening:
         opening = {**opening, 'idea': opening_note(opening)}
+    # In combined browser/manual requests Stockfish can work while the single,
+    # locked Allie model performs inference. Video uses these same two branches
+    # in its latest-only workers.
+    stockfish_future = (_stockfish_pool.submit(
+        stockfish_lines, board.copy(stack=False), stockfish_budget
+    ) if selection == 'both' else None)
     candidate_moves: list[dict[str, Any]] = []
     wdl = None
     expected_think_time = None
     prediction_top: list[dict[str, Any]] = []
     prediction_second: list[dict[str, Any]] = []
     premove_branches: list[tuple[float, list[dict[str, Any]]]] = []
-    opponent_wdl = None
     warnings: list[str] = []
     allie_skip_reason = None
     if selection in ('allie', 'both'):
@@ -279,7 +275,9 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                 with _model_lock:
                     result = model.analyze(moves, white_elo=white_elo, black_elo=black_elo,
                                            time_control=tc, clocks=clocks)
-                    choices = allie_move_order(result['moves'])
+                    # The public API already returns most-likely-first and keeps
+                    # its own game cache. Do not sort the probabilities again.
+                    choices = list(result['moves'].items())[:5]
                     candidate_moves = [describe_move(board, uci, prob) for uci, prob in choices]
                     wdl = [round(float(x), 5) for x in result['wdl']] if result.get('wdl') is not None else None
                     if result.get('think_time') is not None:
@@ -295,15 +293,14 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                             after.push_uci(choice['uci'])
                             if after.is_game_over():
                                 continue
-                            follow = model.analyze(moves + [choice['uci']], white_elo=white_elo,
-                                                   black_elo=black_elo, time_control=tc,
-                                                   clocks=clocks + [None])
-                            replies = sorted(follow['moves'].items(), key=lambda item: -float(item[1]))[:3]
+                            replies = list(model.predict(
+                                moves + [choice['uci']], white_elo=white_elo,
+                                black_elo=black_elo, time_control=tc,
+                                clocks=clocks + [None],
+                            ).items())[:3]
                             shown = [describe_move(after, uci, prob) for uci, prob in replies]
                             if index == 0:
                                 prediction_top = shown
-                                if follow.get('wdl') is not None:
-                                    opponent_wdl = [round(float(x), 5) for x in follow['wdl']]
                                 for reply in after.legal_moves:
                                     probe = after.copy(stack=False)
                                     probe.push(reply)
@@ -331,12 +328,11 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                                 after_reply.push_uci(reply['uci'])
                                 if after_reply.is_game_over():
                                     continue
-                                continuation = model.analyze(
+                                continuation = model.predict(
                                     moves + [candidate_moves[0]['uci'], reply['uci']],
                                     white_elo=white_elo, black_elo=black_elo,
                                     time_control=tc, clocks=clocks + [None, None])
-                                ranked = sorted(continuation['moves'].items(),
-                                                key=lambda item: -float(item[1]))[:5]
+                                ranked = list(continuation.items())[:5]
                                 described = [describe_move(after_reply, uci, prob) for uci, prob in ranked]
                                 premove_branches.append((reply['probability'], described))
                 except Exception as exc:
@@ -344,15 +340,8 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
 
     sf = None
     if selection in ('stockfish', 'both'):
-        try:
-            duration = float(payload.get('stockfish_time', 0.7))
-        except (TypeError, ValueError) as exc:
-            raise ValueError('stockfish_time must be numeric') from exc
-        if not math.isfinite(duration) or duration <= 0:
-            raise ValueError('stockfish_time must be positive and finite')
-        if payload.get('auto_tune', CONFIG['auto_tune_by_time_control']):
-            duration = adaptive_stockfish_seconds(tc)
-        sf = stockfish_lines(board, duration)
+        sf = (stockfish_future.result() if stockfish_future
+              else stockfish_lines(board, stockfish_budget))
         if sf and sf.get('available'):
             for item in sf.get('lines', []):
                 item['explanation'] = describe_candidate(board, item['uci'])
@@ -394,3 +383,23 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     output['plan_messages'] = make_plan_messages(output)
     output['brief'] = make_brief(output)
     return output
+
+
+ALLIE_FIELDS = (
+    'model', 'moves', 'wdl', 'expected_think_time_s', 'tactical_warnings',
+    'allie_skip_reason', 'player_side', 'player_to_move', 'my_moves',
+    'opponent_moves', 'premove', 'plan_messages',
+)
+
+
+def merge_results(engine_result: dict | None, allie_result: dict | None) -> dict | None:
+    """Order-independent merge for two results from the same position."""
+    if not engine_result:
+        return allie_result
+    if not allie_result or engine_result.get('fen') != allie_result.get('fen'):
+        return engine_result
+    combined = dict(engine_result)
+    for key in ALLIE_FIELDS:
+        combined[key] = allie_result.get(key)
+    combined['brief'] = make_brief(combined)
+    return combined

@@ -14,7 +14,10 @@ try:
 except ImportError as exc:
     raise unittest.SkipTest('Chess libraries have not been installed yet') from exc
 
-from allie_local_server import parse_history, analyse_position, risk_weighted_premove, make_plan_messages
+from allie_local_server import (
+    analyse_position, make_plan_messages, merge_results, parse_history,
+    risk_weighted_premove,
+)
 from position_tracker import PositionTracker
 from chess_extras import opening_for_position
 from live_session import LiveSession
@@ -23,12 +26,15 @@ from browser_session import BrowserTrackerPool
 
 class FakeAllie:
     def __init__(self): self.called = 0
-    def analyze(self, moves, **kwargs):
+    def predict(self, moves, **kwargs):
         self.called += 1
         board = chess.Board()
         for uci in moves: board.push_uci(uci)
-        return {'moves': {move.uci(): .6/(i+1) for i, move in enumerate(list(board.legal_moves)[:4])},
-                'wdl': [.4,.3,.3], 'think_time': 2.5}
+        return {move.uci(): .6/(i+1) for i, move in enumerate(list(board.legal_moves)[:4])}
+
+    def analyze(self, moves, **kwargs):
+        return {'moves': self.predict(moves, **kwargs), 'wdl': [.4,.3,.3],
+                'think_time': 2.5}
 
 
 class ChessTests(unittest.TestCase):
@@ -55,13 +61,20 @@ class ChessTests(unittest.TestCase):
         self.assertTrue(result['ready'])
         self.assertEqual(result['pgn'], 'e2e4 b8c6')
 
-    def test_browser_tracker_recovers_when_overlay_starts_after_f3_e5(self):
+    def test_browser_tracker_does_not_invent_a_late_start_history(self):
         pool = BrowserTrackerPool()
         board = chess.Board(); board.push_uci('f2f3'); board.push_uci('e7e5')
         result = pool.observe('web-late-start', board.board_fen())
+        self.assertFalse(result['ready'])
+        self.assertEqual(result['pgn'], '')
+        self.assertFalse(result['history_source'] == 'reconstructed-opening')
+
+    def test_browser_tracker_accepts_confirmed_complete_history(self):
+        pool = BrowserTrackerPool()
+        board = chess.Board(); board.push_uci('f2f3'); board.push_uci('e7e5')
+        result = pool.observe('web-with-pgn', board.board_fen(), '1. f3 e5')
         self.assertTrue(result['ready'])
         self.assertEqual(result['pgn'], 'f2f3 e7e5')
-        self.assertEqual(result['history_source'], 'reconstructed-opening')
 
     def test_pgn_is_legal(self):
         moves, board, clocks = parse_history('1. e4 e5 2. Nf3 Nc6')
@@ -129,6 +142,24 @@ class ChessTests(unittest.TestCase):
         result = analyse_position({'fen':chess.STARTING_FEN, 'analysis_source':'allie'}, model)
         self.assertEqual(model.called, 0)
         self.assertTrue(result['allie_skip_reason'])
+
+    def test_result_merge_is_identical_for_both_completion_orders(self):
+        common = {'fen': chess.STARTING_FEN, 'opening': None, 'position_facts': [],
+                  'brief': []}
+        engine = {**common, 'stockfish': {'available': True, 'lines': [{'uci': 'e2e4'}]},
+                  'moves': [], 'model': None}
+        human = {**common, 'stockfish': None, 'model': 'yimingzhang/allie-2.1',
+                 'moves': [{'uci': 'e2e4', 'san': 'e4', 'probability': .5,
+                            'flags': [], 'explanation': 'Zentrum'}], 'wdl': [.4, .3, .3],
+                 'expected_think_time_s': 1.0, 'tactical_warnings': [],
+                 'allie_skip_reason': None, 'player_side': 'white',
+                 'player_to_move': True, 'my_moves': [], 'opponent_moves': [],
+                 'premove': None, 'plan_messages': []}
+        engine_first = merge_results(engine, human)
+        human_first = merge_results(engine, human)
+        self.assertEqual(engine_first, human_first)
+        self.assertEqual(engine_first['moves'][0]['uci'], 'e2e4')
+        self.assertTrue(engine_first['stockfish']['available'])
 
     def test_model_failure_is_visible(self):
         class Broken:
@@ -260,7 +291,6 @@ class ChessTests(unittest.TestCase):
                 with live.lock:
                     live.tracker.observe(chess.STARTING_FEN)
                     live._update_history_locked()
-                    live.settings['progressive'] = False
                     live._queue_locked()
                 deadline = time.monotonic() + 3
                 state = live.get_state()
@@ -279,6 +309,78 @@ class ChessTests(unittest.TestCase):
                 self.assertFalse(state['analysing'])
         finally:
             release_allie.set()
+            live.stop()
+
+    def test_allie_result_does_not_break_later_stockfish_merge(self):
+        live = LiveSession()
+        live.start({})
+        release_engine = Event()
+
+        def fake_analysis(payload):
+            base = {'fen': chess.STARTING_FEN, 'opening': None, 'position_facts': [],
+                    'tactical_warnings': [], 'allie_skip_reason': None, 'brief': []}
+            if payload['analysis_source'] == 'stockfish':
+                release_engine.wait(3)
+                return {**base, 'model': None, 'moves': [],
+                        'stockfish': {'available': True, 'lines': [{'uci': 'e2e4'}]}}
+            return {**base, 'model': 'yimingzhang/allie-2.1', 'stockfish': None,
+                    'moves': [{'san': 'e4', 'uci': 'e2e4', 'probability': .5}],
+                    'wdl': None, 'expected_think_time_s': None,
+                    'my_moves': [], 'opponent_moves': [], 'premove': None,
+                    'player_side': 'white', 'player_to_move': True,
+                    'plan_messages': []}
+
+        try:
+            with patch('live_session.analyse_position', side_effect=fake_analysis):
+                with live.lock:
+                    live.tracker.observe(chess.STARTING_FEN)
+                    live._update_history_locked()
+                    live._queue_locked()
+                deadline = time.monotonic() + 3
+                state = live.get_state()
+                while not (state.get('result') or {}).get('moves') and time.monotonic() < deadline:
+                    time.sleep(.02)
+                    state = live.get_state()
+                self.assertEqual(state['result']['moves'][0]['uci'], 'e2e4')
+                self.assertTrue(state['engine_analysing'])
+                release_engine.set()
+                deadline = time.monotonic() + 3
+                while state.get('engine_analysing') and time.monotonic() < deadline:
+                    time.sleep(.02)
+                    state = live.get_state()
+                self.assertTrue(state['result']['stockfish']['available'])
+                self.assertEqual(state['result']['moves'][0]['uci'], 'e2e4')
+        finally:
+            release_engine.set()
+            live.stop()
+
+    def test_stopped_analysis_cannot_publish_and_restart_is_clean(self):
+        live = LiveSession()
+        release = Event()
+
+        def delayed(payload):
+            release.wait(3)
+            return {'fen': chess.STARTING_FEN, 'moves': [{'uci': 'e2e4'}],
+                    'stockfish': None, 'opening': None, 'position_facts': [],
+                    'tactical_warnings': [], 'allie_skip_reason': None, 'brief': []}
+
+        try:
+            live.start({})
+            with patch('live_session.analyse_position', side_effect=delayed):
+                with live.lock:
+                    live.tracker.observe(chess.STARTING_FEN)
+                    live._update_history_locked()
+                    live._queue_locked()
+                live.stop()
+                live.start({})
+                release.set()
+                time.sleep(.1)
+                state = live.get_state()
+                self.assertTrue(state['running'])
+                self.assertIsNone(state['result'])
+                self.assertFalse(state['analysing'])
+        finally:
+            release.set()
             live.stop()
 
 

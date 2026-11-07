@@ -1,9 +1,8 @@
 {
   "white_elo": 1950,
   "black_elo": 1950,
+  "player_side": "white",
   "time_control": "600+0",
-  "auto_tune_by_time_control": true,
-  "stockfish_seconds": 0.35,
   "stockfish_threads": 2,
   "stockfish_hash_mb": 128,
   "stockfish_path": "",
@@ -12,9 +11,8 @@
   "stability_frames": 2,
   "ocr_history": true,
   "preview_opponent_replies": true,
-  "progressive_engine": true,
   "model_id": "yimingzhang/allie-2.1",
+  "model_revision": "d2545701ff5af46a51ac947911844f779b355a08",
   "auto_download_stockfish": true,
-  "auto_download_openings": true,
   "prefetch_allie_weights": false
 }
