@@ -181,9 +181,11 @@ def make_plan_messages(output: dict[str, Any]) -> list[str]:
     opponent = output.get('opponent_moves') or []
     if opponent:
         first = opponent[0]
+        engine_fallback = first.get('source') == 'stockfish'
         explanation = str(first.get('explanation') or '').strip()
         if explanation:
-            messages.append('Wahrscheinliche gegnerische Absicht: ' + explanation)
+            prefix = 'Stockfish-Hinweis: ' if engine_fallback else 'Wahrscheinliche gegnerische Absicht: '
+            messages.append(prefix + explanation)
         flags = first.get('flags') or []
         if 'Schachmatt' in flags:
             messages.append('Konkrete Gefahr: Der rote Hauptzug wäre matt.')
@@ -191,7 +193,7 @@ def make_plan_messages(output: dict[str, Any]) -> list[str]:
             messages.append('Konkrete Gefahr: Der rote Hauptzug kommt mit Schach und erzwingt eine Antwort.')
         elif 'Schlagzug' in flags:
             messages.append('Konkrete Gefahr: Der rote Hauptzug verändert sofort die Materiallage.')
-        if len(opponent) > 1:
+        if len(opponent) > 1 and not engine_fallback:
             gap = float(first.get('probability', 0.0)) - float(opponent[1].get('probability', 0.0))
             if gap >= .18:
                 messages.append('Spielverhalten: Allie sieht hier einen klaren gegnerischen Hauptplan statt vieler gleichwertiger Ideen.')
@@ -359,12 +361,19 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
             for item in sf.get('lines', []):
                 item['explanation'] = describe_candidate(board, item['uci'])
 
+    engine_moves = []
+    if selection == 'stockfish' and sf and sf.get('available'):
+        engine_moves = [{**item, 'source': 'stockfish'} for item in sf.get('lines', [])[:2]]
+    if fen_only and not allie_skip_reason:
+        allie_skip_reason = ('Allie wartet auf die vollständige Partiegeschichte; '
+                             'bis dahin zeigt Stockfish die sicheren Stellungszüge.')
+
     if player_to_move:
-        my_moves = candidate_moves[:2]
+        my_moves = candidate_moves[:2] or engine_moves
         opponent_moves = prediction_top[:2]
         premove = risk_weighted_premove(premove_branches)
     else:
-        opponent_moves = candidate_moves[:2]
+        opponent_moves = candidate_moves[:2] or engine_moves
         my_moves = prediction_top[:2]
         reply_branches = []
         if candidate_moves:

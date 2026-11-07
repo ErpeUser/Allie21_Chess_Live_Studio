@@ -98,15 +98,15 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.1.3', overlay)
+        self.assertIn('@version      11.1.4', overlay)
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
         self.assertIn('new MutationObserver', overlay)
         self.assertIn('setTimeout(()=>tick(manual),120)', overlay)
-        self.assertIn("request('allie',false,false)", overlay)
+        self.assertIn("request(fen?'stockfish':'allie',false,!!fen)", overlay)
         self.assertIn("request('both',true,true)", overlay)
-        self.assertNotIn("analysis_source:'stockfish'", overlay)
+        self.assertIn("fen?'stockfish':'allie'", overlay)
         self.assertIn('cfg.playerSide', overlay)
         self.assertIn("localPost('/api/browser-position'", overlay)
         self.assertIn("'X-Allie-Overlay':'1'", overlay)

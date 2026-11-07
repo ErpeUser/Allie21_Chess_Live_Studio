@@ -58,6 +58,7 @@ class BrowserTrackerPool:
                 and tracker.board.board_fen() == chess.Board(visible_fen).board_fen()
             )
             ready = bool(tracker.complete_history and tracker.turn_verified and synced)
+            fallback_ready = bool(tracker.turn_verified and synced)
             message = change.message
             if tracker.complete_history and not synced:
                 message = "Brettwechsel noch nicht eindeutig erkannt; Pfeile ausgeblendet."
@@ -65,6 +66,7 @@ class BrowserTrackerPool:
                 message = "Brett erkannt – warte auf Startstellung oder eine lesbare Zugfolge."
             return {
                 "ready": ready,
+                "fallback_ready": fallback_ready,
                 "changed": bool(change.changed),
                 "message": message,
                 "pgn": (tracker.pgn_uci or "*") if ready else "",

@@ -106,8 +106,14 @@ class ChessTests(unittest.TestCase):
         board = chess.Board(); board.push_uci('f2f3'); board.push_uci('e7e5')
         result = pool.observe('web-late-start', board.board_fen())
         self.assertFalse(result['ready'])
+        self.assertFalse(result['fallback_ready'])
         self.assertEqual(result['pgn'], '')
         self.assertFalse(result['history_source'] == 'reconstructed-opening')
+        board.push_uci('e2e4')
+        tracked = pool.observe('web-late-start', board.board_fen())
+        self.assertFalse(tracked['ready'])
+        self.assertTrue(tracked['fallback_ready'])
+        self.assertEqual(chess.Board(tracked['fen']).turn, chess.BLACK)
 
     def test_browser_tracker_accepts_confirmed_complete_history(self):
         pool = BrowserTrackerPool()
@@ -223,6 +229,22 @@ class ChessTests(unittest.TestCase):
         model = FakeAllie()
         result = analyse_position({'fen':chess.STARTING_FEN, 'analysis_source':'allie'}, model)
         self.assertEqual(model.called, 0)
+        self.assertTrue(result['allie_skip_reason'])
+
+    def test_fen_stockfish_fallback_populates_current_side_arrows(self):
+        lines = [
+            {'san': 'e4', 'uci': 'e2e4', 'score': '+0.20', 'variation': '1. e4'},
+            {'san': 'd4', 'uci': 'd2d4', 'score': '+0.10', 'variation': '1. d4'},
+        ]
+        with patch('allie_local_server.stockfish_lines', return_value={
+            'available': True, 'engine': 'Stockfish', 'scope': 'position', 'lines': lines,
+        }):
+            result = analyse_position({
+                'fen': chess.STARTING_FEN, 'analysis_source': 'stockfish',
+                'player_side': 'white',
+            })
+        self.assertEqual([move['uci'] for move in result['my_moves']], ['e2e4', 'd2d4'])
+        self.assertFalse(result['opponent_moves'])
         self.assertTrue(result['allie_skip_reason'])
 
     def test_model_failure_is_visible(self):

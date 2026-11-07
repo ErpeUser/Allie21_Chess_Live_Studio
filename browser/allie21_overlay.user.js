@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Manuelles Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.1.3
+// @version      11.1.4
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -48,11 +48,11 @@
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{el('panel').classList.toggle('open');el('bubble').style.display=el('panel').classList.contains('open')?'none':''};
  el('close').onclick=()=>{el('panel').classList.remove('open');el('bubble').style.display=''};
- const invalidate=()=>{cancelAnalysis();lastPGN='';analysisKey='';currentResult=null;clearOverlay();show({})};
+ const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({})};
  const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;save();invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','orientation','playerSide'])el(field).addEventListener('change',updateSettings);
  const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
@@ -246,21 +246,21 @@
  function localPost(path,data,timeout=15000){return new Promise((resolve,reject)=>GM_xmlhttpRequest({method:'POST',url:'http://127.0.0.1:8765'+path,timeout,headers:{'Content-Type':'application/json','X-Allie-Overlay':'1'},data:JSON.stringify(data),onload:r=>{try{const parsed=JSON.parse(r.responseText);if(r.status!==200)throw Error(parsed.error||String(r.status));resolve(parsed)}catch(e){reject(e)}},onerror:()=>reject(Error('Lokaler Allie-Server nicht erreichbar.')),ontimeout:()=>reject(Error('Lokale Brett-Erkennung braucht zu lange.'))}))}
  async function historyFromVisibleBoard(){
   const snapshot=readBoardSnapshot();if(!snapshot)return{pgn:readHistory(),orientation:cfg.orientation==='auto'?'white':cfg.orientation,placement:''};
-  if(snapshot.placement===lastPlacement&&trackedPGN)return{pgn:trackedPGN,orientation:snapshot.orientation,placement:snapshot.placement};
+  if(snapshot.placement===lastPlacement&&(trackedPGN||trackedFen))return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:!!trackedFen};
   const expected=snapshot.placement,fallback=readHistory();
   const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback},12000);
   const latest=readBoardSnapshot();if(!latest||latest.placement!==expected)return{pgn:'',orientation:snapshot.orientation,placement:expected,stale:true};
-  lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';
-  return{pgn:trackedPGN,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,moves_seen:state.moves_seen};
+  lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
+  return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,fallback_ready:state.fallback_ready,moves_seen:state.moves_seen};
  }
- function analyze(pgn,placement=''){
+ function analyze(pgn,placement='',fen=''){
    if(pending||!cfg.enabled)return;
-   const key=JSON.stringify([pgn,placement,cfg.elo,cfg.tc,cfg.playerSide]);analysisKey=key;
+   const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,cfg.playerSide]);analysisKey=key;
    const serial=++analysisSerial;
    pending=true;el('status').textContent='Allie analysiert den aktuellen Zug...';
-   const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===pgn&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
+   const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
    const request=(source,preview,final)=>{
-    const data={pgn,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:cfg.playerSide,analysis_source:source,preview};
+    const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:cfg.playerSide,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
     const fail=message=>{
      if(serial!==analysisSerial)return;
      activeRequest=null;
@@ -281,9 +281,9 @@
      onerror:()=>fail('Backend nicht erreichbar. Python-Server starten.'),
      ontimeout:()=>fail('Backend-Zeitlimit.')});
    };
-   request('allie',false,false);
+   request(fen?'stockfish':'allie',false,!!fen);
  }
- el('now').onclick=async()=>{updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';await tick(true)};
+ el('now').onclick=async()=>{updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';await tick(true)};
  async function tick(manual=false){
   if(trackingPending)return;
   const visibleBoard=readBoardSnapshot();wrapper.style.display=visibleBoard?'':'none';
@@ -291,17 +291,17 @@
   if(!cfg.enabled){clearOverlay();return}
   trackingPending=true;
   try{
-   const history=await historyFromVisibleBoard(),pgn=history.pgn;
-   if(!pgn||!atHistoryEnd()){
+   const history=await historyFromVisibleBoard(),pgn=history.pgn,fen=history.fen||'',basis=pgn||fen;
+   if(!basis||!atHistoryEnd()){
     if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();show({})}
     if(manual||history.message)el('status').textContent=history.message||'Brett erkannt – warte auf eine vollständige Zugfolge ab der Startstellung.';
     return;
    }
-    const wanted=JSON.stringify([pgn,history.placement,cfg.elo,cfg.tc,cfg.playerSide]);
-    if(pgn!==lastPGN||wanted!==analysisKey){
+    const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,cfg.playerSide]);
+    if(basis!==lastPGN||wanted!==analysisKey){
      currentResult=null;clearOverlay();show({});
      if(pending)cancelAnalysis();
-     if(Date.now()>=retryAfter){lastPGN=pgn;analyze(pgn,history.placement)}
+     if(Date.now()>=retryAfter){lastPGN=basis;analyze(pgn,history.placement,fen)}
     }
   }catch(error){if(manual)el('status').textContent=error.message||String(error)}finally{trackingPending=false}
  }
