@@ -44,6 +44,8 @@ class StandaloneTests(unittest.TestCase):
                      'backend/live_server.py', 'backend/live_session.py',
                      'viewer/index.html', 'browser/allie21_overlay.user.js'):
             self.assertTrue((ROOT / name).is_file(), name)
+        self.assertTrue((ROOT / 'browser/manifest.json').is_file())
+        self.assertTrue((ROOT / 'browser/extension_shim.js').is_file())
         for removed in ('requirements.txt', 'ALLIE_VORLADEN.bat', 'TEST_HIER.bat',
                         'tools/auto_setup.ps1', 'tools/AllieLauncher.cs'):
             self.assertFalse((ROOT / removed).exists(), removed)
