@@ -67,7 +67,22 @@
 - [ ] Regenerate `uv.lock` with only the requested package upgrade.
 - [ ] Run the full suite and JavaScript syntax checks.
 
-### Task 3: Correct installer, help, and build cleanup
+### Task 3: Polish the existing interface and copy
+
+**Files:**
+- Modify: `viewer/index.html`
+- Modify: `browser/allie21_overlay.user.js`
+
+**Interfaces:**
+- Consumes: the existing Allie dark theme and current analysis/status data.
+- Produces: a calmer, clearer interface without a UI framework or bitmap asset.
+
+- [ ] Preserve the existing layout and behavior while simplifying visible German copy.
+- [ ] Use the existing palette with clearer surface levels, hierarchy, focus, and status treatments.
+- [ ] Keep the chess motif as lightweight CSS/SVG rather than adding image/runtime weight.
+- [ ] Run comprehension and UI-code reviews plus focused browser parser tests.
+
+### Task 4: Correct installer, help, and build cleanup
 
 **Files:**
 - Modify: `viewer/index.html`
@@ -84,7 +99,7 @@
 - [ ] Delete ignored crash/test/build artifacts after resolving their exact paths.
 - [ ] Rebuild and run `Allie21 Chess Live Studio.exe --check`.
 
-### Task 4: Final verification and reproducibility record
+### Task 5: Final verification and reproducibility record
 
 **Files:**
 - Modify: `VERSIONEN.md`

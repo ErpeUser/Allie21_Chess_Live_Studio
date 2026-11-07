@@ -13,7 +13,6 @@ if (-not (Test-Path -LiteralPath $uvx)) {
 
 & $uvx --from 'pyinstaller==6.22.3' pyinstaller `
     --noconfirm --clean --onefile --windowed `
-    --runtime-tmpdir '.' `
     --name 'Allie21 Chess Live Studio' `
     --distpath $root `
     --workpath (Join-Path $root '.build\pyinstaller') `

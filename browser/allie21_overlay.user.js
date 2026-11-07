@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.1.7
+// @version      11.2.0
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -24,25 +24,25 @@
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
  const wrapper=document.createElement('div');
  wrapper.id='allie21-auto-study-root';
- wrapper.style.cssText='all:initial;display:none;position:fixed;right:15px;bottom:18px;z-index:2147483000;font-family:system-ui,sans-serif;color:#e7f2ff';
+ wrapper.style.cssText='all:initial;display:none;position:fixed;right:15px;bottom:18px;z-index:2147483000;font-family:Inter,ui-sans-serif,system-ui,"Segoe UI",sans-serif;color:#eef7ff';
  document.documentElement.appendChild(wrapper);
  const shadow=wrapper.attachShadow({mode:'open'});
  shadow.innerHTML=`
  <style>
- *{box-sizing:border-box}button,input,select{font:inherit}#bubble{background:#10283d;color:#eaf6ff;border:1px solid #48758c;border-radius:25px;padding:9px 13px;font-size:12px;font-weight:650;cursor:pointer;box-shadow:0 2px 10px #0008}
- #panel{display:none;width:350px;max-width:calc(100vw - 20px);max-height:76vh;overflow:auto;background:#102236;color:#e7f2ff;border:1px solid #43657e;box-shadow:0 8px 24px #0009;border-radius:10px;padding:11px;line-height:1.35;font-size:12px}
- #panel.open{display:block}h3{margin:8px 0 4px;color:#8de0c5;font-size:13px}p{margin:5px 0}label{display:block;margin:6px 0 3px}.row{display:flex;gap:7px;align-items:center}.row>*{flex:1;min-width:0}#close{flex:0 0 32px;padding:6px}input,select{width:100%;padding:6px;background:#091724;border:1px solid #3c6076;border-radius:5px;color:#e6f3ff}
- button{border:1px solid #3c6076;background:#285474;color:white;border-radius:6px;padding:7px;cursor:pointer}.item{display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #325068;padding:4px 0}.stat{color:#a6d9e3}.warn{color:#ffccaf}.small{font-size:11px;color:#abc4d6}#results{margin-top:7px}.insight{background:#ffffff0b;border-left:3px solid #58b99a;border-radius:7px;margin:6px 0;padding:8px 9px}.analysis-title{display:flex;justify-content:space-between;align-items:center;color:#8de0c5;font-weight:700;margin-top:9px}
+ *{box-sizing:border-box}button,input,select{font:inherit}#bubble{background:#10283d;color:#eaf6ff;border:1px solid #48758c;border-radius:999px;padding:9px 13px;font-size:12px;font-weight:650;cursor:pointer;box-shadow:0 2px 10px #0008}#bubble:before{content:'';display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:#52d3ad;box-shadow:0 0 8px #52d3ad}
+ #panel{display:none;width:360px;max-width:calc(100vw - 20px);max-height:76vh;overflow:auto;background:#0e1b2df5;color:#eef7ff;border:1px solid #2a4159;box-shadow:0 0 0 .5px #ffffff0a,0 8px 24px #000a;border-radius:14px;padding:14px;line-height:1.4;font-size:12px}
+ #panel.open{display:block}h3{margin:10px 0 5px;color:#8de0c5;font-size:13px}p{margin:6px 0}label{display:block;margin:8px 0 4px;color:#c9d8e4}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1;min-width:0}#close{flex:0 0 32px;padding:6px;background:transparent}input,select{width:100%;min-height:38px;padding:7px 8px;background:#091724;border:1px solid #3c6076;border-radius:8px;color:#e6f3ff}
+ button{min-height:38px;border:1px solid #41667f;background:#285474;color:white;border-radius:8px;padding:7px;cursor:pointer}button:hover{background:#336786}.item{display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #294157;padding:6px 0}.stat{color:#a6d9e3}.warn{color:#ffccaf}.small{font-size:11px;color:#abc4d6}#results{margin-top:9px}.insight{background:#14273a;border:1px solid #294157;border-radius:9px;margin:7px 0;padding:9px 10px}.analysis-title{display:flex;justify-content:space-between;align-items:center;color:#8de0c5;font-weight:700;margin-top:10px}
  </style>
- <button id='bubble'>Allie 2.1 | Analyse</button>
- <section id='panel'><div class='row'><b style='font-size:15px'>Allie 2.1 | Live Overlay</b><button id='close'>X</button></div>
- <p class='small'>Allie wählt menschlich passend zu Elo und Zeit; Stockfish bleibt nur der objektive Vergleich.</p>
+ <button id='bubble'>Allie · Analyse</button>
+ <section id='panel'><div class='row'><b style='font-size:15px'>Allie Live-Analyse</b><button id='close' aria-label='Fenster schließen'>×</button></div>
+ <p class='small'>Allie schätzt menschliche Züge. Stockfish prüft sie objektiv.</p>
  <div class='row'><div><label>Elo</label><input id='elo' type='number' min='600' max='2800'/></div>
   <div><label>Zeitkontrolle</label><input id='tc' placeholder='300+0'/></div></div>
  <div class='row'><div><label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select></div>
  <div><label>Deine Farbe</label><select id='playerSide'><option value='auto'>Automatisch</option><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
- <p id='status' class='stat'>Lokalen Server starten; die Analyse verbindet sich automatisch.</p>
+ <p id='status' class='stat'>Warte auf ein Brett. Die Verbindung startet automatisch.</p>
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move. Allie klickt nie selbst.</p>
  </section>`;
  const el=id=>shadow.getElementById(id);

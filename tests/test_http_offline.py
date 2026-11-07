@@ -172,7 +172,7 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
-        self.assertIn(b'11.1.7', page)
+        self.assertIn(b'11.2.0', page)
         self.assertEqual(self.call('GET', '/install/allie21_overlay.user.js')[0], 404)
 
 

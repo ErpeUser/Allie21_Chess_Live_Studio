@@ -1,5 +1,13 @@
 # Änderungen
 
+## v11.2.0
+
+- Viewer und Browser-Overlay ruhiger, klarer und kompakter gestaltet; Texte und Statusmeldungen vereinfacht.
+- Wirkungslose Modellfelder, unbenutzte Wrapper und das durch automatisches Warmup überflüssige Preload-Skript entfernt.
+- FastAPI auf den kompatiblen Patchstand 0.162.2 aktualisiert.
+- EXE-Build verwendet wieder das sichere Windows-Temp-Verzeichnis und hinterlässt keine `_MEI*`-Ordner im Projekt.
+- Direkte Edge-Erweiterung und automatische Allie-Vorwärmung in Hilfe und Startanleitung richtig dokumentiert.
+
 ## v11.1.7
 
 - Beim Serverstart läuft jetzt immer eine echte Allie-Startstellungsanalyse im Hintergrund; Modell und Allie-Cache sind dadurch vor dem ersten Zug warm.

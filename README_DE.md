@@ -10,11 +10,7 @@ Lokale Windows-Anwendung für menschliche Zugprognosen mit Allie 2.1 und objekti
 
 Die EXE startet den einzigen Installationsweg `START_HIER.bat`. Er installiert bei Bedarf `uv 0.13.7`, richtet die isolierte `.allie-venv` mit Python 3.12 und allen Paketen aus `uv.lock` ein und lädt Stockfish 19 nur dann, wenn die Engine fehlt. Die Konsole zeigt verständliche Fehler und muss während der Nutzung geöffnet bleiben.
 
-Das echte Allie-Modell wird erst bei der ersten PGN-Analyse geladen. Die Gewichte benötigen ungefähr 18,4 GB Speicherplatz; der CPU-Betrieb benötigt viel Arbeitsspeicher. Optional kann das Modell vorab mit folgendem Befehl geladen werden:
-
-```powershell
-uv run --frozen python backend/preload_allie.py
-```
+Das echte Allie-Modell wird beim Serverstart automatisch im Hintergrund mit der Startstellung vorgewärmt. Die Gewichte benötigen ungefähr 18,4 GB Speicherplatz; der CPU-Betrieb benötigt viel Arbeitsspeicher. Sobald im Viewer „Allie geladen“ steht, ist der erste Live-Zug ohne Modell-Kaltstart bereit.
 
 ## Eingabewege
 

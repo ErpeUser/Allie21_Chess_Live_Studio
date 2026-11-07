@@ -1,6 +1,6 @@
 # Reproduzierbare Versionen und Prüfstand
 
-Stand der Prüfung: 7. November 2026, Windows 11 x64. Abhängigkeiten sind in `pyproject.toml` direkt und in `uv.lock` vollständig festgelegt.
+Stand der Prüfung: 8. November 2026, Windows 11 x64. Abhängigkeiten sind in `pyproject.toml` direkt und in `uv.lock` vollständig festgelegt.
 
 ## Laufzeit
 
@@ -9,7 +9,7 @@ Stand der Prüfung: 7. November 2026, Windows 11 x64. Abhängigkeiten sind in `p
 | uv | 0.13.7 |
 | Python | 3.12.x; geprüft mit 3.12.10 |
 | chess | 1.11.2 |
-| FastAPI | 0.162.0 |
+| FastAPI | 0.162.2 |
 | Pydantic | 2.14.3 |
 | Uvicorn | 0.54.0 |
 | Pillow | 13.0.0 |
@@ -31,8 +31,8 @@ PyTorch 2.15.0 ist für die veröffentlichte Allie-2.1-CPU-Implementierung beibe
 - Stockfish-Release: `sf_19`
 - Stockfish-Archiv SHA-256: `3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7`
 - Installierte `stockfish.exe` SHA-256: `45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`
-- `uv.lock` SHA-256 beim Abschluss: `976b234f6ca1ca3043b2ad908685d6e327634d1124d32d57f9da30e6ede6af33`
-- `Allie21 Chess Live Studio.exe` SHA-256: `3821bad0f7bc1f9630a0c61df652c9792028e7099d9f6f612627de93dc692d9b`
+- `uv.lock` SHA-256 beim Abschluss: `bd767015037b6bba1c8e51499bf4ba0fdb3871c228fd4ba435848c3d5005c9a2`
+- `Allie21 Chess Live Studio.exe` SHA-256: `beaeb4ec4db64a7df665a8e02a57f4e17972d4c0848ebc8260dd2e89825b6c94`
 
 Gebündelte Lichess-Eröffnungsdaten:
 
@@ -46,11 +46,11 @@ Gebündelte Lichess-Eröffnungsdaten:
 
 ## Praktische Messungen auf diesem System
 
-- 54 kurze automatisierte Tests; aktueller Messwert siehe Abschlussprüfung im Änderungsstand.
+- 58 kurze automatisierte Tests, alle am 8. November 2026 bestanden.
 - Stockfish über `python-chess`, drei Varianten, Rapid-Budget 1,1 s: erster Aufruf 2,159 s einschließlich Prozessstart; zweiter Aufruf mit derselben Engine 1,103 s.
 - Allie CPU nach Neustart: einmaliger Modell-Kaltstart 84,541 s; danach aktuelle Top-2-Auswahl 0,551 s und vollständige Allie-/Stockfish-Vorschau 1,576 s. Das Modell wird deshalb ab v11.1.1 direkt beim Programmstart im Hintergrund vorgeladen.
 - chessvision/ONNX: bedarfsgerechte Initialisierung 0,615 s.
 - Viewer: lokaler Uvicorn-Start, sichtbarer v11-Status, Spielerfarbe, Empfehlungsschalter und echte PGN-Allie-Ausgabe im Browser geprüft.
-- Windows-EXE: PyInstaller-Onefile-Starter im echten Benutzerkontext mit `--check` geprüft; die EXE startet ausschließlich den reproduzierbaren Batch-Weg neben sich.
+- Windows-EXE: 9.080.051 Byte; PyInstaller-Onefile-Starter im echten Benutzerkontext mit `--check` (Exitcode 0) geprüft. Die EXE startet ausschließlich den reproduzierbaren Batch-Weg neben sich.
 
 Die Videoerkennung wurde bis zur echten Initialisierung und über den Frame-/Stabilitäts-Integrationstest geprüft. Die direkte entpackte Edge-Erweiterung wurde auf Chess.com sichtbar geladen; ihre lokale CORS-Verbindung und der Stockfish-Fallback wurden zusätzlich per echtem HTTP-Aufruf geprüft.
