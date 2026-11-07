@@ -1,5 +1,10 @@
 # Änderungen
 
+## v11.1.3
+
+- Chess.com-Läufercodes wie `bb` werden nicht mehr als Springer gelesen (`Bb7` statt illegalem `Nb7`).
+- Windows nutzt den unterstützten PyTorch-Pfad ohne erfolglosen Rust-Backend-Versuch und mit acht aktiven Experten für schnellere Blitz-Analysen.
+
 ## v11.1.2
 
 - Veraltete Pfeile werden bei nicht eindeutig erkannten Brettwechseln sofort ausgeblendet.

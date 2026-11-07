@@ -11,6 +11,7 @@ import os
 import re
 import threading
 import math
+import sys
 from typing import Any
 
 import chess
@@ -33,9 +34,14 @@ def get_model():
             # Remote code is the model author's official API implementation.
             # Review Hugging Face repository source before enabling remote code.
             from transformers import AutoModel
-            print(f"Loading actual model {MODEL_NAME} (first use may download ~18.4 GB)...", flush=True)
+            print(f"Loading actual model {MODEL_NAME} (CPU int8 weights use about 9.8 GB)...", flush=True)
+            options = {"active_experts": 8}
+            if sys.platform == "win32":
+                # Allie's native Rust engine is officially Linux x86-64 only.
+                # Avoid a failed probe and use the supported Windows backend.
+                options["backend"] = "torch"
             _model = AutoModel.from_pretrained(
-                MODEL_NAME, revision=MODEL_REVISION, trust_remote_code=True
+                MODEL_NAME, revision=MODEL_REVISION, trust_remote_code=True, **options
             )
         return _model
 

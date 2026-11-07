@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Manuelles Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.1.2
+// @version      11.1.3
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -78,7 +78,9 @@
   if(/^[a-h][1-8](?:x[a-h][1-8])?(?:=[QRBN])?[+#]?$/.test(value)&&node){
    const descendants=Array.from(node.querySelectorAll?.('[data-figurine],[data-piece],[class*="knight"],[class*="bishop"],[class*="rook"],[class*="queen"],[class*="king"]')||[]).slice(0,5);
    const signature=[node,...descendants].map(n=>`${n.getAttribute?.('data-figurine')||''} ${n.getAttribute?.('data-piece')||''} ${String(n.className||'')}`).join(' ').toLowerCase();
-   const piece=/knight|(?:^|\s)[bn]n?(?:\s|$)/.test(signature)?'N':/bishop/.test(signature)?'B':/rook/.test(signature)?'R':/queen/.test(signature)?'Q':/king/.test(signature)?'K':'';
+   const tokens=signature.split(/\s+/).map(part=>part.replace(/[^a-z]/g,'')).filter(Boolean);
+   const coded=tokens.map(part=>/^(?:[wb])?([nbrqk])$/.exec(part)?.[1]).find(Boolean);
+   const piece=/knight/.test(signature)||coded==='n'?'N':/bishop/.test(signature)||coded==='b'?'B':/rook/.test(signature)||coded==='r'?'R':/queen/.test(signature)||coded==='q'?'Q':/king/.test(signature)||coded==='k'?'K':'';
    if(piece)value=piece+value;
   }
   return value;

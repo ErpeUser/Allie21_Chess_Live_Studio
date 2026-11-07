@@ -96,7 +96,7 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.1.2', overlay)
+        self.assertIn('@version      11.1.3', overlay)
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
@@ -116,6 +116,7 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('Math.min(10,rect.width/72)', overlay)
         self.assertIn("(data.plan_messages||[]).slice(0,2)", overlay)
         self.assertIn('button,[role="button"]', overlay)
+        self.assertNotIn("[bn]n?", overlay)
         self.assertNotIn("querySelectorAll('*')", overlay)
 
     def test_arrow_roles_have_the_same_exact_colors_in_both_clients(self):

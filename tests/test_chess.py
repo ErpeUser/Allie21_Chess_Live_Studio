@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch
 from io import BytesIO
 from threading import Event
+from types import SimpleNamespace
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
@@ -18,6 +19,7 @@ from allie_local_server import (
     analyse_position, make_plan_messages, parse_history,
     risk_weighted_premove,
 )
+import allie_local_server as allie_server
 from position_tracker import PositionTracker
 from chess_extras import opening_for_position
 from live_session import LiveSession
@@ -38,6 +40,26 @@ class FakeAllie:
 
 
 class ChessTests(unittest.TestCase):
+    def test_windows_model_load_uses_supported_blitz_settings(self):
+        calls = []
+
+        class FakeAutoModel:
+            @staticmethod
+            def from_pretrained(*args, **kwargs):
+                calls.append((args, kwargs))
+                return object()
+
+        previous = allie_server._model
+        allie_server._model = None
+        try:
+            with patch.dict(sys.modules, {'transformers': SimpleNamespace(AutoModel=FakeAutoModel)}), \
+                 patch.object(allie_server.sys, 'platform', 'win32'):
+                allie_server.get_model()
+        finally:
+            allie_server._model = previous
+        self.assertEqual(calls[0][1]['active_experts'], 8)
+        self.assertEqual(calls[0][1]['backend'], 'torch')
+
     def test_browser_tracker_reconstructs_visible_board_transitions(self):
         pool = BrowserTrackerPool()
         board = chess.Board()
