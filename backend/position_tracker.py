@@ -57,7 +57,12 @@ class PositionTracker:
                 return Change(False, "No readable moves")
             if observed_fen and board.board_fen() != chess.Board(observed_fen).board_fen():
                 return Change(False, "Notation does not match visible board")
-            if self.complete_history and len(moves) < len(self.moves):
+            if (
+                self.complete_history
+                and self.board
+                and self.board.board_fen() == board.board_fen()
+                and len(moves) < len(self.moves)
+            ):
                 return Change(False, "Partial notation; retaining longer recorded history")
             if self.complete_history and moves == self.moves:
                 return Change(False, "Notation unchanged")

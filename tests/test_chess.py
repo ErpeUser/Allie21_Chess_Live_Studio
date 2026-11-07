@@ -140,6 +140,21 @@ class ChessTests(unittest.TestCase):
         self.assertTrue(result['ready'])
         self.assertEqual(result['pgn'], 'f2f3 e7e5')
 
+    def test_new_shorter_game_replaces_previous_history_on_same_page(self):
+        pool = BrowserTrackerPool()
+        previous = chess.Board()
+        pool.observe('web-same-page', previous.board_fen())
+        for uci in ('e2e4', 'e7e5', 'g1f3'):
+            previous.push_uci(uci)
+            pool.observe('web-same-page', previous.board_fen())
+
+        current = chess.Board()
+        current.push_uci('f2f3'); current.push_uci('d7d5')
+        result = pool.observe('web-same-page', current.board_fen(), '1. f3 d5')
+
+        self.assertTrue(result['ready'])
+        self.assertEqual(result['pgn'], 'f2f3 d7d5')
+
     def test_pgn_is_legal(self):
         moves, board, clocks = parse_history('1. e4 e5 2. Nf3 Nc6')
         self.assertEqual(len(moves), 4)
