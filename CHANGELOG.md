@@ -5,6 +5,7 @@
 - Direkte Edge-Erweiterung ersetzt den fehleranfälligen Tampermonkey-Installationsweg.
 - Eng begrenzte CORS-Freigabe für Chess.com und Lichess ergänzt.
 - Bei fehlender vollständiger Historie startet nach eindeutig erkanntem Zug automatisch ein Stockfish-Fallback; Allie bleibt strikt an bestätigte Historie gebunden.
+- Chess.com-Zuglisten werden auch gelesen, wenn Zugnummern nur optisch statt als DOM-Text dargestellt werden; Python validiert die gesamte Folge gegen das sichtbare Brett.
 - Alte Browser-Kompatibilitätsschicht, wirkungslose Einstellungen, internes Plan-Dokument und unbenutzte `.venv` entfernt.
 
 ## v11.1.3

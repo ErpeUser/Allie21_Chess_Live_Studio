@@ -57,7 +57,7 @@
  const sessionSeed=location.hostname+location.pathname;
  let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
  const boardSessionId='web-'+(sessionHash>>>0).toString(36);
- const selectors=['wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-simple-move-list [data-ply]','wc-simple-move-list [class*="move"]','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
+ const selectors=['wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
  const sanPattern=/^(?:O-O(?:-O)?|0-0(?:-0)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][+#]?)$/;
  // Lichess changes its short custom tag names regularly. Locate the current
  // mainline structurally via the rewind-to-ply-0 control instead of tag names.
@@ -105,7 +105,7 @@
  function candidateMoveRoots(){
   const rootSelectors=['wc-move-list','wc-simple-move-list','wc-vertical-move-list','.analyse__moves','.vertical-move-list','.move-list','.move-list-component','.pgn-viewer','.analysis-moves','[data-cy="move-list"]','[class*="move-list"]'];
   const roots=Array.from(document.querySelectorAll(rootSelectors.join(',')));
-  return Array.from(new Set(roots)).filter(root=>!root.closest('#allie21-auto-study-root')&&startsAtMoveOne(root));
+  return Array.from(new Set(roots)).filter(root=>!root.closest('#allie21-auto-study-root'));
  }
  function readHistory(){
   let best=[];
@@ -119,14 +119,9 @@
    const arr=movesFromRoot(root);if(arr.length>best.length)best=arr;
   }
   if(!best.length)return isStandardStartPosition()?'*':'';
-  // IMPORTANT: a virtualised or scrolled list may contain only moves 23-31.
-  // Never renumber that fragment as if it started at move one.
-  const sources=['wc-move-list','wc-simple-move-list','wc-vertical-move-list','l4x','.analyse__moves','.vertical-move-list',
-                 '.move-list','.move-list-component','.pgn-viewer','.analysis-moves','[data-cy="move-list"]','[class*="move-list"]'];
-  const roots=sources.map(sel=>document.querySelector(sel)).filter(Boolean);roots.push(...candidateMoveRoots());if(structural)roots.push(structural);
-  if(!roots.some(startsAtMoveOne))return '';
-
-  // UCI/SAN from the first halfmove; Python validates every move before analysis.
+  // Python accepts this candidate only when every move is legal from the
+  // standard start and the final placement equals the visible board. A
+  // virtualised fragment therefore cannot create a false history.
   return best.map((m,i)=>i%2===0?`${1+i/2}. ${m}`:m).join(' ');
  }
  function pieceCode(node){

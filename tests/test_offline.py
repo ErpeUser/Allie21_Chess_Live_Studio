@@ -122,6 +122,8 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('button,[role="button"]', overlay)
         self.assertNotIn("[bn]n?", overlay)
         self.assertNotIn("querySelectorAll('*')", overlay)
+        self.assertIn("'[class*=\"move-list\"] button'", overlay)
+        self.assertNotIn("if(!roots.some(startsAtMoveOne))return ''", overlay)
 
     def test_arrow_roles_have_the_same_exact_colors_in_both_clients(self):
         expected = {
