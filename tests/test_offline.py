@@ -104,6 +104,8 @@ class StandaloneTests(unittest.TestCase):
         self.assertNotIn('@match        *://*/*', overlay)
         self.assertIn('new MutationObserver', overlay)
         self.assertIn('setTimeout(()=>tick(manual),120)', overlay)
+        self.assertIn('unsettledRetries<4', overlay)
+        self.assertIn('unsettledRetries++;scheduleTick()', overlay)
         self.assertIn("request(fen?'stockfish':'allie',false,!!fen)", overlay)
         self.assertIn("request('both',true,true)", overlay)
         self.assertIn("fen?'stockfish':'allie'", overlay)

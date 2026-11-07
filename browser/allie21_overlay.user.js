@@ -45,7 +45,7 @@
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{el('panel').classList.toggle('open');el('bubble').style.display=el('panel').classList.contains('open')?'none':''};
  el('close').onclick=()=>{el('panel').classList.remove('open');el('bubble').style.display=''};
@@ -292,8 +292,13 @@
    if(!basis||!atHistoryEnd()){
     if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();show({})}
     if(manual||history.message)el('status').textContent=history.message||'Brett erkannt – warte auf eine vollständige Zugfolge ab der Startstellung.';
+    if(!basis){
+     if(history.placement!==unsettledPlacement){unsettledPlacement=history.placement;unsettledRetries=0}
+     if(unsettledRetries<4){unsettledRetries++;scheduleTick()}
+    }
     return;
    }
+    unsettledPlacement=history.placement;unsettledRetries=0;
     const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,cfg.playerSide]);
     if(basis!==lastPGN||wanted!==analysisKey){
      currentResult=null;clearOverlay();show({});
