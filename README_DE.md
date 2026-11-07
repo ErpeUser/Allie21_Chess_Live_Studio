@@ -29,7 +29,7 @@ uv run --frozen python backend/preload_allie.py
 - Blau: bester sicherer Pre-Move, der über die wahrscheinlichsten Gegnerzweige hinweg legal bleibt.
 - Allie bestimmt bei vollständiger Historie die Reihenfolge; Stockfish bewertet anschließend ihre Kandidaten. Bei einem Einstieg mitten in der Partie startet nach dem ersten eindeutig beobachteten Zug automatisch ein konservativer Stockfish-Fallback ohne erfundene Rochade- oder en-passant-Rechte.
 
-Brettorientierung und Spielerfarbe sind getrennte Einstellungen. Bei einem Einstieg mitten in der Partie werden fehlende Züge, Rochaderechte und en-passant-Rechte nicht erfunden. Allie wartet auf eine vollständige PGN; Stockfish kann eine ausdrücklich gelieferte FEN dennoch analysieren.
+Brettorientierung und Spielerfarbe werden getrennt verwaltet und bei Livepartien standardmäßig automatisch aus dem sichtbaren Brett bestimmt; Weiss/Schwarz bleiben als manuelle Overrides verfügbar. Bei einem Einstieg mitten in der Partie werden fehlende Züge, Rochaderechte und en-passant-Rechte nicht erfunden. Allie wartet auf eine vollständige PGN; Stockfish kann eine ausdrücklich gelieferte FEN dennoch analysieren.
 
 Die einheitliche Zeitklasse verwendet `Grundzeit + 40 × Inkrement`:
 

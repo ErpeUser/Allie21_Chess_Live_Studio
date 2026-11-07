@@ -46,7 +46,7 @@ Gebündelte Lichess-Eröffnungsdaten:
 
 ## Praktische Messungen auf diesem System
 
-- 53 kurze automatisierte Tests; aktueller Messwert siehe Abschlussprüfung im Änderungsstand.
+- 54 kurze automatisierte Tests; aktueller Messwert siehe Abschlussprüfung im Änderungsstand.
 - Stockfish über `python-chess`, drei Varianten, Rapid-Budget 1,1 s: erster Aufruf 2,159 s einschließlich Prozessstart; zweiter Aufruf mit derselben Engine 1,103 s.
 - Allie CPU nach Neustart: einmaliger Modell-Kaltstart 84,541 s; danach aktuelle Top-2-Auswahl 0,551 s und vollständige Allie-/Stockfish-Vorschau 1,576 s. Das Modell wird deshalb ab v11.1.1 direkt beim Programmstart im Hintergrund vorgeladen.
 - chessvision/ONNX: bedarfsgerechte Initialisierung 0,615 s.

@@ -9,6 +9,8 @@
 - Eine neue, kürzere Partie auf derselben Chess.com-Seite ersetzt jetzt zuverlässig die Historie der vorherigen Partie.
 - Während Brettanimationen wird die Stellung höchstens viermal kurz nachgemessen, statt bis zum Fünf-Sekunden-Intervall zu warten.
 - Getrennte Chess.com-Figurensymbole und SAN-Texte werden gemeinsam gelesen (`♘` + `f3` wird `Nf3`), sodass die vollständige sichtbare Historie validiert werden kann.
+- Spielerfarbe wird standardmäßig automatisch aus der erkannten Live-Brettseite bestimmt; Weiss/Schwarz bleiben als manuelle Overrides verfügbar.
+- Vorhandene `data-san`-Werte und Lichess-Figurensymbole werden direkt übernommen und vollständig gegen das sichtbare Brett validiert.
 - Alte Browser-Kompatibilitätsschicht, wirkungslose Einstellungen, internes Plan-Dokument und unbenutzte `.venv` entfernt.
 
 ## v11.1.3

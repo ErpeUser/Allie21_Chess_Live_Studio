@@ -17,7 +17,9 @@
  if (window.top !== window.self || document.getElementById('allie21-auto-study-root')) return;
  const STORE='allie21.auto.v11';
  const load=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}};
- const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'white'},load());
+ const stored=load();
+ const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto'},stored);
+ if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
  const wrapper=document.createElement('div');
@@ -38,7 +40,7 @@
  <div class='row'><div><label>Elo</label><input id='elo' type='number' min='600' max='2800'/></div>
   <div><label>Zeitkontrolle</label><input id='tc' placeholder='300+0'/></div></div>
  <div class='row'><div><label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select></div>
- <div><label>Deine Farbe</label><select id='playerSide'><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
+ <div><label>Deine Farbe</label><select id='playerSide'><option value='auto'>Automatisch</option><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <p id='status' class='stat'>Lokalen Server starten; die Analyse verbindet sich automatisch.</p>
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move. Allie klickt nie selbst.</p>
@@ -50,7 +52,7 @@
  el('bubble').onclick=()=>{el('panel').classList.toggle('open');el('bubble').style.display=el('panel').classList.contains('open')?'none':''};
  el('close').onclick=()=>{el('panel').classList.remove('open');el('bubble').style.display=''};
  const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({})};
- const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;save();invalidate();scheduleTick(true)};
+ const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';save();invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','orientation','playerSide'])el(field).addEventListener('change',updateSettings);
  const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
@@ -87,7 +89,7 @@
   const ordered=Array.from(nodes).slice(0,1100).map((node,index)=>{const raw=node.getAttribute?.('data-ply');return{node,index,ply:raw==null||raw===''?NaN:Number(raw)}});
   if(ordered.some(item=>Number.isFinite(item.ply)))ordered.sort((a,b)=>(Number.isFinite(a.ply)?a.ply:1e9)-(Number.isFinite(b.ply)?b.ply:1e9)||a.index-b.index);
   const compact=[];
-  for(const {node} of ordered){const move=cleanMove(node.textContent,node);if(sanPattern.test(move)&&move!==compact.at(-1))compact.push(move)}
+  for(const {node} of ordered){const move=cleanMove(node.getAttribute?.('data-san')||node.textContent,node);if(sanPattern.test(move)&&move!==compact.at(-1))compact.push(move)}
   return compact;
  }
  function startsAtMoveOne(root){
@@ -255,14 +257,15 @@
   lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
   return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,fallback_ready:state.fallback_ready,moves_seen:state.moves_seen};
  }
- function analyze(pgn,placement='',fen=''){
+ function playerSideFor(orientation){return cfg.playerSide==='auto'?(orientation==='black'?'black':'white'):cfg.playerSide}
+ function analyze(pgn,placement='',fen='',playerSide='white'){
    if(pending||!cfg.enabled)return;
-   const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,cfg.playerSide]);analysisKey=key;
+   const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide]);analysisKey=key;
    const serial=++analysisSerial;
    pending=true;el('status').textContent='Allie analysiert den aktuellen Zug...';
    const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
    const request=(source,preview,final)=>{
-    const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:cfg.playerSide,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
+    const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:playerSide,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
     const fail=message=>{
      if(serial!==analysisSerial)return;
      activeRequest=null;
@@ -300,11 +303,12 @@
     return;
    }
     unsettledPlacement=history.placement;unsettledRetries=0;
-    const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,cfg.playerSide]);
+    const playerSide=playerSideFor(history.orientation);
+    const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide]);
     if(basis!==lastPGN||wanted!==analysisKey){
      currentResult=null;clearOverlay();show({});
      if(pending)cancelAnalysis();
-     if(Date.now()>=retryAfter){lastPGN=basis;analyze(pgn,history.placement,fen)}
+     if(Date.now()>=retryAfter){lastPGN=basis;analyze(pgn,history.placement,fen,playerSide)}
     }
   }catch(error){if(manual)el('status').textContent=error.message||String(error)}finally{trackingPending=false}
  }
