@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.py[cod]
+backend/engines/*.exe
+backend/openings/*.tsv
+*.log
