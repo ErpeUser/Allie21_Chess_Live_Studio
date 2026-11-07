@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.1.5
+// @version      11.1.6
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -264,8 +264,15 @@
   return{promise,abort:()=>controller.abort()};
  }
  const localPost=(path,data,timeout)=>postJson(path,data,timeout).promise;
+ const START_PLACEMENT='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+ function startPositionHistory(snapshot){
+  if(snapshot?.placement!==START_PLACEMENT)return null;
+  return{pgn:'*',fen:'',orientation:snapshot.orientation,placement:snapshot.placement,message:'Startstellung erkannt - Analyse startet.',ready:true,fallback_ready:false,moves_seen:0};
+ }
  async function historyFromVisibleBoard(){
   const snapshot=readBoardSnapshot();if(!snapshot)return{pgn:readHistory(),orientation:cfg.orientation==='auto'?'white':cfg.orientation,placement:''};
+  const initial=startPositionHistory(snapshot);
+  if(initial){lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';return initial}
   if(snapshot.placement===lastPlacement&&trackedPGN)return{pgn:trackedPGN,fen:'',orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:false};
   const expected=snapshot.placement,fallback=readHistory();
   const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback},12000);

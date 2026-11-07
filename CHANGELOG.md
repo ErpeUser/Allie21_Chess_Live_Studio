@@ -1,5 +1,9 @@
 # Änderungen
 
+## v11.1.6
+
+- Die eindeutig erkannte Standardstartstellung wird sofort als vollständige Partie ab Zug 1 analysiert und kann nicht mehr an einer alten Chess.com-Bot-Sitzung hängen bleiben.
+
 ## v11.1.5
 
 - Die vollständige Allie-Spielanalyse öffnet sich wieder automatisch neben dem erkannten Brett.
