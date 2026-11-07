@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Manuelles Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.0.0
+// @version      11.1.1
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -21,6 +21,7 @@
  if (window.top !== window.self || document.getElementById('allie21-auto-study-root')) return;
  const STORE='allie21.auto.v11';
  const cfg=Object.assign({elo:1950,tc:'600+0',enabled:true,orientation:'auto',playerSide:'white'}, GM_getValue(STORE,{}));
+ const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>GM_setValue(STORE,cfg);
  const wrapper=document.createElement('div');
  wrapper.id='allie21-auto-study-root';
@@ -43,18 +44,19 @@
  <div><label>Deine Farbe</label><select id='playerSide'><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <p id='status' class='stat'>Lokalen Server starten; die Analyse verbindet sich automatisch.</p>
- <div id='results'></div><p class='small'>Rot = Gegner · Grün = du · Blau = Pre-Move. Allie klickt nie selbst.</p>
+ <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move. Allie klickt nie selbst.</p>
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0;
+ const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{el('panel').classList.toggle('open');el('bubble').style.display=el('panel').classList.contains('open')?'none':''};
  el('close').onclick=()=>{el('panel').classList.remove('open');el('bubble').style.display=''};
- const invalidate=()=>{lastPGN='';analysisKey='';currentResult=null;clearOverlay();show({})};
+ const invalidate=()=>{cancelAnalysis();lastPGN='';analysisKey='';currentResult=null;clearOverlay();show({})};
  const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'600+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;save();invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','orientation','playerSide'])el(field).addEventListener('change',updateSettings);
  const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0;
  const sessionSeed=location.hostname+location.pathname;
  let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
  const boardSessionId='web-'+(sessionHash>>>0).toString(36);
@@ -91,7 +93,7 @@
   const preferred=root.querySelectorAll?.('[data-ply],.main-line-ply,.move,.node,.san,[class*="move-node"],[class*="move-text"],[class*="move-san"]')||[];
   let moves=movesFromNodes(preferred);
   if(moves.length<2){
-   const leaves=Array.from(root.querySelectorAll?.('*')||[]).filter(n=>n.children.length===0&&cleanMove(n.textContent,n));
+   const leaves=Array.from(root.querySelectorAll?.('span,div,move,l4')||[]).filter(n=>n.children.length===0&&cleanMove(n.textContent,n));
    moves=movesFromNodes(leaves);
   }
   const compact=[];for(const move of moves)if(move!==compact.at(-1))compact.push(move);
@@ -100,7 +102,6 @@
  function candidateMoveRoots(){
   const rootSelectors=['wc-move-list','wc-simple-move-list','wc-vertical-move-list','.analyse__moves','.vertical-move-list','.move-list','.move-list-component','.pgn-viewer','.analysis-moves','[data-cy="move-list"]','[class*="move-list"]'];
   const roots=Array.from(document.querySelectorAll(rootSelectors.join(',')));
-  for(const node of Array.from(document.querySelectorAll('*')).filter(n=>/move/.test(n.localName||'')).slice(0,80))roots.push(node);
   return Array.from(new Set(roots)).filter(root=>!root.closest('#allie21-auto-study-root')&&startsAtMoveOne(root));
  }
  function readHistory(){
@@ -142,9 +143,7 @@
  }
  function pieceNodes(board){
   const selector='piece,.piece,[data-piece],[data-figurine],img[alt*="pawn" i],img[alt*="knight" i],img[alt*="bishop" i],img[alt*="rook" i],img[alt*="queen" i],img[alt*="king" i],[aria-label*="pawn" i],[aria-label*="knight" i],[aria-label*="bishop" i],[aria-label*="rook" i],[aria-label*="queen" i],[aria-label*="king" i]';
-  let nodes=Array.from(board.querySelectorAll(selector));
-  if(nodes.filter(pieceCode).length<2)nodes=Array.from(board.querySelectorAll('*')).slice(0,900).filter(pieceCode);
-  return Array.from(new Set(nodes)).filter(pieceCode);
+  return Array.from(new Set(board.querySelectorAll(selector))).filter(pieceCode);
  }
  function boardOrientation(board,pieces){
   if(cfg.orientation!=='auto')return cfg.orientation;
@@ -176,9 +175,7 @@
  function boardCandidates(){
   const selector='cg-board,wc-chess-board,chess-board,.chessboard,[data-chess-board],.analyse__board,.board,[class*="chess-board"],[class*="chessboard"],[id*="chessboard"],[role="grid"]';
   const sortByArea=(a,b)=>{const x=a.getBoundingClientRect(),y=b.getBoundingClientRect();return y.width*y.height-x.width*x.height};
-  const known=Array.from(document.querySelectorAll(selector)).filter(node=>!node.closest('#allie21-auto-study-root')).sort(sortByArea);
-  const generic=Array.from(document.querySelectorAll('div,section,main')).filter(node=>{const r=node.getBoundingClientRect(),ratio=r.width/Math.max(1,r.height);return r.width>=160&&r.width<=1400&&ratio>.88&&ratio<1.12&&node.children.length>1&&!node.closest('#allie21-auto-study-root')}).sort(sortByArea).slice(0,120);
-  return Array.from(new Set([...known,...generic]));
+  return Array.from(document.querySelectorAll(selector)).filter(node=>!node.closest('#allie21-auto-study-root')).sort(sortByArea);
  }
  function readBoardSnapshot(){
   if(currentBoard?.isConnected){const snapshot=placementFromBoard(currentBoard);if(snapshot)return{board:currentBoard,...snapshot}}
@@ -200,9 +197,9 @@
   const dx=u-x,dy=v-y,norm=Math.max(1,Math.hypot(dx,dy)),ux=dx/norm,uy=dy/norm;
   const sx=x+ux*rect.width/22,sy=y+uy*rect.width/22,tx=u-ux*rect.width/18,ty=v-uy*rect.width/18;
   const mk=(tag,props)=>{let a=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(props).forEach(([k,val])=>a.setAttribute(k,val));svg.appendChild(a)};
-  const width=Math.max(4,rect.width/38);
+  const width=Math.max(4,Math.min(10,rect.width/72));
   mk('line',{x1:sx,y1:sy,x2:tx,y2:ty,stroke:color,'stroke-width':width,'stroke-linecap':'round',opacity});
-  let angle=Math.atan2(dy,dx),size=rect.width/17;
+  let angle=Math.atan2(dy,dx),size=Math.max(14,Math.min(30,rect.width/22));
   let points=[[tx,ty],[tx-size*Math.cos(angle-.48),ty-size*Math.sin(angle-.48)],[tx-size*Math.cos(angle+.48),ty-size*Math.sin(angle+.48)]];
   mk('polygon',{points:points.map(p=>p.join(',')).join(' '),fill:color,opacity});
  }
@@ -229,23 +226,10 @@
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('width','100%');svg.setAttribute('height','100%');
   svg.setAttribute('viewBox',`0 0 ${window.innerWidth} ${window.innerHeight}`);
   let ori=boardOrientation(board);
-  (data.opponent_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,rect,ori,m.uci,i===0?'#ff3f36':'#ff8b84',i===0?.96:.62));
-  (data.my_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,rect,ori,m.uci,i===0?'#18dc98':'#78e8c1',i===0?.96:.65));
-  if(data.premove)drawArrow(svg,rect,ori,data.premove.uci,'#389cff',.96);
+  (data.opponent_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,rect,ori,m.uci,i===0?ARROW_COLORS.opponentTop1:ARROW_COLORS.opponentTop2,i===0?.96:.62));
+  (data.my_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,rect,ori,m.uci,i===0?ARROW_COLORS.ownTop1:ARROW_COLORS.ownTop2,i===0?.96:.65));
+  if(data.premove)drawArrow(svg,rect,ori,data.premove.uci,ARROW_COLORS.premove,.96);
   layer.replaceChildren(svg);
-  const messages=(data.plan_messages||[]).slice(0,5);
-  if(messages.length){
-    const notes=document.createElement('div');notes.style.cssText='position:fixed;pointer-events:none;box-sizing:border-box;background:rgba(10,24,37,.96);border:1px solid #4ca99c;border-radius:12px;padding:11px;color:#edfafb;width:300px;max-width:calc(100vw - 16px);font:12px/1.4 system-ui,sans-serif;box-shadow:0 5px 22px #0009;white-space:normal';
-    let left=rect.right+10,top=Math.max(10,rect.top);
-    if(left+310>innerWidth)left=Math.max(10,rect.left-310);
-    if(rect.left<310 && rect.right+310>innerWidth){left=Math.max(8,rect.left);top=Math.min(innerHeight-210,rect.bottom+8)}
-    notes.style.left=left+'px';notes.style.top=top+'px';
-    const add=(text,css='')=>{const d=document.createElement('div');d.style.cssText=css;d.textContent=text;notes.appendChild(d);return d};
-    add('Allie · Live','font-weight:800;font-size:14px;color:#9cf0d5;margin-bottom:3px');
-    add('🔴 Gegner  ·  🟢 Du  ·  🔵 Pre-Move','color:#a9bdca;font-size:10px;margin-bottom:7px');
-    messages.forEach(message=>add(message,'background:#ffffff0b;border-radius:10px 10px 10px 3px;padding:7px 8px;margin:6px 0;color:#e7f2f7'));
-    layer.appendChild(notes);
-  }
  }
  function show(data){let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
@@ -266,14 +250,32 @@
  function analyze(pgn,placement=''){
    if(pending||!cfg.enabled)return;
    const key=JSON.stringify([pgn,placement,cfg.elo,cfg.tc,cfg.playerSide]);analysisKey=key;
-   pending=true;el('status').textContent='Allie und Stockfish analysieren...';
-   const data={pgn,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:cfg.playerSide,analysis_source:'both',preview:true};
-   const current=()=>analysisKey===key&&lastPGN===pgn&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
-   GM_xmlhttpRequest({method:'POST',url:'http://127.0.0.1:8765/analyze',timeout:240000,
-    headers:{'Content-Type':'application/json','X-Allie-Overlay':'1'},data:JSON.stringify(data),
-    onload:r=>{pending=false;try{const parsed=JSON.parse(r.responseText);if(r.status!==200)throw Error(parsed.error||String(r.status));if(!current()){lastPGN='';return scheduleTick()}currentResult=parsed;el('status').textContent=`Analyse aktuell: ${parsed.move_count} Halbzuege`;show(parsed);paint(parsed)}catch(e){retryAfter=Date.now()+30000;if(current())el('status').textContent='Analyse: '+e.message;scheduleTick()}},
-    onerror:()=>{pending=false;retryAfter=Date.now()+30000;if(current())el('status').textContent='Backend nicht erreichbar. Python-Server starten.';scheduleTick()},
-    ontimeout:()=>{pending=false;retryAfter=Date.now()+30000;if(current())el('status').textContent='Backend-Zeitlimit.';scheduleTick()}});
+   const serial=++analysisSerial;
+   pending=true;el('status').textContent='Allie analysiert den aktuellen Zug...';
+   const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===pgn&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
+   const request=(source,preview,final)=>{
+    const data={pgn,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:cfg.playerSide,analysis_source:source,preview};
+    const fail=message=>{
+     if(serial!==analysisSerial)return;
+     activeRequest=null;
+     if(!final&&current())return request('both',true,true);
+     pending=false;retryAfter=Date.now()+30000;
+     if(current())el('status').textContent=message;
+     scheduleTick();
+    };
+    activeRequest=GM_xmlhttpRequest({method:'POST',url:'http://127.0.0.1:8765/analyze',timeout:240000,
+     headers:{'Content-Type':'application/json','X-Allie-Overlay':'1'},data:JSON.stringify(data),
+     onload:r=>{if(serial!==analysisSerial)return;activeRequest=null;try{
+      const parsed=JSON.parse(r.responseText);if(r.status!==200)throw Error(parsed.error||String(r.status));
+      if(!current()){pending=false;lastPGN='';return scheduleTick()}
+      currentResult=parsed;show(parsed);paint(parsed);
+      if(!final){el('status').textContent='Allie-Züge sichtbar · Vorschau folgt...';return request('both',true,true)}
+      pending=false;el('status').textContent=`Analyse aktuell: ${parsed.move_count} Halbzuege`;
+     }catch(e){fail('Analyse: '+e.message)}},
+     onerror:()=>fail('Backend nicht erreichbar. Python-Server starten.'),
+     ontimeout:()=>fail('Backend-Zeitlimit.')});
+   };
+   request('allie',false,false);
  }
  el('now').onclick=async()=>{updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';await tick(true)};
  async function tick(manual=false){
@@ -292,7 +294,7 @@
     const wanted=JSON.stringify([pgn,history.placement,cfg.elo,cfg.tc,cfg.playerSide]);
     if(pgn!==lastPGN||wanted!==analysisKey){
      currentResult=null;clearOverlay();show({});
-     if(pending){lastPGN='';return}
+     if(pending)cancelAnalysis();
      if(Date.now()>=retryAfter){lastPGN=pgn;analyze(pgn,history.placement)}
     }
   }catch(error){if(manual)el('status').textContent=error.message||String(error)}finally{trackingPending=false}

@@ -1,5 +1,21 @@
 # Änderungen
 
+## v11.1.1
+
+- Browser-Overlay zeigt die aktuelle Allie-Top-2-Auswahl sofort und ergänzt Gegner- sowie Pre-Move-Pfeile anschließend.
+- Unbenutzte Allie-Vorschauzweige entfernt: maximal drei statt fünf Modellaufrufe pro vollständiger Live-Analyse.
+- Allie-Modell wird beim Programmstart im Hintergrund vorgeladen.
+- Automatisch eingeblendeten Textblock entfernt und Pfeile deutlich schlanker dargestellt.
+
+## v11.1.0
+
+- Allie-first-Pipeline: Allie ordnet menschlich wahrscheinliche Züge; Stockfish bewertet anschließend nur diese Kandidaten.
+- Zwei parallele Live-Worker und die Ergebnis-Zusammenführung durch einen generation-gesicherten latest-only Auftrag ersetzt.
+- Fünf Pfeilrollen in Viewer und Overlay exakt vereinheitlicht; sichere Pre-Move-Abdeckung bleibt Allie-basiert.
+- Teure universelle DOM-Scans entfernt und alte Overlay-Anfragen bei Stellung oder Einstellung sofort abgebrochen.
+- Funktionierende `Allie21 Chess Live Studio.exe` samt reproduzierbarem PyInstaller-Build ergänzt.
+- Beschädigte alte `.venv` entfernt; Laufzeitumgebung eindeutig auf `.allie-venv` festgelegt.
+
 ## v11.0.0
 
 - Eigenen HTTP-Handler durch FastAPI, Pydantic und Uvicorn ersetzt; lokale Bindung, Herkunftsprüfung und Größenlimits erhalten.

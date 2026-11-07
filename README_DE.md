@@ -5,10 +5,10 @@ Lokale Windows-Anwendung für menschliche Zugprognosen mit Allie 2.1 und objekti
 ## Schnellstart unter Windows
 
 1. Projekt vollständig entpacken.
-2. `START_HIER.bat` doppelklicken.
+2. **`Allie21 Chess Live Studio.exe` doppelklicken.**
 3. Warten, bis `http://127.0.0.1:8765/viewer` geöffnet wird.
 
-Der Starter installiert bei Bedarf den festgelegten Paketmanager `uv 0.13.7`, richtet Python 3.12 und alle Pakete aus `uv.lock` ein und lädt Stockfish 19 nur dann, wenn die Engine fehlt. Die Konsole zeigt verständliche Fehler und muss während der Nutzung geöffnet bleiben.
+Die EXE startet den einzigen Installationsweg `START_HIER.bat`. Er installiert bei Bedarf `uv 0.13.7`, richtet die isolierte `.allie-venv` mit Python 3.12 und allen Paketen aus `uv.lock` ein und lädt Stockfish 19 nur dann, wenn die Engine fehlt. Die Konsole zeigt verständliche Fehler und muss während der Nutzung geöffnet bleiben.
 
 Das echte Allie-Modell wird erst bei der ersten PGN-Analyse geladen. Die Gewichte benötigen ungefähr 18,4 GB Speicherplatz; der CPU-Betrieb benötigt viel Arbeitsspeicher. Optional kann das Modell vorab mit folgendem Befehl geladen werden:
 
@@ -24,10 +24,10 @@ uv run --frozen python backend/preload_allie.py
 
 ## Korrektheit und Anzeigen
 
-- Rot: wahrscheinliche gegnerische Allie-Züge.
-- Grün: eigene Allie-Empfehlungen.
-- Blau: risikogewichteter Pre-Move, wenn aus den prognostizierten Varianten ableitbar.
-- Stockfish bleibt eine getrennte objektive Textanalyse und erzeugt keine Allie-Ersatzpfeile.
+- Starkgrün: mein Allie Top 1; Hellgrün: mein Allie Top 2.
+- Starkrot: Gegner Allie Top 1; Hellrot: Gegner Allie Top 2.
+- Blau: bester sicherer Pre-Move, der über die wahrscheinlichsten Gegnerzweige hinweg legal bleibt.
+- Allie bestimmt die Reihenfolge. Stockfish bewertet anschließend genau diese Allie-Kandidaten objektiv und erzeugt keine Ersatzpfeile. Ohne vollständige Historie bleibt die FEN-Stockfish-Analyse verfügbar.
 
 Brettorientierung und Spielerfarbe sind getrennte Einstellungen. Bei einem Einstieg mitten in der Partie werden fehlende Züge, Rochaderechte und en-passant-Rechte nicht erfunden. Allie wartet auf eine vollständige PGN; Stockfish kann eine ausdrücklich gelieferte FEN dennoch analysieren.
 
@@ -43,6 +43,8 @@ Die einheitliche Zeitklasse verwendet `Grundzeit + 40 × Inkrement`:
 Die Standardwerte stehen in `config.json`. Wichtige Felder sind `white_elo`, `black_elo`, `player_side`, `time_control`, `recognition_interval_ms`, `stability_frames`, `ocr_history`, `stockfish_threads` und `stockfish_hash_mb`. Modellkennung und Modellrevision sind absichtlich festgelegt.
 
 Der Schalter „Live-Zugpfeile & Empfehlungen“ verwirft sofort laufende Ergebnisse. Nach Stellungs-, Einstellungs- oder Sitzungswechseln akzeptiert die Pipeline nur Antworten der aktuellen Generation.
+
+Die EXE kann reproduzierbar neu gebaut werden: `powershell -ExecutionPolicy Bypass -File tools/build_exe.ps1`. PyInstaller wird dabei nur für den Build geladen und ist keine Laufzeitabhängigkeit.
 
 ## Tests und Diagnose
 

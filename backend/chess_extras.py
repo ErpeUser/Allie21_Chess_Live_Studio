@@ -222,15 +222,36 @@ def _get_stockfish(binary: str) -> chess.engine.SimpleEngine:
     return _ENGINE
 
 
-def stockfish_lines(board: chess.Board, limit_seconds: float = 0.7) -> dict[str, Any]:
+def stockfish_lines(
+    board: chess.Board,
+    limit_seconds: float = 0.7,
+    root_moves: list[str] | None = None,
+) -> dict[str, Any]:
     binary = find_stockfish()
     if not binary:
         return {'available': False, 'error': 'Stockfish fehlt. START_HIER.bat richtet ihn automatisch ein.'}
     limit_seconds = max(0.15, min(12.0, float(limit_seconds)))
+    constrained: list[chess.Move] | None = None
+    if root_moves:
+        constrained = []
+        for uci in dict.fromkeys(root_moves):
+            try:
+                move = chess.Move.from_uci(uci)
+            except ValueError:
+                continue
+            if move in board.legal_moves:
+                constrained.append(move)
+        if not constrained:
+            return {'available': False, 'error': 'Keine legalen Allie-Kandidaten für Stockfish.'}
     try:
         with _ENGINE_LOCK:
             engine = _get_stockfish(binary)
-            infos = engine.analyse(board, chess.engine.Limit(time=limit_seconds), multipv=3)
+            infos = engine.analyse(
+                board,
+                chess.engine.Limit(time=limit_seconds),
+                multipv=len(constrained) if constrained else 3,
+                root_moves=constrained,
+            )
         if not isinstance(infos, list):
             infos = [infos]
         lines: list[dict[str, Any]] = []
@@ -251,7 +272,12 @@ def stockfish_lines(board: chess.Board, limit_seconds: float = 0.7) -> dict[str,
                 continue
             lines.append({'san': first_san, 'uci': pv[0].uci(), 'score': label,
                           'depth': info.get('depth'), 'variation': pv_san})
-        return {'available': True, 'engine': 'Stockfish', 'lines': lines}
+        return {
+            'available': True,
+            'engine': 'Stockfish',
+            'scope': 'allie-candidates' if constrained else 'position',
+            'lines': lines,
+        }
     except (OSError, chess.engine.EngineError, TimeoutError, ValueError) as exc:
         _close_stockfish()
         return {'available': False, 'error': f'Stockfish-Fehler: {str(exc)[:160]}'}

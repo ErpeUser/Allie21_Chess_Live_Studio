@@ -1,6 +1,7 @@
 """Fast checks that need no downloads or model inference."""
 import json
 from pathlib import Path
+import subprocess
 import sys
 import unittest
 from unittest.mock import patch
@@ -73,29 +74,63 @@ class StandaloneTests(unittest.TestCase):
     def test_single_uv_start_path_wires_stockfish(self):
         script = (ROOT / 'START_HIER.bat').read_text(encoding='utf-8')
         self.assertIn('uv 0.13.7', script)
-        self.assertIn('uv sync --frozen --all-extras --no-dev', script)
+        self.assertIn('UV_PROJECT_ENVIRONMENT=%~dp0.allie-venv', script)
+        self.assertIn('sync --frozen --all-extras --no-dev', script)
         self.assertIn('backend\\download_stockfish.py', script)
         self.assertIn('backend\\live_server.py', script)
         self.assertNotIn('AllieLauncher', script)
         self.assertNotIn('auto_setup.ps1', script)
 
+    def test_launcher_check_mode_validates_adjacent_project(self):
+        launcher = ROOT / 'tools' / 'launcher.py'
+        self.assertTrue(launcher.is_file())
+        result = subprocess.run(
+            [sys.executable, str(launcher), '--check'],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Allie21 Chess Live Studio: OK', result.stdout)
+
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.0.0', overlay)
+        self.assertIn('@version      11.1.1', overlay)
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
         self.assertIn('new MutationObserver', overlay)
         self.assertIn('setTimeout(()=>tick(manual),250)', overlay)
-        self.assertIn("analysis_source:'both'", overlay)
+        self.assertIn("request('allie',false,false)", overlay)
+        self.assertIn("request('both',true,true)", overlay)
         self.assertNotIn("analysis_source:'stockfish'", overlay)
-        self.assertNotIn("analysis_source:'allie'", overlay)
         self.assertIn('cfg.playerSide', overlay)
         self.assertIn("localPost('/api/browser-position'", overlay)
         self.assertIn("'X-Allie-Overlay':'1'", overlay)
-        self.assertIn('const current=()=>analysisKey===key', overlay)
+        self.assertIn('activeRequest.abort()', overlay)
+        self.assertIn('serial===analysisSerial', overlay)
         self.assertIn('if(!current())', overlay)
         self.assertIn('clearOverlay();show({})', overlay)
+        self.assertNotIn("const messages=(data.plan_messages||[]).slice(0,5)", overlay)
+        self.assertIn('Math.min(10,rect.width/72)', overlay)
+        self.assertNotIn("querySelectorAll('*')", overlay)
+
+    def test_arrow_roles_have_the_same_exact_colors_in_both_clients(self):
+        expected = {
+            'ownTop1': '#16c784',
+            'ownTop2': '#7ee2b8',
+            'opponentTop1': '#ef3340',
+            'opponentTop2': '#ff9299',
+            'premove': '#2f80ed',
+        }
+        for relative in ('viewer/index.html', 'browser/allie21_overlay.user.js'):
+            source = (ROOT / relative).read_text(encoding='utf-8')
+            for role, color in expected.items():
+                self.assertIn(f"{role}:'{color}'", source, f'{relative}: {role}')
+            for label in ('Mein Top 1', 'Mein Top 2', 'Gegner Top 1',
+                          'Gegner Top 2', 'Sicherer Pre-Move'):
+                self.assertIn(label, source, f'{relative}: {label}')
 
     def test_upstream_stockfish_hash_locked(self):
         script = (ROOT / 'backend/download_stockfish.py').read_text(encoding='utf-8')

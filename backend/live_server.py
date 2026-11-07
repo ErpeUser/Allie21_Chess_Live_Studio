@@ -30,6 +30,22 @@ BROWSER_TRACKERS = BrowserTrackerPool()
 app = FastAPI(title="Allie21 Live Studio", docs_url=None, redoc_url=None, openapi_url=None)
 
 
+def _preload_model() -> None:
+    try:
+        allie.get_model()
+    except Exception as exc:
+        print('Allie-Modell konnte im Hintergrund nicht vorgeladen werden:', repr(exc))
+
+
+def start_model_preload() -> threading.Thread:
+    """Start loading Allie while the local UI is already becoming available."""
+    worker = threading.Thread(
+        target=_preload_model, name='allie-model-loader', daemon=True
+    )
+    worker.start()
+    return worker
+
+
 class InputModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -198,6 +214,8 @@ def main():
     print('Allie 2.1 Live Studio v11 (nur lokal)')
     print('Viewer:', f'http://{HOST}:{PORT}/viewer')
     print('Modellrevision:', CONFIG['model_revision'])
+    if os.environ.get('ALLIE_NO_PRELOAD') != '1':
+        start_model_preload()
     if os.environ.get('ALLIE_NO_BROWSER') != '1':
         threading.Timer(1.0, lambda: webbrowser.open(f'http://{HOST}:{PORT}/viewer')).start()
     try:

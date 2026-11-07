@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 import unittest
+from unittest.mock import patch
 from http.client import HTTPConnection
 from pathlib import Path
 
@@ -94,6 +95,13 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, data = response.status, response.read()
         client.close()
         return status, data
+
+    def test_model_preload_runs_once_in_background(self):
+        with patch('live_server.allie.get_model') as load_model:
+            worker = app.start_model_preload()
+            worker.join(1)
+        self.assertFalse(worker.is_alive())
+        load_model.assert_called_once_with()
 
     def test_viewer_has_no_access_key_ui_or_placeholder(self):
         status, data = self.call('GET', '/viewer')

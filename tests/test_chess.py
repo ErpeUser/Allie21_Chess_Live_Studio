@@ -15,7 +15,7 @@ except ImportError as exc:
     raise unittest.SkipTest('Chess libraries have not been installed yet') from exc
 
 from allie_local_server import (
-    analyse_position, make_plan_messages, merge_results, parse_history,
+    analyse_position, make_plan_messages, parse_history,
     risk_weighted_premove,
 )
 from position_tracker import PositionTracker
@@ -92,6 +92,48 @@ class ChessTests(unittest.TestCase):
         self.assertTrue(result['plan_messages'])
         self.assertTrue(result['moves'][0]['explanation'])
 
+    def test_player_turn_preview_needs_only_three_allie_calls(self):
+        model = FakeAllie()
+        result = analyse_position({
+            'pgn': '1. e4 e5 2. Nf3 Nc6',
+            'analysis_source': 'allie',
+            'preview': True,
+            'player_side': 'white',
+        }, model)
+
+        self.assertEqual(model.called, 3)
+        self.assertEqual(len(result['my_moves']), 2)
+        self.assertEqual(len(result['opponent_moves']), 2)
+        self.assertIsNotNone(result['premove'])
+
+    def test_both_mode_scores_only_allie_candidates_without_reordering_them(self):
+        captured = []
+
+        def score_candidates(_board, _budget, root_moves=None):
+            captured.append(root_moves)
+            return {
+                'available': True,
+                'engine': 'Stockfish',
+                'scope': 'allie-candidates',
+                'lines': [
+                    {'uci': uci, 'san': uci, 'score': f'+{index}.00',
+                     'depth': 12, 'variation': uci}
+                    for index, uci in enumerate(reversed(root_moves or []), 1)
+                ],
+            }
+
+        with patch('allie_local_server.stockfish_lines', side_effect=score_candidates):
+            result = analyse_position({
+                'pgn': '1. e4 e5 2. Nf3 Nc6',
+                'analysis_source': 'both',
+                'preview': False,
+            }, FakeAllie())
+
+        allie_order = [move['uci'] for move in result['moves']]
+        self.assertEqual(captured, [allie_order])
+        self.assertEqual(result['stockfish']['scope'], 'allie-candidates')
+        self.assertTrue(all('stockfish_score' in move for move in result['moves']))
+
     def test_allie_can_choose_from_the_normal_start_position(self):
         result = analyse_position({'pgn': '*', 'analysis_source': 'allie', 'preview': False}, FakeAllie())
         self.assertEqual(result['move_count'], 0)
@@ -142,24 +184,6 @@ class ChessTests(unittest.TestCase):
         result = analyse_position({'fen':chess.STARTING_FEN, 'analysis_source':'allie'}, model)
         self.assertEqual(model.called, 0)
         self.assertTrue(result['allie_skip_reason'])
-
-    def test_result_merge_is_identical_for_both_completion_orders(self):
-        common = {'fen': chess.STARTING_FEN, 'opening': None, 'position_facts': [],
-                  'brief': []}
-        engine = {**common, 'stockfish': {'available': True, 'lines': [{'uci': 'e2e4'}]},
-                  'moves': [], 'model': None}
-        human = {**common, 'stockfish': None, 'model': 'yimingzhang/allie-2.1',
-                 'moves': [{'uci': 'e2e4', 'san': 'e4', 'probability': .5,
-                            'flags': [], 'explanation': 'Zentrum'}], 'wdl': [.4, .3, .3],
-                 'expected_think_time_s': 1.0, 'tactical_warnings': [],
-                 'allie_skip_reason': None, 'player_side': 'white',
-                 'player_to_move': True, 'my_moves': [], 'opponent_moves': [],
-                 'premove': None, 'plan_messages': []}
-        engine_first = merge_results(engine, human)
-        human_first = merge_results(engine, human)
-        self.assertEqual(engine_first, human_first)
-        self.assertEqual(engine_first['moves'][0]['uci'], 'e2e4')
-        self.assertTrue(engine_first['stockfish']['available'])
 
     def test_model_failure_is_visible(self):
         class Broken:
@@ -268,67 +292,22 @@ class ChessTests(unittest.TestCase):
         finally:
             live.stop()
 
-    def test_stockfish_result_does_not_wait_for_allie(self):
+    def test_complete_live_history_runs_one_combined_latest_job(self):
         live = LiveSession()
         live.start({})
-        release_allie = Event()
+        calls = []
 
         def fake_analysis(payload):
+            calls.append(payload['analysis_source'])
             base = {'fen': chess.STARTING_FEN, 'opening': None, 'position_facts': [],
-                    'tactical_warnings': [], 'allie_skip_reason': None, 'brief': []}
-            if payload['analysis_source'] == 'allie':
-                release_allie.wait(3)
-                return {**base, 'model': 'yimingzhang/allie-2.1', 'stockfish': None,
-                        'moves': [{'san': 'e4', 'uci': 'e2e4', 'probability': .5}],
-                        'wdl': None, 'expected_think_time_s': None,
-                        'my_moves': [], 'opponent_moves': [], 'premove': None,
-                        'plan_messages': []}
-            return {**base, 'model': None, 'moves': [],
-                    'stockfish': {'available': False, 'lines': []}}
-
-        try:
-            with patch('live_session.analyse_position', side_effect=fake_analysis):
-                with live.lock:
-                    live.tracker.observe(chess.STARTING_FEN)
-                    live._update_history_locked()
-                    live._queue_locked()
-                deadline = time.monotonic() + 3
-                state = live.get_state()
-                while not state.get('result') and time.monotonic() < deadline:
-                    time.sleep(.02)
-                    state = live.get_state()
-                self.assertIsNotNone(state.get('result'))
-                self.assertTrue(state['allie_analysing'])
-                self.assertFalse(state['engine_analysing'])
-                release_allie.set()
-                deadline = time.monotonic() + 3
-                while not (state.get('result') or {}).get('moves') and time.monotonic() < deadline:
-                    time.sleep(.02)
-                    state = live.get_state()
-                self.assertEqual(state['result']['moves'][0]['uci'], 'e2e4')
-                self.assertFalse(state['analysing'])
-        finally:
-            release_allie.set()
-            live.stop()
-
-    def test_allie_result_does_not_break_later_stockfish_merge(self):
-        live = LiveSession()
-        live.start({})
-        release_engine = Event()
-
-        def fake_analysis(payload):
-            base = {'fen': chess.STARTING_FEN, 'opening': None, 'position_facts': [],
-                    'tactical_warnings': [], 'allie_skip_reason': None, 'brief': []}
-            if payload['analysis_source'] == 'stockfish':
-                release_engine.wait(3)
-                return {**base, 'model': None, 'moves': [],
-                        'stockfish': {'available': True, 'lines': [{'uci': 'e2e4'}]}}
-            return {**base, 'model': 'yimingzhang/allie-2.1', 'stockfish': None,
+                    'tactical_warnings': [], 'allie_skip_reason': None, 'brief': [],
+                    'model': 'yimingzhang/allie-2.1',
+                    'stockfish': {'available': True, 'lines': []},
                     'moves': [{'san': 'e4', 'uci': 'e2e4', 'probability': .5}],
                     'wdl': None, 'expected_think_time_s': None,
                     'my_moves': [], 'opponent_moves': [], 'premove': None,
-                    'player_side': 'white', 'player_to_move': True,
                     'plan_messages': []}
+            return base
 
         try:
             with patch('live_session.analyse_position', side_effect=fake_analysis):
@@ -338,20 +317,13 @@ class ChessTests(unittest.TestCase):
                     live._queue_locked()
                 deadline = time.monotonic() + 3
                 state = live.get_state()
-                while not (state.get('result') or {}).get('moves') and time.monotonic() < deadline:
+                while state.get('analysing') and time.monotonic() < deadline:
                     time.sleep(.02)
                     state = live.get_state()
+                self.assertEqual(calls, ['both'])
                 self.assertEqual(state['result']['moves'][0]['uci'], 'e2e4')
-                self.assertTrue(state['engine_analysing'])
-                release_engine.set()
-                deadline = time.monotonic() + 3
-                while state.get('engine_analysing') and time.monotonic() < deadline:
-                    time.sleep(.02)
-                    state = live.get_state()
-                self.assertTrue(state['result']['stockfish']['available'])
-                self.assertEqual(state['result']['moves'][0]['uci'], 'e2e4')
+                self.assertFalse(state['analysing'])
         finally:
-            release_engine.set()
             live.stop()
 
     def test_stopped_analysis_cannot_publish_and_restart_is_clean(self):

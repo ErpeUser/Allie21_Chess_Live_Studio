@@ -10,7 +10,7 @@ from threading import Event, RLock, Thread
 import json
 import time
 
-from allie_local_server import analyse_position, merge_results
+from allie_local_server import analyse_position
 from chess_extras import make_brief
 from config import CONFIG, parse_time_control
 from position_tracker import PositionTracker
@@ -20,14 +20,12 @@ MAX_JPEG = 3_500_000
 class LiveSession:
     def __init__(self):
         self.lock = RLock()
-        self.engine_event = Event()
-        self.allie_event = Event()
+        self.analysis_event = Event()
         self.tracker = PositionTracker()
         self.vision = None  # loaded on first frame, not at server startup
         self.generation = 0
         self.session_id = 0
-        self.engine_job = None
-        self.allie_job = None
+        self.analysis_job = None
         self.failed_key = None
         self.settings = {}
         self.stable_placement = None
@@ -35,14 +33,12 @@ class LiveSession:
         self.unmatched_frames = 0
         self.state = {}
         self._reset_state(False)
-        Thread(target=self._engine_worker, name='stockfish-analysis', daemon=True).start()
-        Thread(target=self._allie_worker, name='allie-analysis', daemon=True).start()
+        Thread(target=self._analysis_worker, name='allie-first-analysis', daemon=True).start()
 
     def _reset_state(self, running):
         recommendations_enabled = bool(self.settings.get('recommendations_enabled', True))
         self.state = {'running': running, 'message': ('Bereit – Fenster oder Tab freigeben' if running else 'Gestoppt'),
                       'detection': None, 'result': None, 'analysing': False,
-                      'engine_analysing': False, 'allie_analysing': False,
                       'history_complete': False, 'turn_verified': False,
                       'history_source': 'unknown', 'moves_seen': 0, 'model': CONFIG['model_id'],
                       'recommendations_enabled': recommendations_enabled}
@@ -66,11 +62,9 @@ class LiveSession:
             self.session_id += 1
             self.tracker = PositionTracker()
             self.vision = None
-            self.engine_job = None
-            self.allie_job = None
+            self.analysis_job = None
             self.failed_key = None
-            self.engine_event.clear()
-            self.allie_event.clear()
+            self.analysis_event.clear()
             self.stable_placement, self.stable_count = None, 0
             self.unmatched_frames = 0
             self.settings = {'white_elo': white, 'black_elo': black,
@@ -88,11 +82,9 @@ class LiveSession:
         with self.lock:
             self.generation += 1
             self.session_id += 1
-            self.engine_job = None
-            self.allie_job = None
+            self.analysis_job = None
             self.failed_key = None
-            self.engine_event.clear()
-            self.allie_event.clear()
+            self.analysis_event.clear()
             self.tracker.reset()
             self.vision = None
             self.stable_placement, self.stable_count = None, 0
@@ -104,15 +96,11 @@ class LiveSession:
         if not self.settings.get('recommendations_enabled', True):
             self.state['result'] = None
             self.state['analysing'] = False
-            self.state['engine_analysing'] = False
-            self.state['allie_analysing'] = False
             return
         board = self.tracker.board
         if not board or not self.tracker.turn_verified or not board.is_valid() or board.is_game_over():
             self.state['result'] = None
             self.state['analysing'] = False
-            self.state['engine_analysing'] = False
-            self.state['allie_analysing'] = False
             return
         # Never pass FEN as if it were full human history.
         field = 'pgn' if self.tracker.complete_history else 'fen'
@@ -124,28 +112,11 @@ class LiveSession:
             return
         self.generation += 1
         revision = self.generation
-        wants_engine = True
-        wants_allie = self.tracker.complete_history
-        if wants_engine:
-            engine_payload = dict(payload)
-            engine_payload['analysis_source'] = 'stockfish'
-            self.engine_job = (revision, engine_payload)
-        else:
-            self.engine_job = None
-        if wants_allie:
-            allie_payload = dict(payload)
-            allie_payload['analysis_source'] = 'allie'
-            self.allie_job = (revision, allie_payload)
-        else:
-            self.allie_job = None
+        payload['analysis_source'] = 'both' if self.tracker.complete_history else 'stockfish'
+        self.analysis_job = (revision, payload)
         self.state['result'] = None
-        self.state['engine_analysing'] = wants_engine
-        self.state['allie_analysing'] = wants_allie
-        self.state['analysing'] = wants_engine or wants_allie
-        if wants_engine:
-            self.engine_event.set()
-        if wants_allie:
-            self.allie_event.set()
+        self.state['analysing'] = True
+        self.analysis_event.set()
 
     def set_recommendations(self, enabled: bool):
         """Immediately enable or suppress every live recommendation job."""
@@ -156,14 +127,10 @@ class LiveSession:
             self.settings['recommendations_enabled'] = enabled
             self.state['recommendations_enabled'] = enabled
             self.generation += 1
-            self.engine_job = None
-            self.allie_job = None
-            self.engine_event.clear()
-            self.allie_event.clear()
+            self.analysis_job = None
+            self.analysis_event.clear()
             self.state['result'] = None
             self.state['analysing'] = False
-            self.state['engine_analysing'] = False
-            self.state['allie_analysing'] = False
             if enabled:
                 self.failed_key = None
                 self._queue_locked()
@@ -194,12 +161,9 @@ class LiveSession:
         self.state['detection'] = None
         self.state['result'] = None
         self.state['analysing'] = False
-        self.state['engine_analysing'] = False
-        self.state['allie_analysing'] = False
         self.state['message'] = message
         self.generation += 1
-        self.engine_job = None
-        self.allie_job = None
+        self.analysis_job = None
 
     def submit_frame(self, data: bytes):
         if not 0 < len(data) <= MAX_JPEG:
@@ -298,12 +262,12 @@ class LiveSession:
             result['brief'] = make_brief(result)
         return result
 
-    def _engine_worker(self):
+    def _analysis_worker(self):
         while True:
-            self.engine_event.wait()
-            self.engine_event.clear()
+            self.analysis_event.wait()
+            self.analysis_event.clear()
             with self.lock:
-                job = self.engine_job
+                job = self.analysis_job
             if job is None:
                 continue
             revision, payload = job
@@ -316,50 +280,12 @@ class LiveSession:
                 if not self.state['running'] or revision != self.generation:
                     continue
                 result = self._with_stream_warning(result, payload)
-                current = self.state.get('result')
-                if result and current and (current.get('moves') or current.get('allie_skip_reason')):
-                    result = merge_results(result, current)
                 self.state['result'] = result
-                self.state['engine_analysing'] = False
-                self.state['analysing'] = self.state['allie_analysing']
+                self.state['analysing'] = False
                 if error:
                     self.failed_key = ('pgn', payload['pgn']) if 'pgn' in payload else ('fen', payload.get('fen', ''))
                     self.state['message'] = 'Analysefehler: ' + error
-                elif self.state['allie_analysing']:
-                    self.state['message'] = 'Stockfish aktuell · Allie rechnet parallel ...'
                 elif not self.state['history_complete']:
                     self.state['message'] = 'Stockfish aktuell · Allie benötigt die Zugfolge ab Zug 1'
-                else:
-                    self.state['message'] = 'Analyse aktuell'
-    def _allie_worker(self):
-        while True:
-            self.allie_event.wait()
-            self.allie_event.clear()
-            with self.lock:
-                job = self.allie_job
-            if job is None:
-                continue
-            revision, payload = job
-            try:
-                result = analyse_position(payload)
-                error = None
-            except Exception as exc:
-                result, error = None, str(exc)[:220]
-            with self.lock:
-                if not self.state['running'] or revision != self.generation:
-                    continue
-                current = self.state.get('result')
-                if result:
-                    result = merge_results(current, result)
-                    result['brief'] = make_brief(result)
-                    self.state['result'] = result
-                self.state['allie_analysing'] = False
-                self.state['analysing'] = self.state['engine_analysing']
-                if error:
-                    self.state['message'] = 'Allie-Analysefehler: ' + error
-                elif result and result.get('allie_skip_reason'):
-                    self.state['message'] = result['allie_skip_reason']
-                elif self.state['engine_analysing']:
-                    self.state['message'] = 'Allie aktuell · Stockfish rechnet weiter ...'
                 else:
                     self.state['message'] = 'Allie + Stockfish aktuell'

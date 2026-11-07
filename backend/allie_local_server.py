@@ -11,7 +11,6 @@ import os
 import re
 import threading
 import math
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import chess
@@ -25,7 +24,6 @@ MODEL_NAME = MODEL_ID
 MAX_BODY = 64 * 1024
 _model = None
 _model_lock = threading.RLock()
-_stockfish_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='stockfish-request')
 
 
 def get_model():
@@ -251,12 +249,6 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     opening = opening_for_position(board, moves)
     if opening:
         opening = {**opening, 'idea': opening_note(opening)}
-    # In combined browser/manual requests Stockfish can work while the single,
-    # locked Allie model performs inference. Video uses these same two branches
-    # in its latest-only workers.
-    stockfish_future = (_stockfish_pool.submit(
-        stockfish_lines, board.copy(stack=False), stockfish_budget
-    ) if selection == 'both' else None)
     candidate_moves: list[dict[str, Any]] = []
     wdl = None
     expected_think_time = None
@@ -265,6 +257,10 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     premove_branches: list[tuple[float, list[dict[str, Any]]]] = []
     warnings: list[str] = []
     allie_skip_reason = None
+    player_side = str(payload.get('player_side', 'white' if board.turn else 'black')).lower()
+    if player_side not in ('white', 'black'):
+        player_side = 'white' if board.turn else 'black'
+    player_to_move = player_side == ('white' if board.turn else 'black')
     if selection in ('allie', 'both'):
         if fen_only:
             allie_skip_reason = ('Allie 2.1 benötigt die Zugfolge ab Zug 1 und kann nur '
@@ -288,7 +284,11 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
             if candidate_moves and payload.get('preview', True):
                 try:
                     with _model_lock:
-                        for index, choice in enumerate(candidate_moves[:2]):
+                        # On our turn only the top choice needs an opponent
+                        # preview. Computing a reply to our second choice is
+                        # unused and costs a complete model step.
+                        preview_choices = candidate_moves[:1 if player_to_move else 2]
+                        for index, choice in enumerate(preview_choices):
                             after = board.copy(stack=False)
                             after.push_uci(choice['uci'])
                             if after.is_game_over():
@@ -315,14 +315,12 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                                         warnings.append('Die wahrscheinlichste Gegnerantwort schlaegt eine Figur: ' + shown[0]['san'])
                             else:
                                 prediction_second = shown
-                        player_side = str(payload.get('player_side', 'white' if board.turn else 'black')).lower()
-                        if player_side not in ('white', 'black'):
-                            player_side = 'white' if board.turn else 'black'
-                        player_to_move = player_side == ('white' if board.turn else 'black')
                         if player_to_move and candidate_moves and prediction_top:
-                            # A real pre-move is our next turn after our main choice and
-                            # either of the two most likely Allie opponent replies.
-                            for reply in prediction_top[:2]:
+                            # The blue arrow is the best continuation after
+                            # the single most likely opponent reply. A second
+                            # speculative branch doubled latency without
+                            # changing the requested top-reply pre-move.
+                            for reply in prediction_top[:1]:
                                 after_reply = board.copy(stack=False)
                                 after_reply.push_uci(candidate_moves[0]['uci'])
                                 after_reply.push_uci(reply['uci'])
@@ -340,16 +338,21 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
 
     sf = None
     if selection in ('stockfish', 'both'):
-        sf = (stockfish_future.result() if stockfish_future
-              else stockfish_lines(board, stockfish_budget))
+        roots = ([move['uci'] for move in candidate_moves]
+                 if selection == 'both' and candidate_moves else None)
+        sf = stockfish_lines(board, stockfish_budget, roots)
         if sf and sf.get('available'):
+            scored = {item['uci']: item for item in sf.get('lines', [])}
+            for move in candidate_moves:
+                if evaluation := scored.get(move['uci']):
+                    move.update({
+                        'stockfish_score': evaluation.get('score'),
+                        'stockfish_depth': evaluation.get('depth'),
+                        'stockfish_variation': evaluation.get('variation'),
+                    })
             for item in sf.get('lines', []):
                 item['explanation'] = describe_candidate(board, item['uci'])
 
-    player_side = str(payload.get('player_side', 'white' if board.turn else 'black')).lower()
-    if player_side not in ('white', 'black'):
-        player_side = 'white' if board.turn else 'black'
-    player_to_move = player_side == ('white' if board.turn else 'black')
     if player_to_move:
         my_moves = candidate_moves[:2]
         opponent_moves = prediction_top[:2]
@@ -383,23 +386,3 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     output['plan_messages'] = make_plan_messages(output)
     output['brief'] = make_brief(output)
     return output
-
-
-ALLIE_FIELDS = (
-    'model', 'moves', 'wdl', 'expected_think_time_s', 'tactical_warnings',
-    'allie_skip_reason', 'player_side', 'player_to_move', 'my_moves',
-    'opponent_moves', 'premove', 'plan_messages',
-)
-
-
-def merge_results(engine_result: dict | None, allie_result: dict | None) -> dict | None:
-    """Order-independent merge for two results from the same position."""
-    if not engine_result:
-        return allie_result
-    if not allie_result or engine_result.get('fen') != allie_result.get('fen'):
-        return engine_result
-    combined = dict(engine_result)
-    for key in ALLIE_FIELDS:
-        combined[key] = allie_result.get(key)
-    combined['brief'] = make_brief(combined)
-    return combined

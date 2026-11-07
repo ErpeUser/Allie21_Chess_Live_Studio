@@ -1,8 +1,11 @@
 .venv*/
+.allie-venv*/
 .uv-cache/
+.build/
 __pycache__/
 *.py[cod]
 backend/engines/*.exe
+!Allie21 Chess Live Studio.exe
 *.log
 tests/tmp*/
 .pytest_cache/

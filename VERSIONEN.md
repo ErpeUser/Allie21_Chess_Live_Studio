@@ -20,6 +20,7 @@ Stand der Prüfung: 7. November 2026, Windows 11 x64. Abhängigkeiten sind in `p
 | Transformers | 5.22.2 |
 | PyTorch CPU | 2.15.0 |
 | Stockfish | 19 |
+| PyInstaller (nur EXE-Build) | 6.22.3 |
 
 PyTorch 2.15.0 ist für die veröffentlichte Allie-2.1-CPU-Implementierung beibehalten; „neueste“ bedeutet hier die neueste gemeinsam praktisch geprüfte Kombination, nicht blind die höchste Einzelversion.
 
@@ -30,7 +31,8 @@ PyTorch 2.15.0 ist für die veröffentlichte Allie-2.1-CPU-Implementierung beibe
 - Stockfish-Release: `sf_19`
 - Stockfish-Archiv SHA-256: `3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7`
 - Installierte `stockfish.exe` SHA-256: `45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`
-- `uv.lock` SHA-256 beim Abschluss: `fa989dd1714b2d7dcd26ec0f5acf4ac3728a5e6205491678410fd26a12dda4f5`
+- `uv.lock` SHA-256 beim Abschluss: `976b234f6ca1ca3043b2ad908685d6e327634d1124d32d57f9da30e6ede6af33`
+- `Allie21 Chess Live Studio.exe` SHA-256: `3821bad0f7bc1f9630a0c61df652c9792028e7099d9f6f612627de93dc692d9b`
 
 Gebündelte Lichess-Eröffnungsdaten:
 
@@ -44,10 +46,11 @@ Gebündelte Lichess-Eröffnungsdaten:
 
 ## Praktische Messungen auf diesem System
 
-- 41 automatisierte Tests: 1,383 s, alle bestanden (2,086 s einschließlich Prozessstart).
+- 44 kurze automatisierte Tests; aktueller Messwert siehe Abschlussprüfung im Änderungsstand.
 - Stockfish über `python-chess`, drei Varianten, Rapid-Budget 1,1 s: erster Aufruf 2,159 s einschließlich Prozessstart; zweiter Aufruf mit derselben Engine 1,103 s.
-- Allie CPU: Modellladen aus lokalem Cache 44,194 s; reale Inferenz nach `1. e4 e5 2. Nf3 Nc6` 6,960 s; fünf Züge und WDL geliefert.
+- Allie CPU nach Neustart: einmaliger Modell-Kaltstart 84,541 s; danach aktuelle Top-2-Auswahl 0,551 s und vollständige Allie-/Stockfish-Vorschau 1,576 s. Das Modell wird deshalb ab v11.1.1 direkt beim Programmstart im Hintergrund vorgeladen.
 - chessvision/ONNX: bedarfsgerechte Initialisierung 0,615 s.
 - Viewer: lokaler Uvicorn-Start, sichtbarer v11-Status, Spielerfarbe, Empfehlungsschalter und echte PGN-Allie-Ausgabe im Browser geprüft.
+- Windows-EXE: PyInstaller-Onefile-Starter im echten Benutzerkontext mit `--check` geprüft; die EXE startet ausschließlich den reproduzierbaren Batch-Weg neben sich.
 
-Die Videoerkennung wurde bis zur echten Initialisierung und über den Frame-/Stabilitäts-Integrationstest geprüft. Ein externes Discord-Livevideo und eine reale Tampermonkey-Installation standen in der automatisierten Umgebung nicht zur Verfügung.
+Die Videoerkennung wurde bis zur echten Initialisierung und über den Frame-/Stabilitäts-Integrationstest geprüft. Tampermonkey 5.5.1 und das Allie-v11-Userscript wurden in Microsoft Edge nachgewiesen; der externe sichtbare Edge-Automationstest war wegen einer fehlerhaften Browser-Steuerungsverbindung nicht vollständig automatisierbar.

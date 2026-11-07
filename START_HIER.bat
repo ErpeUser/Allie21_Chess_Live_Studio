@@ -3,29 +3,37 @@ setlocal
 cd /d "%~dp0"
 set "PYTHONUTF8=1"
 set "UV_CACHE_DIR=%~dp0.uv-cache"
+set "UV_PROJECT_ENVIRONMENT=%~dp0.allie-venv"
+set "UV_EXE=uv"
 
 where uv >nul 2>nul
 if errorlevel 1 (
-  echo [Allie] Installiere den Paketmanager uv 0.13.7 ...
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/0.13.7/install.ps1 | iex"
-  set "PATH=%USERPROFILE%\.local\bin;%PATH%"
+  if exist "%~dp0.venv\Scripts\uv.exe" (
+    set "UV_EXE=%~dp0.venv\Scripts\uv.exe"
+  ) else (
+    echo [Allie] Installiere den Paketmanager uv 0.13.7 ...
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/0.13.7/install.ps1 | iex"
+    set "PATH=%USERPROFILE%\.local\bin;%PATH%"
+  )
 )
 
-where uv >nul 2>nul
-if errorlevel 1 goto :uv_error
+if "%UV_EXE%"=="uv" (
+  where uv >nul 2>nul
+  if errorlevel 1 goto :uv_error
+)
 
 echo [Allie] Pruefe die reproduzierbare Python-Umgebung ...
-uv sync --frozen --all-extras --no-dev
+"%UV_EXE%" sync --frozen --all-extras --no-dev
 if errorlevel 1 goto :setup_error
 
 if not exist "backend\engines\stockfish.exe" (
   echo [Allie] Lade Stockfish 19 von der offiziellen Quelle ...
-  uv run --frozen python backend\download_stockfish.py
+  "%UV_EXE%" run --frozen python backend\download_stockfish.py
   if errorlevel 1 echo [Hinweis] Stockfish konnte nicht geladen werden. Allie funktioniert trotzdem.
 )
 
 echo [Allie] Starte http://127.0.0.1:8765/viewer
-uv run --frozen python backend\live_server.py
+"%UV_EXE%" run --frozen python backend\live_server.py
 if errorlevel 1 goto :server_error
 exit /b 0
 
