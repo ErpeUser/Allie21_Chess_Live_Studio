@@ -1,5 +1,11 @@
 # Änderungen
 
+## v11.1.5
+
+- Die vollständige Allie-Spielanalyse öffnet sich wieder automatisch neben dem erkannten Brett.
+- Bis zu sechs Hinweise zeigen Eröffnung, Stellungsmerkmale, Gegnerabsicht, konkrete Gefahr, Spielverhalten und Pre-Move-Risiko; Stockfish bleibt der objektive Vergleich.
+- Chess.com und Lichess nutzen weiterhin dieselbe automatische DOM-Erkennung für Brett, Orientierung, Spielerfarbe und validierte Zuggeschichte – ohne zusätzliche API oder Bibliothek.
+
 ## v11.1.4
 
 - Direkte Edge-Erweiterung ersetzt den fehleranfälligen Tampermonkey-Installationsweg.

@@ -98,7 +98,9 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.1.4', overlay)
+        self.assertIn('@version      11.1.5', overlay)
+        manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
+        self.assertEqual(manifest['version_name'], '11.1.5')
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
@@ -118,9 +120,10 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('serial===analysisSerial', overlay)
         self.assertIn('if(!current())', overlay)
         self.assertIn('clearOverlay();show({})', overlay)
-        self.assertNotIn("const messages=(data.plan_messages||[]).slice(0,5)", overlay)
         self.assertIn('Math.min(10,rect.width/72)', overlay)
-        self.assertIn("(data.plan_messages||[]).slice(0,2)", overlay)
+        self.assertIn('function insightLines', overlay)
+        self.assertIn('function panelPosition', overlay)
+        self.assertIn('placePanel()', overlay)
         self.assertIn('button,[role="button"]', overlay)
         self.assertNotIn("[bn]n?", overlay)
         self.assertNotIn("querySelectorAll('*')", overlay)
@@ -140,6 +143,16 @@ class StandaloneTests(unittest.TestCase):
     def test_overlay_resolves_player_side_automatically(self):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_auto_side.js')],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_overlay_shows_full_analysis_bubble_beside_board(self):
+        result = subprocess.run(
+            ['node', str(ROOT / 'tests/test_overlay_insights.js')],
             cwd=ROOT,
             capture_output=True,
             text=True,

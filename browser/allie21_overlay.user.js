@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Allie 2.1 Live Studio v11 (Manuelles Live-Overlay)
+// @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.1.4
+// @version      11.1.5
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -30,9 +30,9 @@
  shadow.innerHTML=`
  <style>
  *{box-sizing:border-box}button,input,select{font:inherit}#bubble{background:#10283d;color:#eaf6ff;border:1px solid #48758c;border-radius:25px;padding:9px 13px;font-size:12px;font-weight:650;cursor:pointer;box-shadow:0 2px 10px #0008}
- #panel{display:none;width:310px;max-width:calc(100vw - 20px);max-height:62vh;overflow:auto;background:#102236;color:#e7f2ff;border:1px solid #43657e;box-shadow:0 8px 24px #0009;border-radius:10px;padding:11px;line-height:1.35;font-size:12px}
+ #panel{display:none;width:350px;max-width:calc(100vw - 20px);max-height:76vh;overflow:auto;background:#102236;color:#e7f2ff;border:1px solid #43657e;box-shadow:0 8px 24px #0009;border-radius:10px;padding:11px;line-height:1.35;font-size:12px}
  #panel.open{display:block}h3{margin:8px 0 4px;color:#8de0c5;font-size:13px}p{margin:5px 0}label{display:block;margin:6px 0 3px}.row{display:flex;gap:7px;align-items:center}.row>*{flex:1;min-width:0}#close{flex:0 0 32px;padding:6px}input,select{width:100%;padding:6px;background:#091724;border:1px solid #3c6076;border-radius:5px;color:#e6f3ff}
- button{border:1px solid #3c6076;background:#285474;color:white;border-radius:6px;padding:7px;cursor:pointer}.item{display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #325068;padding:4px 0}.stat{color:#a6d9e3}.warn{color:#ffccaf}.small{font-size:11px;color:#abc4d6}#results{margin-top:5px;max-height:180px;overflow:auto}
+ button{border:1px solid #3c6076;background:#285474;color:white;border-radius:6px;padding:7px;cursor:pointer}.item{display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #325068;padding:4px 0}.stat{color:#a6d9e3}.warn{color:#ffccaf}.small{font-size:11px;color:#abc4d6}#results{margin-top:7px}.insight{background:#ffffff0b;border-left:3px solid #58b99a;border-radius:7px;margin:6px 0;padding:8px 9px}.analysis-title{display:flex;justify-content:space-between;align-items:center;color:#8de0c5;font-weight:700;margin-top:9px}
  </style>
  <button id='bubble'>Allie 2.1 | Analyse</button>
  <section id='panel'><div class='row'><b style='font-size:15px'>Allie 2.1 | Live Overlay</b><button id='close'>X</button></div>
@@ -47,10 +47,10 @@
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
- el('bubble').onclick=()=>{el('panel').classList.toggle('open');el('bubble').style.display=el('panel').classList.contains('open')?'none':''};
- el('close').onclick=()=>{el('panel').classList.remove('open');el('bubble').style.display=''};
+ el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
+ el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
  const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({})};
  const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';save();invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','orientation','playerSide'])el(field).addEventListener('change',updateSettings);
@@ -232,11 +232,27 @@
   if(data.premove)drawArrow(svg,rect,ori,data.premove.uci,ARROW_COLORS.premove,.96);
   layer.replaceChildren(svg);
  }
+ function insightLines(data){
+  return (Array.isArray(data?.plan_messages)?data.plan_messages:[]).filter(Boolean).slice(0,6);
+ }
+ function panelPosition(rect,viewportWidth,viewportHeight,panelWidth=350){
+  const gap=12,margin=10;
+  let left=viewportWidth-rect.right>=panelWidth+gap?rect.right+gap:rect.left>=panelWidth+gap?rect.left-panelWidth-gap:Math.max(margin,viewportWidth-panelWidth-margin);
+  return{left:Math.round(left),top:Math.round(Math.max(margin,Math.min(rect.top,viewportHeight-180)))};
+ }
+ function placePanel(board=currentBoard||boardElement()){
+  if(!board)return;
+  const pos=panelPosition(board.getBoundingClientRect(),window.innerWidth,window.innerHeight);
+  wrapper.style.left=`${pos.left}px`;wrapper.style.top=`${pos.top}px`;wrapper.style.right='auto';wrapper.style.bottom='auto';
+ }
  function show(data){let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
-   for(const message of (data.plan_messages||[]).slice(0,2))html+=`<p style='background:#ffffff0b;border-radius:8px;padding:7px'>${escape(message)}</p>`;
+  const messages=insightLines(data);
+  if(messages.length)html+=`<div class='analysis-title'><span>Allie \u00b7 Spielanalyse</span><span>${messages.length} Hinweise</span></div>`;
+  for(const message of messages)html+=`<div class='insight'>${escape(message)}</div>`;
   if(data.stockfish){html+='<h3>Stockfish: objektiv</h3>';if(!data.stockfish.available)html+=`<p>${escape(data.stockfish.error||'Engine fehlt')}</p>`;else for(const m of data.stockfish.lines||[])html+=`<div class='item'><span>${escape(m.san)} | ${escape(m.variation)}</span><span>${escape(m.score)}</span></div>`}
   el('results').innerHTML=html;
+  if(messages.length&&!panelDismissed){el('panel').classList.add('open');el('bubble').style.display='none';placePanel()}
  }
  function postJson(path,data,timeout=15000){
   const controller=new AbortController();let expired=false;
@@ -287,7 +303,7 @@
  el('now').onclick=async()=>{updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';await tick(true)};
  async function tick(manual=false){
   if(trackingPending)return;
-  const visibleBoard=readBoardSnapshot();wrapper.style.display=visibleBoard?'':'none';
+  const visibleBoard=readBoardSnapshot();wrapper.style.display=visibleBoard?'':'none';if(visibleBoard)placePanel(visibleBoard.board);
   if(!visibleBoard){if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();show({})}return}
   if(!cfg.enabled){clearOverlay();return}
   trackingPending=true;
@@ -312,8 +328,8 @@
     }
   }catch(error){if(manual)el('status').textContent=error.message||String(error)}finally{trackingPending=false}
  }
- window.addEventListener('resize',()=>currentResult&&paint(currentResult));
- window.addEventListener('scroll',()=>currentResult&&paint(currentResult),true);
+ window.addEventListener('resize',()=>{placePanel();if(currentResult)paint(currentResult)});
+ window.addEventListener('scroll',()=>{placePanel();if(currentResult)paint(currentResult)},true);
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
  new MutationObserver(changes=>{
    if(changes.every(change=>wrapper.contains(change.target)||layer.contains(change.target)))return;
