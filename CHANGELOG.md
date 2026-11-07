@@ -1,5 +1,12 @@
 # Änderungen
 
+## v11.1.4
+
+- Direkte Edge-Erweiterung ersetzt den fehleranfälligen Tampermonkey-Installationsweg.
+- Eng begrenzte CORS-Freigabe für Chess.com und Lichess ergänzt.
+- Bei fehlender vollständiger Historie startet nach eindeutig erkanntem Zug automatisch ein Stockfish-Fallback; Allie bleibt strikt an bestätigte Historie gebunden.
+- Alte Browser-Kompatibilitätsschicht, wirkungslose Einstellungen, internes Plan-Dokument und unbenutzte `.venv` entfernt.
+
 ## v11.1.3
 
 - Chess.com-Läufercodes wie `bb` werden nicht mehr als Springer gelesen (`Bb7` statt illegalem `Nb7`).

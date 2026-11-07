@@ -55,8 +55,6 @@ class AppConfig(BaseModel):
     preview_opponent_replies: bool = True
     model_id: Literal[MODEL_ID] = MODEL_ID
     model_revision: Literal[MODEL_REVISION] = MODEL_REVISION
-    auto_download_stockfish: bool = True
-    prefetch_allie_weights: bool = False
 
     @field_validator("time_control")
     @classmethod

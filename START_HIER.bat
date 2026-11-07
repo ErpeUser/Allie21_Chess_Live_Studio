@@ -8,19 +8,12 @@ set "UV_EXE=uv"
 
 where uv >nul 2>nul
 if errorlevel 1 (
-  if exist "%~dp0.venv\Scripts\uv.exe" (
-    set "UV_EXE=%~dp0.venv\Scripts\uv.exe"
-  ) else (
-    echo [Allie] Installiere den Paketmanager uv 0.13.7 ...
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/0.13.7/install.ps1 | iex"
-    set "PATH=%USERPROFILE%\.local\bin;%PATH%"
-  )
+  echo [Allie] Installiere den Paketmanager uv 0.13.7 ...
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/0.13.7/install.ps1 | iex"
+  set "PATH=%USERPROFILE%\.local\bin;%PATH%"
 )
-
-if "%UV_EXE%"=="uv" (
-  where uv >nul 2>nul
-  if errorlevel 1 goto :uv_error
-)
+where uv >nul 2>nul
+if errorlevel 1 goto :uv_error
 
 echo [Allie] Pruefe die reproduzierbare Python-Umgebung ...
 "%UV_EXE%" sync --frozen --all-extras --no-dev

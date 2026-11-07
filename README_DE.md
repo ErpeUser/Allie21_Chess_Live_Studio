@@ -19,7 +19,7 @@ uv run --frozen python backend/preload_allie.py
 ## Eingabewege
 
 - **Video/Fenster:** Im Viewer „Quelle auswählen“ anklicken und in Chrome oder Edge ein sichtbares Discord-, Browser- oder Monitorfenster freigeben. `chessvision` und optional RapidOCR werden erst beim ersten Frame geladen.
-- **Browser-Overlay:** Das Userscript aus dem Viewer installieren. Es unterstützt gezielt Chess.com und Lichess, beobachtet DOM-Änderungen gebündelt und sendet nur an den lokalen Dienst. Für Canvas-Bretter und andere Websites den Video- oder PGN-Weg verwenden.
+- **Browser-Overlay:** `EDGE_OVERLAY_INSTALLIEREN.bat` startet die direkte Edge-Erweiterungsinstallation. Sie unterstützt gezielt Chess.com und Lichess, beobachtet DOM-Änderungen gebündelt und sendet nur an den lokalen Dienst. Für Canvas-Bretter und andere Websites den Video- oder PGN-Weg verwenden.
 - **PGN/FEN:** „PGN oder FEN ohne Stream analysieren“ öffnen. Nur eine vollständige, bestätigte Partiegeschichte ab der Startstellung wird an Allie übergeben. FEN allein wird ausschließlich mit Stockfish analysiert.
 
 ## Korrektheit und Anzeigen
@@ -27,7 +27,7 @@ uv run --frozen python backend/preload_allie.py
 - Starkgrün: mein Allie Top 1; Hellgrün: mein Allie Top 2.
 - Starkrot: Gegner Allie Top 1; Hellrot: Gegner Allie Top 2.
 - Blau: bester sicherer Pre-Move, der über die wahrscheinlichsten Gegnerzweige hinweg legal bleibt.
-- Allie bestimmt die Reihenfolge. Stockfish bewertet anschließend genau diese Allie-Kandidaten objektiv und erzeugt keine Ersatzpfeile. Ohne vollständige Historie bleibt die FEN-Stockfish-Analyse verfügbar.
+- Allie bestimmt bei vollständiger Historie die Reihenfolge; Stockfish bewertet anschließend ihre Kandidaten. Bei einem Einstieg mitten in der Partie startet nach dem ersten eindeutig beobachteten Zug automatisch ein konservativer Stockfish-Fallback ohne erfundene Rochade- oder en-passant-Rechte.
 
 Brettorientierung und Spielerfarbe sind getrennte Einstellungen. Bei einem Einstieg mitten in der Partie werden fehlende Züge, Rochaderechte und en-passant-Rechte nicht erfunden. Allie wartet auf eine vollständige PGN; Stockfish kann eine ausdrücklich gelieferte FEN dennoch analysieren.
 

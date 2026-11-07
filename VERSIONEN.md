@@ -46,11 +46,11 @@ Gebündelte Lichess-Eröffnungsdaten:
 
 ## Praktische Messungen auf diesem System
 
-- 44 kurze automatisierte Tests; aktueller Messwert siehe Abschlussprüfung im Änderungsstand.
+- 49 kurze automatisierte Tests; aktueller Messwert siehe Abschlussprüfung im Änderungsstand.
 - Stockfish über `python-chess`, drei Varianten, Rapid-Budget 1,1 s: erster Aufruf 2,159 s einschließlich Prozessstart; zweiter Aufruf mit derselben Engine 1,103 s.
 - Allie CPU nach Neustart: einmaliger Modell-Kaltstart 84,541 s; danach aktuelle Top-2-Auswahl 0,551 s und vollständige Allie-/Stockfish-Vorschau 1,576 s. Das Modell wird deshalb ab v11.1.1 direkt beim Programmstart im Hintergrund vorgeladen.
 - chessvision/ONNX: bedarfsgerechte Initialisierung 0,615 s.
 - Viewer: lokaler Uvicorn-Start, sichtbarer v11-Status, Spielerfarbe, Empfehlungsschalter und echte PGN-Allie-Ausgabe im Browser geprüft.
 - Windows-EXE: PyInstaller-Onefile-Starter im echten Benutzerkontext mit `--check` geprüft; die EXE startet ausschließlich den reproduzierbaren Batch-Weg neben sich.
 
-Die Videoerkennung wurde bis zur echten Initialisierung und über den Frame-/Stabilitäts-Integrationstest geprüft. Tampermonkey 5.5.1 und das Allie-v11-Userscript wurden in Microsoft Edge nachgewiesen; der externe sichtbare Edge-Automationstest war wegen einer fehlerhaften Browser-Steuerungsverbindung nicht vollständig automatisierbar.
+Die Videoerkennung wurde bis zur echten Initialisierung und über den Frame-/Stabilitäts-Integrationstest geprüft. Die direkte entpackte Edge-Erweiterung wurde auf Chess.com sichtbar geladen; ihre lokale CORS-Verbindung und der Stockfish-Fallback wurden zusätzlich per echtem HTTP-Aufruf geprüft.

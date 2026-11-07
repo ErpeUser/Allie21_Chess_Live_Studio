@@ -63,7 +63,8 @@ class BrowserTrackerPool:
             if tracker.complete_history and not synced:
                 message = "Brettwechsel noch nicht eindeutig erkannt; Pfeile ausgeblendet."
             if not ready and message == "Position unchanged":
-                message = "Brett erkannt – warte auf Startstellung oder eine lesbare Zugfolge."
+                message = ("Brett erkannt – nach dem nächsten eindeutigen Zug startet Stockfish; "
+                           "Allie folgt mit vollständiger Historie.")
             return {
                 "ready": ready,
                 "fallback_ready": fallback_ready,

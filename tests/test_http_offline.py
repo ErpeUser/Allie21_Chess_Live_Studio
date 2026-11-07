@@ -157,17 +157,12 @@ class HTTPBoundaryTests(unittest.TestCase):
         self.assertEqual(self.call('POST', '/api/start', payload={'unknown': True})[0], 400)
         self.assertEqual(self.call('POST', '/api/start')[0], 413)
 
-    def test_userscript_download_needs_no_ticket(self):
-        status, data = self.call('GET', '/install/allie21_overlay.user.js')
-        self.assertEqual(status, 200)
-        self.assertNotIn(b'__ALLIE_INSTALL_TOKEN__', data)
+    def test_direct_extension_installer(self):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
         self.assertIn(b'11.1.4', page)
-        status, download = self.call('GET', '/install/allie21_overlay.download.user.js')
-        self.assertEqual(status, 200)
-        self.assertIn(b'// ==UserScript==', download)
+        self.assertEqual(self.call('GET', '/install/allie21_overlay.user.js')[0], 404)
 
 
 if __name__ == '__main__':

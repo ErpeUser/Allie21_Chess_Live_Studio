@@ -8,7 +8,7 @@
   "content_scripts": [
     {
       "matches": ["https://*.chess.com/*", "https://lichess.org/*"],
-      "js": ["extension_shim.js", "allie21_overlay.user.js"],
+      "js": ["allie21_overlay.user.js"],
       "run_at": "document_idle"
     }
   ]

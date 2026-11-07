@@ -45,7 +45,7 @@ class StandaloneTests(unittest.TestCase):
                      'viewer/index.html', 'browser/allie21_overlay.user.js'):
             self.assertTrue((ROOT / name).is_file(), name)
         self.assertTrue((ROOT / 'browser/manifest.json').is_file())
-        self.assertTrue((ROOT / 'browser/extension_shim.js').is_file())
+        self.assertFalse((ROOT / 'browser/extension_shim.js').exists())
         for removed in ('requirements.txt', 'ALLIE_VORLADEN.bat', 'TEST_HIER.bat',
                         'tools/auto_setup.ps1', 'tools/AllieLauncher.cs'):
             self.assertFalse((ROOT / removed).exists(), removed)
@@ -110,6 +110,8 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('cfg.playerSide', overlay)
         self.assertIn("localPost('/api/browser-position'", overlay)
         self.assertIn("'X-Allie-Overlay':'1'", overlay)
+        self.assertIn('new AbortController()', overlay)
+        self.assertNotIn('GM_xmlhttpRequest', overlay)
         self.assertIn('activeRequest.abort()', overlay)
         self.assertIn('serial===analysisSerial', overlay)
         self.assertIn('if(!current())', overlay)

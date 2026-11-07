@@ -7,10 +7,6 @@
 // @match        https://lichess.org/*
 // @run-at       document-idle
 // @noframes
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_xmlhttpRequest
-// @connect      127.0.0.1
 // ==/UserScript==
 /*
   No auto-moves and never clicks on the chess site. The local service is bound
@@ -20,9 +16,10 @@
  'use strict';
  if (window.top !== window.self || document.getElementById('allie21-auto-study-root')) return;
  const STORE='allie21.auto.v11';
- const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'white'}, GM_getValue(STORE,{}));
+ const load=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}};
+ const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'white'},load());
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
- const save=()=>GM_setValue(STORE,cfg);
+ const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
  const wrapper=document.createElement('div');
  wrapper.id='allie21-auto-study-root';
  wrapper.style.cssText='all:initial;display:none;position:fixed;right:15px;bottom:18px;z-index:2147483000;font-family:system-ui,sans-serif;color:#e7f2ff';
@@ -243,10 +240,19 @@
   if(data.stockfish){html+='<h3>Stockfish: objektiv</h3>';if(!data.stockfish.available)html+=`<p>${escape(data.stockfish.error||'Engine fehlt')}</p>`;else for(const m of data.stockfish.lines||[])html+=`<div class='item'><span>${escape(m.san)} | ${escape(m.variation)}</span><span>${escape(m.score)}</span></div>`}
   el('results').innerHTML=html;
  }
- function localPost(path,data,timeout=15000){return new Promise((resolve,reject)=>GM_xmlhttpRequest({method:'POST',url:'http://127.0.0.1:8765'+path,timeout,headers:{'Content-Type':'application/json','X-Allie-Overlay':'1'},data:JSON.stringify(data),onload:r=>{try{const parsed=JSON.parse(r.responseText);if(r.status!==200)throw Error(parsed.error||String(r.status));resolve(parsed)}catch(e){reject(e)}},onerror:()=>reject(Error('Lokaler Allie-Server nicht erreichbar.')),ontimeout:()=>reject(Error('Lokale Brett-Erkennung braucht zu lange.'))}))}
+ function postJson(path,data,timeout=15000){
+  const controller=new AbortController();let expired=false;
+  const timer=setTimeout(()=>{expired=true;controller.abort()},timeout);
+  const promise=fetch('http://127.0.0.1:8765'+path,{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1'},body:JSON.stringify(data),signal:controller.signal})
+   .then(async response=>{let parsed={};try{parsed=await response.json()}catch{}if(!response.ok)throw Error(parsed.error||String(response.status));return parsed})
+   .catch(error=>{if(expired)throw Error('Lokale Analyse braucht zu lange.');if(error.name==='AbortError')throw error;throw Error('Lokaler Allie-Server nicht erreichbar: '+error.message)})
+   .finally(()=>clearTimeout(timer));
+  return{promise,abort:()=>controller.abort()};
+ }
+ const localPost=(path,data,timeout)=>postJson(path,data,timeout).promise;
  async function historyFromVisibleBoard(){
   const snapshot=readBoardSnapshot();if(!snapshot)return{pgn:readHistory(),orientation:cfg.orientation==='auto'?'white':cfg.orientation,placement:''};
-  if(snapshot.placement===lastPlacement&&(trackedPGN||trackedFen))return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:!!trackedFen};
+  if(snapshot.placement===lastPlacement&&trackedPGN)return{pgn:trackedPGN,fen:'',orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:false};
   const expected=snapshot.placement,fallback=readHistory();
   const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback},12000);
   const latest=readBoardSnapshot();if(!latest||latest.placement!==expected)return{pgn:'',orientation:snapshot.orientation,placement:expected,stale:true};
@@ -269,17 +275,13 @@
      if(current())el('status').textContent=message;
      scheduleTick();
     };
-    activeRequest=GM_xmlhttpRequest({method:'POST',url:'http://127.0.0.1:8765/analyze',timeout:240000,
-     headers:{'Content-Type':'application/json','X-Allie-Overlay':'1'},data:JSON.stringify(data),
-     onload:r=>{if(serial!==analysisSerial)return;activeRequest=null;try{
-      const parsed=JSON.parse(r.responseText);if(r.status!==200)throw Error(parsed.error||String(r.status));
+    activeRequest=postJson('/analyze',data,240000);
+    activeRequest.promise.then(parsed=>{if(serial!==analysisSerial)return;activeRequest=null;try{
       if(!current()){pending=false;lastPGN='';return scheduleTick()}
       currentResult=parsed;show(parsed);paint(parsed);
       if(!final){el('status').textContent='Allie-Züge sichtbar · Vorschau folgt...';return request('both',true,true)}
       pending=false;el('status').textContent=`Analyse aktuell: ${parsed.move_count} Halbzuege`;
-     }catch(e){fail('Analyse: '+e.message)}},
-     onerror:()=>fail('Backend nicht erreichbar. Python-Server starten.'),
-     ontimeout:()=>fail('Backend-Zeitlimit.')});
+     }catch(e){fail('Analyse: '+e.message)}}).catch(error=>fail(error.name==='AbortError'?'Analyse abgebrochen.':error.message));
    };
    request(fen?'stockfish':'allie',false,!!fen);
  }

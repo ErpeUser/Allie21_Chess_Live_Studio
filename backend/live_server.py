@@ -5,7 +5,6 @@ from __future__ import annotations
 import html
 import json
 import os
-import re
 import threading
 import webbrowser
 from pathlib import Path
@@ -16,7 +15,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 import allie_local_server as allie
@@ -172,32 +171,15 @@ def viewer():
     return body.replace('__ALLIE_CONFIG__', json.dumps(CONFIG, ensure_ascii=False).replace('<', '\\u003c'))
 
 
-@app.get('/install/allie21_overlay.user.js')
-def userscript():
-    body = (ROOT / 'browser' / 'allie21_overlay.user.js').read_bytes()
-    return Response(body, media_type='text/javascript; charset=utf-8')
-
-
 @app.get('/install', response_class=HTMLResponse)
-def userscript_installer():
-    """Local fallback when Chromium does not hand .user.js to Tampermonkey."""
-    source = (ROOT / 'browser' / 'allie21_overlay.user.js').read_text(encoding='utf-8')
-    match = re.search(r'^// @version\s+(.+)$', source, re.MULTILINE)
-    version = html.escape(match.group(1).strip() if match else 'aktuell')
+def extension_installer():
+    manifest = json.loads((ROOT / 'browser' / 'manifest.json').read_text(encoding='utf-8'))
+    version = html.escape(str(manifest.get('version_name', 'aktuell')))
     return f'''<!doctype html><html lang="de"><meta charset="utf-8"><title>Allie Overlay installieren</title>
 <style>body{{font:16px system-ui;background:#071522;color:#edf7ff;max-width:720px;margin:50px auto;padding:24px}}.card{{background:#10283d;border:1px solid #43657e;border-radius:14px;padding:24px}}a{{display:inline-block;margin:6px 6px 6px 0;padding:11px 15px;border-radius:8px;background:#16a777;color:white;font-weight:700;text-decoration:none}}code{{background:#06101a;padding:3px 6px;border-radius:4px}}li{{margin:10px 0}}</style>
-<div class="card"><h1>Allie Overlay {version}</h1><p><b>Tampermonkey wird nicht benötigt.</b> Verwende die fertige direkte Edge-Erweiterung im Projektordner <code>browser</code>.</p>
+<div class="card"><h1>Allie Overlay {version}</h1><p>Verwende die fertige direkte Edge-Erweiterung im Projektordner <code>browser</code>.</p>
 <ol><li>Doppelklicke im Projekt auf <code>EDGE_OVERLAY_INSTALLIEREN.bat</code>.</li><li>Schalte in <code>edge://extensions</code> den <b>Entwicklermodus</b> ein.</li><li>Klicke <b>Entpackte Erweiterung laden</b> und wähle den automatisch geöffneten Ordner <code>browser</code>.</li><li>Lade Chess.com oder Lichess einmal neu.</li></ol>
-<p>Optionaler Altweg: <a href="/install/allie21_overlay.user.js">Userscript öffnen</a><a href="/install/allie21_overlay.download.user.js">Userscript herunterladen</a></p>
 </div></html>'''
-
-
-@app.get('/install/allie21_overlay.download.user.js')
-def userscript_download():
-    body = (ROOT / 'browser' / 'allie21_overlay.user.js').read_bytes()
-    return Response(body, media_type='application/javascript; charset=utf-8', headers={
-        'Content-Disposition': 'attachment; filename="allie21_overlay.user.js"',
-    })
 
 
 @app.get('/health')
