@@ -25,7 +25,7 @@ class StandaloneTests(unittest.TestCase):
 
     def test_invalid_json_uses_defaults(self):
         with patch.object(Path, 'read_text', return_value='{broken'):
-            self.assertEqual(config.load_config()['time_control'], '600+0')
+            self.assertEqual(config.load_config()['time_control'], '300+0')
 
     def test_one_time_control_definition(self):
         self.assertEqual(config.time_profile('60+1'), ('Bullet', .25))
@@ -96,12 +96,12 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.1.1', overlay)
+        self.assertIn('@version      11.1.2', overlay)
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
         self.assertIn('new MutationObserver', overlay)
-        self.assertIn('setTimeout(()=>tick(manual),250)', overlay)
+        self.assertIn('setTimeout(()=>tick(manual),120)', overlay)
         self.assertIn("request('allie',false,false)", overlay)
         self.assertIn("request('both',true,true)", overlay)
         self.assertNotIn("analysis_source:'stockfish'", overlay)
@@ -114,6 +114,8 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('clearOverlay();show({})', overlay)
         self.assertNotIn("const messages=(data.plan_messages||[]).slice(0,5)", overlay)
         self.assertIn('Math.min(10,rect.width/72)', overlay)
+        self.assertIn("(data.plan_messages||[]).slice(0,2)", overlay)
+        self.assertIn('button,[role="button"]', overlay)
         self.assertNotIn("querySelectorAll('*')", overlay)
 
     def test_arrow_roles_have_the_same_exact_colors_in_both_clients(self):

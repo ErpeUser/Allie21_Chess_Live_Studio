@@ -1,5 +1,12 @@
 # Änderungen
 
+## v11.1.2
+
+- Veraltete Pfeile werden bei nicht eindeutig erkannten Brettwechseln sofort ausgeblendet.
+- Chess.com-Zuglisten werden zusätzlich aus Buttons, Rollen und sortierten `data-ply`-Elementen gelesen.
+- Standardprofil ist 5-Minuten-Blitz (`300+0`); DOM-Änderungen werden nach 120 ms verarbeitet.
+- Das Overlay ist kleiner und zeigt nur die zwei wichtigsten Hinweise.
+
 ## v11.1.1
 
 - Browser-Overlay zeigt die aktuelle Allie-Top-2-Auswahl sofort und ergänzt Gegner- sowie Pre-Move-Pfeile anschließend.

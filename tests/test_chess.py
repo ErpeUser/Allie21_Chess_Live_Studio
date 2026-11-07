@@ -61,6 +61,24 @@ class ChessTests(unittest.TestCase):
         self.assertTrue(result['ready'])
         self.assertEqual(result['pgn'], 'e2e4 b8c6')
 
+    def test_browser_tracker_never_returns_old_history_for_unmatched_board(self):
+        pool = BrowserTrackerPool()
+        board = chess.Board()
+        pool.observe('web-stale', board.board_fen())
+        board.push_uci('e2e4')
+        current = pool.observe('web-stale', board.board_fen())
+        self.assertTrue(current['ready'])
+        self.assertEqual(current['pgn'], 'e2e4')
+
+        unrelated = chess.Board()
+        unrelated.push_uci('d2d4')
+        unrelated.push_uci('d7d5')
+        unrelated.push_uci('c1f4')
+        stale = pool.observe('web-stale', unrelated.board_fen())
+        self.assertFalse(stale['ready'])
+        self.assertEqual(stale['pgn'], '')
+        self.assertIn('Pfeile ausgeblendet', stale['message'])
+
     def test_browser_tracker_does_not_invent_a_late_start_history(self):
         pool = BrowserTrackerPool()
         board = chess.Board(); board.push_uci('f2f3'); board.push_uci('e7e5')

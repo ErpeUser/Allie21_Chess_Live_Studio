@@ -2,7 +2,7 @@
   "white_elo": 1950,
   "black_elo": 1950,
   "player_side": "white",
-  "time_control": "600+0",
+  "time_control": "300+0",
   "stockfish_threads": 2,
   "stockfish_hash_mb": 128,
   "stockfish_path": "",

@@ -18,7 +18,7 @@ TIME_CONTROL_RE = re.compile(r"\d{1,5}\+\d{1,4}")
 def parse_time_control(value: str) -> tuple[int, int]:
     value = str(value).strip()
     if not TIME_CONTROL_RE.fullmatch(value):
-        raise ValueError("Zeitkontrolle muss wie 600+0 aussehen (Sekunden+Inkrement)")
+        raise ValueError("Zeitkontrolle muss wie 300+0 aussehen (Sekunden+Inkrement)")
     base, increment = map(int, value.split("+"))
     if not 1 <= base <= 86_400 or not 0 <= increment <= 3_600:
         raise ValueError("Ungültige Zeitkontrolle")
@@ -44,7 +44,7 @@ class AppConfig(BaseModel):
     white_elo: int = Field(1950, ge=600, le=2800)
     black_elo: int = Field(1950, ge=600, le=2800)
     player_side: Literal["white", "black"] = "white"
-    time_control: str = "600+0"
+    time_control: str = "300+0"
     stockfish_threads: int = Field(2, ge=1, le=32)
     stockfish_hash_mb: int = Field(128, ge=16, le=4096)
     stockfish_path: str = Field("", max_length=1024)

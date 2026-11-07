@@ -53,8 +53,14 @@ class BrowserTrackerPool:
                 change = tracker.set_notation(notation, visible_fen, origin="sichtbares Brett")
             if change is None or not change.changed:
                 change = tracker.observe(visible_fen)
-            ready = bool(tracker.complete_history and tracker.turn_verified and tracker.board)
+            synced = bool(
+                tracker.board
+                and tracker.board.board_fen() == chess.Board(visible_fen).board_fen()
+            )
+            ready = bool(tracker.complete_history and tracker.turn_verified and synced)
             message = change.message
+            if tracker.complete_history and not synced:
+                message = "Brettwechsel noch nicht eindeutig erkannt; Pfeile ausgeblendet."
             if not ready and message == "Position unchanged":
                 message = "Brett erkannt – warte auf Startstellung oder eine lesbare Zugfolge."
             return {
