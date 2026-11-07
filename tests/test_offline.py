@@ -13,15 +13,26 @@ from vision import sanitize_ocr_history
 
 
 class StandaloneTests(unittest.TestCase):
-    def test_config_rejects_fake_model_and_invalid_fields(self):
-        raw = json.dumps({'model_id': 'stockfish-not-allie', 'white_elo': 300,
-                          'recognition_interval_ms': 10, 'stability_frames': 3})
+    def test_config_rejects_invalid_fields(self):
+        raw = json.dumps({'white_elo': 300, 'recognition_interval_ms': 10,
+                          'stability_frames': 3})
         with patch.object(Path, 'read_text', return_value=raw):
             loaded = config.load_config()
-        self.assertEqual(loaded['model_id'], 'yimingzhang/allie-2.1')
         self.assertEqual(loaded['white_elo'], 1950)
         self.assertEqual(loaded['recognition_interval_ms'], 750)
         self.assertEqual(loaded['stability_frames'], 2)
+
+    def test_model_identity_is_fixed_outside_user_config(self):
+        raw = json.dumps({'model_id': 'stockfish-not-allie',
+                          'model_revision': 'untrusted', 'white_elo': 2000})
+        with patch.object(Path, 'read_text', return_value=raw):
+            loaded = config.load_config()
+        self.assertEqual(loaded['white_elo'], 2000)
+        self.assertNotIn('model_id', loaded)
+        self.assertNotIn('model_revision', loaded)
+        self.assertEqual(config.MODEL_ID, 'yimingzhang/allie-2.1')
+        self.assertEqual(config.MODEL_REVISION,
+                         'd2545701ff5af46a51ac947911844f779b355a08')
 
     def test_invalid_json_uses_defaults(self):
         with patch.object(Path, 'read_text', return_value='{broken'):

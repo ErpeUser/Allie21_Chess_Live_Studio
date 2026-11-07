@@ -92,11 +92,6 @@
   for(const {node} of ordered){const move=cleanMove(node.getAttribute?.('data-san')||node.textContent,node);if(sanPattern.test(move)&&move!==compact.at(-1))compact.push(move)}
   return compact;
  }
- function startsAtMoveOne(root){
-  if(root.querySelector?.('[data-ply="0"],[data-ply="1"],[data-node="0-0"],[data-move-number="1"]'))return true;
-  const text=(root.textContent||'').trim().slice(0,240);
-  return /(?:^|\s)1\s*\./.test(text)||/^1(?=[a-hKQRBN♔♕♖♗♘♚♛♜♝♞])/.test(text);
- }
  function movesFromRoot(root){
   const preferred=root.querySelectorAll?.('[data-ply],[data-node],[data-san],button,[role="button"],.main-line-ply,.move,.node,.san,[class*="move-node"],[class*="move-text"],[class*="move-san"]')||[];
   let moves=movesFromNodes(preferred);

@@ -22,7 +22,7 @@ import allie_local_server as allie
 from allie_local_server import HOST, PORT, MODEL_NAME, analyse_position
 from browser_session import BrowserTrackerPool
 from chess_extras import find_stockfish
-from config import CONFIG, parse_time_control
+from config import CONFIG, MODEL_REVISION, parse_time_control
 from live_session import LiveSession, MAX_JPEG
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -194,7 +194,7 @@ def extension_installer():
 
 @app.get('/health')
 def health():
-    return {'alive': True, 'model': MODEL_NAME, 'model_revision': CONFIG['model_revision'],
+    return {'alive': True, 'model': MODEL_NAME, 'model_revision': MODEL_REVISION,
             'model_loaded': allie._model is not None,
             'stockfish_available': bool(find_stockfish())}
 
@@ -245,7 +245,7 @@ def browser_position(request: BrowserPositionRequest):
 def main():
     print('Allie 2.1 Live Studio v11 (nur lokal)')
     print('Viewer:', f'http://{HOST}:{PORT}/viewer')
-    print('Modellrevision:', CONFIG['model_revision'])
+    print('Modellrevision:', MODEL_REVISION)
     if os.environ.get('ALLIE_NO_PRELOAD') != '1':
         start_model_preload()
     if os.environ.get('ALLIE_NO_BROWSER') != '1':

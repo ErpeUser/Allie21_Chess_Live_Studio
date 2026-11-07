@@ -3,7 +3,7 @@ const vm = require('vm');
 
 const source = fs.readFileSync('browser/allie21_overlay.user.js', 'utf8');
 const start = source.indexOf('const sanPattern=');
-const end = source.indexOf('function startsAtMoveOne', start);
+const end = source.indexOf('function movesFromRoot', start);
 if (start < 0 || end < 0) throw new Error('move parser not found');
 
 function moveNode(text, ply, piece = '', dataSan = '', dataNode = '') {

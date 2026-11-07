@@ -8,11 +8,10 @@ from io import BytesIO
 from PIL import Image, UnidentifiedImageError
 from threading import Event, RLock, Thread
 import json
-import time
 
 from allie_local_server import analyse_position
 from chess_extras import make_brief
-from config import CONFIG, parse_time_control
+from config import CONFIG, MODEL_ID, parse_time_control
 from position_tracker import PositionTracker
 from vision import BoardVision
 
@@ -40,7 +39,7 @@ class LiveSession:
         self.state = {'running': running, 'message': ('Bereit – Fenster oder Tab freigeben' if running else 'Gestoppt'),
                       'detection': None, 'result': None, 'analysing': False,
                       'history_complete': False, 'turn_verified': False,
-                      'history_source': 'unknown', 'moves_seen': 0, 'model': CONFIG['model_id'],
+                      'history_source': 'unknown', 'moves_seen': 0, 'model': MODEL_ID,
                       'recommendations_enabled': recommendations_enabled}
 
     def get_state(self):

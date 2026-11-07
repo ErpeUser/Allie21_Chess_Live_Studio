@@ -10,7 +10,5 @@
   "recognition_max_width": 1280,
   "stability_frames": 2,
   "ocr_history": true,
-  "preview_opponent_replies": true,
-  "model_id": "yimingzhang/allie-2.1",
-  "model_revision": "d2545701ff5af46a51ac947911844f779b355a08"
+  "preview_opponent_replies": true
 }

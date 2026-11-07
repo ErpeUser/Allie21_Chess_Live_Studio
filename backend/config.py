@@ -53,9 +53,6 @@ class AppConfig(BaseModel):
     stability_frames: int = Field(2, ge=1, le=5)
     ocr_history: bool = True
     preview_opponent_replies: bool = True
-    model_id: Literal[MODEL_ID] = MODEL_ID
-    model_revision: Literal[MODEL_REVISION] = MODEL_REVISION
-
     @field_validator("time_control")
     @classmethod
     def valid_time_control(cls, value: str) -> str:

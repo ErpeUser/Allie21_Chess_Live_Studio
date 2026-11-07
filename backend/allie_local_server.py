@@ -17,7 +17,7 @@ from typing import Any
 import chess
 import chess.pgn
 from chess_extras import opening_for_position, opening_note, position_facts, stockfish_lines, describe_candidate, make_brief
-from config import CONFIG, MODEL_ID, MODEL_REVISION, time_profile
+from config import MODEL_ID, MODEL_REVISION, time_profile
 
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("ALLIE_PORT", "8765"))
