@@ -94,6 +94,13 @@ class ChessTests(unittest.TestCase):
         self.assertTrue(started['ready'])
         self.assertEqual(started['pgn'], 'e2e4')
 
+    def test_first_observation_after_server_restart_can_be_e4(self):
+        pool = BrowserTrackerPool()
+        game = chess.Board(); game.push_uci('e2e4')
+        started = pool.observe('web-restart', game.board_fen())
+        self.assertTrue(started['ready'])
+        self.assertEqual(started['pgn'], 'e2e4')
+
     def test_browser_tracker_never_returns_old_history_for_unmatched_board(self):
         pool = BrowserTrackerPool()
         board = chess.Board()

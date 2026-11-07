@@ -100,6 +100,23 @@ class PositionTracker:
         for color in (chess.WHITE, chess.BLACK):
             if len(observed.pieces(chess.PAWN, color)) > 8 or sum(piece.color == color for piece in observed.piece_map().values()) > 16:
                 return Change(False, "Unplausible piece counts; waiting for clearer video")
+
+        # Recognize a game already one move past the start, including after a
+        # server restart. A unique legal first ply is complete observed history.
+        fresh = chess.Board()
+        fresh_moves = self._candidates(fresh, placement, depth=1)
+        fresh_uci = {sequence[0].uci() for sequence in fresh_moves}
+        if len(fresh_uci) == 1 and (self.board is None or self.board.board_fen() != placement):
+            move = fresh_moves[0][0]
+            self.board = fresh
+            self.moves = []
+            self.complete_history = True
+            self.turn_verified = True
+            self.history_origin = "initial-position"
+            self.board.push(move)
+            self.moves.append(move.uci())
+            return Change(True, "Neue Partie erkannt: " + move.uci(), (move.uci(),))
+
         if self.board is None or (
             placement == chess.STARTING_BOARD_FEN
             and self.board.board_fen() != chess.STARTING_BOARD_FEN
@@ -121,20 +138,6 @@ class PositionTracker:
         # A bot-selection preview can be replaced by a real game between two
         # samples. If the new board is uniquely one legal ply from the standard
         # start, that single move is a complete observed history, not a guess.
-        fresh = chess.Board()
-        fresh_moves = self._candidates(fresh, placement, depth=1)
-        fresh_uci = {sequence[0].uci() for sequence in fresh_moves}
-        if len(fresh_uci) == 1:
-            move = fresh_moves[0][0]
-            self.board = fresh
-            self.moves = []
-            self.complete_history = True
-            self.turn_verified = True
-            self.history_origin = "initial-position"
-            self.board.push(move)
-            self.moves.append(move.uci())
-            return Change(True, "Neue Partie erkannt: " + move.uci(), (move.uci(),))
-
         # When initial side to move was inferred from video, try both sides for first transition.
         variants = [self.board.copy(stack=True)]
         if not self.complete_history and not self.moves:
