@@ -41,15 +41,25 @@ app.add_middleware(
 
 def _preload_model() -> None:
     try:
-        allie.get_model()
+        model = allie.get_model()
+        allie.analyse_position({
+            'pgn': '*',
+            'white_elo': CONFIG['white_elo'],
+            'black_elo': CONFIG['black_elo'],
+            'player_side': CONFIG['player_side'],
+            'time_control': CONFIG['time_control'],
+            'analysis_source': 'allie',
+            'preview': False,
+        }, model=model)
+        print('Allie-Modell und Startstellungscache sind bereit.', flush=True)
     except Exception as exc:
-        print('Allie-Modell konnte im Hintergrund nicht vorgeladen werden:', repr(exc))
+        print('Allie-Modell konnte im Hintergrund nicht vorgewärmt werden:', repr(exc))
 
 
 def start_model_preload() -> threading.Thread:
-    """Start loading Allie while the local UI is already becoming available."""
+    """Load Allie and warm its opening cache while the local UI starts."""
     worker = threading.Thread(
-        target=_preload_model, name='allie-model-loader', daemon=True
+        target=_preload_model, name='allie-model-warmup', daemon=True
     )
     worker.start()
     return worker

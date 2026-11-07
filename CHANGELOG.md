@@ -1,5 +1,12 @@
 # Änderungen
 
+## v11.1.7
+
+- Beim Serverstart läuft jetzt immer eine echte Allie-Startstellungsanalyse im Hintergrund; Modell und Allie-Cache sind dadurch vor dem ersten Zug warm.
+- Die Analyseblase zeigt sofort nach der Bretterkennung Eröffnungs- und Statushinweise, während Allie rechnet.
+- Die Orientierung wird nur noch am sichtbaren Brett und seinen Eltern bestimmt; versteckte Chess.com-Bot-Bretter können sie nicht mehr verfälschen.
+- Aktuelle Chess.com-Zugknoten mit `data-node="0-N"` werden in der richtigen Halbzugreihenfolge gelesen und gegen das sichtbare Brett validiert.
+
 ## v11.1.6
 
 - Die eindeutig erkannte Standardstartstellung wird sofort als vollständige Partie ab Zug 1 analysiert und kann nicht mehr an einer alten Chess.com-Bot-Sitzung hängen bleiben.

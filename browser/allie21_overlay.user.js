@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.1.6
+// @version      11.1.7
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -59,7 +59,7 @@
  const sessionSeed=location.hostname+location.pathname;
  let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
  const boardSessionId='web-'+(sessionHash>>>0).toString(36);
- const selectors=['wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
+ const selectors=['wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list [data-node]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list [data-node]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [data-node]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
  const sanPattern=/^(?:O-O(?:-O)?|0-0(?:-0)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][+#]?)$/;
  // Lichess changes its short custom tag names regularly. Locate the current
  // mainline structurally via the rewind-to-ply-0 control instead of tag names.
@@ -75,7 +75,7 @@
   let value=String(text||'').trim().replace(/^\d+\.(?:\.\.)?/,'').replace(/[!?]+/g,'').replace(/\s+/g,'');
   value=value.replace(/^[♔♕♖♗♘♚♛♜♝♞]/,piece=>figurines[piece]);
   if(/^[a-h][1-8](?:x[a-h][1-8])?(?:=[QRBN])?[+#]?$/.test(value)&&node){
-   const owner=node.closest?.('button,[data-ply],[data-san],move,l4,.main-line-ply,.move')||node;
+   const owner=node.closest?.('button,[data-ply],[data-node],[data-san],move,l4,.main-line-ply,.move,.node')||node;
    const descendants=Array.from(owner.querySelectorAll?.('[data-figurine],[data-piece],[class*="knight"],[class*="bishop"],[class*="rook"],[class*="queen"],[class*="king"]')||[]).slice(0,5);
    const signature=[owner,node,...descendants].map(n=>`${n.getAttribute?.('data-figurine')||''} ${n.getAttribute?.('data-piece')||''} ${String(n.className||'')}`).join(' ').toLowerCase();
    const tokens=signature.split(/\s+/).map(part=>part.replace(/[^a-z]/g,'')).filter(Boolean);
@@ -86,19 +86,19 @@
   return value;
  }
  function movesFromNodes(nodes){
-  const ordered=Array.from(nodes).slice(0,1100).map((node,index)=>{const raw=node.getAttribute?.('data-ply');return{node,index,ply:raw==null||raw===''?NaN:Number(raw)}});
+  const ordered=Array.from(nodes).slice(0,1100).map((node,index)=>{const raw=node.getAttribute?.('data-ply'),dataNode=node.getAttribute?.('data-node'),match=/^0-(\d+)$/.exec(dataNode||'');const ply=raw==null||raw===''?(match?Number(match[1]):NaN):Number(raw);return{node,index,ply}});
   if(ordered.some(item=>Number.isFinite(item.ply)))ordered.sort((a,b)=>(Number.isFinite(a.ply)?a.ply:1e9)-(Number.isFinite(b.ply)?b.ply:1e9)||a.index-b.index);
   const compact=[];
   for(const {node} of ordered){const move=cleanMove(node.getAttribute?.('data-san')||node.textContent,node);if(sanPattern.test(move)&&move!==compact.at(-1))compact.push(move)}
   return compact;
  }
  function startsAtMoveOne(root){
-  if(root.querySelector?.('[data-ply="0"],[data-ply="1"],[data-move-number="1"]'))return true;
+  if(root.querySelector?.('[data-ply="0"],[data-ply="1"],[data-node="0-0"],[data-move-number="1"]'))return true;
   const text=(root.textContent||'').trim().slice(0,240);
   return /(?:^|\s)1\s*\./.test(text)||/^1(?=[a-hKQRBN♔♕♖♗♘♚♛♜♝♞])/.test(text);
  }
  function movesFromRoot(root){
-  const preferred=root.querySelectorAll?.('[data-ply],[data-san],button,[role="button"],.main-line-ply,.move,.node,.san,[class*="move-node"],[class*="move-text"],[class*="move-san"]')||[];
+  const preferred=root.querySelectorAll?.('[data-ply],[data-node],[data-san],button,[role="button"],.main-line-ply,.move,.node,.san,[class*="move-node"],[class*="move-text"],[class*="move-san"]')||[];
   let moves=movesFromNodes(preferred);
   const leaves=Array.from(root.querySelectorAll?.('span,div,button,move,l4')||[]).filter(n=>n.children.length===0&&cleanMove(n.textContent,n));
   const leafMoves=movesFromNodes(leaves);if(leafMoves.length>moves.length)moves=leafMoves;
@@ -152,7 +152,10 @@
   if(attribute==='black')return 'black';if(attribute==='white')return 'white';
   const explicit=(board?.parentElement?.className||'')+' '+(board?.className||'');
   if(/\b(flipped|orientation-black|black-bottom|board-layout-flipped)\b/i.test(explicit)&&!/orientation-white/i.test(explicit))return 'black';
-  if(document.querySelector('.orientation-black,.flipped.chess-board,.board.flipped,.board-layout-flipped'))return 'black';
+  const scoped=board?.closest?.('.orientation-black,.orientation-white,.board-layout-flipped,.chess-board.flipped,.board.flipped,cg-wrap');
+  const scopedClass=String(scoped?.className||'');
+  if(/\b(orientation-black|board-layout-flipped|flipped)\b/i.test(scopedClass)&&!/orientation-white/i.test(scopedClass))return 'black';
+  if(/\borientation-white\b/i.test(scopedClass))return 'white';
   const white=[],black=[];for(const piece of pieces||[]){const code=pieceCode(piece),r=piece.getBoundingClientRect();if(code[0]==='w')white.push(r.top+r.height/2);if(code[0]==='b')black.push(r.top+r.height/2)}
   if(white.length&&black.length){const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;return avg(white)>avg(black)?'white':'black'}
   return 'white';
@@ -269,6 +272,10 @@
   if(snapshot?.placement!==START_PLACEMENT)return null;
   return{pgn:'*',fen:'',orientation:snapshot.orientation,placement:snapshot.placement,message:'Startstellung erkannt - Analyse startet.',ready:true,fallback_ready:false,moves_seen:0};
  }
+ function pendingInsights(history){
+  if(history?.placement===START_PLACEMENT)return{plan_messages:['Startstellung erkannt: Allie berechnet sofort die menschlich wahrscheinlichsten Eröffnungszüge.','Eröffnungsphase: Zentrum kontrollieren, Leichtfiguren entwickeln und den König sicher rochieren.']};
+  return{plan_messages:['Stellung erkannt: Allie analysiert den aktuellen Zug.']};
+ }
  async function historyFromVisibleBoard(){
   const snapshot=readBoardSnapshot();if(!snapshot)return{pgn:readHistory(),orientation:cfg.orientation==='auto'?'white':cfg.orientation,placement:''};
   const initial=startPositionHistory(snapshot);
@@ -329,7 +336,7 @@
     const playerSide=playerSideFor(history.orientation);
     const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide]);
     if(basis!==lastPGN||wanted!==analysisKey){
-     currentResult=null;clearOverlay();show({});
+     currentResult=null;clearOverlay();show(pendingInsights(history));
      if(pending)cancelAnalysis();
      if(Date.now()>=retryAfter){lastPGN=basis;analyze(pgn,history.placement,fen,playerSide)}
     }

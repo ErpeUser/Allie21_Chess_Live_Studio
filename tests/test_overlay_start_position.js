@@ -24,4 +24,9 @@ const changed = context.startPositionHistory({
 });
 if (changed !== null) throw new Error('non-start position was incorrectly bypassed');
 
+const pending = context.pendingInsights(standard);
+if (!pending || pending.plan_messages.length < 2 || !pending.plan_messages[0].includes('Startstellung')) {
+  throw new Error(`start analysis did not get immediate content: ${JSON.stringify(pending)}`);
+}
+
 console.log('overlay start-position tests passed');

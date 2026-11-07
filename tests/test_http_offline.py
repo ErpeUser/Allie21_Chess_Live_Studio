@@ -99,12 +99,23 @@ class HTTPBoundaryTests(unittest.TestCase):
         client.close()
         return status, data
 
-    def test_model_preload_runs_once_in_background(self):
-        with patch('live_server.allie.get_model') as load_model:
+    def test_model_preload_warms_start_position_in_background(self):
+        fake_model = object()
+        with (patch('live_server.allie.get_model', return_value=fake_model) as load_model,
+              patch('live_server.allie.analyse_position') as analyse):
             worker = app.start_model_preload()
             worker.join(1)
         self.assertFalse(worker.is_alive())
         load_model.assert_called_once_with()
+        analyse.assert_called_once_with({
+            'pgn': '*',
+            'white_elo': app.CONFIG['white_elo'],
+            'black_elo': app.CONFIG['black_elo'],
+            'player_side': app.CONFIG['player_side'],
+            'time_control': app.CONFIG['time_control'],
+            'analysis_source': 'allie',
+            'preview': False,
+        }, model=fake_model)
 
     def test_viewer_has_no_access_key_ui_or_placeholder(self):
         status, data = self.call('GET', '/viewer')
@@ -161,7 +172,7 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
-        self.assertIn(b'11.1.6', page)
+        self.assertIn(b'11.1.7', page)
         self.assertEqual(self.call('GET', '/install/allie21_overlay.user.js')[0], 404)
 
 

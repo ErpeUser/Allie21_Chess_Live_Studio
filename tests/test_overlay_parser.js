@@ -6,7 +6,7 @@ const start = source.indexOf('const sanPattern=');
 const end = source.indexOf('function startsAtMoveOne', start);
 if (start < 0 || end < 0) throw new Error('move parser not found');
 
-function moveNode(text, ply, piece = '', dataSan = '') {
+function moveNode(text, ply, piece = '', dataSan = '', dataNode = '') {
   const icon = {
     className: piece ? `icon-font-chess ${piece}` : '',
     getAttribute() { return ''; },
@@ -22,6 +22,7 @@ function moveNode(text, ply, piece = '', dataSan = '') {
     getAttribute(name) {
       if (name === 'data-ply') return String(ply);
       if (name === 'data-san') return dataSan;
+      if (name === 'data-node') return dataNode;
       return '';
     },
     querySelectorAll() { return []; },
@@ -54,4 +55,11 @@ context.nodes = [moveNode('♘f3', 0), moveNode('♞c6', 1)];
 vm.runInNewContext('result=movesFromNodes(nodes);', context);
 if (JSON.stringify(Array.from(context.result)) !== JSON.stringify(['Nf3', 'Nc6'])) {
   throw new Error('Lichess figurine SAN must be normalized');
+}
+
+context.result = [];
+context.nodes = [moveNode('c5', '', '', '', '0-1'), moveNode('e4', '', '', '', '0-0')];
+vm.runInNewContext('result=movesFromNodes(nodes);', context);
+if (JSON.stringify(Array.from(context.result)) !== JSON.stringify(['e4', 'c5'])) {
+  throw new Error('Chess.com data-node ply order must be honored');
 }
