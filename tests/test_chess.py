@@ -140,6 +140,19 @@ class ChessTests(unittest.TestCase):
         self.assertTrue(result['ready'])
         self.assertEqual(result['pgn'], 'f2f3 e7e5')
 
+    def test_browser_tracker_chooses_visible_history_that_matches_board(self):
+        pool = BrowserTrackerPool()
+        board = chess.Board()
+        for uci in ('e2e4', 'd7d5', 'e4d5', 'g8f6', 'd2d4', 'e7e5',
+                    'f2f3', 'e5e4', 'g2g3', 'b8c6'):
+            board.push_uci(uci)
+        result = pool.observe(
+            'web-candidates', board.board_fen(), '',
+            ['1. e4 e5', '1. e4 d5 2. exd5 Nf6 3. d4 e5 4. f3 e4 5. g3 Nc6'],
+        )
+        self.assertTrue(result['ready'])
+        self.assertEqual(result['moves_seen'], 10)
+
     def test_new_shorter_game_replaces_previous_history_on_same_page(self):
         pool = BrowserTrackerPool()
         previous = chess.Board()

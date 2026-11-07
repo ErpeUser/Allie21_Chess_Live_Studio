@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Allie 2.1 Live Overlay",
-  "version": "11.2.0.0",
-  "version_name": "11.2.0",
+  "version": "11.2.1.0",
+  "version_name": "11.2.1",
   "description": "Lokale Allie-Zughinweise für Chess.com und Lichess.",
   "host_permissions": ["http://127.0.0.1:8765/*"],
   "content_scripts": [

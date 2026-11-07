@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.0
+// @version      11.2.1
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -105,23 +105,24 @@
   const roots=Array.from(document.querySelectorAll(rootSelectors.join(',')));
   return Array.from(new Set(roots)).filter(root=>!root.closest('#allie21-auto-study-root'));
  }
- function readHistory(){
-  let best=[];
+ function historyText(moves){return moves.map((m,i)=>i%2===0?`${1+i/2}. ${m}`:m).join(' ')}
+ function readHistoryCandidates(){
+  const found=[],add=moves=>{if(moves.length)found.push(moves)};
   for(const sel of selectors){
-    let arr=movesFromNodes(document.querySelectorAll(sel));
-    if(arr.length>best.length)best=arr;
+    add(movesFromNodes(document.querySelectorAll(sel)));
   }
   const structural=structuralMoveRoot();
-  if(structural){const arr=movesFromNodes(structural.children);if(arr.length>best.length)best=arr}
+  if(structural)add(movesFromNodes(structural.children));
   for(const root of candidateMoveRoots()){
-   const arr=movesFromRoot(root);if(arr.length>best.length)best=arr;
+   add(movesFromRoot(root));
   }
-  if(!best.length)return isStandardStartPosition()?'*':'';
   // Python accepts this candidate only when every move is legal from the
   // standard start and the final placement equals the visible board. A
   // virtualised fragment therefore cannot create a false history.
-  return best.map((m,i)=>i%2===0?`${1+i/2}. ${m}`:m).join(' ');
+  const candidates=Array.from(new Set(found.sort((a,b)=>b.length-a.length).map(historyText))).slice(0,16);
+  return candidates.length?candidates:isStandardStartPosition()?['*']:[];
  }
+ function readHistory(){return readHistoryCandidates()[0]||''}
  function pieceCode(node){
   const attrs=['data-piece','data-figurine','data-color','data-role','aria-label','alt','src'].map(name=>node.getAttribute?.(name)||'').join(' ');
   const style=(node.getAttribute?.('style')||'')+' '+(getComputedStyle(node).backgroundImage||'');
@@ -276,8 +277,8 @@
   const initial=startPositionHistory(snapshot);
   if(initial){lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';return initial}
   if(snapshot.placement===lastPlacement&&trackedPGN)return{pgn:trackedPGN,fen:'',orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:false};
-  const expected=snapshot.placement,fallback=readHistory();
-  const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback},12000);
+  const expected=snapshot.placement,candidates=readHistoryCandidates(),fallback=candidates[0]||'';
+  const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback,pgn_candidates:candidates},12000);
   const latest=readBoardSnapshot();if(!latest||latest.placement!==expected)return{pgn:'',orientation:snapshot.orientation,placement:expected,stale:true};
   lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
   return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,fallback_ready:state.fallback_ready,moves_seen:state.moves_seen};

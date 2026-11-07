@@ -1,5 +1,10 @@
 # Änderungen
 
+## v11.2.1
+
+- Chess.com sendet jetzt mehrere erkannte Zuglistenvarianten; Python wählt ausschließlich die legale Variante, die exakt zur sichtbaren Stellung passt.
+- Dadurch blockiert eine längere, aber fehlerhafte DOM-Variante nicht mehr die vollständige Allie-Historie.
+
 ## v11.2.0
 
 - Viewer und Browser-Overlay ruhiger, klarer und kompakter gestaltet; Texte und Statusmeldungen vereinfacht.

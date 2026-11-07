@@ -44,13 +44,20 @@ class BrowserTrackerPool:
             raise ValueError("Beide Könige müssen sichtbar sein")
         return board.fen()
 
-    def observe(self, session_id: str, placement: str, notation: str = "") -> dict:
+    def observe(self, session_id: str, placement: str, notation: str = "",
+                notations: list[str] | None = None) -> dict:
         visible_fen = self._visible_fen(placement)
         with self.lock:
             tracker = self._tracker(session_id)
             change = None
-            if notation and notation != "*":
-                change = tracker.set_notation(notation, visible_fen, origin="sichtbares Brett")
+            candidates = dict.fromkeys([notation, *(notations or [])])
+            for candidate in candidates:
+                if not candidate or candidate == "*":
+                    continue
+                attempt = tracker.set_notation(candidate, visible_fen, origin="sichtbares Brett")
+                change = attempt
+                if attempt.changed:
+                    break
             if change is None or not change.changed:
                 change = tracker.observe(visible_fen)
             synced = bool(

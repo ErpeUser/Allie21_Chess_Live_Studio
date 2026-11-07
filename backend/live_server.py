@@ -106,6 +106,7 @@ class BrowserPositionRequest(InputModel):
     session_id: str = Field(min_length=1, max_length=180)
     placement: str = Field(min_length=1, max_length=100)
     pgn: str = Field('', max_length=40_000)
+    pgn_candidates: list[str] = Field(default_factory=list, max_length=16)
 
 
 def error(status: int, message: str) -> JSONResponse:
@@ -238,7 +239,7 @@ def recommendations(request: RecommendationRequest):
 @app.post('/api/browser-position')
 def browser_position(request: BrowserPositionRequest):
     return run(lambda: BROWSER_TRACKERS.observe(
-        request.session_id, request.placement, request.pgn
+        request.session_id, request.placement, request.pgn, request.pgn_candidates
     ))
 
 

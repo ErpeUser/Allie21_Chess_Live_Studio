@@ -42,9 +42,9 @@ class FakeSession:
 
 
 class FakeBrowserTrackerPool:
-    def observe(self, session_id, placement, pgn=''):
+    def observe(self, session_id, placement, pgn='', pgn_candidates=None):
         return {'ready': True, 'pgn': pgn or '*', 'session_id': session_id,
-                'placement': placement}
+                'placement': placement, 'candidates': pgn_candidates or []}
 
 
 class HTTPBoundaryTests(unittest.TestCase):
@@ -172,7 +172,7 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
-        self.assertIn(b'11.2.0', page)
+        self.assertIn(b'11.2.1', page)
         self.assertEqual(self.call('GET', '/install/allie21_overlay.user.js')[0], 404)
 
 
