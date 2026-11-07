@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -30,6 +31,13 @@ MAX_JSON = 64 * 1024
 SESSION = LiveSession()
 BROWSER_TRACKERS = BrowserTrackerPool()
 app = FastAPI(title="Allie21 Live Studio", docs_url=None, redoc_url=None, openapi_url=None)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"^https://(?:[a-z0-9-]+\.)?chess\.com$|^https://lichess\.org$",
+    allow_methods=['POST'],
+    allow_headers=['Content-Type', 'X-Allie-Overlay'],
+    max_age=3600,
+)
 
 
 def _preload_model() -> None:
@@ -116,8 +124,16 @@ async def local_boundary(request: Request, call_next):
     if origin:
         parsed = urlparse(origin)
         local = parsed.scheme in {'http', 'https'} and parsed.hostname in {'127.0.0.1', 'localhost'}
-        overlay = (parsed.scheme in {'http', 'https', 'chrome-extension', 'extension'} and parsed.hostname
-                   and request.headers.get('x-allie-overlay') == '1')
+        website = parsed.scheme == 'https' and (
+            parsed.hostname == 'lichess.org' or parsed.hostname == 'chess.com'
+            or bool(parsed.hostname and parsed.hostname.endswith('.chess.com'))
+        )
+        extension = parsed.scheme in {'chrome-extension', 'extension'} and bool(parsed.hostname)
+        preflight = (request.method == 'OPTIONS'
+                     and 'x-allie-overlay' in request.headers.get('access-control-request-headers', '').lower())
+        overlay = (website or extension) and (
+            request.headers.get('x-allie-overlay') == '1' or preflight
+        )
         if not (local or overlay):
             return error(403, 'Local host or origin invalid')
     if request.method == 'POST':

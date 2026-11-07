@@ -78,7 +78,7 @@ class HTTPBoundaryTests(unittest.TestCase):
         (app.SESSION, app.BROWSER_TRACKERS, app.analyse_position,
          app.find_stockfish) = cls.originals
 
-    def call(self, method, path, origin='', host=None, payload=None, overlay=False):
+    def call(self, method, path, origin='', host=None, payload=None, overlay=False, preflight=False):
         client = HTTPConnection('127.0.0.1', self.port, timeout=5)
         headers = {}
         if origin:
@@ -89,6 +89,9 @@ class HTTPBoundaryTests(unittest.TestCase):
             headers['Content-Type'] = 'application/json'
         if overlay:
             headers['X-Allie-Overlay'] = '1'
+        if preflight:
+            headers['Access-Control-Request-Method'] = 'POST'
+            headers['Access-Control-Request-Headers'] = 'content-type,x-allie-overlay'
         body = json.dumps(payload).encode() if payload is not None else None
         client.request(method, path, body=body, headers=headers)
         response = client.getresponse()
@@ -129,10 +132,17 @@ class HTTPBoundaryTests(unittest.TestCase):
         payload = {'session_id': 'web-test', 'placement': '8/8/8/3k4/8/8/4K3/8', 'pgn': '*'}
         self.assertEqual(self.call('POST', '/api/browser-position',
                                    origin='https://chess.example', payload=payload)[0], 403)
+        self.assertEqual(self.call('POST', '/api/browser-position',
+                                   origin='https://chess.example', overlay=True, payload=payload)[0], 403)
         status, data = self.call('POST', '/api/browser-position',
-                                 origin='https://chess.example', overlay=True, payload=payload)
+                                 origin='https://www.chess.com', overlay=True, payload=payload)
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(data)['session_id'], 'web-test')
+
+    def test_supported_site_cors_preflight(self):
+        status, data = self.call('OPTIONS', '/api/browser-position',
+                                 origin='https://www.chess.com', preflight=True)
+        self.assertEqual(status, 200, data)
 
     def test_start_stop_and_analyze_are_separate(self):
         self.assertEqual(self.call('POST', '/api/start', payload={})[0], 200)
