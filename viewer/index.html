@@ -114,7 +114,7 @@ details{border-top:1px solid #22374d;margin-top:13px;padding-top:3px}summary{cur
 const SETTINGS=__ALLIE_CONFIG__;
 const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
 const $=id=>document.getElementById(id);
-$('install').href='/install/allie21_overlay.user.js';
+$('install').href='/install';
 $('white').value=SETTINGS.white_elo;$('black').value=SETTINGS.black_elo;$('tc').value=SETTINGS.time_control;$('playerSide').value=SETTINGS.player_side;$('ocr').checked=SETTINGS.ocr_history;
 try{$('recommendationsToggle').checked=localStorage.getItem('allie-live-recommendations')!=='off'}catch{}
 let stream=null,timer=null,busyId=null,lastState=null,tickId=0;

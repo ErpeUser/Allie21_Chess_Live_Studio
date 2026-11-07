@@ -2,8 +2,10 @@
 """FastAPI boundary for the local-only studio."""
 from __future__ import annotations
 
+import html
 import json
 import os
+import re
 import threading
 import webbrowser
 from pathlib import Path
@@ -158,6 +160,28 @@ def viewer():
 def userscript():
     body = (ROOT / 'browser' / 'allie21_overlay.user.js').read_bytes()
     return Response(body, media_type='text/javascript; charset=utf-8')
+
+
+@app.get('/install', response_class=HTMLResponse)
+def userscript_installer():
+    """Local fallback when Chromium does not hand .user.js to Tampermonkey."""
+    source = (ROOT / 'browser' / 'allie21_overlay.user.js').read_text(encoding='utf-8')
+    match = re.search(r'^// @version\s+(.+)$', source, re.MULTILINE)
+    version = html.escape(match.group(1).strip() if match else 'aktuell')
+    return f'''<!doctype html><html lang="de"><meta charset="utf-8"><title>Allie Overlay installieren</title>
+<style>body{{font:16px system-ui;background:#071522;color:#edf7ff;max-width:720px;margin:50px auto;padding:24px}}.card{{background:#10283d;border:1px solid #43657e;border-radius:14px;padding:24px}}a{{display:inline-block;margin:6px 6px 6px 0;padding:11px 15px;border-radius:8px;background:#16a777;color:white;font-weight:700;text-decoration:none}}code{{background:#06101a;padding:3px 6px;border-radius:4px}}li{{margin:10px 0}}</style>
+<div class="card"><h1>Allie Overlay {version}</h1><p>Wenn Tampermonkey nur seine leere Zwischenseite zeigt, fehlt in Edge die Freigabe für Userscripts.</p>
+<ol><li>Öffne <code>edge://extensions</code>.</li><li>Öffne <b>Tampermonkey → Details</b>.</li><li>Aktiviere <b>Benutzerskripts zulassen / Allow user scripts</b>. Falls der Schalter fehlt: oben den <b>Entwicklermodus</b> einschalten.</li><li>Klicke danach hier:</li></ol>
+<a href="/install/allie21_overlay.user.js">Overlay in Tampermonkey öffnen</a><a href="/install/allie21_overlay.download.user.js">Datei herunterladen</a>
+<p>Nach der Installation Chess.com oder Lichess einmal neu laden.</p></div></html>'''
+
+
+@app.get('/install/allie21_overlay.download.user.js')
+def userscript_download():
+    body = (ROOT / 'browser' / 'allie21_overlay.user.js').read_bytes()
+    return Response(body, media_type='application/javascript; charset=utf-8', headers={
+        'Content-Disposition': 'attachment; filename="allie21_overlay.user.js"',
+    })
 
 
 @app.get('/health')
