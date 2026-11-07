@@ -100,8 +100,9 @@ class PositionTracker:
         for color in (chess.WHITE, chess.BLACK):
             if len(observed.pieces(chess.PAWN, color)) > 8 or sum(piece.color == color for piece in observed.piece_map().values()) > 16:
                 return Change(False, "Unplausible piece counts; waiting for clearer video")
-        if self.board is None or placement == chess.STARTING_BOARD_FEN and (
-            self.board.board_fen() != chess.STARTING_BOARD_FEN and len(self.moves) > 0
+        if self.board is None or (
+            placement == chess.STARTING_BOARD_FEN
+            and self.board.board_fen() != chess.STARTING_BOARD_FEN
         ):
             self.board = chess.Board() if placement == chess.STARTING_BOARD_FEN else observed
             if placement != chess.STARTING_BOARD_FEN:
@@ -116,6 +117,23 @@ class PositionTracker:
             return Change(True, "Initial board acquired" if self.complete_history else "Started in midgame: unknown prior history")
         if self.board.board_fen() == placement:
             return Change(False, "Position unchanged")
+
+        # A bot-selection preview can be replaced by a real game between two
+        # samples. If the new board is uniquely one legal ply from the standard
+        # start, that single move is a complete observed history, not a guess.
+        fresh = chess.Board()
+        fresh_moves = self._candidates(fresh, placement, depth=1)
+        fresh_uci = {sequence[0].uci() for sequence in fresh_moves}
+        if len(fresh_uci) == 1:
+            move = fresh_moves[0][0]
+            self.board = fresh
+            self.moves = []
+            self.complete_history = True
+            self.turn_verified = True
+            self.history_origin = "initial-position"
+            self.board.push(move)
+            self.moves.append(move.uci())
+            return Change(True, "Neue Partie erkannt: " + move.uci(), (move.uci(),))
 
         # When initial side to move was inferred from video, try both sides for first transition.
         variants = [self.board.copy(stack=True)]
@@ -137,8 +155,8 @@ class PositionTracker:
         # Symmetrical positions can have multiple equally plausible sequences; do not fabricate.
         unique = {tuple(m.uci() for m in seq) for _, seq in shortest}
         if len(unique) != 1:
-            self.last_error = ("Ambiguous transition" if matches else "No legal transition")
-            return Change(False, self.last_error + "; waiting for next stable frame")
+            self.last_error = ("Mehrdeutiger Stellungswechsel" if matches else "Kein legaler Stellungswechsel")
+            return Change(False, self.last_error + "; warte auf das nächste stabile Brettbild")
         base, seq = shortest[0]
         self.board = base.copy(stack=True)
         self.turn_verified = True

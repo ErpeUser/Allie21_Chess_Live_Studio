@@ -83,6 +83,17 @@ class ChessTests(unittest.TestCase):
         self.assertTrue(result['ready'])
         self.assertEqual(result['pgn'], 'e2e4 b8c6')
 
+    def test_bot_preview_is_replaced_by_new_game_first_move(self):
+        pool = BrowserTrackerPool()
+        preview = chess.Board()
+        for uci in ('d2d4', 'd7d5', 'c1f4'):
+            preview.push_uci(uci)
+        self.assertFalse(pool.observe('web-bot', preview.board_fen())['ready'])
+        game = chess.Board(); game.push_uci('e2e4')
+        started = pool.observe('web-bot', game.board_fen())
+        self.assertTrue(started['ready'])
+        self.assertEqual(started['pgn'], 'e2e4')
+
     def test_browser_tracker_never_returns_old_history_for_unmatched_board(self):
         pool = BrowserTrackerPool()
         board = chess.Board()
