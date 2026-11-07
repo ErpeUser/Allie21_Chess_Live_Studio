@@ -170,10 +170,10 @@ def userscript_installer():
     version = html.escape(match.group(1).strip() if match else 'aktuell')
     return f'''<!doctype html><html lang="de"><meta charset="utf-8"><title>Allie Overlay installieren</title>
 <style>body{{font:16px system-ui;background:#071522;color:#edf7ff;max-width:720px;margin:50px auto;padding:24px}}.card{{background:#10283d;border:1px solid #43657e;border-radius:14px;padding:24px}}a{{display:inline-block;margin:6px 6px 6px 0;padding:11px 15px;border-radius:8px;background:#16a777;color:white;font-weight:700;text-decoration:none}}code{{background:#06101a;padding:3px 6px;border-radius:4px}}li{{margin:10px 0}}</style>
-<div class="card"><h1>Allie Overlay {version}</h1><p>Wenn Tampermonkey nur seine leere Zwischenseite zeigt, verwende die fertige direkte Edge-Erweiterung im Projektordner <code>browser</code>.</p>
-<ol><li>Öffne <code>edge://extensions</code>.</li><li>Öffne <b>Tampermonkey → Details</b>.</li><li>Aktiviere <b>Benutzerskripts zulassen / Allow user scripts</b>. Falls der Schalter fehlt: oben den <b>Entwicklermodus</b> einschalten.</li><li>Klicke danach hier:</li></ol>
-<a href="/install/allie21_overlay.user.js">Overlay in Tampermonkey öffnen</a><a href="/install/allie21_overlay.download.user.js">Datei herunterladen</a>
-<p>Nach der Installation Chess.com oder Lichess einmal neu laden.</p></div></html>'''
+<div class="card"><h1>Allie Overlay {version}</h1><p><b>Tampermonkey wird nicht benötigt.</b> Verwende die fertige direkte Edge-Erweiterung im Projektordner <code>browser</code>.</p>
+<ol><li>Doppelklicke im Projekt auf <code>EDGE_OVERLAY_INSTALLIEREN.bat</code>.</li><li>Schalte in <code>edge://extensions</code> den <b>Entwicklermodus</b> ein.</li><li>Klicke <b>Entpackte Erweiterung laden</b> und wähle den automatisch geöffneten Ordner <code>browser</code>.</li><li>Lade Chess.com oder Lichess einmal neu.</li></ol>
+<p>Optionaler Altweg: <a href="/install/allie21_overlay.user.js">Userscript öffnen</a><a href="/install/allie21_overlay.download.user.js">Userscript herunterladen</a></p>
+</div></html>'''
 
 
 @app.get('/install/allie21_overlay.download.user.js')
