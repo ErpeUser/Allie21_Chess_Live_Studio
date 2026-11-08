@@ -1,5 +1,9 @@
 # Änderungen
 
+## v11.2.12
+
+- Standardrepertoire hinterlegt: Weiß Wiener Gambit mit Dänischem Gambit als Alternative; Schwarz Budapester Gambit mit Aljechin-Verteidigung als Alternative. Die Präferenz bleibt legal, weich und Allie-first.
+
 ## v11.2.11
 
 - Pfeile verwenden jetzt dieselbe figurenbasierte Brettorientierung wie die Stellungserkennung; dadurch werden schwarze Bretter nicht mehr gespiegelt gezeichnet.

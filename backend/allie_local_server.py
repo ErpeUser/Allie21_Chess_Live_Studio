@@ -16,7 +16,8 @@ from typing import Any
 
 import chess
 import chess.pgn
-from chess_extras import opening_for_position, opening_note, position_facts, stockfish_lines, describe_candidate, make_brief
+from chess_extras import (opening_for_position, opening_note, position_facts, stockfish_lines,
+                          describe_candidate, make_brief, repertoire_move_for, standard_repertoire)
 from config import MODEL_ID, MODEL_REVISION, time_profile
 
 HOST = "127.0.0.1"
@@ -226,6 +227,14 @@ def risk_weighted_premove(branches: list[tuple[float, list[dict[str, Any]]]]) ->
 def make_plan_messages(output: dict[str, Any]) -> list[str]:
     """Add information that is not already obvious from arrows and labels."""
     messages: list[str] = []
+    repertoire = output.get('repertoire') or {}
+    if output.get('move_count', 0) <= 2 and repertoire.get('primary'):
+        messages.append(
+            f"Standardrepertoire: {repertoire['primary']} · Alternative: {repertoire['alternative']}."
+        )
+        if repertoire.get('expected_move'):
+            messages.append('Allie-Kandidat aus dem Repertoire: ' +
+                            str(repertoire.get('expected_san') or repertoire['expected_move']) + '.')
     opening = output.get('opening') or {}
     if opening.get('name'):
         eco = f" ({opening['eco']})" if opening.get('eco') else ''
@@ -337,6 +346,15 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     if player_side not in ('white', 'black'):
         player_side = 'white' if board.turn else 'black'
     player_to_move = player_side == ('white' if board.turn else 'black')
+    repertoire = standard_repertoire(player_side)
+    repertoire['expected_move'] = repertoire_move_for(moves, player_side)
+    if repertoire['expected_move']:
+        try:
+            expected = chess.Move.from_uci(repertoire['expected_move'])
+            if expected in board.legal_moves:
+                repertoire['expected_san'] = board.san(expected)
+        except ValueError:
+            pass
     if selection in ('allie', 'both'):
         if fen_only:
             allie_skip_reason = ('Allie 2.1 benötigt die Zugfolge ab Zug 1 und kann nur '
@@ -353,6 +371,13 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                     candidate_moves = [describe_move(board, uci, prob) for uci, prob in choices]
                     if player_to_move:
                         candidate_moves = rank_allie_candidates(board, candidate_moves, play_style)
+                        expected = repertoire.get('expected_move')
+                        if expected:
+                            match = next((move for move in candidate_moves if move['uci'] == expected), None)
+                            if match and (not candidate_moves or
+                                          float(candidate_moves[0].get('probability', 0.0)) -
+                                          float(match.get('probability', 0.0)) <= .18):
+                                candidate_moves = [match] + [move for move in candidate_moves if move is not match]
                     wdl = [round(float(x), 5) for x in result['wdl']] if result.get('wdl') is not None else None
                     if result.get('think_time') is not None:
                         expected_think_time = round(float(result['think_time']), 2)
@@ -465,6 +490,7 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
         'fen_only': fen_only, 'opening': opening, 'position_facts': position_facts(board),
         'moves': candidate_moves, 'wdl': wdl, 'expected_think_time_s': expected_think_time,
         'player_side': player_side, 'player_to_move': player_to_move,
+        'repertoire': repertoire,
         'my_moves': my_moves, 'opponent_moves': opponent_moves, 'premove': premove,
         'tactical_warnings': warnings,
         'stockfish': sf,

@@ -217,10 +217,10 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
-        self.assertIn(b'11.2.11', page)
+        self.assertIn(b'11.2.12', page)
         status, script = self.call('GET', '/install/allie21_overlay.user.js')
         self.assertEqual(status, 200)
-        self.assertIn(b'@version      11.2.11', script)
+        self.assertIn(b'@version      11.2.12', script)
 
 
 if __name__ == '__main__':

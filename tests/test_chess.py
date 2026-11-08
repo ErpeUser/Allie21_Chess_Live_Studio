@@ -21,7 +21,7 @@ from allie_local_server import (
 )
 import allie_local_server as allie_server
 from position_tracker import PositionTracker
-from chess_extras import opening_for_position
+from chess_extras import opening_for_position, standard_repertoire, repertoire_move_for
 from live_session import LiveSession
 from browser_session import BrowserTrackerPool
 
@@ -243,6 +243,18 @@ class ChessTests(unittest.TestCase):
 
         self.assertEqual(rank_allie_candidates(board, choices, 'normal'), choices)
 
+    def test_standard_repertoire_has_requested_white_and_black_lines(self):
+        self.assertEqual(standard_repertoire('white')['primary'], 'Wiener Gambit')
+        self.assertEqual(standard_repertoire('white')['alternative'], 'Dänisches Gambit')
+        self.assertEqual(standard_repertoire('black')['primary'], 'Budapester Gambit')
+        self.assertEqual(standard_repertoire('black')['alternative'], 'Aljechin-Verteidigung')
+
+    def test_repertoire_move_is_only_returned_for_matching_legal_history(self):
+        self.assertEqual(repertoire_move_for([], 'white'), 'e2e4')
+        self.assertEqual(repertoire_move_for(['e2e4'], 'black'), 'g8f6')
+        self.assertEqual(repertoire_move_for(['d2d4'], 'black'), 'g8f6')
+        self.assertIsNone(repertoire_move_for(['e2e4', 'e7e5', 'b1c3'], 'black'))
+
     def test_aggressive_style_promotes_immediate_mate_for_player(self):
         result = analyse_position({
             'pgn': '1. f3 e5 2. g4',
@@ -284,6 +296,10 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(result['move_count'], 0)
         self.assertEqual(result['side_to_move'], 'white')
         self.assertTrue(result['moves'])
+        self.assertEqual(result['repertoire']['primary'], 'Wiener Gambit')
+        self.assertEqual(result['repertoire']['expected_move'], 'e2e4')
+        self.assertEqual(result['repertoire']['expected_san'], 'e4')
+        self.assertTrue(any('Standardrepertoire' in message for message in result['plan_messages']))
 
     def test_premove_balances_probability_and_branch_risk(self):
         common = {'uci':'g1f3', 'san':'Nf3', 'probability':.5, 'flags':[]}

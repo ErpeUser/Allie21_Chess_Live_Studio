@@ -23,6 +23,42 @@ import chess.engine
 
 BASE = Path(__file__).resolve().parent
 
+STANDARD_REPERTOIRE = {
+    'white': {'primary': 'Wiener Gambit', 'alternative': 'Dänisches Gambit'},
+    'black': {'primary': 'Budapester Gambit', 'alternative': 'Aljechin-Verteidigung'},
+}
+
+_STANDARD_LINES = {
+    'white': (
+        ('e2e4', 'e7e5', 'b1c3', 'b8c6', 'f2f4'),
+        ('e2e4', 'e7e5', 'd2d4', 'e5d4', 'c2c3'),
+    ),
+    'black': (
+        ('d2d4', 'g8f6', 'c2c4', 'e7e5'),
+        ('e2e4', 'g8f6'),
+    ),
+}
+
+
+def standard_repertoire(side: str) -> dict[str, str]:
+    """Return the configured human repertoire without changing Allie's model."""
+    normalized = str(side).lower()
+    if normalized not in STANDARD_REPERTOIRE:
+        raise ValueError('side must be white or black')
+    return dict(STANDARD_REPERTOIRE[normalized])
+
+
+def repertoire_move_for(moves: list[str], side: str) -> str | None:
+    """Return the next move of the primary/alternative line, if history matches."""
+    normalized = str(side).lower()
+    if normalized not in _STANDARD_LINES:
+        return None
+    history = tuple(moves)
+    for line in _STANDARD_LINES[normalized]:
+        if len(history) < len(line) and line[:len(history)] == history:
+            return line[len(history)]
+    return None
+
 def epd_key(board: chess.Board) -> str:
     return board.epd(en_passant='legal')
 
