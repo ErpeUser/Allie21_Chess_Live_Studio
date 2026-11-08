@@ -1,5 +1,13 @@
 # Änderungen
 
+## v11.2.9
+
+- Automatische Spielerfarbe nutzt sichtbare Plattformmarker und fällt bei fehlenden Markern auf die Brettseite zurück; Brettorientierung und manuelle Farbauswahl bleiben getrennt.
+
+## v11.2.8
+
+- Automatische Spielerfarbe ist jetzt unabhängig von der Brettorientierung und liest die sichtbare Spielerfarbe der Plattform; manuelle Weiss/Schwarz-Auswahl bleibt erhalten.
+
 ## v11.2.7
 
 - Die Windows-EXE bleibt als Infobereich-Steuerung aktiv und zeigt ein eigenes Allie-Symbol.

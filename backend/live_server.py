@@ -19,7 +19,7 @@ from chess_tcn import tcn_to_pgn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 import allie_local_server as allie
@@ -234,9 +234,15 @@ def extension_installer():
     version = html.escape(str(manifest.get('version_name', 'aktuell')))
     return f'''<!doctype html><html lang="de"><meta charset="utf-8"><title>Allie Overlay installieren</title>
 <style>body{{font:16px system-ui;background:#071522;color:#edf7ff;max-width:720px;margin:50px auto;padding:24px}}.card{{background:#10283d;border:1px solid #43657e;border-radius:14px;padding:24px}}a{{display:inline-block;margin:6px 6px 6px 0;padding:11px 15px;border-radius:8px;background:#16a777;color:white;font-weight:700;text-decoration:none}}code{{background:#06101a;padding:3px 6px;border-radius:4px}}li{{margin:10px 0}}</style>
-<div class="card"><h1>Allie Overlay {version}</h1><p>Verwende die fertige direkte Edge-Erweiterung im Projektordner <code>browser</code>.</p>
+<div class="card"><h1>Allie Overlay {version}</h1><p>Verwende die fertige direkte Edge-Erweiterung im Projektordner <code>browser</code> oder <a href="/install/allie21_overlay.user.js">installiere das Userscript in Tampermonkey</a>.</p>
 <ol><li>Doppelklicke im Projekt auf <code>EDGE_OVERLAY_INSTALLIEREN.bat</code>.</li><li>Schalte in <code>edge://extensions</code> den <b>Entwicklermodus</b> ein.</li><li>Klicke <b>Entpackte Erweiterung laden</b> und wähle den automatisch geöffneten Ordner <code>browser</code>.</li><li>Lade Chess.com oder Lichess einmal neu.</li></ol>
 </div></html>'''
+
+
+@app.get('/install/allie21_overlay.user.js', response_class=Response)
+def extension_userscript():
+    script = (ROOT / 'browser' / 'allie21_overlay.user.js').read_text(encoding='utf-8')
+    return Response(script, media_type='text/javascript', headers={'Cache-Control': 'no-store'})
 
 
 @app.get('/health')

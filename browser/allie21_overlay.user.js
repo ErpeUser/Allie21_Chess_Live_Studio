@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.6
+// @version      11.2.9
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -320,6 +320,35 @@
   if(snapshot?.placement!==START_PLACEMENT)return null;
   return{pgn:'*',fen:'',orientation:snapshot.orientation,placement:snapshot.placement,message:'Startstellung erkannt - Analyse startet.',ready:true,fallback_ready:false,moves_seen:0};
  }
+ function sideToken(value){
+  const text=String(value||'').toLowerCase();
+  if(/(?:^|[\s_-])(black|dark|schwarz)(?:$|[\s_-])/.test(text))return'black';
+  if(/(?:^|[\s_-])(white|light|weiss|weiß)(?:$|[\s_-])/.test(text))return'white';
+  return'';
+ }
+ function detectedPlayerSide(board){
+  const direct=[board,board?.parentElement,board?.closest?.('[data-player-color],[data-player-side],[data-color]')].filter(Boolean);
+  for(const node of direct){
+   for(const attr of ['data-player-color','data-player-side','data-color','data-side','player-color']){
+    const side=sideToken(node.getAttribute?.(attr));if(side)return side;
+   }
+  }
+  if(typeof document==='undefined'||!board)return'';
+  const boardRect=board.getBoundingClientRect?.();
+  const candidates=Array.from(document.querySelectorAll('[data-player-color],[data-player-side],[data-color],[data-side],[class*="player"]'));
+  let best='',bestScore=-1;
+  for(const node of candidates){
+   const side=sideToken(['data-player-color','data-player-side','data-color','data-side'].map(a=>node.getAttribute?.(a)||'').concat(String(node.className||'')).join(' '));
+   if(!side)continue;
+   const cls=String(node.className||'').toLowerCase(),rect=node.getBoundingClientRect?.();
+   let score=0;
+   if(/player-bottom|bottom-player|player-bottom/.test(cls))score+=100;
+   if(boardRect&&rect&&rect.top>boardRect.bottom)score+=50;
+   if(boardRect&&rect)score-=Math.min(20,Math.abs(rect.top-boardRect.bottom)/100);
+   if(score>bestScore){best=side;bestScore=score}
+  }
+  return best;
+ }
  function pendingInsights(history){
   if(history?.placement===START_PLACEMENT)return{plan_messages:['Startstellung erkannt: Allie berechnet sofort die menschlich wahrscheinlichsten Eröffnungszüge.','Eröffnungsphase: Zentrum kontrollieren, Leichtfiguren entwickeln und den König sicher rochieren.']};
   return{plan_messages:['Stellung erkannt: Allie analysiert den aktuellen Zug.']};
@@ -343,7 +372,10 @@
   lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
   return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,fallback_ready:state.fallback_ready,moves_seen:state.moves_seen};
  }
- function playerSideFor(orientation){return cfg.playerSide==='auto'?(orientation==='black'?'black':'white'):cfg.playerSide}
+ // Plattform-Farbmarker haben Vorrang. Fehlen sie (z.B. bei laufenden Chess.com-
+ // Partien), entspricht die eigene Seite der sichtbaren Brettseite; die manuelle
+ // Auswahl bleibt jederzeit maßgeblich.
+ function playerSideFor(orientation,detected){return cfg.playerSide==='auto'?(detected||orientation||'white'):cfg.playerSide}
  function analyze(pgn,placement='',fen='',playerSide='white'){
    if(pending||!cfg.enabled)return;
    const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle]);analysisKey=key;
@@ -393,7 +425,7 @@
     return;
    }
     unsettledPlacement=history.placement;unsettledRetries=0;
-    const playerSide=playerSideFor(history.orientation);
+    const playerSide=playerSideFor(history.orientation,detectedPlayerSide(currentBoard));
      const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle]);
     if(basis!==lastPGN||wanted!==analysisKey){
      currentResult=null;clearOverlay();show(pendingInsights(history));
