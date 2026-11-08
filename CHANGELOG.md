@@ -1,5 +1,11 @@
 # Änderungen
 
+## v11.2.6
+
+- Neuer optionaler Spielstil „Aggressiv“: Innerhalb von Allies legalen Top-Kandidaten werden Matt, Schach und direkter Königsdruck bevorzugt; Normalmodus und gegnerische Allie-Reihenfolge bleiben unverändert.
+- Seiten-Neuladen und „Jetzt analysieren“ bauen den lokalen Browser-Tracker vor der nächsten Analyse einmal vollständig neu auf.
+- Beendete Partien zeigen keine Pfeile der Stellung vor dem letzten Zug mehr; eine neue, kürzere und vollständig validierte Runde hebt alte Wiederholungswartezeiten sofort auf.
+
 ## v11.2.5
 
 - Chess.com-Stellungen werden aus den autoritativen `square-XY`-Klassen gelesen; Doppelschritt-Animationen können dadurch keine falschen Zwischenzüge mehr speichern.

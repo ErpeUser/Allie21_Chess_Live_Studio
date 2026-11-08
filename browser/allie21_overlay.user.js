@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.5
+// @version      11.2.6
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -18,7 +18,7 @@
  const STORE='allie21.auto.v11';
  const load=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}};
  const stored=load();
- const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto'},stored);
+ const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal'},stored);
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -41,6 +41,7 @@
   <div><label>Zeitkontrolle</label><input id='tc' placeholder='300+0'/></div></div>
  <div class='row'><div><label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select></div>
  <div><label>Deine Farbe</label><select id='playerSide'><option value='auto'>Automatisch</option><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
+ <label>Spielstil</label><select id='playStyle'><option value='normal'>Normal · menschlich wahrscheinlich</option><option value='aggressive'>Aggressiv · Matt und Königsdruck</option></select>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <p id='status' class='stat'>Warte auf ein Brett. Die Verbindung startet automatisch.</p>
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move. Allie klickt nie selbst.</p>
@@ -52,9 +53,9 @@
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
  const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({})};
- const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';save();invalidate();scheduleTick(true)};
- for(const field of ['elo','tc','orientation','playerSide'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
+ const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;save();invalidate();scheduleTick(true)};
+ for(const field of ['elo','tc','orientation','playerSide','playStyle'])el(field).addEventListener('change',updateSettings);
+ const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
  const sessionSeed=location.hostname+location.pathname;
  let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
@@ -309,6 +310,11 @@
   return{promise,abort:()=>controller.abort()};
  }
  const localPost=(path,data,timeout)=>postJson(path,data,timeout).promise;
+ let browserSessionNeedsReset=true;
+ function browserSessionResetPending(){return browserSessionNeedsReset}
+ function markBrowserSessionReset(){browserSessionNeedsReset=true}
+ function browserSessionResetDone(){browserSessionNeedsReset=false;retryAfter=0}
+ function shorterValidatedRound(previousPgn,movesSeen){return Boolean(previousPgn&&movesSeen<previousPgn.trim().split(/\s+/).length)}
  const START_PLACEMENT='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
  function startPositionHistory(snapshot){
   if(snapshot?.placement!==START_PLACEMENT)return null;
@@ -320,27 +326,32 @@
  }
  async function historyFromVisibleBoard(){
  const snapshot=readBoardSnapshot();if(!snapshot)return{pgn:readHistory(),orientation:cfg.orientation==='auto'?'white':cfg.orientation,placement:''};
- const initial=startPositionHistory(snapshot);
-  if(initial){
-   if(lastPlacement!==START_PLACEMENT)await localPost('/api/browser-position/reset',{session_id:boardSessionId},4000).catch(()=>{});
-   lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';return initial;
+  const initial=startPositionHistory(snapshot);
+   if(initial&&lastPlacement!==START_PLACEMENT)markBrowserSessionReset();
+   if(browserSessionResetPending()){
+    await localPost('/api/browser-position/reset',{session_id:boardSessionId},4000);
+    browserSessionResetDone();trackedPGN='';trackedFen='';lastPlacement='';
+   }
+   if(initial){
+    lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';return initial;
   }
   if(snapshot.placement===lastPlacement&&trackedPGN)return{pgn:trackedPGN,fen:'',orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:false};
-  const expected=snapshot.placement,candidates=readHistoryCandidates(),fallback=candidates[0]||'',game_id=chessComGameId();
-  const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback,pgn_candidates:candidates,game_id},12000);
-  const latest=readBoardSnapshot();if(!latest||latest.placement!==expected)return{pgn:'',orientation:snapshot.orientation,placement:expected,stale:true};
+   const expected=snapshot.placement,candidates=readHistoryCandidates(),fallback=candidates[0]||'',game_id=chessComGameId(),previousPGN=trackedPGN;
+   const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback,pgn_candidates:candidates,game_id},12000);
+   const latest=readBoardSnapshot();if(!latest||latest.placement!==expected)return{pgn:'',orientation:snapshot.orientation,placement:expected,stale:true};
+   if(state.ready&&shorterValidatedRound(previousPGN,state.moves_seen))retryAfter=0;
   lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
   return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,fallback_ready:state.fallback_ready,moves_seen:state.moves_seen};
  }
  function playerSideFor(orientation){return cfg.playerSide==='auto'?(orientation==='black'?'black':'white'):cfg.playerSide}
  function analyze(pgn,placement='',fen='',playerSide='white'){
    if(pending||!cfg.enabled)return;
-   const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide]);analysisKey=key;
+   const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle]);analysisKey=key;
    const serial=++analysisSerial;
    pending=true;el('status').textContent='Allie analysiert den aktuellen Zug...';
    const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
    const request=(source,preview,final)=>{
-    const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:true,player_side:playerSide,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
+     const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
     const fail=message=>{
      if(serial!==analysisSerial)return;
      activeRequest=null;
@@ -359,7 +370,7 @@
    };
    request(fen?'stockfish':'allie',false,!!fen);
  }
- el('now').onclick=async()=>{updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';await tick(true)};
+  el('now').onclick=async()=>{markBrowserSessionReset();updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';await tick(true)};
  async function tick(manual=false){
   if(trackingPending)return;
   const visibleBoard=readBoardSnapshot();wrapper.style.display=visibleBoard?'':'none';if(visibleBoard)placePanel(visibleBoard.board);
@@ -383,7 +394,7 @@
    }
     unsettledPlacement=history.placement;unsettledRetries=0;
     const playerSide=playerSideFor(history.orientation);
-    const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide]);
+     const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle]);
     if(basis!==lastPGN||wanted!==analysisKey){
      currentResult=null;clearOverlay();show(pendingInsights(history));
      if(pending)cancelAnalysis();

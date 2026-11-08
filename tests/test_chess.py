@@ -17,7 +17,7 @@ except ImportError as exc:
 
 from allie_local_server import (
     analyse_position, make_plan_messages, parse_history,
-    risk_weighted_premove,
+    rank_allie_candidates, risk_weighted_premove,
 )
 import allie_local_server as allie_server
 from position_tracker import PositionTracker
@@ -37,6 +37,14 @@ class FakeAllie:
     def analyze(self, moves, **kwargs):
         return {'moves': self.predict(moves, **kwargs), 'wdl': [.4,.3,.3],
                 'think_time': 2.5}
+
+
+class FoolMateAllie:
+    def analyze(self, _moves, **_kwargs):
+        return {'moves': {'a7a6': .72, 'd8h4': .08}, 'wdl': [.3, .3, .4]}
+
+    def predict(self, _moves, **_kwargs):
+        return {}
 
 
 class ChessTests(unittest.TestCase):
@@ -225,6 +233,39 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(captured, [allie_order])
         self.assertEqual(result['stockfish']['scope'], 'allie-candidates')
         self.assertTrue(all('stockfish_score' in move for move in result['moves']))
+
+    def test_normal_style_preserves_allie_order(self):
+        board = chess.Board()
+        choices = [
+            {'uci': 'e2e4', 'probability': .51, 'flags': []},
+            {'uci': 'd2d4', 'probability': .29, 'flags': []},
+        ]
+
+        self.assertEqual(rank_allie_candidates(board, choices, 'normal'), choices)
+
+    def test_aggressive_style_promotes_immediate_mate_for_player(self):
+        result = analyse_position({
+            'pgn': '1. f3 e5 2. g4',
+            'analysis_source': 'allie',
+            'preview': False,
+            'player_side': 'black',
+            'play_style': 'aggressive',
+        }, FoolMateAllie())
+
+        self.assertEqual(result['my_moves'][0]['uci'], 'd8h4')
+        self.assertIn('Schachmatt', result['my_moves'][0]['flags'])
+        self.assertEqual(result['play_style'], 'aggressive')
+
+    def test_aggressive_style_does_not_reorder_opponent_prediction(self):
+        result = analyse_position({
+            'pgn': '1. f3 e5 2. g4',
+            'analysis_source': 'allie',
+            'preview': False,
+            'player_side': 'white',
+            'play_style': 'aggressive',
+        }, FoolMateAllie())
+
+        self.assertEqual([move['uci'] for move in result['opponent_moves']], ['a7a6', 'd8h4'])
 
     def test_allie_can_choose_from_the_normal_start_position(self):
         result = analyse_position({'pgn': '*', 'analysis_source': 'allie', 'preview': False}, FakeAllie())

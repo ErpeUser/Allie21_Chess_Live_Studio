@@ -82,6 +82,7 @@ class StartRequest(InputModel):
     time_control: str = CONFIG['time_control']
     ocr_history: bool = CONFIG['ocr_history']
     recommendations_enabled: bool = True
+    play_style: Literal['normal', 'aggressive'] = 'normal'
 
     @field_validator('time_control')
     @classmethod

@@ -121,6 +121,35 @@ def describe_move(board: chess.Board, uci: str, probability: float) -> dict[str,
     }
 
 
+def rank_allie_candidates(
+    board: chess.Board, candidates: list[dict[str, Any]], play_style: str
+) -> list[dict[str, Any]]:
+    """Rerank Allie's legal candidates for direct king pressure only on request."""
+    if play_style == 'normal':
+        return candidates
+    if play_style != 'aggressive':
+        raise ValueError("play_style must be normal or aggressive")
+
+    def pressure(item: tuple[int, dict[str, Any]]) -> tuple[int, int, int, float, int]:
+        index, candidate = item
+        flags = candidate.get('flags') or []
+        after = board.copy(stack=False)
+        after.push_uci(candidate['uci'])
+        king = after.king(after.turn)
+        ring = chess.SquareSet(chess.BB_KING_ATTACKS[king]) if king is not None else ()
+        attacker = not after.turn
+        attacked = sum(after.is_attacked_by(attacker, square) for square in ring)
+        return (
+            int('Schachmatt' in flags),
+            int('Schach' in flags),
+            attacked,
+            float(candidate.get('probability', 0.0)),
+            -index,
+        )
+
+    return [candidate for _, candidate in sorted(enumerate(candidates), key=pressure, reverse=True)]
+
+
 def risk_weighted_premove(branches: list[tuple[float, list[dict[str, Any]]]]) -> dict[str, Any] | None:
     """Pick one Allie move that survives the most likely alternative branches.
 
@@ -253,6 +282,9 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     selection = str(payload.get('analysis_source', 'both'))
     if selection not in ('allie', 'stockfish', 'both'):
         raise ValueError('analysis_source must be allie, stockfish or both')
+    play_style = str(payload.get('play_style', 'normal'))
+    if play_style not in ('normal', 'aggressive'):
+        raise ValueError('play_style must be normal or aggressive')
 
     opening = opening_for_position(board, moves)
     if opening:
@@ -283,6 +315,8 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                     # its own game cache. Do not sort the probabilities again.
                     choices = list(result['moves'].items())[:5]
                     candidate_moves = [describe_move(board, uci, prob) for uci, prob in choices]
+                    if player_to_move:
+                        candidate_moves = rank_allie_candidates(board, candidate_moves, play_style)
                     wdl = [round(float(x), 5) for x in result['wdl']] if result.get('wdl') is not None else None
                     if result.get('think_time') is not None:
                         expected_think_time = round(float(result['think_time']), 2)
@@ -307,6 +341,8 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                                 clocks=clocks + [None],
                             ).items())[:3]
                             shown = [describe_move(after, uci, prob) for uci, prob in replies]
+                            if not player_to_move:
+                                shown = rank_allie_candidates(after, shown, play_style)
                             if index == 0:
                                 prediction_top = shown
                                 for reply in after.legal_moves:
@@ -386,7 +422,7 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
         'model': MODEL_NAME if selection in ('allie', 'both') and not fen_only and candidate_moves else None,
         'reviewed_finished_game': bool(last_move), 'final_played_move': last_move,
         'rating_white': white_elo, 'rating_black': black_elo,
-        'mode': mode, 'time_control': tc, 'move_count': len(moves),
+        'mode': mode, 'play_style': play_style, 'time_control': tc, 'move_count': len(moves),
         'side_to_move': 'white' if board.turn else 'black', 'fen': board.fen(),
         'fen_only': fen_only, 'opening': opening, 'position_facts': position_facts(board),
         'moves': candidate_moves, 'wdl': wdl, 'expected_think_time_s': expected_think_time,

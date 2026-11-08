@@ -4,7 +4,7 @@ requires-python = "==3.12.*"
 
 [[package]]
 name = "allie21-chess-live-studio"
-version = "11.2.5"
+version = "11.2.6"
 source = { virtual = "." }
 dependencies = [
     { name = "chess" },
