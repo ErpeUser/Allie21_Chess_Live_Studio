@@ -63,3 +63,18 @@ vm.runInNewContext('result=movesFromNodes(nodes);', context);
 if (JSON.stringify(Array.from(context.result)) !== JSON.stringify(['e4', 'c5'])) {
   throw new Error('Chess.com data-node ply order must be honored');
 }
+
+const text = value => ({ nodeType: 3, textContent: value });
+const icon = piece => ({ nodeType: 1, className: `icon-font-chess ${piece}`, childNodes: [], getAttribute() { return ''; } });
+const nestedMove = (ply, children) => ({
+  nodeType: 1, className: 'node main-line-ply', childNodes: children,
+  textContent: children.map(child => child.textContent || '').join(''),
+  getAttribute(name) { return name === 'data-node' ? `0-${ply}` : ''; },
+  querySelectorAll() { return []; }, closest() { return this; },
+});
+context.result = [];
+context.nodes = [nestedMove(0, [text('e4')]), nestedMove(1, [icon('knight-black'), text('f6')])];
+vm.runInNewContext('result=movesFromNodes(nodes);', context);
+if (JSON.stringify(Array.from(context.result)) !== JSON.stringify(['e4', 'Nf6'])) {
+  throw new Error('nested Chess.com figurine must become SAN piece letter');
+}

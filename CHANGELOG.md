@@ -1,5 +1,16 @@
 # Änderungen
 
+## v11.2.3
+
+- Beim Zuschauen liest das Overlay die vollständige Chess.com-Live-Historie anhand der Spiel-ID, auch wenn die sichtbare Zugliste nur späte Züge enthält.
+- `chess-tcn` 1.0.1 dekodiert Chess.coms kompakte `moveList`; das Ergebnis wird vor jeder Analyse exakt gegen das sichtbare Brett validiert.
+
+## v11.2.2
+
+- Chess.com-Figurensymbole werden direkt aus verschachtelten Zugknoten in korrektes SAN umgewandelt.
+- Autoritative `data-node`-Züge bleiben vor breiten DOM-Ersatztreffern priorisiert; ungültige Duplikate verdrängen die echte Partiehistorie nicht mehr.
+- Beim Eintritt in eine neue Startstellung wird die alte Browser-Sitzung automatisch verworfen.
+
 ## v11.2.1
 
 - Chess.com sendet jetzt mehrere erkannte Zuglistenvarianten; Python wählt ausschließlich die legale Variante, die exakt zur sichtbaren Stellung passt.

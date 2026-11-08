@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.1
+// @version      11.2.3
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -47,7 +47,7 @@
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,tcnCache={id:'',value:'',at:0,pending:null};
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
@@ -59,7 +59,7 @@
  const sessionSeed=location.hostname+location.pathname;
  let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
  const boardSessionId='web-'+(sessionHash>>>0).toString(36);
- const selectors=['wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list [data-node]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list [data-node]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [data-node]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
+ const selectors=['wc-simple-move-list [data-node]','wc-vertical-move-list [data-node]','wc-horizontal-move-list [data-node]','wc-move-list [data-node]','wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
  const sanPattern=/^(?:O-O(?:-O)?|0-0(?:-0)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][+#]?)$/;
  // Lichess changes its short custom tag names regularly. Locate the current
  // mainline structurally via the rewind-to-ply-0 control instead of tag names.
@@ -71,6 +71,21 @@
   return texts.some(t=>t==='1')&&texts.some(t=>sanPattern.test(t.replace(/[!?]+/g,'')))?candidate:null;
  }
  const figurines={'♔':'K','♕':'Q','♖':'R','♗':'B','♘':'N','♚':'K','♛':'Q','♜':'R','♝':'B','♞':'N'};
+ function nodeMoveText(node){
+  let out='';
+  const walk=item=>{
+   if(item?.nodeType===3){out+=item.textContent||'';return}
+   if(!item)return;
+   const cls=String(item.className||item.getAttribute?.('class')||'').toLowerCase();
+   if(/icon-font-chess|figurine|move-piece/.test(cls)){
+    const piece=/\bknight\b/.test(cls)?'N':/\bbishop\b/.test(cls)?'B':/\brook\b/.test(cls)?'R':/\bqueen\b/.test(cls)?'Q':/\bking\b/.test(cls)?'K':'';
+    out+=piece;return;
+   }
+   const children=Array.from(item.childNodes||[]);
+   if(children.length)for(const child of children)walk(child);else out+=item.textContent||'';
+  };
+  walk(node);return out;
+ }
  function cleanMove(text,node){
   let value=String(text||'').trim().replace(/^\d+\.(?:\.\.)?/,'').replace(/[!?]+/g,'').replace(/\s+/g,'');
   value=value.replace(/^[♔♕♖♗♘♚♛♜♝♞]/,piece=>figurines[piece]);
@@ -89,7 +104,7 @@
   const ordered=Array.from(nodes).slice(0,1100).map((node,index)=>{const raw=node.getAttribute?.('data-ply'),dataNode=node.getAttribute?.('data-node'),match=/^0-(\d+)$/.exec(dataNode||'');const ply=raw==null||raw===''?(match?Number(match[1]):NaN):Number(raw);return{node,index,ply}});
   if(ordered.some(item=>Number.isFinite(item.ply)))ordered.sort((a,b)=>(Number.isFinite(a.ply)?a.ply:1e9)-(Number.isFinite(b.ply)?b.ply:1e9)||a.index-b.index);
   const compact=[];
-  for(const {node} of ordered){const move=cleanMove(node.getAttribute?.('data-san')||node.textContent,node);if(sanPattern.test(move)&&move!==compact.at(-1))compact.push(move)}
+  for(const {node} of ordered){const move=cleanMove(node.getAttribute?.('data-san')||nodeMoveText(node),node);if(sanPattern.test(move))compact.push(move)}
   return compact;
  }
  function movesFromRoot(root){
@@ -101,7 +116,7 @@
   return compact;
  }
  function candidateMoveRoots(){
-  const rootSelectors=['wc-move-list','wc-simple-move-list','wc-vertical-move-list','.analyse__moves','.vertical-move-list','.move-list','.move-list-component','.pgn-viewer','.analysis-moves','[data-cy="move-list"]','[class*="move-list"]'];
+  const rootSelectors=['wc-move-list','wc-simple-move-list','wc-vertical-move-list','wc-horizontal-move-list','.analyse__moves','.vertical-move-list','.move-list','.move-list-component','.pgn-viewer','.analysis-moves','[data-cy="move-list"]','[class*="move-list"]'];
   const roots=Array.from(document.querySelectorAll(rootSelectors.join(',')));
   return Array.from(new Set(roots)).filter(root=>!root.closest('#allie21-auto-study-root'));
  }
@@ -119,10 +134,28 @@
   // Python accepts this candidate only when every move is legal from the
   // standard start and the final placement equals the visible board. A
   // virtualised fragment therefore cannot create a false history.
-  const candidates=Array.from(new Set(found.sort((a,b)=>b.length-a.length).map(historyText))).slice(0,16);
+  // Exact, indexed move-list selectors are added first. Keep that priority:
+  // broad descendants can duplicate moves and must never crowd the valid SAN
+  // mainline out of the bounded request.
+  const candidates=Array.from(new Set(found.map(historyText))).slice(0,16);
   return candidates.length?candidates:isStandardStartPosition()?['*']:[];
  }
  function readHistory(){return readHistoryCandidates()[0]||''}
+ async function readChessComTcn(){
+  const match=/\/game\/(?:live\/)?(\d+)/.exec(location.pathname);
+  if(!/\.chess\.com$/.test('.'+location.hostname)||!match)return'';
+  const id=match[1],now=Date.now();
+  if(tcnCache.id===id&&now-tcnCache.at<1200)return tcnCache.value;
+  if(tcnCache.id===id&&tcnCache.pending)return tcnCache.pending;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),2500);
+  const pending=fetch(`/callback/live/game/${id}`,{credentials:'include',cache:'no-store',signal:controller.signal})
+   .then(response=>response.ok?response.json():Promise.reject(Error(String(response.status))))
+   .then(data=>{const game=data?.game||data||{},value=game.moveList||game.move_list||data?.moveList||'';return typeof value==='string'&&value.length%2===0?value:''})
+   .catch(()=>tcnCache.id===id?tcnCache.value:'')
+   .finally(()=>{clearTimeout(timer);tcnCache.pending=null});
+  tcnCache={id,value:tcnCache.id===id?tcnCache.value:'',at:now,pending};
+  const value=await pending;tcnCache.value=value;tcnCache.at=Date.now();return value;
+ }
  function pieceCode(node){
   const attrs=['data-piece','data-figurine','data-color','data-role','aria-label','alt','src'].map(name=>node.getAttribute?.(name)||'').join(' ');
   const style=(node.getAttribute?.('style')||'')+' '+(getComputedStyle(node).backgroundImage||'');
@@ -273,12 +306,15 @@
   return{plan_messages:['Stellung erkannt: Allie analysiert den aktuellen Zug.']};
  }
  async function historyFromVisibleBoard(){
-  const snapshot=readBoardSnapshot();if(!snapshot)return{pgn:readHistory(),orientation:cfg.orientation==='auto'?'white':cfg.orientation,placement:''};
-  const initial=startPositionHistory(snapshot);
-  if(initial){lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';return initial}
+ const snapshot=readBoardSnapshot();if(!snapshot)return{pgn:readHistory(),orientation:cfg.orientation==='auto'?'white':cfg.orientation,placement:''};
+ const initial=startPositionHistory(snapshot);
+  if(initial){
+   if(lastPlacement!==START_PLACEMENT)await localPost('/api/browser-position/reset',{session_id:boardSessionId},4000).catch(()=>{});
+   lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';return initial;
+  }
   if(snapshot.placement===lastPlacement&&trackedPGN)return{pgn:trackedPGN,fen:'',orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:false};
-  const expected=snapshot.placement,candidates=readHistoryCandidates(),fallback=candidates[0]||'';
-  const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback,pgn_candidates:candidates},12000);
+  const expected=snapshot.placement,candidates=readHistoryCandidates(),fallback=candidates[0]||'',tcn=await readChessComTcn();
+  const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback,pgn_candidates:candidates,tcn},12000);
   const latest=readBoardSnapshot();if(!latest||latest.placement!==expected)return{pgn:'',orientation:snapshot.orientation,placement:expected,stale:true};
   lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
   return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,fallback_ready:state.fallback_ready,moves_seen:state.moves_seen};

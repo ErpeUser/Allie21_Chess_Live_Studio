@@ -42,9 +42,15 @@ class FakeSession:
 
 
 class FakeBrowserTrackerPool:
+    def __init__(self):
+        self.reset_session = ''
+
     def observe(self, session_id, placement, pgn='', pgn_candidates=None):
         return {'ready': True, 'pgn': pgn or '*', 'session_id': session_id,
                 'placement': placement, 'candidates': pgn_candidates or []}
+
+    def reset(self, session_id):
+        self.reset_session = session_id
 
 
 class HTTPBoundaryTests(unittest.TestCase):
@@ -155,6 +161,24 @@ class HTTPBoundaryTests(unittest.TestCase):
                                  origin='https://www.chess.com', preflight=True)
         self.assertEqual(status, 200, data)
 
+    def test_browser_session_can_be_reset_for_a_new_game(self):
+        status, data = self.call('POST', '/api/browser-position/reset',
+                                 origin='https://www.chess.com', overlay=True,
+                                 payload={'session_id': 'web-new-game'})
+        self.assertEqual(status, 200, data)
+        self.assertEqual(app.BROWSER_TRACKERS.reset_session, 'web-new-game')
+
+    def test_chesscom_tcn_becomes_complete_pgn_candidate(self):
+        payload = {'session_id': 'web-spectator',
+                   'placement': '8/8/8/3k4/8/8/4K3/8',
+                   'tcn': 'mC0Kgv5Q'}
+        status, data = self.call('POST', '/api/browser-position',
+                                 origin='https://www.chess.com', overlay=True,
+                                 payload=payload)
+        self.assertEqual(status, 200, data)
+        self.assertTrue(json.loads(data)['candidates'][0].startswith(
+            '1. e4 e5 2. Nf3 Nc6'))
+
     def test_start_stop_and_analyze_are_separate(self):
         self.assertEqual(self.call('POST', '/api/start', payload={})[0], 200)
         status, data = self.call('POST', '/api/recommendations', payload={'enabled': False})
@@ -172,7 +196,7 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
-        self.assertIn(b'11.2.1', page)
+        self.assertIn(b'11.2.3', page)
         self.assertEqual(self.call('GET', '/install/allie21_overlay.user.js')[0], 404)
 
 

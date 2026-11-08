@@ -12,6 +12,7 @@ from typing import Literal
 from urllib.parse import urlparse
 
 import uvicorn
+from chess_tcn import tcn_to_pgn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -107,6 +108,11 @@ class BrowserPositionRequest(InputModel):
     placement: str = Field(min_length=1, max_length=100)
     pgn: str = Field('', max_length=40_000)
     pgn_candidates: list[str] = Field(default_factory=list, max_length=16)
+    tcn: str = Field('', max_length=40_000)
+
+
+class BrowserSessionRequest(InputModel):
+    session_id: str = Field(min_length=1, max_length=180)
 
 
 def error(status: int, message: str) -> JSONResponse:
@@ -238,9 +244,20 @@ def recommendations(request: RecommendationRequest):
 
 @app.post('/api/browser-position')
 def browser_position(request: BrowserPositionRequest):
+    candidates = list(request.pgn_candidates)
+    if request.tcn:
+        try:
+            candidates.insert(0, tcn_to_pgn(request.tcn))
+        except (ValueError, TypeError, IndexError, KeyError):
+            pass
     return run(lambda: BROWSER_TRACKERS.observe(
-        request.session_id, request.placement, request.pgn, request.pgn_candidates
+        request.session_id, request.placement, request.pgn, candidates[:16]
     ))
+
+
+@app.post('/api/browser-position/reset')
+def reset_browser_position(request: BrowserSessionRequest):
+    return run(lambda: (BROWSER_TRACKERS.reset(request.session_id), {'ok': True})[1])
 
 
 def main():

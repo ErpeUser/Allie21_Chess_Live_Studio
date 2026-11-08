@@ -4,10 +4,11 @@ requires-python = "==3.12.*"
 
 [[package]]
 name = "allie21-chess-live-studio"
-version = "11.2.1"
+version = "11.2.3"
 source = { virtual = "." }
 dependencies = [
     { name = "chess" },
+    { name = "chess-tcn" },
     { name = "fastapi" },
     { name = "pillow" },
     { name = "pydantic" },
@@ -27,6 +28,7 @@ vision = [
 [package.metadata]
 requires-dist = [
     { name = "chess", specifier = "==1.11.2" },
+    { name = "chess-tcn", specifier = "==1.0.1" },
     { name = "chessvision", marker = "extra == 'vision'", specifier = "==0.13.1" },
     { name = "fastapi", specifier = "==0.162.2" },
     { name = "numpy", marker = "extra == 'vision'", specifier = "==2.5.4" },
@@ -126,6 +128,18 @@ name = "chess"
 version = "1.11.2"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/93/09/7d04d7581ae3bb8b598017941781bceb7959dd1b13e3ebf7b6a2cd843bc9/chess-1.11.2.tar.gz", hash = "sha256:a8b43e5678fdb3000695bdaa573117ad683761e5ca38e591c4826eba6d25bb39", size = 6131385, upload-time = "2025-02-25T19:10:27.328Z" }
+
+[[package]]
+name = "chess-tcn"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "chess" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9e/6d/f299620e9fec7a4c57ac705cb5778a5bbf99fa6f8e564be6967b2007e6f0/chess_tcn-1.0.1.tar.gz", hash = "sha256:780753b0890ec5f7676313457545117bbd44fe625ce468017d2fe4f57653f7e7", size = 4282, upload-time = "2025-07-18T03:27:15.804Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/32/82d3f8e387e37032779d106b051d484e2b0cb24d7f289ce6a1f6822c77f0/chess_tcn-1.0.1-py3-none-any.whl", hash = "sha256:e087745dbb30fbcfd9a4c9ecdbd68e8065a16d4c6455a7edf5dbe58c2bb20001", size = 5108, upload-time = "2025-07-18T03:27:14.396Z" },
+]
 
 [[package]]
 name = "chessvision"
