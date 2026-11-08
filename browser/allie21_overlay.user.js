@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.3
+// @version      11.2.4
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -47,7 +47,7 @@
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,tcnCache={id:'',value:'',at:0,pending:null};
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
@@ -141,20 +141,9 @@
   return candidates.length?candidates:isStandardStartPosition()?['*']:[];
  }
  function readHistory(){return readHistoryCandidates()[0]||''}
- async function readChessComTcn(){
+ function chessComGameId(){
   const match=/\/game\/(?:live\/)?(\d+)/.exec(location.pathname);
-  if(!/\.chess\.com$/.test('.'+location.hostname)||!match)return'';
-  const id=match[1],now=Date.now();
-  if(tcnCache.id===id&&now-tcnCache.at<1200)return tcnCache.value;
-  if(tcnCache.id===id&&tcnCache.pending)return tcnCache.pending;
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),2500);
-  const pending=fetch(`/callback/live/game/${id}`,{credentials:'include',cache:'no-store',signal:controller.signal})
-   .then(response=>response.ok?response.json():Promise.reject(Error(String(response.status))))
-   .then(data=>{const game=data?.game||data||{},value=game.moveList||game.move_list||data?.moveList||'';return typeof value==='string'&&value.length%2===0?value:''})
-   .catch(()=>tcnCache.id===id?tcnCache.value:'')
-   .finally(()=>{clearTimeout(timer);tcnCache.pending=null});
-  tcnCache={id,value:tcnCache.id===id?tcnCache.value:'',at:now,pending};
-  const value=await pending;tcnCache.value=value;tcnCache.at=Date.now();return value;
+  return /\.chess\.com$/.test('.'+location.hostname)&&match?match[1]:'';
  }
  function pieceCode(node){
   const attrs=['data-piece','data-figurine','data-color','data-role','aria-label','alt','src'].map(name=>node.getAttribute?.(name)||'').join(' ');
@@ -313,8 +302,8 @@
    lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';return initial;
   }
   if(snapshot.placement===lastPlacement&&trackedPGN)return{pgn:trackedPGN,fen:'',orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:false};
-  const expected=snapshot.placement,candidates=readHistoryCandidates(),fallback=candidates[0]||'',tcn=await readChessComTcn();
-  const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback,pgn_candidates:candidates,tcn},12000);
+  const expected=snapshot.placement,candidates=readHistoryCandidates(),fallback=candidates[0]||'',game_id=chessComGameId();
+  const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback,pgn_candidates:candidates,game_id},12000);
   const latest=readBoardSnapshot();if(!latest||latest.placement!==expected)return{pgn:'',orientation:snapshot.orientation,placement:expected,stale:true};
   lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
   return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,fallback_ready:state.fallback_ready,moves_seen:state.moves_seen};

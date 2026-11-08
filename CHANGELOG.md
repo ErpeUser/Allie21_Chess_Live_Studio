@@ -1,5 +1,10 @@
 # Änderungen
 
+## v11.2.4
+
+- Der lokale Server lädt die vollständige Chess.com-Historie jetzt selbst; Browser-CORS kann lange oder beobachtete Partien nicht mehr nach einigen Zügen stoppen.
+- Der Abruf ist auf numerische Chess.com-Spiel-IDs begrenzt, kurz gecacht und wird weiterhin exakt gegen das sichtbare Brett validiert.
+
 ## v11.2.3
 
 - Beim Zuschauen liest das Overlay die vollständige Chess.com-Live-Historie anhand der Spiel-ID, auch wenn die sichtbare Zugliste nur späte Züge enthält.

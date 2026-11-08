@@ -6,10 +6,13 @@ import html
 import json
 import os
 import threading
+import time
 import webbrowser
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlparse
+from urllib.error import URLError
+from urllib.request import Request as URLRequest, urlopen
 
 import uvicorn
 from chess_tcn import tcn_to_pgn
@@ -30,6 +33,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MAX_JSON = 64 * 1024
 SESSION = LiveSession()
 BROWSER_TRACKERS = BrowserTrackerPool()
+_CHESSCOM_HISTORY_CACHE: dict[str, tuple[float, str]] = {}
+_CHESSCOM_HISTORY_LOCK = threading.RLock()
 app = FastAPI(title="Allie21 Live Studio", docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(
     CORSMiddleware,
@@ -109,10 +114,44 @@ class BrowserPositionRequest(InputModel):
     pgn: str = Field('', max_length=40_000)
     pgn_candidates: list[str] = Field(default_factory=list, max_length=16)
     tcn: str = Field('', max_length=40_000)
+    game_id: str = Field('', pattern=r'^(?:\d{1,20})?$')
 
 
 class BrowserSessionRequest(InputModel):
     session_id: str = Field(min_length=1, max_length=180)
+
+
+def _fetch_chesscom_tcn(game_id: str) -> str:
+    """Best-effort full live history for virtualised spectator move lists."""
+    now = time.monotonic()
+    with _CHESSCOM_HISTORY_LOCK:
+        cached = _CHESSCOM_HISTORY_CACHE.get(game_id)
+        if cached and now - cached[0] < 1.2:
+            return cached[1]
+    request = URLRequest(
+        f'https://www.chess.com/callback/live/game/{game_id}',
+        headers={'Accept': 'application/json',
+                 'User-Agent': 'Mozilla/5.0 Allie21-Live-Studio/11.2.4'},
+    )
+    try:
+        with urlopen(request, timeout=3) as response:
+            raw = response.read(MAX_JSON + 1)
+        if len(raw) > MAX_JSON:
+            return ''
+        payload = json.loads(raw)
+        game = payload.get('game', payload) if isinstance(payload, dict) else {}
+        value = game.get('moveList', '') if isinstance(game, dict) else ''
+        if not isinstance(value, str) or len(value) > 40_000 or len(value) % 2:
+            return ''
+    except (OSError, URLError, TimeoutError, ValueError, json.JSONDecodeError):
+        return cached[1] if cached else ''
+    with _CHESSCOM_HISTORY_LOCK:
+        _CHESSCOM_HISTORY_CACHE[game_id] = (time.monotonic(), value)
+        if len(_CHESSCOM_HISTORY_CACHE) > 32:
+            oldest = min(_CHESSCOM_HISTORY_CACHE,
+                         key=lambda key: _CHESSCOM_HISTORY_CACHE[key][0])
+            _CHESSCOM_HISTORY_CACHE.pop(oldest, None)
+    return value
 
 
 def error(status: int, message: str) -> JSONResponse:
@@ -245,9 +284,10 @@ def recommendations(request: RecommendationRequest):
 @app.post('/api/browser-position')
 def browser_position(request: BrowserPositionRequest):
     candidates = list(request.pgn_candidates)
-    if request.tcn:
+    tcn = request.tcn or (_fetch_chesscom_tcn(request.game_id) if request.game_id else '')
+    if tcn:
         try:
-            candidates.insert(0, tcn_to_pgn(request.tcn))
+            candidates.insert(0, tcn_to_pgn(tcn))
         except (ValueError, TypeError, IndexError, KeyError):
             pass
     return run(lambda: BROWSER_TRACKERS.observe(

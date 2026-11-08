@@ -179,6 +179,19 @@ class HTTPBoundaryTests(unittest.TestCase):
         self.assertTrue(json.loads(data)['candidates'][0].startswith(
             '1. e4 e5 2. Nf3 Nc6'))
 
+    def test_server_fetches_virtualised_chesscom_spectator_history(self):
+        payload = {'session_id': 'web-spectator-server',
+                   'placement': '8/8/8/3k4/8/8/4K3/8',
+                   'game_id': '186750736526'}
+        with patch('live_server._fetch_chesscom_tcn', return_value='mC0Kgv5Q') as fetch:
+            status, data = self.call('POST', '/api/browser-position',
+                                     origin='https://www.chess.com', overlay=True,
+                                     payload=payload)
+        self.assertEqual(status, 200, data)
+        fetch.assert_called_once_with('186750736526')
+        self.assertTrue(json.loads(data)['candidates'][0].startswith(
+            '1. e4 e5 2. Nf3 Nc6'))
+
     def test_start_stop_and_analyze_are_separate(self):
         self.assertEqual(self.call('POST', '/api/start', payload={})[0], 200)
         status, data = self.call('POST', '/api/recommendations', payload={'enabled': False})
@@ -196,7 +209,7 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
-        self.assertIn(b'11.2.3', page)
+        self.assertIn(b'11.2.4', page)
         self.assertEqual(self.call('GET', '/install/allie21_overlay.user.js')[0], 404)
 
 
