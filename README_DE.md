@@ -5,10 +5,10 @@ Lokale Windows-Anwendung für menschliche Zugprognosen mit Allie 2.1 und objekti
 ## Schnellstart unter Windows
 
 1. Projekt vollständig entpacken.
-2. **`Allie21 Chess Live Studio.exe` doppelklicken.**
+2. **`release\Allie21 Chess Live Studio\Allie21 Chess Live Studio.exe` doppelklicken.**
 3. Warten, bis `http://127.0.0.1:8765/viewer` geöffnet wird.
 
-Die EXE startet den einzigen Installationsweg `START_HIER.bat`. Er installiert bei Bedarf `uv 0.13.7`, richtet die isolierte `.allie-venv` mit Python 3.12 und allen Paketen aus `uv.lock` ein und lädt Stockfish 19 nur dann, wenn die Engine fehlt. Die Konsole zeigt verständliche Fehler und muss während der Nutzung geöffnet bleiben.
+Die EXE startet den einzigen Installationsweg `START_HIER.bat`. Er installiert bei Bedarf `uv 0.13.7`, richtet die isolierte `.allie-venv` mit Python 3.12 und allen Paketen aus `uv.lock` ein und lädt Stockfish 19 nur dann, wenn die Engine fehlt. Die Konsole zeigt verständliche Fehler. Solange Allie läuft, erscheint rechts unten im Windows-Infobereich ein Allie-Symbol: Doppelklick oder „Allie öffnen“ öffnet den Viewer, „Allie beenden“ schließt Server und Symbol vollständig.
 
 Das echte Allie-Modell wird beim Serverstart automatisch im Hintergrund mit der Startstellung vorgewärmt. Die Gewichte benötigen ungefähr 18,4 GB Speicherplatz; der CPU-Betrieb benötigt viel Arbeitsspeicher. Sobald im Viewer „Allie geladen“ steht, ist der erste Live-Zug ohne Modell-Kaltstart bereit.
 
@@ -40,7 +40,7 @@ Die Standardwerte stehen in `config.json`. Wichtige Felder sind `white_elo`, `bl
 
 Der Schalter „Live-Zugpfeile & Empfehlungen“ verwirft sofort laufende Ergebnisse. Nach Stellungs-, Einstellungs- oder Sitzungswechseln akzeptiert die Pipeline nur Antworten der aktuellen Generation.
 
-Die EXE kann reproduzierbar neu gebaut werden: `powershell -ExecutionPolicy Bypass -File tools/build_exe.ps1`. PyInstaller wird dabei nur für den Build geladen und ist keine Laufzeitabhängigkeit.
+Die EXE kann reproduzierbar neu gebaut werden: `powershell -ExecutionPolicy Bypass -File tools/build_exe.ps1`. PyInstaller wird dabei nur für den Build geladen und ist keine Backend-Laufzeitabhängigkeit. Die schnelle App-Ordner-Ausgabe vermeidet das langsame und auf diesem Windows unzuverlässige Selbstentpacken einer Onefile-EXE; der komplette `release\Allie21 Chess Live Studio`-Ordner muss zusammenbleiben.
 
 ## Tests und Diagnose
 

@@ -1,5 +1,12 @@
 # Änderungen
 
+## v11.2.7
+
+- Die Windows-EXE bleibt als Infobereich-Steuerung aktiv und zeigt ein eigenes Allie-Symbol.
+- „Allie öffnen“ öffnet den lokalen Viewer; „Allie beenden“ schließt den ausschließlich von dieser EXE gestarteten BAT-/uv-/Server-Prozessbaum.
+- Endet der Server anderweitig, verschwindet das Symbol automatisch.
+- Der Windows-Build verwendet Python 3.12 und eine schnell startende App-Ordner-EXE statt der auf diesem System hängenden Onefile-Selbstentpackung.
+
 ## v11.2.6
 
 - Neuer optionaler Spielstil „Aggressiv“: Innerhalb von Allies legalen Top-Kandidaten werden Matt, Schach und direkter Königsdruck bevorzugt; Normalmodus und gegnerische Allie-Reihenfolge bleiben unverändert.

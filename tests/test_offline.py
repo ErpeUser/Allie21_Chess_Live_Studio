@@ -1,15 +1,22 @@
 """Fast checks that need no downloads or model inference."""
 import json
+import importlib.util
 from pathlib import Path
 import subprocess
 import sys
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
 import config
 from vision import sanitize_ocr_history
+
+LAUNCHER_SPEC = importlib.util.spec_from_file_location('allie_launcher', ROOT / 'tools/launcher.py')
+allie_launcher = importlib.util.module_from_spec(LAUNCHER_SPEC)
+assert LAUNCHER_SPEC.loader is not None
+LAUNCHER_SPEC.loader.exec_module(allie_launcher)
 
 
 class StandaloneTests(unittest.TestCase):
@@ -106,6 +113,47 @@ class StandaloneTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('Allie21 Chess Live Studio: OK', result.stdout)
+
+    def test_tray_quit_stops_only_owned_process_tree(self):
+        calls = []
+        process = SimpleNamespace(pid=4242, poll=lambda: None, terminate=lambda: calls.append('terminate'))
+        runner = lambda args, **kwargs: (calls.append((args, kwargs)) or SimpleNamespace(returncode=0))
+        icon = SimpleNamespace(stop=lambda: calls.append('icon-stop'))
+        app = allie_launcher.TrayApp(ROOT, command_runner=runner)
+        app.process = process
+
+        app.quit(icon)
+
+        self.assertEqual(calls[0][0], ['taskkill', '/PID', '4242', '/T', '/F'])
+        self.assertEqual(calls[-1], 'icon-stop')
+        self.assertNotIn('terminate', calls)
+
+    def test_tray_open_action_uses_local_viewer(self):
+        opened = []
+        app = allie_launcher.TrayApp(ROOT, browser_open=opened.append)
+
+        app.open_viewer()
+
+        self.assertEqual(opened, ['http://127.0.0.1:8765/viewer'])
+
+    def test_tray_image_is_visible_and_square(self):
+        image = allie_launcher.create_tray_image()
+        self.assertEqual(image.size, (64, 64))
+        self.assertEqual(image.mode, 'RGBA')
+        self.assertIsNotNone(image.getbbox())
+
+    def test_launcher_finds_project_above_onedir_bundle(self):
+        nested = ROOT / 'release' / 'Allie21 Chess Live Studio'
+        self.assertEqual(allie_launcher.find_project_root(nested), ROOT)
+
+    def test_exe_build_pins_tray_dependencies(self):
+        script = (ROOT / 'tools/build_exe.ps1').read_text(encoding='utf-8')
+        self.assertIn("--python '3.12'", script)
+        self.assertIn("--with 'pystray==0.19.5'", script)
+        self.assertIn("--with 'pillow==13.0.0'", script)
+        self.assertIn("--hidden-import 'pystray._win32'", script)
+        self.assertIn("--onedir", script)
+        self.assertNotIn("--onefile", script)
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
