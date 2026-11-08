@@ -1,5 +1,11 @@
 # Änderungen
 
+## v11.2.5
+
+- Chess.com-Stellungen werden aus den autoritativen `square-XY`-Klassen gelesen; Doppelschritt-Animationen können dadurch keine falschen Zwischenzüge mehr speichern.
+- Lichess/Chessground verwendet die Zielkoordinaten aus dem Inline-`transform`; ausgeblendete Ghost-/Fading-Figuren werden ignoriert.
+- Unbekannte DOM-Bretter behalten die allgemeine Geometrie-Erkennung, werden aber erst nach einem stabilen Brettbild verarbeitet.
+
 ## v11.2.4
 
 - Der lokale Server lädt die vollständige Chess.com-Historie jetzt selbst; Browser-CORS kann lange oder beobachtete Partien nicht mehr nach einigen Zügen stoppen.

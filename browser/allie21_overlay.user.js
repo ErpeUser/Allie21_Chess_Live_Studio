@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.4
+// @version      11.2.5
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -162,7 +162,7 @@
  }
  function pieceNodes(board){
   const selector='piece,.piece,[data-piece],[data-figurine],img[alt*="pawn" i],img[alt*="knight" i],img[alt*="bishop" i],img[alt*="rook" i],img[alt*="queen" i],img[alt*="king" i],[aria-label*="pawn" i],[aria-label*="knight" i],[aria-label*="bishop" i],[aria-label*="rook" i],[aria-label*="queen" i],[aria-label*="king" i]';
-  return Array.from(new Set(board.querySelectorAll(selector))).filter(pieceCode);
+  return Array.from(new Set(board.querySelectorAll(selector))).filter(node=>pieceCode(node)&&!isTransientPieceNode(node));
  }
  function boardOrientation(board,pieces){
   if(cfg.orientation!=='auto')return cfg.orientation;
@@ -178,21 +178,45 @@
   if(white.length&&black.length){const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;return avg(white)>avg(black)?'white':'black'}
   return 'white';
  }
+ function isTransientPieceNode(piece){return /\b(?:fading|ghost)\b/i.test(String(piece?.className||''))}
+ function authoritativePieceSquare(piece,board,ori){
+  if(isTransientPieceNode(piece))return null;
+  const square=/\bsquare-([1-8])([1-8])\b/.exec(String(piece?.className||''));
+  if(square)return{file:Number(square[1])-1,rank:Number(square[2])-1};
+  if(String(board?.tagName||'').toLowerCase()!=='cg-board'||String(piece?.tagName||'').toLowerCase()!=='piece')return null;
+  const style=piece.getAttribute?.('style')||'';
+  const move=/translate(?:3d)?\(\s*(-?\d+(?:\.\d+)?)(px|%)\s*,\s*(-?\d+(?:\.\d+)?)(px|%)/i.exec(style);
+  if(!move)return null;
+  const rect=board.getBoundingClientRect(),toPixels=(value,unit,size)=>Number(value)*(unit==='%'?size/800:1);
+  const col=Math.round(toPixels(move[1],move[2],rect.width)/(rect.width/8));
+  const row=Math.round(toPixels(move[3],move[4],rect.height)/(rect.height/8));
+  if(col<0||col>7||row<0||row>7)return null;
+  return{file:ori==='black'?7-col:col,rank:ori==='black'?row:7-row};
+ }
+ let pendingBoardPlacement='',pendingBoardSince=0;
+ function boardFrameIsStable(placement,now=Date.now()){
+  if(placement!==pendingBoardPlacement){pendingBoardPlacement=placement;pendingBoardSince=now;return false}
+  return now-pendingBoardSince>=220;
+ }
  function placementFromBoard(board){
   const rect=board.getBoundingClientRect(),pieces=pieceNodes(board),ori=boardOrientation(board,pieces),square=rect.width/8;
   if(rect.width<130||rect.height<130||Math.abs(rect.width-rect.height)>Math.max(rect.width,rect.height)*.12)return null;
-  const found=new Map();
+  const found=new Map();let authoritative=0;
   for(const piece of pieces){
    const code=pieceCode(piece),r=piece.getBoundingClientRect();
    if(!code||r.width<2||r.height<2||r.width>square*1.8||r.height>square*1.8)continue;
-   const px=r.left+r.width/2,py=r.top+r.height/2;if(px<rect.left||px>rect.right||py<rect.top||py>rect.bottom)continue;
-   let col=Math.max(0,Math.min(7,Math.floor((px-rect.left)/square))),row=Math.max(0,Math.min(7,Math.floor((py-rect.top)/square)));
-   const file=ori==='black'?7-col:col,rank=ori==='black'?row:7-row,key=rank*8+file;
+   const target=authoritativePieceSquare(piece,board,ori);let file,rank;
+   if(target){({file,rank}=target);authoritative++}else{
+    const px=r.left+r.width/2,py=r.top+r.height/2;if(px<rect.left||px>rect.right||py<rect.top||py>rect.bottom)continue;
+    const col=Math.max(0,Math.min(7,Math.floor((px-rect.left)/square))),row=Math.max(0,Math.min(7,Math.floor((py-rect.top)/square)));
+    file=ori==='black'?7-col:col;rank=ori==='black'?row:7-row;
+   }
+   const key=rank*8+file;
    if(found.has(key)&&found.get(key)!==code)return null;found.set(key,code);
   }
   const values=Array.from(found.values());if(values.filter(x=>x==='wk').length!==1||values.filter(x=>x==='bk').length!==1||values.length<4||values.length>32)return null;
   const ranks=[];for(let rank=7;rank>=0;rank--){let empty=0,text='';for(let file=0;file<8;file++){const code=found.get(rank*8+file);if(!code){empty++;continue}if(empty){text+=empty;empty=0}text+=code[0]==='w'?code[1].toUpperCase():code[1]}if(empty)text+=empty;ranks.push(text)}
-  return {placement:ranks.join('/'),orientation:ori,pieces:values.length};
+  return {placement:ranks.join('/'),orientation:ori,pieces:values.length,authoritative:authoritative===values.length};
  }
  function boardCandidates(){
   const selector='cg-board,wc-chess-board,chess-board,.chessboard,[data-chess-board],.analyse__board,.board,[class*="chess-board"],[class*="chessboard"],[id*="chessboard"],[role="grid"]';
@@ -341,6 +365,10 @@
   const visibleBoard=readBoardSnapshot();wrapper.style.display=visibleBoard?'':'none';if(visibleBoard)placePanel(visibleBoard.board);
   if(!visibleBoard){if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();show({})}return}
   if(!cfg.enabled){clearOverlay();return}
+  if(!visibleBoard.authoritative&&!boardFrameIsStable(visibleBoard.placement)){
+   if(visibleBoard.placement!==lastPlacement){currentResult=null;clearOverlay();if(pending)cancelAnalysis()}
+   scheduleTick();return;
+  }
   trackingPending=true;
   try{
    const history=await historyFromVisibleBoard(),pgn=history.pgn,fen=history.fen||'',basis=pgn||fen;

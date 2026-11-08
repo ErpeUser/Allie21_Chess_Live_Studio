@@ -109,9 +109,9 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.2.4', overlay)
+        self.assertIn('@version      11.2.5', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
-        self.assertEqual(manifest['version_name'], '11.2.4')
+        self.assertEqual(manifest['version_name'], '11.2.5')
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
@@ -188,6 +188,16 @@ class StandaloneTests(unittest.TestCase):
     def test_overlay_orientation_ignores_hidden_unrelated_boards(self):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_orientation.js')],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_overlay_uses_authoritative_site_coordinates_during_animation(self):
+        result = subprocess.run(
+            ['node', str(ROOT / 'tests/test_overlay_board_adapter.js')],
             cwd=ROOT,
             capture_output=True,
             text=True,
