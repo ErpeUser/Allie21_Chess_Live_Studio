@@ -1,5 +1,13 @@
 # Änderungen
 
+## v11.2.11
+
+- Pfeile verwenden jetzt dieselbe figurenbasierte Brettorientierung wie die Stellungserkennung; dadurch werden schwarze Bretter nicht mehr gespiegelt gezeichnet.
+
+## v11.2.10
+
+- Aggressiver Königsdruck bleibt Allie-first, wird aber bei klarer Materialverschlechterung durch Stockfish zurückgestellt; Züge, die sofortiges Matt zulassen, werden ebenfalls nicht bevorzugt.
+
 ## v11.2.9
 
 - Automatische Spielerfarbe nutzt sichtbare Plattformmarker und fällt bei fehlenden Markern auf die Brettseite zurück; Brettorientierung und manuelle Farbauswahl bleiben getrennt.

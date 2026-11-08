@@ -157,9 +157,9 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.2.9', overlay)
+        self.assertIn('@version      11.2.11', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
-        self.assertEqual(manifest['version_name'], '11.2.9')
+        self.assertEqual(manifest['version_name'], '11.2.11')
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
@@ -252,6 +252,8 @@ class StandaloneTests(unittest.TestCase):
             timeout=10,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
+        self.assertIn('boardOrientation(board,pieceNodes(board))', overlay)
 
     def test_overlay_uses_authoritative_site_coordinates_during_animation(self):
         result = subprocess.run(

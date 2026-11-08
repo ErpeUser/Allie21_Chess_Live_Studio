@@ -130,17 +130,27 @@ def rank_allie_candidates(
     if play_style != 'aggressive':
         raise ValueError("play_style must be normal or aggressive")
 
-    def pressure(item: tuple[int, dict[str, Any]]) -> tuple[int, int, int, float, int]:
+    def pressure(item: tuple[int, dict[str, Any]]) -> tuple[int, int, int, int, float, int]:
         index, candidate = item
         flags = candidate.get('flags') or []
         after = board.copy(stack=False)
         after.push_uci(candidate['uci'])
+        own_mate = int('Schachmatt' in flags)
+        opponent_can_mate = False
+        if not own_mate:
+            for reply in after.legal_moves:
+                probe = after.copy(stack=False)
+                probe.push(reply)
+                if probe.is_checkmate():
+                    opponent_can_mate = True
+                    break
         king = after.king(after.turn)
         ring = chess.SquareSet(chess.BB_KING_ATTACKS[king]) if king is not None else ()
         attacker = not after.turn
         attacked = sum(after.is_attacked_by(attacker, square) for square in ring)
         return (
-            int('Schachmatt' in flags),
+            own_mate,
+            int(not opponent_can_mate),
             int('Schach' in flags),
             attacked,
             float(candidate.get('probability', 0.0)),
@@ -148,6 +158,32 @@ def rank_allie_candidates(
         )
 
     return [candidate for _, candidate in sorted(enumerate(candidates), key=pressure, reverse=True)]
+
+
+def safe_aggressive_order(
+    candidates: list[dict[str, Any]], stockfish: dict[str, Any] | None,
+    margin_cp: int = 150,
+) -> list[dict[str, Any]]:
+    """Keep aggressive king pressure from overriding a clear engine safety gap.
+
+    Allie still determines the candidates and their pressure order. Stockfish
+    only demotes a move that is materially far below the best Allie candidate;
+    missing engine lines are left in their original Allie order.
+    """
+    if not candidates or not stockfish or not stockfish.get('available'):
+        return candidates
+    scores = {
+        str(line.get('uci')): int(line['score_cp'])
+        for line in stockfish.get('lines', [])
+        if line.get('uci') and isinstance(line.get('score_cp'), int)
+    }
+    known = [scores[move['uci']] for move in candidates if move.get('uci') in scores]
+    if not known:
+        return candidates
+    floor = max(known) - max(50, int(margin_cp))
+    safe = [move for move in candidates if move.get('uci') not in scores or scores[move['uci']] >= floor]
+    unsafe = [move for move in candidates if move.get('uci') in scores and scores[move['uci']] < floor]
+    return safe + unsafe
 
 
 def risk_weighted_premove(branches: list[tuple[float, list[dict[str, Any]]]]) -> dict[str, Any] | None:
@@ -396,6 +432,8 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                     })
             for item in sf.get('lines', []):
                 item['explanation'] = describe_candidate(board, item['uci'])
+            if play_style == 'aggressive':
+                candidate_moves = safe_aggressive_order(candidate_moves, sf)
 
     engine_moves = []
     if selection == 'stockfish' and sf and sf.get('available'):

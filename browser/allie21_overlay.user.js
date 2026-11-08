@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.9
+// @version      11.2.11
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -272,7 +272,10 @@
   if(rect.width<130||rect.height<130)return clearOverlay();
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('width','100%');svg.setAttribute('height','100%');
   svg.setAttribute('viewBox',`0 0 ${window.innerWidth} ${window.innerHeight}`);
-  let ori=boardOrientation(board);
+  // Use the same piece-aware orientation as placementFromBoard(). Re-running
+  // the resolver without pieces falls back to white on boards without an
+  // explicit CSS orientation marker and mirrors arrows on black boards.
+  let ori=boardOrientation(board,pieceNodes(board));
   (data.opponent_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,rect,ori,m.uci,i===0?ARROW_COLORS.opponentTop1:ARROW_COLORS.opponentTop2,i===0?.96:.62));
   (data.my_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,rect,ori,m.uci,i===0?ARROW_COLORS.ownTop1:ARROW_COLORS.ownTop2,i===0?.96:.65));
   if(data.premove)drawArrow(svg,rect,ori,data.premove.uci,ARROW_COLORS.premove,.96);

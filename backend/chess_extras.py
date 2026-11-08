@@ -271,7 +271,7 @@ def stockfish_lines(
             except (ValueError, AssertionError):
                 continue
             lines.append({'san': first_san, 'uci': pv[0].uci(), 'score': label,
-                          'depth': info.get('depth'), 'variation': pv_san})
+                          'score_cp': centipawns, 'depth': info.get('depth'), 'variation': pv_san})
         return {
             'available': True,
             'engine': 'Stockfish',

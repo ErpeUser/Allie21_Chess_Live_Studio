@@ -17,7 +17,7 @@ except ImportError as exc:
 
 from allie_local_server import (
     analyse_position, make_plan_messages, parse_history,
-    rank_allie_candidates, risk_weighted_premove,
+    rank_allie_candidates, risk_weighted_premove, safe_aggressive_order,
 )
 import allie_local_server as allie_server
 from position_tracker import PositionTracker
@@ -266,6 +266,18 @@ class ChessTests(unittest.TestCase):
         }, FoolMateAllie())
 
         self.assertEqual([move['uci'] for move in result['opponent_moves']], ['a7a6', 'd8h4'])
+
+    def test_aggressive_style_keeps_pressure_inside_engine_safety_margin(self):
+        candidates = [
+            {'uci': 'e2e4', 'probability': .8, 'flags': ['Schach']},
+            {'uci': 'd2d4', 'probability': .2, 'flags': []},
+        ]
+        stockfish = {'available': True, 'lines': [
+            {'uci': 'e2e4', 'score_cp': -240},
+            {'uci': 'd2d4', 'score_cp': 20},
+        ]}
+        safe = safe_aggressive_order(candidates, stockfish)
+        self.assertEqual([move['uci'] for move in safe], ['d2d4', 'e2e4'])
 
     def test_allie_can_choose_from_the_normal_start_position(self):
         result = analyse_position({'pgn': '*', 'analysis_source': 'allie', 'preview': False}, FakeAllie())
