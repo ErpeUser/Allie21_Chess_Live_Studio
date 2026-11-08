@@ -99,6 +99,8 @@ class AnalysisRequest(StartRequest):
     preview: bool = True
     recommendations_enabled: bool = True
     ocr_history: bool = False
+    opening_white: Literal['grob', 'vienna', 'danish'] = 'grob'
+    opening_black: Literal['englund', 'budapest', 'alekhine'] = 'englund'
 
 
 class HistoryRequest(InputModel):

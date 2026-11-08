@@ -1,5 +1,8 @@
 # Änderungen
 
+## v11.2.15
+- Hotfix: Opening-Auswahl wird von der FastAPI-Anfrage akzeptiert; kein „Extra inputs are not permitted“ mehr.
+
 ## v11.2.14
 - Warmes Schach-Design für Viewer und Browser-Overlay; Pfeilfarben unverändert.
 - Opening-Auswahl bleibt konfigurierbar, Standard ist Grob Gambit (Weiß) und Englund Gambit (Schwarz).

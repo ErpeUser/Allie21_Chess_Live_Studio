@@ -33,8 +33,8 @@ PyTorch 2.15.0 ist für die veröffentlichte Allie-2.1-CPU-Implementierung beibe
 - Stockfish-Release: `sf_19`
 - Stockfish-Archiv SHA-256: `3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7`
 - Installierte `stockfish.exe` SHA-256: `45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`
-- `uv.lock` SHA-256 beim Abschluss: `ccdecec5e2eba1b5718e11f6e6b514165c4077e90e70d3f112b48f566b8a4014`
-- `release\Allie21 Chess Live Studio\Allie21 Chess Live Studio.exe` SHA-256: `77c5a8a53825b6521cbff2404f607cd398d88f044c863fcd5be2b317074c5660`
+- `uv.lock` SHA-256 beim Abschluss: `c88069bfa715eb51d28989177a93122002c82e20391b88b9a008a671050a97f3`
+- `release\Allie21 Chess Live Studio\Allie21 Chess Live Studio.exe` SHA-256: `649dbf4810677c2bfb8a69fbb7e34599d5f739dac89adf6f49c0913049311b7a`
 
 Gebündelte Lichess-Eröffnungsdaten:
 

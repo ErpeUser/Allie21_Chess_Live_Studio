@@ -141,6 +141,14 @@ class HTTPBoundaryTests(unittest.TestCase):
             'pgn': '*', 'analysis_source': 'allie', 'play_style': 'reckless'
         })[0], 400)
 
+    def test_analysis_accepts_opening_selection(self):
+        status, data = self.call('POST', '/analyze', payload={
+            'pgn': '*', 'analysis_source': 'allie',
+            'opening_white': 'vienna', 'opening_black': 'alekhine'
+        })
+        self.assertEqual(status, 200)
+        self.assertIn(b'fen', data)
+
     def test_csrf_origin_blocked_and_host_checked(self):
         self.assertEqual(self.call('POST', '/api/start',
                                    origin='https://attacker.example', payload={})[0], 403)
@@ -217,10 +225,10 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
-        self.assertIn(b'11.2.14', page)
+        self.assertIn(b'11.2.15', page)
         status, script = self.call('GET', '/install/allie21_overlay.user.js')
         self.assertEqual(status, 200)
-        self.assertIn(b'@version      11.2.14', script)
+        self.assertIn(b'@version      11.2.15', script)
 
 
 if __name__ == '__main__':
