@@ -23,38 +23,46 @@ import chess.engine
 
 BASE = Path(__file__).resolve().parent
 
-STANDARD_REPERTOIRE = {
-    'white': {'primary': 'Wiener Gambit', 'alternative': 'Dänisches Gambit'},
-    'black': {'primary': 'Budapester Gambit', 'alternative': 'Aljechin-Verteidigung'},
+OPENING_OPTIONS = {
+    'white': {
+        'grob': ('Grob Gambit', ('g2g4', 'd7d5', 'f1g2')),
+        'vienna': ('Wiener Gambit', ('e2e4', 'e7e5', 'b1c3', 'b8c6', 'f2f4')),
+        'danish': ('Dänisches Gambit', ('e2e4', 'e7e5', 'd2d4', 'e5d4', 'c2c3')),
+    },
+    'black': {
+        'englund': ('Englund Gambit', ('d2d4', 'e7e5')),
+        'budapest': ('Budapester Gambit', ('d2d4', 'g8f6', 'c2c4', 'e7e5')),
+        'alekhine': ('Aljechin-Verteidigung', ('e2e4', 'g8f6')),
+    },
 }
-
-_STANDARD_LINES = {
-    'white': (
-        ('e2e4', 'e7e5', 'b1c3', 'b8c6', 'f2f4'),
-        ('e2e4', 'e7e5', 'd2d4', 'e5d4', 'c2c3'),
-    ),
-    'black': (
-        ('d2d4', 'g8f6', 'c2c4', 'e7e5'),
-        ('e2e4', 'g8f6'),
-    ),
-}
+DEFAULT_OPENINGS = {'white': 'grob', 'black': 'englund'}
 
 
-def standard_repertoire(side: str) -> dict[str, str]:
-    """Return the configured human repertoire without changing Allie's model."""
+def standard_repertoire(side: str, selection: str | None = None) -> dict[str, str]:
+    """Return the selected human repertoire without changing Allie's model."""
     normalized = str(side).lower()
-    if normalized not in STANDARD_REPERTOIRE:
+    options = OPENING_OPTIONS.get(normalized)
+    if not options:
         raise ValueError('side must be white or black')
-    return dict(STANDARD_REPERTOIRE[normalized])
+    key = str(selection or DEFAULT_OPENINGS[normalized]).lower()
+    if key not in options:
+        key = DEFAULT_OPENINGS[normalized]
+    names = [name for option, (name, _line) in options.items() if option != key]
+    return {'primary': options[key][0], 'alternative': names[0],
+            'additional': ' · '.join(names[1:]), 'selection': key}
 
 
-def repertoire_move_for(moves: list[str], side: str) -> str | None:
+def repertoire_move_for(moves: list[str], side: str, selection: str | None = None) -> str | None:
     """Return the next move of the primary/alternative line, if history matches."""
     normalized = str(side).lower()
-    if normalized not in _STANDARD_LINES:
+    options = OPENING_OPTIONS.get(normalized)
+    if not options:
         return None
     history = tuple(moves)
-    for line in _STANDARD_LINES[normalized]:
+    key = str(selection or DEFAULT_OPENINGS[normalized]).lower()
+    ordered = [key] + [option for option in options if option != key]
+    for option in ordered:
+        line = options[option][1]
         if len(history) < len(line) and line[:len(history)] == history:
             return line[len(history)]
     return None

@@ -1,8 +1,14 @@
 # Änderungen
 
-## v11.2.12
+## v11.2.14
+- Warmes Schach-Design für Viewer und Browser-Overlay; Pfeilfarben unverändert.
+- Opening-Auswahl bleibt konfigurierbar, Standard ist Grob Gambit (Weiß) und Englund Gambit (Schwarz).
+
+## v11.2.13
 
 - Standardrepertoire hinterlegt: Weiß Wiener Gambit mit Dänischem Gambit als Alternative; Schwarz Budapester Gambit mit Aljechin-Verteidigung als Alternative. Die Präferenz bleibt legal, weich und Allie-first.
+
+- Ragebait-Standard ergänzt: Grob Gambit für Weiß und Englund Gambit für Schwarz; Wiener/Budapest sowie Dänisch/Aljechin bleiben als Alternativen erhalten.
 
 ## v11.2.11
 

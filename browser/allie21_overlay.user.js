@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.12
+// @version      11.2.14
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -18,21 +18,21 @@
  const STORE='allie21.auto.v11';
  const load=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}};
  const stored=load();
- const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal'},stored);
+ const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund'},stored);
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
  const wrapper=document.createElement('div');
  wrapper.id='allie21-auto-study-root';
- wrapper.style.cssText='all:initial;display:none;position:fixed;right:15px;bottom:18px;z-index:2147483000;font-family:Inter,ui-sans-serif,system-ui,"Segoe UI",sans-serif;color:#eef7ff';
+ wrapper.style.cssText='all:initial;display:none;position:fixed;right:18px;bottom:18px;z-index:2147483000;font-family:Inter,ui-sans-serif,system-ui,"Segoe UI",sans-serif;color:#f7ead8';
  document.documentElement.appendChild(wrapper);
  const shadow=wrapper.attachShadow({mode:'open'});
  shadow.innerHTML=`
  <style>
- *{box-sizing:border-box}button,input,select{font:inherit}#bubble{background:#10283d;color:#eaf6ff;border:1px solid #48758c;border-radius:999px;padding:9px 13px;font-size:12px;font-weight:650;cursor:pointer;box-shadow:0 2px 10px #0008}#bubble:before{content:'';display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:#52d3ad;box-shadow:0 0 8px #52d3ad}
- #panel{display:none;width:360px;max-width:calc(100vw - 20px);max-height:76vh;overflow:auto;background:#0e1b2df5;color:#eef7ff;border:1px solid #2a4159;box-shadow:0 0 0 .5px #ffffff0a,0 8px 24px #000a;border-radius:14px;padding:14px;line-height:1.4;font-size:12px}
- #panel.open{display:block}h3{margin:10px 0 5px;color:#8de0c5;font-size:13px}p{margin:6px 0}label{display:block;margin:8px 0 4px;color:#c9d8e4}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1;min-width:0}#close{flex:0 0 32px;padding:6px;background:transparent}input,select{width:100%;min-height:38px;padding:7px 8px;background:#091724;border:1px solid #3c6076;border-radius:8px;color:#e6f3ff}
- button{min-height:38px;border:1px solid #41667f;background:#285474;color:white;border-radius:8px;padding:7px;cursor:pointer}button:hover{background:#336786}.item{display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #294157;padding:6px 0}.stat{color:#a6d9e3}.warn{color:#ffccaf}.small{font-size:11px;color:#abc4d6}#results{margin-top:9px}.insight{background:#14273a;border:1px solid #294157;border-radius:9px;margin:7px 0;padding:9px 10px}.analysis-title{display:flex;justify-content:space-between;align-items:center;color:#8de0c5;font-weight:700;margin-top:10px}
+ *{box-sizing:border-box}button,input,select{font:inherit}#bubble{background:#4b3426;color:#fff3e2;border:1px solid #a77a4d;border-radius:999px;padding:10px 14px;font-size:12px;font-weight:650;cursor:pointer;box-shadow:0 6px 18px #1a0e088c,0 0 0 1px #f2d4a522 inset;letter-spacing:.01em}#bubble:before{content:'';display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:#d6ad67;box-shadow:0 0 8px #d6ad67}
+ #panel{display:none;width:360px;max-width:calc(100vw - 20px);max-height:76vh;overflow:auto;background:#2a1d17f7;color:#f7ead8;border:1px solid #806044;box-shadow:0 18px 42px #160b08bf,0 0 0 1px #f2d4a51a inset;border-radius:14px;padding:16px;line-height:1.45;font-size:12px;backdrop-filter:blur(10px)}
+ #panel.open{display:block}h3{margin:10px 0 5px;color:#e1bd7c;font-size:13px}p{margin:6px 0}label{display:block;margin:8px 0 4px;color:#dfc7ab}.row{display:flex;gap:9px;align-items:center}.row>*{flex:1;min-width:0}#close{flex:0 0 32px;padding:6px;background:transparent;color:#f7ead8;border-color:#8c694d}input,select{width:100%;min-height:38px;padding:8px 9px;background:#1d1410;border:1px solid #72543d;border-radius:8px;color:#f8eee3}input:focus,select:focus{outline:2px solid #c99a5c;outline-offset:1px}
+ button{min-height:38px;border:1px solid #8b6546;background:#704c32;color:#fff3e2;border-radius:8px;padding:7px;cursor:pointer;transition:background .15s ease,border-color .15s ease}button:hover{background:#8a5d3a;border-color:#b78755}.item{display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #604631;padding:7px 0}.stat{color:#d2b991}.warn{color:#f0b28c}.small{font-size:11px;color:#c5ab8b}#results{margin-top:10px}.insight{background:#39271d;border:1px solid #694b35;border-radius:9px;margin:8px 0;padding:10px 11px;box-shadow:0 4px 12px #180c081f}.analysis-title{display:flex;justify-content:space-between;align-items:center;color:#e1bd7c;font-weight:700;margin-top:11px}
  </style>
  <button id='bubble'>Allie · Analyse</button>
  <section id='panel'><div class='row'><b style='font-size:15px'>Allie Live-Analyse</b><button id='close' aria-label='Fenster schließen'>×</button></div>
@@ -42,6 +42,8 @@
  <div class='row'><div><label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select></div>
  <div><label>Deine Farbe</label><select id='playerSide'><option value='auto'>Automatisch</option><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
  <label>Spielstil</label><select id='playStyle'><option value='normal'>Normal · menschlich wahrscheinlich</option><option value='aggressive'>Aggressiv · Matt und Königsdruck</option></select>
+ <div class='row'><div><label>Weißes Opening</label><select id='whiteOpening'><option value='grob'>Grob Gambit · Ragebait</option><option value='vienna'>Wiener Gambit</option><option value='danish'>Dänisches Gambit</option></select></div>
+  <div><label>Schwarzes Opening</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <p id='status' class='stat'>Warte auf ein Brett. Die Verbindung startet automatisch.</p>
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move. Allie klickt nie selbst.</p>
@@ -53,9 +55,9 @@
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
  const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({})};
- const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;save();invalidate();scheduleTick(true)};
- for(const field of ['elo','tc','orientation','playerSide','playStyle'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
+ const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;cfg.whiteOpening=el('whiteOpening').value;cfg.blackOpening=el('blackOpening').value;save();invalidate();scheduleTick(true)};
+ for(const field of ['elo','tc','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
+ const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
  const sessionSeed=location.hostname+location.pathname;
  let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
@@ -381,12 +383,12 @@
  function playerSideFor(orientation,detected){return cfg.playerSide==='auto'?(detected||orientation||'white'):cfg.playerSide}
  function analyze(pgn,placement='',fen='',playerSide='white'){
    if(pending||!cfg.enabled)return;
-   const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle]);analysisKey=key;
+   const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle,cfg.whiteOpening,cfg.blackOpening]);analysisKey=key;
    const serial=++analysisSerial;
    pending=true;el('status').textContent='Allie analysiert den aktuellen Zug...';
    const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
    const request=(source,preview,final)=>{
-     const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
+     const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,opening_white:cfg.whiteOpening,opening_black:cfg.blackOpening,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
     const fail=message=>{
      if(serial!==analysisSerial)return;
      activeRequest=null;
@@ -429,7 +431,7 @@
    }
     unsettledPlacement=history.placement;unsettledRetries=0;
     const playerSide=playerSideFor(history.orientation,detectedPlayerSide(currentBoard));
-     const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle]);
+    const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle,cfg.whiteOpening,cfg.blackOpening]);
     if(basis!==lastPGN||wanted!==analysisKey){
      currentResult=null;clearOverlay();show(pendingInsights(history));
      if(pending)cancelAnalysis();

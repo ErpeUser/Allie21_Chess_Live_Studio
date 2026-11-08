@@ -244,15 +244,23 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(rank_allie_candidates(board, choices, 'normal'), choices)
 
     def test_standard_repertoire_has_requested_white_and_black_lines(self):
-        self.assertEqual(standard_repertoire('white')['primary'], 'Wiener Gambit')
-        self.assertEqual(standard_repertoire('white')['alternative'], 'Dänisches Gambit')
-        self.assertEqual(standard_repertoire('black')['primary'], 'Budapester Gambit')
-        self.assertEqual(standard_repertoire('black')['alternative'], 'Aljechin-Verteidigung')
+        self.assertEqual(standard_repertoire('white')['primary'], 'Grob Gambit')
+        self.assertEqual(standard_repertoire('white')['alternative'], 'Wiener Gambit')
+        self.assertEqual(standard_repertoire('white')['additional'], 'Dänisches Gambit')
+        self.assertEqual(standard_repertoire('black')['primary'], 'Englund Gambit')
+        self.assertEqual(standard_repertoire('black')['alternative'], 'Budapester Gambit')
+        self.assertEqual(standard_repertoire('black')['additional'], 'Aljechin-Verteidigung')
+
+    def test_standard_repertoire_selection_changes_primary_line(self):
+        self.assertEqual(standard_repertoire('white', 'vienna')['primary'], 'Wiener Gambit')
+        self.assertEqual(repertoire_move_for([], 'white', 'vienna'), 'e2e4')
+        self.assertEqual(standard_repertoire('black', 'alekhine')['primary'], 'Aljechin-Verteidigung')
+        self.assertEqual(repertoire_move_for(['e2e4'], 'black', 'alekhine'), 'g8f6')
 
     def test_repertoire_move_is_only_returned_for_matching_legal_history(self):
-        self.assertEqual(repertoire_move_for([], 'white'), 'e2e4')
+        self.assertEqual(repertoire_move_for([], 'white'), 'g2g4')
         self.assertEqual(repertoire_move_for(['e2e4'], 'black'), 'g8f6')
-        self.assertEqual(repertoire_move_for(['d2d4'], 'black'), 'g8f6')
+        self.assertEqual(repertoire_move_for(['d2d4'], 'black'), 'e7e5')
         self.assertIsNone(repertoire_move_for(['e2e4', 'e7e5', 'b1c3'], 'black'))
 
     def test_aggressive_style_promotes_immediate_mate_for_player(self):
@@ -296,9 +304,9 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(result['move_count'], 0)
         self.assertEqual(result['side_to_move'], 'white')
         self.assertTrue(result['moves'])
-        self.assertEqual(result['repertoire']['primary'], 'Wiener Gambit')
-        self.assertEqual(result['repertoire']['expected_move'], 'e2e4')
-        self.assertEqual(result['repertoire']['expected_san'], 'e4')
+        self.assertEqual(result['repertoire']['primary'], 'Grob Gambit')
+        self.assertEqual(result['repertoire']['expected_move'], 'g2g4')
+        self.assertEqual(result['repertoire']['expected_san'], 'g4')
         self.assertTrue(any('Standardrepertoire' in message for message in result['plan_messages']))
 
     def test_premove_balances_probability_and_branch_risk(self):

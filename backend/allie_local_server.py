@@ -230,7 +230,8 @@ def make_plan_messages(output: dict[str, Any]) -> list[str]:
     repertoire = output.get('repertoire') or {}
     if output.get('move_count', 0) <= 2 and repertoire.get('primary'):
         messages.append(
-            f"Standardrepertoire: {repertoire['primary']} · Alternative: {repertoire['alternative']}."
+            f"Standardrepertoire: {repertoire['primary']} · Alternative: {repertoire['alternative']}"
+            f" · Weitere Option: {repertoire.get('additional', 'keine')}."
         )
         if repertoire.get('expected_move'):
             messages.append('Allie-Kandidat aus dem Repertoire: ' +
@@ -346,8 +347,9 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     if player_side not in ('white', 'black'):
         player_side = 'white' if board.turn else 'black'
     player_to_move = player_side == ('white' if board.turn else 'black')
-    repertoire = standard_repertoire(player_side)
-    repertoire['expected_move'] = repertoire_move_for(moves, player_side)
+    requested_opening = payload.get('opening_white' if player_side == 'white' else 'opening_black')
+    repertoire = standard_repertoire(player_side, requested_opening)
+    repertoire['expected_move'] = repertoire_move_for(moves, player_side, repertoire['selection'])
     if repertoire['expected_move']:
         try:
             expected = chess.Move.from_uci(repertoire['expected_move'])
