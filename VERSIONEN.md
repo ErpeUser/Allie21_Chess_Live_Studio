@@ -1,5 +1,11 @@
 # Reproduzierbare Versionen und Prüfstand
 
+## Update 11.2.17
+
+- Opening-Einstellungen, GUI-Persistenz, exakte Pfeilzentren und blauer Best-Premove sind umgesetzt und durch Node-Regressionstests abgedeckt.
+- Native Overlay, Request-Limits, Session-/Render-Gates, Stockfish-Verifikation und CI-Prüfungen wurden erweitert.
+
+
 Stand der Prüfung: 9. November 2026, Windows 11 x64. Abhängigkeiten sind in `pyproject.toml` direkt und in `uv.lock` vollständig festgelegt.
 
 ## Aktueller Wiederaufnahme-Checkpoint (09.11.2026)
