@@ -56,11 +56,11 @@
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
- const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
+ const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
  const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;cfg.whiteOpening=el('whiteOpening').value;cfg.blackOpening=el('blackOpening').value;save();invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
  const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=privateUnavailable?'Privates Windows-Overlay ist hier nicht verfügbar – sichtbarer Browsermodus aktiv.':cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
@@ -379,8 +379,8 @@
   const controller=new AbortController();let expired=false;
   const timer=setTimeout(()=>{expired=true;controller.abort()},timeout);
   const promise=ensureCapability().then(token=>fetch('http://127.0.0.1:8765'+path,{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance},body:JSON.stringify(data),signal:controller.signal}))
-   .then(async response=>{let parsed={};try{parsed=await response.json()}catch{}if(!response.ok)throw Error(parsed.error||String(response.status));return parsed})
-   .catch(error=>{if(expired)throw Error('Lokale Analyse braucht zu lange.');if(error.name==='AbortError')throw error;throw Error('Lokaler Allie-Server nicht erreichbar: '+error.message)})
+   .then(async response=>{let parsed={};try{parsed=await response.json()}catch{}if(!response.ok){const error=new Error(parsed.error||String(response.status));error.status=response.status;throw error}return parsed})
+   .catch(error=>{if(expired)throw Error('Lokale Analyse braucht zu lange.');if(error.name==='AbortError'||error.status)throw error;throw Error('Lokaler Allie-Server nicht erreichbar: '+error.message)})
    .finally(()=>clearTimeout(timer));
   return{promise,abort:()=>controller.abort()};
  }
@@ -460,14 +460,24 @@
    const request=(source,preview,final)=>{
      const fallback=source==='stockfish'&&!fen;
      const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,opening_white:cfg.whiteOpening,opening_black:cfg.blackOpening,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
-    const fail=message=>{
+    const fail=error=>{
      if(serial!==analysisSerial)return;
      activeRequest=null;
+     const message=typeof error==='string'?error:(error?.message||String(error));
+     if(error?.status===429){
+       // The server is working on another request; Stockfish would hit the same gate.
+       pending=false;
+       const delay=Math.min(12000,2000*(2**Math.min(busyRetries++,3)));
+       retryAfter=Date.now()+delay;
+       if(current())el('status').textContent='Analyse bereits aktiv – erneuter Versuch folgt.';
+       setTimeout(()=>{if(serial===analysisSerial)scheduleTick()},delay+50);
+       return;
+     }
      if(source==='allie'&&!fen&&current()){
        el('status').textContent='Allie nicht verfügbar – Stockfish-Fallback läuft...';
        return request('stockfish',false,true);
      }
-     pending=false;retryAfter=Date.now()+30000;
+     pending=false;busyRetries=0;retryAfter=Date.now()+30000;
      if(current())el('status').textContent=message;
      scheduleTick();
     };
@@ -479,8 +489,8 @@
         return request('stockfish',false,true);
       }
       currentResult=parsed;show(parsed);paint(parsed);
-      pending=false;el('status').textContent=source==='stockfish'?(fallback?'Stockfish-Fallback aktuell':'Stockfish aktuell'):`Allie aktuell · ${parsed.move_count} Halbzuege`;
-     }catch(e){fail('Analyse: '+e.message)}}).catch(error=>fail(error.name==='AbortError'?'Analyse abgebrochen.':error.message));
+      pending=false;busyRetries=0;el('status').textContent=source==='stockfish'?(fallback?'Stockfish-Fallback aktuell':'Stockfish aktuell'):`Allie aktuell · ${parsed.move_count} Halbzuege`;
+     }catch(e){fail('Analyse: '+e.message)}}).catch(error=>fail(error.name==='AbortError'?'Analyse abgebrochen.':error));
    };
    request(fen?'stockfish':'allie',false,!!fen);
  }
@@ -517,7 +527,8 @@
     unsettledPlacement=history.placement;unsettledRetries=0;
     const playerSide=playerSideFor(history.orientation,detectedPlayerSide(currentBoard));
     const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle,cfg.whiteOpening,cfg.blackOpening]);
-    if(basis!==lastPGN||wanted!==analysisKey){
+    if(basis!==lastPGN||wanted!==analysisKey||(!pending&&!currentResult&&Date.now()>=retryAfter)){
+     if(basis!==lastPGN||wanted!==analysisKey)busyRetries=0;
      currentResult=null;clearOverlay();show(pendingInsights(history));
      // Keep the protected native HUD alive while the model is thinking.  In
      // private mode a normal-mode payload is deliberately rejected by the
@@ -541,7 +552,7 @@
  function resetBoardSession(reason='navigation'){
   clearRemoteOverlay(reason);
   cancelAnalysis();
-  currentResult=null;lastPGN='';trackedPGN='';trackedFen='';analysisKey='';lastPlacement='';unsettledPlacement='';unsettledRetries=0;currentBoard=null;markBrowserSessionReset();
+  currentResult=null;lastPGN='';trackedPGN='';trackedFen='';analysisKey='';busyRetries=0;lastPlacement='';unsettledPlacement='';unsettledRetries=0;currentBoard=null;markBrowserSessionReset();
   sessionHash=Math.imul(sessionHash^Date.now(),16777619);boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
   clearOverlay();show({});scheduleTick(true);
  }
