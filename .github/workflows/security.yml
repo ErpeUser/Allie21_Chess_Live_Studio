@@ -1,7 +1,8 @@
 name: Security
 
 on:
-  push:
+  workflow_dispatch:
+  push:  push:
   pull_request:
   schedule:
     - cron: '17 3 * * 1'
