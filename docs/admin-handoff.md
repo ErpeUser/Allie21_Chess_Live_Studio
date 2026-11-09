@@ -1,6 +1,6 @@
 # Admin- und Abnahme-Handoff
 
-Der Quellcode und die automatisierten Tests sind auf `codex/allie-full-fix` fertig. Die folgenden Schritte benötigen GitHub-Administratorrechte oder einen echten Windows-Rechner und können deshalb nicht aus dem Repository-Commit heraus sicher automatisiert werden.
+Der Quellcode und die automatisierten Tests sind auf `main` fertig. Die folgenden Schritte benötigen GitHub-Administratorrechte oder einen echten Windows-Rechner und können deshalb nicht aus dem Repository-Commit heraus sicher automatisiert werden.
 
 ## GitHub Advanced Security und CodeQL
 
@@ -15,7 +15,7 @@ gh api --method PATCH `
 Danach den Security-Workflow erneut starten:
 
 ```powershell
-gh workflow run Security --repo ErpeUser/Allie21_Chess_Live_Studio --ref codex/allie-full-fix
+gh workflow run Security --repo ErpeUser/Allie21_Chess_Live_Studio --ref main
 gh run list --repo ErpeUser/Allie21_Chess_Live_Studio --workflow Security.yml --limit 5
 ```
 
@@ -50,7 +50,7 @@ Die Schutzregeln erfordern Repository-Adminrechte. Die Statusnamen müssen exakt
 }
 '@ | Set-Content protection.json
 gh api --method PUT `
-  repos/ErpeUser/Allie21_Chess_Live_Studio/branches/codex/allie-first-exe/protection `
+  repos/ErpeUser/Allie21_Chess_Live_Studio/branches/main/protection `
   --input protection.json
 Remove-Item protection.json
 ```
@@ -75,3 +75,27 @@ Get-ChildItem backend/vendor/allie_model -Filter '*.py' -Recurse |
 ```
 
 Danach müssen die vendorten Klassen mit `trust_remote_code=False`, `local_files_only=True` geladen, das Manifest im Review geprüft und die zusätzlichen Dateien in Git versioniert werden. Ohne diese Prüfung wäre das Abschalten der Option nur eine Scheinmaßnahme.
+
+## Nach dem Merge: Default-Branch und Bereinigung
+
+Nach dem Merge muss ein GitHub-Administrator `main` als Standardbranch setzen und die alten Arbeitsbranches löschen. Diese REST-Aufrufe sind absichtlich separat aufgeführt, weil die verfügbare Connector-Schnittstelle keine Repository-Einstellungen und keine DELETE-Ref-Operation bereitstellt:
+
+```powershell
+gh auth login
+
+gh api --method PATCH `
+  repos/ErpeUser/Allie21_Chess_Live_Studio `
+  -f default_branch=main
+
+gh api --method DELETE `
+  repos/ErpeUser/Allie21_Chess_Live_Studio/git/refs/heads/codex/allie-full-fix
+
+gh api --method DELETE `
+  repos/ErpeUser/Allie21_Chess_Live_Studio/git/refs/heads/codex/allie-first-exe
+
+gh api --method DELETE `
+  repos/ErpeUser/Allie21_Chess_Live_Studio/git/refs/heads/fix/allie-first-browser-visible
+
+gh api --method DELETE `
+  repos/ErpeUser/Allie21_Chess_Live_Studio/git/refs/heads/fix/ci-version-assertions
+```
