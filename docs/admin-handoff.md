@@ -1,6 +1,6 @@
 # Admin- und Abnahme-Handoff
 
-Der Quellcode und die automatisierten Tests sind auf `main` fertig. Die folgenden Schritte benötigen GitHub-Administratorrechte oder einen echten Windows-Rechner und können deshalb nicht aus dem Repository-Commit heraus sicher automatisiert werden.
+Der Quellcode und die automatisierten Tests sind auf `main` fertig. Der Merge-Commit ist `89ab33d9ad0a2c9210d7e6bcf3dea2678759be93`. Die folgenden Schritte benötigen GitHub-Administratorrechte oder einen echten Windows-Rechner und können deshalb nicht aus dem Repository-Commit heraus sicher automatisiert werden.
 
 ## GitHub Advanced Security und CodeQL
 
