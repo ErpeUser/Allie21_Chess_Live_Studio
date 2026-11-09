@@ -166,9 +166,9 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.2.16', overlay)
+        self.assertIn('@version      11.2.17', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
-        self.assertEqual(manifest['version_name'], '11.2.16')
+        self.assertEqual(manifest['version_name'], '11.2.17')
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
@@ -179,7 +179,8 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('unsettledRetries<4', overlay)
         self.assertIn('unsettledRetries++;scheduleTick()', overlay)
         self.assertIn("request(fen?'stockfish':'allie',false,!!fen)", overlay)
-        self.assertIn("request('both',true,true)", overlay)
+        self.assertNotIn("request('both',true,true)", overlay)
+        self.assertIn("source==='allie'", overlay)
         self.assertIn("fen?'stockfish':'allie'", overlay)
         self.assertIn('cfg.playerSide', overlay)
         self.assertIn("localPost('/api/browser-position'", overlay)
