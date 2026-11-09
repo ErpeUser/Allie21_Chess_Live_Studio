@@ -1,6 +1,7 @@
 """Fast checks that need no downloads or model inference."""
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import unittest
@@ -136,6 +137,14 @@ class StandaloneTests(unittest.TestCase):
         app.open_viewer()
 
         self.assertEqual(opened, ['http://127.0.0.1:8765/viewer'])
+
+    def test_launcher_validates_and_propagates_custom_port(self):
+        with patch.dict(os.environ, {'ALLIE_PORT': '18765'}):
+            self.assertEqual(allie_launcher.configured_port(), 18765)
+            self.assertEqual(allie_launcher.viewer_url(), 'http://127.0.0.1:18765/viewer')
+        with patch.dict(os.environ, {'ALLIE_PORT': '80'}):
+            with self.assertRaises(RuntimeError):
+                allie_launcher.configured_port()
 
     def test_tray_image_is_visible_and_square(self):
         image = allie_launcher.create_tray_image()
