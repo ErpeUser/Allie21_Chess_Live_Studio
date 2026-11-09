@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.16
+// @version      11.2.17
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
+// @match        https://chess.com/*
 // @match        https://lichess.org/*
 // @run-at       document-idle
 // @noframes
@@ -18,10 +19,10 @@
  const STORE='allie21.auto.v11';
  const PRIVATE_STORE='allie21.private.v1';
  const load=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}};
- const loadPrivate=()=>{try{return JSON.parse(localStorage.getItem(PRIVATE_STORE)||'{"privateMode":true}')}catch{return{privateMode:true}}};
+ const loadPrivate=()=>{try{return JSON.parse(localStorage.getItem(PRIVATE_STORE)||'{"privateMode":false}')}catch{return{privateMode:false}}};
  const stored=load();
  const privateStored=loadPrivate();
- const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:privateStored.privateMode!==false},stored);
+ const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:privateStored.privateMode===true},stored);
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -55,14 +56,14 @@
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='';
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
  const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
  const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;cfg.whiteOpening=el('whiteOpening').value;cfg.blackOpening=el('blackOpening').value;save();invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
+ const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=privateUnavailable?'Privates Windows-Overlay ist hier nicht verfügbar – sichtbarer Browsermodus aktiv.':cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
  el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
  let sessionHash=Date.now()>>>0;
@@ -358,8 +359,9 @@
   const pos=panelPosition(board.getBoundingClientRect(),window.innerWidth,window.innerHeight);
   wrapper.style.left=`${pos.left}px`;wrapper.style.top=`${pos.top}px`;wrapper.style.right='auto';wrapper.style.bottom='auto';
  }
- function show(data){if(cfg.privateMode){el('results').replaceChildren();el('panel').classList.remove('open');el('bubble').style.display='';return}let html='';
+ function show(data){let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
+  if(data.repertoire?.primary)html+=`<p class='small'><b>Repertoire:</b> ${escape(data.repertoire.primary)}${data.repertoire.expected_san?` · nächster Wunschzug ${escape(data.repertoire.expected_san)}`:''}</p>`;
   const messages=insightLines(data);
   if(messages.length)html+=`<div class='analysis-title'><span>Allie \u00b7 Spielanalyse</span><span>${messages.length} Hinweise</span></div>`;
   for(const message of messages)html+=`<div class='insight'>${escape(message)}</div>`;
@@ -456,11 +458,15 @@
    pending=true;el('status').textContent='Allie analysiert den aktuellen Zug...';
    const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
    const request=(source,preview,final)=>{
+     const fallback=source==='stockfish'&&!fen;
      const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,opening_white:cfg.whiteOpening,opening_black:cfg.blackOpening,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
     const fail=message=>{
      if(serial!==analysisSerial)return;
      activeRequest=null;
-     if(!final&&current())return request('both',true,true);
+     if(source==='allie'&&!fen&&current()){
+       el('status').textContent='Allie nicht verfügbar – Stockfish-Fallback läuft...';
+       return request('stockfish',false,true);
+     }
      pending=false;retryAfter=Date.now()+30000;
      if(current())el('status').textContent=message;
      scheduleTick();
@@ -468,9 +474,12 @@
     activeRequest=postJson('/analyze',data,240000);
     activeRequest.promise.then(parsed=>{if(serial!==analysisSerial)return;activeRequest=null;try{
       if(!current()){pending=false;lastPGN='';return scheduleTick()}
+      if(source==='allie'&&!fen&&(!Array.isArray(parsed?.moves)||!parsed.moves.length||parsed?.allie_skip_reason)){
+        el('status').textContent='Allie nicht verfügbar – Stockfish-Fallback läuft...';
+        return request('stockfish',false,true);
+      }
       currentResult=parsed;show(parsed);paint(parsed);
-      if(!final){el('status').textContent='Allie-Züge sichtbar · Vorschau folgt...';return request('both',true,true)}
-      pending=false;el('status').textContent=`Analyse aktuell: ${parsed.move_count} Halbzuege`;
+      pending=false;el('status').textContent=source==='stockfish'?(fallback?'Stockfish-Fallback aktuell':'Stockfish aktuell'):`Allie aktuell · ${parsed.move_count} Halbzuege`;
      }catch(e){fail('Analyse: '+e.message)}}).catch(error=>fail(error.name==='AbortError'?'Analyse abgebrochen.':error.message));
    };
    request(fen?'stockfish':'allie',false,!!fen);
@@ -481,7 +490,7 @@
    const previousBoard=currentBoard;const visibleBoard=readBoardSnapshot();
    if(previousBoard&&visibleBoard&&previousBoard!==visibleBoard.board)resetBoardSession('board_changed');
    observeBoardGeometry(visibleBoard?.board||null);
-   wrapper.style.display=visibleBoard&&!cfg.privateMode?'':'none';if(visibleBoard&&!cfg.privateMode)placePanel(visibleBoard.board);
+   wrapper.style.display='';if(visibleBoard)placePanel(visibleBoard.board);
   if(!visibleBoard){if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();clearRemoteOverlay('stale');show({})}return}
   // Private mode hides all page-owned DOM/SVG HUDs, but it must not stop the
   // browser tracker or analysis pipeline.  The native protected window gets
@@ -548,8 +557,8 @@
   try{
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
    const response=await fetch('http://127.0.0.1:8765/api/overlay/status',{cache:'no-store',headers:{'X-Allie-Overlay':'1'},signal:controller.signal});clearTimeout(timer);
-   if(response.ok){const state=await response.json();if(state?.ready===false||state?.instance_id&&capabilityInstance&&state.instance_id!==capabilityInstance){capabilityToken='';capabilityInstance=''}if(state?.mode==='private'||state?.mode==='normal'){cfg.privateMode=state.mode==='private';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill()}}
-  }catch{}
+   if(response.ok){const state=await response.json();if(state?.ready===false||state?.instance_id&&capabilityInstance&&state.instance_id!==capabilityInstance){capabilityToken='';capabilityInstance=''}privateUnavailable=state?.available===false;if(privateUnavailable){cfg.privateMode=false;try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:false}))}catch{}}else if(state?.mode==='private'||state?.mode==='normal'){cfg.privateMode=state.mode==='private';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{}}fill()}
+  }catch{privateUnavailable=true;cfg.privateMode=false;try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:false}))}catch{};fill()}
   sendOverlayMode(cfg.privateMode?'private':'normal');
   if(cfg.privateMode)clearOverlay();
  }
