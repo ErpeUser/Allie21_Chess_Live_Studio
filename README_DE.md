@@ -47,7 +47,10 @@ Die EXE kann reproduzierbar neu gebaut werden: `powershell -ExecutionPolicy Bypa
 ```powershell
 uv run --frozen python -m unittest discover -s tests -v
 uv run --frozen python backend/doctor.py
+powershell -ExecutionPolicy Bypass -File tools/quality_check.ps1
 ```
+
+Der optionale Qualitätslauf verändert die Produktionsumgebung nicht. Er installiert Ruff, Mypy, Pytest und Playwright bei Bedarf in `.quality-venv`; mit `-InstallBrowsers` werden zusätzlich Chromium-Browserdaten geladen. Pytest verwendet die bereits geprüften Runtime-Abhängigkeiten aus `.allie-venv`. Ruff/Mypy melden bestehende Befunde mit Exitcode 1, statt sie still zu überspringen.
 
 Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begrenzt JSON und JPEG-Größen und speichert keine Videoframes. Exakte geprüfte Versionen, Modellrevisionen, Hashes und Messwerte stehen in `VERSIONEN.md`; Lizenzen in `QUELLEN_LIZENZEN.md`.
 
@@ -55,7 +58,7 @@ Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begr
 
 Der aktuelle Checkpoint steht in `AGENT_PROGRESS.md`, der vollständige Auftrag in `AGENT_TASK.md`. Nach einem Session- oder Kontextlimit zuerst diese beiden Dateien und anschließend den dort genannten nächsten Befehl lesen; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
 
-Der lokale PyInstaller-Onedir-Build wurde erfolgreich erzeugt. Der portable `--check` läuft direkt aus dem Release-Ordner; der mitgelieferte Runtime-Python importiert FastAPI, Chess und PIL, und der Server beantwortet `/health` mit HTTP 200. Der erste Health-Smoke lief mit deaktiviertem Modell-Preload (`model_loaded=false`), damit kein mehrgigabytegroßer Download Teil des Paketchecks wird. Echte Windows-Capture-Proben und ein privater GitHub-Release sind weiterhin offen und werden nicht als erledigt behauptet. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
+Der lokale PyInstaller-Onedir-Build wurde erfolgreich erzeugt. Der portable `--check` läuft direkt aus dem Release-Ordner; der mitgelieferte Runtime-Python importiert FastAPI, Chess und PIL, und der Server beantwortet `/health` mit HTTP 200. Der erste Health-Smoke lief mit deaktiviertem Modell-Preload (`model_loaded=false`), damit kein mehrgigabytegroßer Download Teil des Paketchecks wird. Das private Repository und der Release `v11.2.16` sind unter `https://github.com/ErpeUser/Allie21_Chess_Live_Studio/releases/tag/v11.2.16` verifiziert. Echte Windows-Capture-Proben bleiben offen. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
 
 ## Grenzen
 

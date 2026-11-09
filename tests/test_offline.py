@@ -155,6 +155,14 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn("--onedir", script)
         self.assertNotIn("--onefile", script)
 
+    def test_quality_tooling_is_declared_on_demand(self):
+        project = (ROOT / 'pyproject.toml').read_text(encoding='utf-8')
+        for package in ('pytest', 'ruff', 'mypy', 'playwright'):
+            self.assertIn(package, project)
+        quality = ROOT / 'tools' / 'quality_check.ps1'
+        self.assertTrue(quality.is_file())
+        self.assertIn('pip install --python', quality.read_text(encoding='utf-8'))
+
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
         self.assertIn('@version      11.2.16', overlay)

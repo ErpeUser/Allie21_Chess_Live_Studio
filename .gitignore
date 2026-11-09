@@ -1,6 +1,8 @@
 .venv*/
 .allie-venv*/
+.quality-venv/
 .uv-cache/
+.uv-quality-cache/
 .build/
 __pycache__/
 *.py[cod]
@@ -9,6 +11,9 @@ backend/engines/*.exe
 *.log
 tests/tmp*/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pytest-cache-files-*/
 # The portable build is a local/release artifact; its bundled Python runtime
 # is ~1.1 GB and must be uploaded as a GitHub Release asset, not Git history.
 release/Allie21 Chess Live Studio/app/

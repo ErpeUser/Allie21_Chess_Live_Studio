@@ -4,12 +4,13 @@ Stand der Prüfung: 8. November 2026, Windows 11 x64. Abhängigkeiten sind in `p
 
 ## Aktueller Wiederaufnahme-Checkpoint (09.11.2026)
 
-- Python-Regression: 96 Tests, OK, 1 Skip (`.allie-venv\Scripts\python.exe -m unittest discover -s tests -p 'test_*.py' -q`).
+- Python-Regression: 97 Tests, OK, 1 Skip (`.allie-venv\Scripts\python.exe -m unittest discover -s tests -p 'test_*.py' -q`).
 - Browser-/Viewer-Regression: 9 Node-Fixtures, `node --check` für Userscript und Service Worker sowie Manifest-JSON-Prüfung, alles OK.
 - PyInstaller-Onedir-Build: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_exe.ps1`, Exitcode 0; EXE 2.625.829 Byte, portable Distribution 1.179.028.625 Byte (Runtime + App).
 - Aktuelle SHA-256: EXE `C586212F51F5DDE26E6F3E6C94F7C8380116F47D37855D26E9EB44A7C3872DB5`, `base_library.zip` `7F191DB99D38A04974B52B0301E2B8B65BEEBE7597F02DC36FB7524271C9672E`, `uv.lock` `14E0820B55010B622C6416554E8FED84C45617B794D84769AB70C3BB94B7C990`.
 - `tools\launcher.py --check` ist im Checkout OK und direkt aus dem portablen Release-Ordner ebenfalls OK. Die Distribution enthält `app` und `runtime`; der Runtime-Python importiert FastAPI/Chess/PIL, und der Server-Health-Smoke antwortet mit HTTP 200. Das Modell-Preload wurde für diesen Smoke deaktiviert; die Modellgewichte bleiben ein First-Run-Download in den lokalen Cache.
-- Echte HWND-Affinitäts-/OBS-/getDisplayMedia-Proben sowie privater GitHub-Remote/Release sind in dieser Umgebung nicht verifiziert.
+- Echte HWND-Affinitäts-/OBS-/getDisplayMedia-Proben sind in dieser Umgebung nicht verifiziert. Das private GitHub-Repository und Release `v11.2.16` sind unter `https://github.com/ErpeUser/Allie21_Chess_Live_Studio/releases/tag/v11.2.16` verifiziert.
+- Optionaler Qualitätslauf: `tools\quality_check.ps1` installiert Ruff/Mypy/Pytest/Playwright in `.quality-venv`; Pytest 96 bestanden/1 übersprungen, Ruff 55 Befunde, Mypy 24 Befunde. Diese Lint-/Type-Befunde sind offen dokumentiert.
 
 ## Laufzeit
 

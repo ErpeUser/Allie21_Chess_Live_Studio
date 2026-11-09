@@ -66,14 +66,14 @@ Die bestehende Allie-2.1-Chess.com-Live-Overlay-Erweiterung soll lokal verifizie
 |---|---|---|
 | G1 Arbeitsstand gerettet | PASS | `AGENT_TASK.md`, `AGENT_PROGRESS.md`, Branch/HEAD/Dirty-Stand und nächste Schritte gesichert. |
 | G2 Pfeile/Lifecycle | UNTESTED | 9 JS-Fixtures und Syntaxchecks PASS; reale Playwright-/Browser-Zoom-/DPI-/Fensterbewegungs-E2E nicht ausgeführt. |
-| G3 Eröffnungen/Schach | PASS | 43 Chess-Regressionen im Vollauf 96 Tests PASS; EPD-/Transpositions-/Abweichungs-/Fallback-Fälle enthalten. |
+| G3 Eröffnungen/Schach | PASS | 43 Chess-Regressionen im Vollauf 97 Tests PASS; EPD-/Transpositions-/Abweichungs-/Fallback-Fälle enthalten. |
 | G4 Erweiterung | UNTESTED | Version 11.2.16 konsistent, MV3-Alarmlogik statisch/Node geprüft; tatsächliches Edge-Reload und geladener Content-Script-Stand nicht verifiziert. |
 | G5 Privater Modus | BLOCKED | Native Affinität/Fail-Closed und Mocktests PASS; echte HWND-Rücklesung plus OBS/getDisplayMedia/Discord/Zoom/Teams-Proben fehlen. |
-| G6 Pipeline/Funktionserhalt | PASS | Python-Volltest 96 Tests PASS, 1 Skip; Allie-first-/Stockfish-/Session-/HTTP-Regressionsfälle enthalten. |
-| G7 Qualität | UNTESTED | `git diff --check`, Unit-/JS-Läufe PASS; keine vollständige Lint-/Type-/Playwright-/p50/p95-Abnahme. |
+| G6 Pipeline/Funktionserhalt | PASS | Python-Volltest 97 Tests PASS, 1 Skip; Allie-first-/Stockfish-/Session-/HTTP-Regressionsfälle enthalten. |
+| G7 Qualität | UNTESTED | Qualitätsumgebung installierbar; Pytest 96 PASS/1 Skip, Ruff 55 Befunde und Mypy 24 Befunde; keine vollständige Lint-/Type-/Playwright-/p50/p95-Abnahme. |
 | G8 Windows-Paket | PASS | Portables Onedir mit `app` + `runtime` gebaut; EXE `--check`, Runtime-Imports und Server-`/health` (HTTP 200) direkt aus dem Release-Ordner geprüft. Modell-Download bleibt First-Run. |
 | G9 Dokumentation | PASS | README_DE, VERSIONEN, CHANGELOG, AGENT_TASK/PROGRESS entsprechen dem getesteten und explizit begrenzten Stand. |
-| G10 Privater Release | BLOCKED | Kein Git-Remote/Auth verifiziert; kein Commit/Tag/Push/Release autorisiert oder behauptet. |
+| G10 Privater Release | PASS | Privates Repository, Commit, Tag `v11.2.16`, Branch-Push und Release-Asset verifiziert. |
 
 ## Checkpoint 09.11.2026 06:10
 
@@ -83,14 +83,20 @@ Die bestehende Allie-2.1-Chess.com-Live-Overlay-Erweiterung soll lokal verifizie
 
 ## Checkpoint 09.11.2026 06:20
 
-- G2/G3/G7-Kernchecks erneut ausgeführt: 96 Python-Tests OK (1 Skip), alle 9 JS-Fixtures OK, `node --check` für Userscript/Service Worker OK, `compileall` OK. G3 bleibt PASS; G2 und G7 bleiben wegen fehlendem echten Edge/Playwright bzw. fehlenden Lint-/Type-/Performance-Tools UNTESTED, nicht wegen eines bekannten lokalen Fehlers.
+- G2/G3/G7-Kernchecks erneut ausgeführt: 97 Python-Tests OK (1 Skip), alle 9 JS-Fixtures OK, `node --check` für Userscript/Service Worker OK, `compileall` OK. G3 bleibt PASS; G2 und G7 bleiben wegen fehlendem echten Edge/Playwright bzw. offenen Ruff/Mypy-Befunden UNTESTED, nicht wegen eines bekannten Runtime-Fehlers.
 - G8 umgesetzt: `tools/build_exe.ps1` kopiert jetzt App-Dateien und die `.allie-venv`-Pakete in `release\Allie21 Chess Live Studio\app` und `runtime`. Portable EXE-Check, Import-Smoke und `/health` HTTP 200 bestanden; laufender Testprozess wurde beendet.
 - Aktuelle Distribution: EXE 2.625.829 Byte, Gesamt 1.179.028.625 Byte; Hashes und First-Run-Modellhinweis in `VERSIONEN.md`, Bedienhinweis in `README_DE.md`.
-- G10 bleibt BLOCKED: kein Remote konfiguriert; `gh auth status` meldet ungültigen Token für `ErpeUser`. Für Commit/privates Repo/Push fehlt nur die echte GitHub-Reauth bzw. der gewünschte Remote-Name.
+- G10 war bis zur Reauth BLOCKED; nach erfolgreicher Reauth sind Repository, Branch, Tag und Release verifiziert.
+
+## Checkpoint 09.11.2026 06:45
+
+- GitHub-Reauth erfolgreich; privates Repository `https://github.com/ErpeUser/Allie21_Chess_Live_Studio` verifiziert. Branch `codex/allie-first-exe`, Tag `v11.2.16` und privater Release mit portablem ZIP-Asset sind vorhanden.
+- Qualitätswerkzeuge als optionale `quality`-Abhängigkeiten dokumentiert. `tools\quality_check.ps1` installiert bei Bedarf in `.quality-venv` (eigener uv-Cache), setzt die geprüften `.allie-venv`-Pakete für Pytest wieder ein und kann Chromium mit `-InstallBrowsers` nachladen.
+- Qualitätslauf: Pytest `97 passed, 1 skipped`; Ruff `55` Befunde; Mypy `24` Befunde. Diese Befunde sind sichtbar und werden nicht als bestanden behauptet. Runtime-Tests bleiben grün.
 
 ## Release-Status / Blocker
 
-Kein Remote vorhanden. Ein privater GitHub-Release ist derzeit nicht verifizierbar und darf nicht behauptet werden.
+Remote `origin` zeigt auf `https://github.com/ErpeUser/Allie21_Chess_Live_Studio.git`; Repository-Sichtbarkeit ist `private`. Release-URL: `https://github.com/ErpeUser/Allie21_Chess_Live_Studio/releases/tag/v11.2.16`.
 
 ## Wiederaufnahmeplan
 
