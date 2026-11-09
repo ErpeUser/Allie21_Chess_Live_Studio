@@ -1,8 +1,9 @@
 const fs = require('fs');
+const path = require('path');
 
-const repo = __dirname.replace(/\/tests$/, '');
-const viewer = fs.readFileSync(`${repo}/viewer/index.html`, 'utf8');
-const overlay = fs.readFileSync(`${repo}/browser/allie21_overlay.user.js`, 'utf8');
+const repo = path.resolve(__dirname, '..');
+const viewer = fs.readFileSync(path.join(repo, 'viewer', 'index.html'), 'utf8');
+const overlay = fs.readFileSync(path.join(repo, 'browser', 'allie21_overlay.user.js'), 'utf8');
 
 function requireSource(source, fragment, message) {
   if (!source.includes(fragment)) throw new Error(message || `missing source fragment: ${fragment}`);
