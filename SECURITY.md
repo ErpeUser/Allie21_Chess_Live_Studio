@@ -50,3 +50,11 @@ page. Do not attach personal game captures or model/cache directories.
 There is currently no promise of a public bounty or a guaranteed response
 time. Release readiness and known verification gaps are tracked in
 `VERSIONEN.md` and `README_DE.md`.
+
+## Current hardening (11.2.17)
+
+- The launcher validates `ALLIE_PORT`, probes the loopback port before starting, and forwards the selected port to the server. A port already owned by another process fails closed. The browser extension continues to use the default port unless its host configuration is changed together with the launcher.
+- The MV3 manifest contains a fixed public key and the server allowlists only the resulting extension origin `chrome-extension://omboihgfgofgmidefcpkihgglhkiielo`; arbitrary extension origins are rejected.
+- The pinned Allie weights and remote model code both use `MODEL_REVISION`. The model still requires `trust_remote_code=True`; review that pinned upstream revision before changing it.
+- Model and Stockfish diagnostics are logged locally under opaque error IDs. Raw provider, path, and process details are not returned in API responses.
+- CI runs SHA-pinned CodeQL analysis for Python and JavaScript and a full-history Gitleaks scan in addition to the locked test and quality workflow.
