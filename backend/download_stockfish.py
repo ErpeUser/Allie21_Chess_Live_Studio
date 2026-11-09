@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Optional Stockfish 19 Windows universal release downloader (official upstream)."""
 from __future__ import annotations
-from pathlib import Path
-from urllib.request import urlopen, Request
-import io
+
 import hashlib
+import io
 import os
 import zipfile
+from pathlib import Path
+from urllib.request import Request, urlopen
 
 URL = 'https://github.com/official-stockfish/Stockfish/releases/download/sf_19/stockfish-windows-x86-64-universal.zip'
 # GitHub official release asset digest, verified against the upstream release API.
@@ -35,7 +36,7 @@ def download():
     if not exe_files:
         raise RuntimeError('No Stockfish executable found in official archive')
     # Only extract the signed-off engine executable, not arbitrary paths or scripts.
-    chosen = sorted(exe_files, key=lambda x: x.file_size, reverse=True)[0]
+    chosen = max(exe_files, key=lambda x: x.file_size)
     if chosen.file_size > 175_000_000:
         raise RuntimeError('Executable unexpectedly large')
     with z.open(chosen) as source, target.with_suffix('.download').open('wb') as output:

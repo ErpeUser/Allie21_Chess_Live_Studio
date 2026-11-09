@@ -6,20 +6,20 @@ the objective candidate lines come from a real UCI Stockfish executable when ava
 """
 from __future__ import annotations
 
+import atexit
 import csv
 import functools
 import io
 import os
-from pathlib import Path
 import shutil
 import threading
-import atexit
+from pathlib import Path
 from typing import Any
-from config import CONFIG
 
 import chess
-import chess.pgn
 import chess.engine
+import chess.pgn
+from config import CONFIG
 
 BASE = Path(__file__).resolve().parent
 
@@ -106,7 +106,7 @@ def _position_from_pgn(pgn: str) -> tuple[chess.Board, int] | None:
 @functools.lru_cache(maxsize=1)
 def opening_indexes() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Parse each opening only once. Exact EPD and cautious placement fallback."""
-    rows = []
+    rows: list[tuple[str, str, str]] = []
     for file in sorted((BASE / 'openings').glob('?.tsv')):
         with file.open(encoding='utf-8-sig', newline='') as handle:
             rows.extend((x['eco'], x['name'], x['pgn']) for x in csv.DictReader(handle, delimiter='\t')
@@ -227,9 +227,9 @@ def position_facts(board: chess.Board) -> list[str]:
 
     pinned = []
     for square, piece in board.piece_map().items():
-        if piece.color == side and piece.piece_type not in (chess.PAWN, chess.KING):
-            if board.is_pinned(side, square):
-                pinned.append(f'{PIECE_DE[piece.piece_type]} {chess.square_name(square)}')
+        if (piece.color == side and piece.piece_type not in (chess.PAWN, chess.KING)
+                and board.is_pinned(side, square)):
+            pinned.append(f'{PIECE_DE[piece.piece_type]} {chess.square_name(square)}')
     if pinned:
         facts.append('An den König gefesselt: ' + ', '.join(pinned[:2]) + '.')
 
@@ -263,7 +263,7 @@ def _close_stockfish():
         if _ENGINE is not None:
             try:
                 _ENGINE.quit()
-            except Exception:
+            except Exception:  # noqa: BLE001,S110 - engine shutdown is best effort
                 pass
         _ENGINE, _ENGINE_BINARY = None, None
 

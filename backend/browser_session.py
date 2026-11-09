@@ -5,14 +5,12 @@ fields, private APIs, game-type labels, or website-specific notation are needed.
 """
 from __future__ import annotations
 
+import re
 from collections import OrderedDict
 from threading import RLock
-import re
 
 import chess
-
 from position_tracker import PositionTracker
-
 
 SESSION_RE = re.compile(r"^[A-Za-z0-9._:-]{1,180}$")
 

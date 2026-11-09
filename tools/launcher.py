@@ -3,12 +3,11 @@ from __future__ import annotations
 
 import ctypes
 import os
-from pathlib import Path
 import subprocess
 import sys
-from threading import Thread
 import webbrowser
-
+from pathlib import Path
+from threading import Thread
 
 TITLE = "Allie21 Chess Live Studio"
 VIEWER = "http://127.0.0.1:8765/viewer"

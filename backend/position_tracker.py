@@ -5,10 +5,12 @@ or side to move. Never declare a reconstructed history to be complete unless
 we observed the initial position or verified a full PGN from the initial ply.
 """
 from __future__ import annotations
+
+import io
 from dataclasses import dataclass
+
 import chess
 import chess.pgn
-import io
 
 
 @dataclass

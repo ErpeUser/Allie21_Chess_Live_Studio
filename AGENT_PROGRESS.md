@@ -96,8 +96,19 @@ Die bestehende Allie-2.1-Chess.com-Live-Overlay-Erweiterung soll lokal verifizie
 
 ## Release-Status / Blocker
 
+- Der lokale Onedir-Stand wurde neu gebaut; das vorhandene portable ZIP ist noch das vorherige Artefakt und wurde wegen fehlender AusfÃ¼hrungscredits nicht neu gepackt. Es ist daher fÃ¼r den aktuellen Dirty-Stand nicht als Release-Artefakt freigegeben.
+
 Remote `origin` zeigt auf `https://github.com/ErpeUser/Allie21_Chess_Live_Studio.git`; Repository-Sichtbarkeit ist `private`. Release-URL: `https://github.com/ErpeUser/Allie21_Chess_Live_Studio/releases/tag/v11.2.16`.
 
 ## Wiederaufnahmeplan
 
 Beim Fortsetzen zuerst diese Datei, `AGENT_TASK.md` und die referenzierten Agentenberichte lesen. Dann beim zuletzt offenen Schritt fortfahren; keine bereits verifizierten Arbeiten wiederholen.
+
+## Checkpoint 09.11.2026 09:40
+
+- Den wiedergefundenen Alt-Chat gegen `AGENT_TASK.md` abgeglichen; der aktuelle Checkout ist bereits der dort beschriebene Integrationsstand. Keine konkurrierenden Alt-Patches oder verlorenen Dateien gefunden.
+- Qualitätsbereinigung integriert: Ruff-Importsortierung und sichere lokale Lint-Fixes, präzise Mypy-Typisierung an ctypes-/Payload-Grenzen, robuste Sequenz-/Bounds-Validierung und explizite `subprocess.run(check=False)`-Aufrufe. Breite Fehlerbehandlungen bleiben nur an bewusst fail-soften Modell/OCR/Win32-Grenzen mit begründeten lokalen `# noqa`-Hinweisen.
+- Nachweis: `tools\quality_check.ps1` Exitcode 0; Ruff 0, Mypy 0, Pytest 96 passed / 1 skipped. Separater Unittest-Lauf: 97 Tests OK / 1 Skip.
+- Browser-/Paket-Smokes erneut PASS: neun Node-Fixtures, `node --check` für Userscript/Service Worker, Manifest-JSON, `compileall`, Launcher-Check im Checkout und im portablen Ordner.
+- Onedir-Build nach Freigabe eines ausschließlich projektbezogenen Stockfish-/Release-Prozesslocks erneut erfolgreich: EXE 2.625.831 Byte, Distribution 1.180.055.514 Byte. Aktuelle Hashes stehen in `VERSIONEN.md`.
+- Verbleibende Grenzen unverändert: echte Edge-/Playwright-Zoom-/DPI-E2E, HWND-Affinitäts-Rücklesung sowie reale OBS/getDisplayMedia-/Discord-/Zoom-/Teams-Capture-Proben sind in dieser Umgebung nicht ausgeführt; diese Ziele bleiben UNTESTED/BLOCKED und werden nicht als PASS behauptet.

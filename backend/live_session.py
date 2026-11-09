@@ -4,15 +4,16 @@ No mss, native Win32 hooks, persistent screenshot files, mouse automation, or
 video uploads. Only small JPEG frames are passed to localhost for chessvision.
 """
 from __future__ import annotations
-from io import BytesIO
+
 import hashlib
-from PIL import Image, UnidentifiedImageError
-from threading import Event, RLock, Thread
 import json
+from io import BytesIO
+from threading import Event, RLock, Thread
 
 from allie_local_server import analyse_position
 from chess_extras import make_brief
 from config import CONFIG, MODEL_ID, parse_time_control
+from PIL import Image, UnidentifiedImageError
 from position_tracker import PositionTracker
 from vision import BoardVision
 
@@ -124,7 +125,7 @@ class LiveSession:
         payload['generation'] = revision
         payload['history_complete'] = bool(self.tracker.complete_history)
         payload['turn_verified'] = bool(self.tracker.turn_verified)
-        payload['analysis_key'] = hashlib.sha256(f"{field}:{text}".encode('utf-8')).hexdigest()
+        payload['analysis_key'] = hashlib.sha256(f"{field}:{text}".encode()).hexdigest()
         self.analysis_job = (revision, payload)
         self.state['result'] = None
         self.state['analysing'] = True
@@ -292,7 +293,7 @@ class LiveSession:
             try:
                 result = analyse_position(payload)
                 error = None
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - worker errors are returned in session state
                 result, error = None, str(exc)[:220]
             with self.lock:
                 if not self.state['running'] or revision != self.generation:

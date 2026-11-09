@@ -1,16 +1,18 @@
 # Reproduzierbare Versionen und Prüfstand
 
-Stand der Prüfung: 8. November 2026, Windows 11 x64. Abhängigkeiten sind in `pyproject.toml` direkt und in `uv.lock` vollständig festgelegt.
+Stand der Prüfung: 9. November 2026, Windows 11 x64. Abhängigkeiten sind in `pyproject.toml` direkt und in `uv.lock` vollständig festgelegt.
 
 ## Aktueller Wiederaufnahme-Checkpoint (09.11.2026)
 
 - Python-Regression: 97 Tests, OK, 1 Skip (`.allie-venv\Scripts\python.exe -m unittest discover -s tests -p 'test_*.py' -q`).
 - Browser-/Viewer-Regression: 9 Node-Fixtures, `node --check` für Userscript und Service Worker sowie Manifest-JSON-Prüfung, alles OK.
-- PyInstaller-Onedir-Build: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_exe.ps1`, Exitcode 0; EXE 2.625.829 Byte, portable Distribution 1.179.028.625 Byte (Runtime + App).
-- Aktuelle SHA-256: EXE `C586212F51F5DDE26E6F3E6C94F7C8380116F47D37855D26E9EB44A7C3872DB5`, `base_library.zip` `7F191DB99D38A04974B52B0301E2B8B65BEEBE7597F02DC36FB7524271C9672E`, `uv.lock` `14E0820B55010B622C6416554E8FED84C45617B794D84769AB70C3BB94B7C990`.
+- PyInstaller-Onedir-Build: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_exe.ps1`, Exitcode 0; EXE 2.625.831 Byte, portable Distribution 1.180.055.514 Byte (Runtime + App).
+- Aktuelle SHA-256: EXE `5C7C63925F6365FDCDC1FA41075432FA97837293D72C7C811DE4E260F658CDCC`, `_internal/base_library.zip` `7C1F334848418D83B569BB47EFD2002B97C22FDC88D4BE15E3A49A6DB57376F7`, `uv.lock` `88C82F0B5CE3FFF0FDD06C3C2CBB87EA18AF40B1942472DE22FFE50914027340`.
 - `tools\launcher.py --check` ist im Checkout OK und direkt aus dem portablen Release-Ordner ebenfalls OK. Die Distribution enthält `app` und `runtime`; der Runtime-Python importiert FastAPI/Chess/PIL, und der Server-Health-Smoke antwortet mit HTTP 200. Das Modell-Preload wurde für diesen Smoke deaktiviert; die Modellgewichte bleiben ein First-Run-Download in den lokalen Cache.
 - Echte HWND-Affinitäts-/OBS-/getDisplayMedia-Proben sind in dieser Umgebung nicht verifiziert. Das private GitHub-Repository und Release `v11.2.16` sind unter `https://github.com/ErpeUser/Allie21_Chess_Live_Studio/releases/tag/v11.2.16` verifiziert.
-- Optionaler Qualitätslauf: `tools\quality_check.ps1` installiert Ruff/Mypy/Pytest/Playwright in `.quality-venv`; Pytest 96 bestanden/1 übersprungen, Ruff 55 Befunde, Mypy 24 Befunde. Diese Lint-/Type-Befunde sind offen dokumentiert.
+- Optionaler Qualitätslauf: `tools\quality_check.ps1` installiert Ruff/Mypy/Pytest/Playwright in `.quality-venv`; Pytest 96 bestanden/1 übersprungen, Ruff 0 Befunde, Mypy 0 Befunde.
+
+ - Das vorhandene portable ZIP unter `release\\Allie21_Chess_Live_Studio_v11.2.16_portable.zip` stammt aus dem vorherigen 06:43-Artefaktlauf und wurde nach den lokalen QualitÃ¤ts-/BuildÃ¤nderungen nicht neu gepackt; EXE und Onedir-Ordner sind aktuell, das ZIP darf fÃ¼r diesen Stand noch nicht verÃ¶ffentlicht werden.
 
 ## Laufzeit
 
@@ -43,8 +45,8 @@ PyTorch 2.15.0 ist für die veröffentlichte Allie-2.1-CPU-Implementierung beibe
 - Stockfish-Release: `sf_19`
 - Stockfish-Archiv SHA-256: `3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7`
 - Installierte `stockfish.exe` SHA-256: `45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`
-- `uv.lock` SHA-256 beim aktuellen Checkpoint: `14e0820b55010b622c6416554e8fed84c45617b794d84769ab70c3bb94b7c990`
-- `release\Allie21 Chess Live Studio\Allie21 Chess Live Studio.exe` SHA-256: `4503a19743c76242ce3519066a9cd4e19d72abbcb40df4e103dd4789786df99b`
+- `uv.lock` SHA-256 beim aktuellen Checkpoint: `88c82f0b5ce3fff0fdd06c3c2cbb87ea18af40b1942472de22ffe50914027340`
+- `release\Allie21 Chess Live Studio\Allie21 Chess Live Studio.exe` SHA-256: `5c7c63925f6365fdcdc1fa41075432fa97837293d72c7c811de4e260f658cdcc`
 
 Gebündelte Lichess-Eröffnungsdaten:
 
@@ -58,13 +60,13 @@ Gebündelte Lichess-Eröffnungsdaten:
 
 ## Praktische Messungen auf diesem System
 
-- 73 kurze automatisierte Tests, alle am 8. November 2026 bestanden.
+- 97 kurze automatisierte Tests, alle am 9. November 2026 bestanden (1 Skip im Vollauf).
 - Chess.com-Spectator-Prüfung mit Spiel `186750736526`: 83 Halbzüge aus `moveList` dekodiert, 0 PGN-/Legalitätsfehler.
 - Animations-Regressionsfall `1. g4 d5 2. f3 d4`: 4/4 Halbzüge bestätigt; warme Allie-Top-2-Antwort 1,756 s, vollständige Allie-/Stockfish-Vorschau mit Gegner-Top-2 und Pre-Move 1,984 s.
 - Stockfish über `python-chess`, drei Varianten, Rapid-Budget 1,1 s: erster Aufruf 2,159 s einschließlich Prozessstart; zweiter Aufruf mit derselben Engine 1,103 s.
 - Allie CPU nach Neustart: einmaliger Modell-Kaltstart 84,541 s; danach aktuelle Top-2-Auswahl 0,551 s und vollständige Allie-/Stockfish-Vorschau 1,576 s. Das Modell wird deshalb ab v11.1.1 direkt beim Programmstart im Hintergrund vorgeladen.
 - chessvision/ONNX: bedarfsgerechte Initialisierung 0,615 s.
 - Viewer: lokaler Uvicorn-Start, sichtbarer v11-Status, Spielerfarbe, Empfehlungsschalter und echte PGN-Allie-Ausgabe im Browser geprüft.
-- Windows-EXE: 2.625.829 Byte; portabler App-Ordner-Starter mit mitgeliefertem Python 3.12. `--check`, Runtime-Imports und `/health` (HTTP 200) direkt aus dem Release-Ordner geprüft. Modell-Preload war für den Smoke deaktiviert.
+- Windows-EXE: 2.625.831 Byte; portabler App-Ordner-Starter mit mitgeliefertem Python 3.12. `--check`, Runtime-Imports und `/health` (HTTP 200) direkt aus dem Release-Ordner geprüft. Modell-Preload war für den Smoke deaktiviert.
 
 Die Videoerkennung wurde bis zur echten Initialisierung und über den Frame-/Stabilitäts-Integrationstest geprüft. Die direkte entpackte Edge-Erweiterung wurde auf Chess.com sichtbar geladen; ihre lokale CORS-Verbindung und der Stockfish-Fallback wurden zusätzlich per echtem HTTP-Aufruf geprüft.

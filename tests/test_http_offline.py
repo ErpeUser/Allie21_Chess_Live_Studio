@@ -5,9 +5,9 @@ import sys
 import threading
 import time
 import unittest
-from unittest.mock import patch
 from http.client import HTTPConnection
 from pathlib import Path
+from unittest.mock import patch
 
 import uvicorn
 

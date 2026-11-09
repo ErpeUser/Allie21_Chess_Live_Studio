@@ -1,8 +1,9 @@
 """Chess recognition via published chessvision API; optional RapidOCR for visible move lists."""
 from __future__ import annotations
+
+import math
 import re
 import time
-import math
 
 
 def sanitize_ocr_history(text: str) -> str:
@@ -79,7 +80,7 @@ class BoardVision:
         import numpy as np
         try:
             result = self.ocr(np.asarray(frame.crop(bounds)))
-        except Exception:
+        except Exception:  # noqa: BLE001 - optional OCR failure yields no text
             return ''
         rows = []
         if result is None or any(getattr(result, name, None) is None for name in ('txts', 'boxes', 'scores')):

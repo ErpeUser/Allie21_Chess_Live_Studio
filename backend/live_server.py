@@ -10,25 +10,25 @@ import time
 import webbrowser
 from pathlib import Path
 from typing import Literal
-from urllib.parse import urlparse
 from urllib.error import URLError
-from urllib.request import Request as URLRequest, urlopen
+from urllib.parse import urlparse
+from urllib.request import Request as URLRequest
+from urllib.request import urlopen
 
+import allie_local_server as allie
 import uvicorn
+from allie_local_server import HOST, MODEL_NAME, PORT, analyse_position
+from browser_session import BrowserTrackerPool
+from chess_extras import find_stockfish
 from chess_tcn import tcn_to_pgn
+from config import CONFIG, MODEL_REVISION, parse_time_control
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, Response
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-import allie_local_server as allie
-from allie_local_server import HOST, PORT, MODEL_NAME, analyse_position
-from browser_session import BrowserTrackerPool
-from chess_extras import find_stockfish
-from config import CONFIG, MODEL_REVISION, parse_time_control
-from live_session import LiveSession, MAX_JPEG
+from live_session import MAX_JPEG, LiveSession
 from native_overlay import PrivateOverlayController
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_JSON = 64 * 1024
@@ -60,7 +60,7 @@ def _preload_model() -> None:
             'preview': False,
         }, model=model)
         print('Allie-Modell und Startstellungscache sind bereit.', flush=True)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - background warmup must not block HTTP startup
         print('Allie-Modell konnte im Hintergrund nicht vorgewärmt werden:', repr(exc))
 
 
@@ -346,7 +346,11 @@ def browser_position(request: BrowserPositionRequest):
 
 @app.post('/api/browser-position/reset')
 def reset_browser_position(request: BrowserSessionRequest):
-    return run(lambda: (BROWSER_TRACKERS.reset(request.session_id), {'ok': True})[1])
+    def reset() -> dict[str, bool]:
+        BROWSER_TRACKERS.reset(request.session_id)
+        return {'ok': True}
+
+    return run(reset)
 
 
 @app.get('/api/overlay/status')

@@ -1,12 +1,12 @@
 """Fast checks that need no downloads or model inference."""
-import json
 import importlib.util
-from pathlib import Path
+import json
 import subprocess
 import sys
 import unittest
-from unittest.mock import patch
+from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
@@ -107,6 +107,7 @@ class StandaloneTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, str(launcher), '--check'],
             cwd=ROOT,
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,
@@ -216,6 +217,7 @@ class StandaloneTests(unittest.TestCase):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_parser.js')],
             cwd=ROOT,
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,
@@ -226,6 +228,7 @@ class StandaloneTests(unittest.TestCase):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_auto_side.js')],
             cwd=ROOT,
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,
@@ -236,6 +239,7 @@ class StandaloneTests(unittest.TestCase):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_insights.js')],
             cwd=ROOT,
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,
@@ -246,6 +250,7 @@ class StandaloneTests(unittest.TestCase):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_start_position.js')],
             cwd=ROOT,
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,
@@ -256,6 +261,7 @@ class StandaloneTests(unittest.TestCase):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_round_style.js')],
             cwd=ROOT,
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,
@@ -266,6 +272,7 @@ class StandaloneTests(unittest.TestCase):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_orientation.js')],
             cwd=ROOT,
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,
@@ -278,6 +285,7 @@ class StandaloneTests(unittest.TestCase):
         result = subprocess.run(
             ['node', str(ROOT / 'tests/test_overlay_board_adapter.js')],
             cwd=ROOT,
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,

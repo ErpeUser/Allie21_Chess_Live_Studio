@@ -7,17 +7,25 @@ hard-coded fake 'human move' distribution. Requires standard chess move history.
 from __future__ import annotations
 
 import io
+import math
 import os
 import re
-import threading
-import math
 import sys
+import threading
 from typing import Any
 
 import chess
 import chess.pgn
-from chess_extras import (opening_for_position, opening_note, position_facts, stockfish_lines,
-                          describe_candidate, make_brief, repertoire_move_for, standard_repertoire)
+from chess_extras import (
+    describe_candidate,
+    make_brief,
+    opening_for_position,
+    opening_note,
+    position_facts,
+    repertoire_move_for,
+    standard_repertoire,
+    stockfish_lines,
+)
 from config import MODEL_ID, MODEL_REVISION, time_profile
 
 HOST = "127.0.0.1"
@@ -288,7 +296,7 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     raw = payload.get("pgn", "")
     fen = payload.get("fen", "")
     if not isinstance(raw, str) or not isinstance(fen, str):
-        raise ValueError("pgn and fen must be strings")
+        raise TypeError("pgn and fen must be strings")
     if len(fen) > 200:
         raise ValueError("FEN is too long")
     if fen.strip() and raw.strip():
@@ -342,13 +350,13 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     prediction_second: list[dict[str, Any]] = []
     premove_branches: list[tuple[float, list[dict[str, Any]]]] = []
     warnings: list[str] = []
-    allie_skip_reason = None
+    allie_skip_reason: str | None = None
     player_side = str(payload.get('player_side', 'white' if board.turn else 'black')).lower()
     if player_side not in ('white', 'black'):
         player_side = 'white' if board.turn else 'black'
     player_to_move = player_side == ('white' if board.turn else 'black')
     requested_opening = payload.get('opening_white' if player_side == 'white' else 'opening_black')
-    repertoire = standard_repertoire(player_side, requested_opening)
+    repertoire: dict[str, Any] = standard_repertoire(player_side, requested_opening)
     repertoire['expected_move'] = None
     if player_to_move:
         repertoire['expected_move'] = repertoire_move_for(moves, player_side, repertoire['selection'])
@@ -385,7 +393,7 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                     wdl = [round(float(x), 5) for x in result['wdl']] if result.get('wdl') is not None else None
                     if result.get('think_time') is not None:
                         expected_think_time = round(float(result['think_time']), 2)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - optional model boundary must fail soft
                 allie_skip_reason = ('Allie 2.1 konnte nicht geladen oder ausgefuehrt werden: '
                                      + str(exc)[:220])
             if candidate_moves and payload.get('preview', True):
@@ -442,7 +450,7 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
                                 ranked = list(continuation.items())[:5]
                                 described = [describe_move(after_reply, uci, prob) for uci, prob in ranked]
                                 premove_branches.append((reply['probability'], described))
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - optional prediction branch must fail soft
                     warnings.append('Allie-Gegnerprognose derzeit nicht verfuegbar: ' + str(exc)[:150])
 
     sf = None

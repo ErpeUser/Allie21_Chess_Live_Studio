@@ -1,12 +1,12 @@
 """Integration tests run automatically after START_HIER has installed python-chess."""
-from pathlib import Path
 import sys
+import time
 import unittest
-from unittest.mock import patch
 from io import BytesIO
+from pathlib import Path
 from threading import Event
 from types import SimpleNamespace
-import time
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
 try:
@@ -15,15 +15,19 @@ try:
 except ImportError as exc:
     raise unittest.SkipTest('Chess libraries have not been installed yet') from exc
 
-from allie_local_server import (
-    analyse_position, make_plan_messages, parse_history,
-    rank_allie_candidates, risk_weighted_premove, safe_aggressive_order,
-)
 import allie_local_server as allie_server
-from position_tracker import PositionTracker
-from chess_extras import opening_for_position, standard_repertoire, repertoire_move_for
-from live_session import LiveSession
+from allie_local_server import (
+    analyse_position,
+    make_plan_messages,
+    parse_history,
+    rank_allie_candidates,
+    risk_weighted_premove,
+    safe_aggressive_order,
+)
 from browser_session import BrowserTrackerPool
+from chess_extras import opening_for_position, repertoire_move_for, standard_repertoire
+from live_session import LiveSession
+from position_tracker import PositionTracker
 
 
 class FakeAllie:

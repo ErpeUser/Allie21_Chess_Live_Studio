@@ -11,14 +11,14 @@ only validates and publishes an immutable snapshot.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 import ctypes
-from ctypes import wintypes
 import math
 import os
+from collections.abc import Iterable, Mapping, Sequence
+from ctypes import wintypes
+from dataclasses import dataclass
 from threading import Event, RLock, Thread
-from typing import Iterable, Mapping, Sequence
-
+from typing import Any, cast
 
 # Window styles and messages.  Keeping the values local makes the module easy
 # to inspect and keeps tests independent of a Windows SDK installation.
@@ -184,10 +184,10 @@ def normalize_arrows(arrows: Iterable[OverlayArrow | Mapping[str, object]]) -> t
                 _number_pair(start),
                 _number_pair(end),
                 str(raw.get("color", "#16c784")),
-                int(raw.get("width", 5)),
+                int(cast(Any, raw.get("width", 5))),
             )
         else:
-            raise ValueError("invalid overlay arrow")
+            raise TypeError("invalid overlay arrow")
         if not all(math.isfinite(x) for x in (*arrow.start, *arrow.end)):
             raise ValueError("arrow points must be finite")
         _rgb(arrow.color)
@@ -262,7 +262,7 @@ class _Win32:
         self.gdi32.DeleteObject.argtypes = (wintypes.HGDIOBJ,)
         self.gdi32.SelectObject.argtypes = (wintypes.HDC, wintypes.HGDIOBJ)
 
-    def create_window(self, controller: "NativeOverlayController") -> int:
+    def create_window(self, controller: NativeOverlayController) -> int:
         callback_type = getattr(ctypes, "WINFUNCTYPE", ctypes.CFUNCTYPE)
         callback_type = callback_type(
             ctypes.c_ssize_t,
@@ -311,7 +311,7 @@ class _Win32:
             raise ctypes.WinError(ctypes.get_last_error())
         return int(hwnd)
 
-    def message_loop(self, controller: "NativeOverlayController") -> None:
+    def message_loop(self, controller: NativeOverlayController) -> None:
         msg = _MSG()
         while not controller._stop.is_set():
             result = self.user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
@@ -388,8 +388,8 @@ class _Win32:
         self.gdi32.DeleteObject(obj)
 
     def draw_arrow(self, hdc, start: tuple[float, float], end: tuple[float, float], width: int, _color: int) -> None:
-        sx, sy = (int(round(value)) for value in start)
-        ex, ey = (int(round(value)) for value in end)
+        sx, sy = (int(round(value)) for value in start)  # noqa: RUF046 - ctypes requires concrete ints
+        ex, ey = (int(round(value)) for value in end)  # noqa: RUF046 - ctypes requires concrete ints
         self.gdi32.MoveToEx(hdc, sx, sy, None)
         self.gdi32.LineTo(hdc, ex, ey)
         dx, dy = ex - sx, ey - sy
@@ -423,13 +423,13 @@ class NativeOverlayController:
         self.title = str(title)[:128]
         self.width = max(1, int(width))
         self.height = max(1, int(height))
-        self._api = api
+        self._api: Any = api
         self._lock = RLock()
         self._ready = Event()
         self._stop = Event()
         self._thread: Thread | None = None
         self._hwnd: int | None = None
-        self._wndproc = None
+        self._wndproc: Any = None
         self._class_name = f"Allie21NativeOverlay_{id(self):x}"
         self._snapshot = OverlaySnapshot()
         self._started = False
@@ -459,7 +459,7 @@ class NativeOverlayController:
         with self._lock:
             return self._snapshot
 
-    def _bindings(self) -> object:
+    def _bindings(self) -> Any:
         if self._api is None:
             self._api = _Win32()
         return self._api
@@ -494,7 +494,7 @@ class NativeOverlayController:
         if hwnd is not None:
             try:
                 self._bindings().post_message(hwnd, WM_CLOSE, 0, 0)
-            except Exception:
+            except Exception:  # noqa: BLE001,S110 - overlay cleanup is best effort
                 pass
         if thread and thread is not __import__("threading").current_thread():
             thread.join(max(0.05, float(timeout)))
@@ -516,7 +516,7 @@ class NativeOverlayController:
             with self._lock:
                 self._visible = True
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - fail closed when Win32 show fails
             self._fail_closed()
             return False
 
@@ -527,7 +527,7 @@ class NativeOverlayController:
         if hwnd is not None:
             try:
                 self._bindings().show_window(hwnd, SW_HIDE)
-            except Exception:
+            except Exception:  # noqa: BLE001 - fail closed when Win32 hide fails
                 self._fail_closed()
 
     def update(
@@ -544,7 +544,7 @@ class NativeOverlayController:
             if bounds is not None:
                 if len(bounds) != 4:
                     raise ValueError("overlay bounds must be x,y,width,height")
-                rect = tuple(int(item) for item in bounds)
+                rect = (int(bounds[0]), int(bounds[1]), int(bounds[2]), int(bounds[3]))
                 if rect[2] <= 0 or rect[3] <= 0:
                     raise ValueError("overlay bounds must be positive")
             snapshot = OverlaySnapshot(normalized, str(message)[:500], rect)
@@ -562,7 +562,7 @@ class NativeOverlayController:
                 self._bindings().move_window(hwnd, *snapshot.bounds)
             self._bindings().post_message(hwnd, WM_APP_RENDER, 0, 0)
             return self.show()
-        except Exception:
+        except Exception:  # noqa: BLE001 - fail closed when Win32 render fails
             self._fail_closed()
             return False
 
@@ -579,7 +579,7 @@ class NativeOverlayController:
         if hwnd is not None:
             try:
                 self._bindings().show_window(hwnd, SW_HIDE)
-            except Exception:
+            except Exception:  # noqa: BLE001,S110 - overlay cleanup is best effort
                 pass
 
     def _verify_capture_exclusion(self, hwnd: int) -> bool:
@@ -606,7 +606,7 @@ class NativeOverlayController:
             api.show_window(hwnd, SW_HIDE)
             self._ready.set()
             api.message_loop(self)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - GUI thread must fail closed on any Win32 error
             with self._lock:
                 self._failure_reason = f"{type(exc).__name__}: {exc}"[:240]
                 self._fail_locked()
@@ -685,7 +685,9 @@ class PrivateOverlayController:
     def _square_point(square: str, board: Mapping[str, object], orientation: str) -> tuple[float, float]:
         if not isinstance(square, str) or len(square) != 2 or square[0] not in "abcdefgh" or square[1] not in "12345678":
             raise ValueError("invalid chess square")
-        rect = (float(board["left"]), float(board["top"]), float(board["width"]), float(board["height"]))
+        rect = tuple(
+            float(cast(Any, board[key])) for key in ("left", "top", "width", "height")
+        )
         file_index = ord(square[0]) - 97
         rank_index = int(square[1]) - 1
         if orientation == "black":
@@ -730,11 +732,11 @@ class PrivateOverlayController:
 
     def update(self, payload: Mapping[str, object]) -> dict[str, object]:
         if not isinstance(payload, Mapping):
-            raise ValueError("overlay payload must be an object")
+            raise TypeError("overlay payload must be an object")
         session_id = payload.get("session_id")
         try:
-            generation = int(payload.get("generation", 0))
-            render_revision = int(payload.get("render_revision", 0))
+            generation = int(cast(Any, payload.get("generation", 0)))
+            render_revision = int(cast(Any, payload.get("render_revision", 0)))
         except (TypeError, ValueError, OverflowError) as exc:
             raise ValueError("overlay revisions must be integers") from exc
         if not isinstance(session_id, str) or not session_id or generation < 0 or render_revision < 0:
@@ -783,8 +785,11 @@ class PrivateOverlayController:
                 self._state, self._reason = "hidden", "missing_board_geometry"
             return self.status()
         orientation = str(geometry.get("orientation", "white")) if isinstance(geometry, Mapping) else "white"
-        arrows = []
-        for item in payload.get("arrows", []) or []:
+        arrows: list[dict[str, object]] = []
+        raw_arrows = payload.get("arrows", [])
+        if not isinstance(raw_arrows, Sequence) or isinstance(raw_arrows, (str, bytes)):
+            raw_arrows = ()
+        for item in raw_arrows:
             if not isinstance(item, Mapping):
                 continue
             uci = str(item.get("uci", ""))
@@ -793,8 +798,13 @@ class PrivateOverlayController:
             start = self._square_point(uci[:2], board, orientation)
             end = self._square_point(uci[2:4], board, orientation)
             arrows.append({"start": start, "end": end, "color": item.get("color", "#16c784"), "width": 5})
-        message = " · ".join(str(item) for item in (payload.get("messages") or [])[:2])
-        bounds = (int(float(board["left"])), int(float(board["top"])), int(float(board["width"])), int(float(board["height"])))
+        raw_messages = payload.get("messages", [])
+        if not isinstance(raw_messages, Sequence) or isinstance(raw_messages, (str, bytes)):
+            raw_messages = ()
+        message = " · ".join(str(item) for item in raw_messages[:2])
+        bounds = tuple(
+            int(float(cast(Any, board[key]))) for key in ("left", "top", "width", "height")
+        )
         if self._native.update(arrows, message=message, bounds=bounds):
             with self._lock:
                 self._state, self._reason = "active", "capture_exclusion_verified"
@@ -836,12 +846,12 @@ NativeOverlay = NativeOverlayController
 
 
 __all__ = [
-    "PrivateOverlayController",
+    "WDA_EXCLUDEFROMCAPTURE",
     "NativeOverlay",
     "NativeOverlayController",
     "OverlayArrow",
     "OverlaySnapshot",
-    "normalize_arrows",
+    "PrivateOverlayController",
     "is_overlay_update_newer",
-    "WDA_EXCLUDEFROMCAPTURE",
+    "normalize_arrows",
 ]
