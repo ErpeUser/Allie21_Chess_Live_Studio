@@ -49,7 +49,6 @@ PyTorch 2.15.0 ist für die veröffentlichte Allie-2.1-CPU-Implementierung beibe
 - Stockfish-Archiv SHA-256: `3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7`
 - Installierte `stockfish.exe` SHA-256: `45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`
 
-- `release\Allie21 Chess Live Studio\Allie21 Chess Live Studio.exe` SHA-256: `5c7c63925f6365fdcdc1fa41075432fa97837293d72c7c811de4e260f658cdcc`
 
 Gebündelte Lichess-Eröffnungsdaten:
 
@@ -61,15 +60,15 @@ Gebündelte Lichess-Eröffnungsdaten:
 | d.tsv | `1cf4057a8aece94f27bb3f278ad410ee2844831a642364eeceaafa091dbcceda` |
 | e.tsv | `48c6f6645b031a5937c8386839debab0e2e48837251687ba1afb6369677f8546` |
 
-## Praktische Messungen auf diesem System
+## Historische Messwerte aus dem vorherigen Prüfstand
 
-- 97 kurze automatisierte Tests, alle am 9. November 2026 bestanden (1 Skip im Vollauf).
+Die folgenden Werte sind historische Messungen und keine aktuelle Release-Freigabe.
+
 - Chess.com-Spectator-Prüfung mit Spiel `186750736526`: 83 Halbzüge aus `moveList` dekodiert, 0 PGN-/Legalitätsfehler.
 - Animations-Regressionsfall `1. g4 d5 2. f3 d4`: 4/4 Halbzüge bestätigt; warme Allie-Top-2-Antwort 1,756 s, vollständige Allie-/Stockfish-Vorschau mit Gegner-Top-2 und Pre-Move 1,984 s.
 - Stockfish über `python-chess`, drei Varianten, Rapid-Budget 1,1 s: erster Aufruf 2,159 s einschließlich Prozessstart; zweiter Aufruf mit derselben Engine 1,103 s.
 - Allie CPU nach Neustart: einmaliger Modell-Kaltstart 84,541 s; danach aktuelle Top-2-Auswahl 0,551 s und vollständige Allie-/Stockfish-Vorschau 1,576 s. Das Modell wird deshalb ab v11.1.1 direkt beim Programmstart im Hintergrund vorgeladen.
 - chessvision/ONNX: bedarfsgerechte Initialisierung 0,615 s.
 - Viewer: lokaler Uvicorn-Start, sichtbarer v11-Status, Spielerfarbe, Empfehlungsschalter und echte PGN-Allie-Ausgabe im Browser geprüft.
-- Windows-EXE: 2.625.831 Byte; portabler App-Ordner-Starter mit mitgeliefertem Python 3.12. `--check`, Runtime-Imports und `/health` (HTTP 200) direkt aus dem Release-Ordner geprüft. Modell-Preload war für den Smoke deaktiviert.
 
 Die Videoerkennung wurde bis zur echten Initialisierung und über den Frame-/Stabilitäts-Integrationstest geprüft. Die direkte entpackte Edge-Erweiterung wurde auf Chess.com sichtbar geladen; ihre lokale CORS-Verbindung und der Stockfish-Fallback wurden zusätzlich per echtem HTTP-Aufruf geprüft.
