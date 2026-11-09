@@ -5,8 +5,8 @@ Lokale Windows-Anwendung für menschliche Zugprognosen mit Allie 2.1 und objekti
 ## Schnellstart unter Windows
 
 1. Projekt vollständig entpacken.
-2. **`release\Allie21 Chess Live Studio\Allie21 Chess Live Studio.exe` doppelklicken.**
-3. Warten, bis `http://127.0.0.1:8765/viewer` geöffnet wird.
+2. **`START_HIER.bat` doppelklicken** oder den portablen Onedir-Build aus `tools/build_exe.ps1` starten.
+3. Warten, bis `http://127.0.0.1:8765/viewer` geöffnet wird. Mit `ALLIE_PORT=18765` lässt sich ein anderer Port verwenden.
 
 Die EXE ist ein portables Onedir: Im selben Ordner liegen `app` (Server, Viewer und Assets) und `runtime` (Python 3.12 mit den eingefrorenen Paketen). Sie benötigt für den Start weder Checkout, `uv` noch eine globale Python-Installation. Beim ersten Modellstart können die Allie-Gewichte weiterhin in den lokalen Hugging-Face-Cache geladen werden; Stockfish liegt im App-Ordner. Solange Allie läuft, erscheint rechts unten im Windows-Infobereich ein Allie-Symbol: Doppelklick oder „Allie öffnen“ öffnet den Viewer, „Allie beenden“ schließt Server und Symbol vollständig.
 
@@ -15,7 +15,7 @@ Das echte Allie-Modell wird beim Serverstart automatisch im Hintergrund mit der 
 ## Eingabewege
 
 - **Video/Fenster:** Im Viewer „Quelle auswählen“ anklicken und in Chrome oder Edge ein sichtbares Discord-, Browser- oder Monitorfenster freigeben. `chessvision` und optional RapidOCR werden erst beim ersten Frame geladen.
-- **Browser-Overlay:** `EDGE_OVERLAY_INSTALLIEREN.bat` öffnet die direkte Edge-Erweiterungsinstallation. Sie unterstützt gezielt Chess.com und Lichess, beobachtet DOM-Änderungen gebündelt und sendet nur an den lokalen Dienst. Für Canvas-Bretter und andere Websites den Video- oder PGN-Weg verwenden.
+- **Browser-Overlay:** In Edge/Chrome unter `edge://extensions` bzw. `chrome://extensions` den Entwicklermodus aktivieren und den Ordner `browser/` als „Entpackte Erweiterung laden“ wählen. Die Erweiterung unterstützt gezielt Chess.com und Lichess, beobachtet DOM-Änderungen gebündelt und sendet nur an den lokalen Dienst. Für Canvas-Bretter und andere Websites den Video- oder PGN-Weg verwenden.
 - **PGN/FEN:** „PGN oder FEN ohne Stream analysieren“ öffnen. Nur eine vollständige, bestätigte Partiegeschichte ab der Startstellung wird an Allie übergeben. FEN allein wird ausschließlich mit Stockfish analysiert.
 
 ## Korrektheit und Anzeigen
@@ -54,11 +54,13 @@ Der optionale Qualitätslauf verändert die Produktionsumgebung nicht. Er instal
 
 Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begrenzt JSON und JPEG-Größen und speichert keine Videoframes. Exakte geprüfte Versionen, Modellrevisionen, Hashes und Messwerte stehen in `VERSIONEN.md`; Lizenzen in `QUELLEN_LIZENZEN.md`.
 
+Die Browser-Erweiterung öffnet über ihre Optionen die Einstellung „Lokaler Port“ und speichert sie in `chrome.storage.local`; das Userscript bietet denselben Port im Allie-Menü. Beide müssen mit `ALLIE_PORT` des Servers übereinstimmen. Die Erweiterung verwendet für localhost bewusst eine Port-Wildcard und fragt den konfigurierten Port über den MV3-Service-Worker ab.
+
 ## Wiederaufnahme- und Release-Status (09.11.2026)
 
-Der aktuelle Checkpoint steht in `AGENT_PROGRESS.md`, der vollständige Auftrag in `AGENT_TASK.md`. Nach einem Session- oder Kontextlimit zuerst diese beiden Dateien und anschließend den dort genannten nächsten Befehl lesen; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
+Der technische Checkpoint steht in `VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
 
-Der lokale PyInstaller-Onedir-Build wurde erfolgreich erzeugt. Der portable `--check` läuft direkt aus dem Release-Ordner; der mitgelieferte Runtime-Python importiert FastAPI, Chess und PIL, und der Server beantwortet `/health` mit HTTP 200. Der erste Health-Smoke lief mit deaktiviertem Modell-Preload (`model_loaded=false`), damit kein mehrgigabytegroßer Download Teil des Paketchecks wird. Das private Repository und der Release `v11.2.16` sind unter `https://github.com/ErpeUser/Allie21_Chess_Live_Studio/releases/tag/v11.2.16` verifiziert. Echte Windows-Capture-Proben bleiben offen. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
+Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `release/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
 
 ## Grenzen
 

@@ -271,7 +271,7 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(repertoire_move_for([], 'white', 'bongcloud'), 'e2e4')
         self.assertEqual(repertoire_move_for(['e2e4', 'e7e5'], 'white', 'bongcloud'), 'e1e2')
         self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5'], 'black', 'stafford'), 'b8c6')
-        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'g1g5'], 'black', 'traxler'), 'f8c5')
+        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'f3g5'], 'black', 'traxler'), 'f8c5')
 
     def test_repertoire_move_is_only_returned_for_matching_legal_history(self):
         self.assertEqual(repertoire_move_for([], 'white'), 'g2g4')
@@ -413,7 +413,8 @@ class ChessTests(unittest.TestCase):
         class Broken:
             def analyze(self, *args, **kwargs): raise RuntimeError('Unreachable')
         result = analyse_position({'pgn':'1. e4 e5', 'analysis_source':'allie'}, Broken())
-        self.assertIn('Unreachable', result['allie_skip_reason'])
+        self.assertIn('Fehler-ID', result['allie_skip_reason'])
+        self.assertNotIn('Unreachable', result['allie_skip_reason'])
 
     def test_midgame_unknown_turn_does_not_show_engine(self):
         tracker = PositionTracker()
@@ -472,7 +473,8 @@ class ChessTests(unittest.TestCase):
         }, BrokenAllie())
         self.assertEqual(result['repertoire']['selection'], 'alekhine')
         self.assertEqual(result['repertoire']['expected_move'], 'g8f6')
-        self.assertIn('Unreachable', result['allie_skip_reason'])
+        self.assertIn('Fehler-ID', result['allie_skip_reason'])
+        self.assertNotIn('Unreachable', result['allie_skip_reason'])
 
     def test_plan_messages_add_context_instead_of_repeating_arrows(self):
         messages = make_plan_messages({

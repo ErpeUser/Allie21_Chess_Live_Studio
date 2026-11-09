@@ -14,6 +14,7 @@ from __future__ import annotations
 import ctypes
 import math
 import os
+from collections import deque
 from collections.abc import Iterable, Mapping, Sequence
 from ctypes import wintypes
 from dataclasses import dataclass
@@ -482,7 +483,18 @@ class NativeOverlayController:
             self._thread = Thread(target=self._window_thread, name="allie-native-overlay", daemon=True)
             self._thread.start()
         if not self._ready.wait(max(0.05, float(timeout))):
+            with self._lock:
+                self._stop.set()
+                thread = self._thread
+                hwnd = self._hwnd
+            if hwnd is not None:
+                try:
+                    self._bindings().post_message(hwnd, WM_CLOSE, 0, 0)
+                except Exception:  # noqa: BLE001 - timeout cleanup is best effort
+                    pass
             self._fail_closed()
+            if thread and thread is not __import__("threading").current_thread():
+                thread.join(max(0.05, min(float(timeout), 2.0)))
         with self._lock:
             return self._start_result
 
@@ -594,11 +606,17 @@ class NativeOverlayController:
     # The following methods are used only on the dedicated GUI thread.  The
     # binding object is intentionally small so tests can provide a fake API.
     def _window_thread(self) -> None:
+        hwnd = None
         try:
             api = self._bindings()
             hwnd = api.create_window(self)
             if not hwnd or not self._verify_capture_exclusion(hwnd):
                 raise OSError("WDA_EXCLUDEFROMCAPTURE could not be verified")
+            if self._stop.is_set():
+                destroy = getattr(api, "destroy_window", None)
+                if destroy is not None:
+                    destroy(hwnd)
+                return
             with self._lock:
                 self._hwnd = hwnd
                 self._capture_excluded = True
@@ -607,6 +625,13 @@ class NativeOverlayController:
             self._ready.set()
             api.message_loop(self)
         except Exception as exc:  # noqa: BLE001 - GUI thread must fail closed on any Win32 error
+            if hwnd:
+                destroy = getattr(self._bindings(), "destroy_window", None)
+                if destroy is not None:
+                    try:
+                        destroy(hwnd)
+                    except Exception:  # noqa: BLE001 - cleanup is best effort
+                        pass
             with self._lock:
                 self._failure_reason = f"{type(exc).__name__}: {exc}"[:240]
                 self._fail_locked()
@@ -615,6 +640,9 @@ class NativeOverlayController:
             with self._lock:
                 self._visible = False
                 self._capture_excluded = False
+                self._hwnd = None
+                self._started = False
+                self._thread = None
 
     def _window_proc(self, hwnd, message, wparam, lparam):  # pragma: no cover - Win32 callback
         if message == WM_NCHITTEST:
@@ -669,6 +697,10 @@ class PrivateOverlayController:
 
     def __init__(self) -> None:
         self._lock = RLock()
+        # Cursor acceptance and native application must be ordered together.
+        # HTTP requests can finish out of order even when their revisions are
+        # monotonic, so a second lock serializes hide/update operations.
+        self._render_lock = RLock()
         self._native = NativeOverlayController()
         self._mode = "private"
         # The active session is intentionally separate from the per-session
@@ -678,6 +710,7 @@ class PrivateOverlayController:
         self._active_session_id: str | None = None
         self._last_update_by_session: dict[str, tuple[int, int]] = {}
         self._retired_sessions: set[str] = set()
+        self._retired_order: deque[str] = deque(maxlen=64)
         self._state = "unsupported" if os.name != "nt" else "starting"
         self._reason = "Windows capture exclusion is unavailable" if os.name != "nt" else "not_started"
 
@@ -707,28 +740,44 @@ class PrivateOverlayController:
                 "capture_excluded": self._native.available,
             }
 
+    def _retire_locked(self, session_id: str | None) -> None:
+        if not session_id:
+            return
+        self._retired_sessions.add(session_id)
+        try:
+            self._retired_order.remove(session_id)
+        except ValueError:
+            pass
+        max_retired = self._retired_order.maxlen or 64
+        if len(self._retired_order) >= max_retired:
+            oldest = self._retired_order.popleft()
+            self._retired_sessions.discard(oldest)
+        self._retired_order.append(session_id)
+
     def set_mode(self, mode: str) -> dict[str, object]:
         if mode not in {"private", "normal"}:
             raise ValueError("overlay mode must be private or normal")
-        with self._lock:
-            self._mode = mode
+        with self._render_lock:
+            with self._lock:
+                self._mode = mode
+                if mode == "normal":
+                    self._active_session_id = None
+                    self._last_update_by_session.clear()
+                    self._retired_sessions.clear()
+                    self._retired_order.clear()
             if mode == "normal":
-                self._active_session_id = None
-                self._last_update_by_session.clear()
-                self._retired_sessions.clear()
-        if mode == "normal":
-            self._native.hide()
+                self._native.hide()
+                with self._lock:
+                    self._state, self._reason = "normal", "explicit_normal_mode"
+                return self.status()
+            if not self._native.start():
+                with self._lock:
+                    detail = getattr(self._native, "_failure_reason", "")
+                    self._state, self._reason = ("unsupported" if os.name != "nt" else "exclusion_error", detail or "capture_exclusion_not_verified")
+                return self.status()
             with self._lock:
-                self._state, self._reason = "normal", "explicit_normal_mode"
+                self._state, self._reason = "ready", "capture_exclusion_verified"
             return self.status()
-        if not self._native.start():
-            with self._lock:
-                detail = getattr(self._native, "_failure_reason", "")
-                self._state, self._reason = ("unsupported" if os.name != "nt" else "exclusion_error", detail or "capture_exclusion_not_verified")
-            return self.status()
-        with self._lock:
-            self._state, self._reason = "ready", "capture_exclusion_verified"
-        return self.status()
 
     def update(self, payload: Mapping[str, object]) -> dict[str, object]:
         if not isinstance(payload, Mapping):
@@ -751,7 +800,7 @@ class PrivateOverlayController:
             if self._active_session_id is None:
                 self._active_session_id = session_id
             elif session_id != self._active_session_id:
-                self._retired_sessions.add(self._active_session_id)
+                self._retire_locked(self._active_session_id)
                 self._active_session_id = session_id
             if not is_overlay_update_newer(
                 session_id,
@@ -768,47 +817,56 @@ class PrivateOverlayController:
                 for key in tuple(self._last_update_by_session):
                     if key != self._active_session_id:
                         self._last_update_by_session.pop(key, None)
-        if self._mode != "private" or payload.get("mode") not in {"private", "stale", "stopped", "exclusion_error"}:
-            self._native.hide()
-            return self.status()
-        if not self._native.available and not self.set_mode("private").get("available"):
-            return self.status()
-        mode = str(payload.get("mode", "private"))
-        if mode != "private":
-            self._native.hide()
-            return self.status()
-        geometry = payload.get("geometry") or {}
-        board = (geometry.get("screen_board") or geometry.get("board")) if isinstance(geometry, Mapping) else None
-        if not isinstance(board, Mapping):
-            self._native.hide()
+        with self._render_lock:
+            # A newer request may have advanced the cursor while this request
+            # was waiting for the renderer.  Do not apply the old snapshot.
             with self._lock:
-                self._state, self._reason = "hidden", "missing_board_geometry"
+                if (self._active_session_id != session_id
+                        or self._last_update_by_session.get(session_id)
+                        != (generation, render_revision)):
+                    self._state, self._reason = "stale", "stale_update_ignored"
+                    return self.status()
+            if self._mode != "private" or payload.get("mode") not in {"private", "stale", "stopped", "exclusion_error"}:
+                self._native.hide()
+                return self.status()
+            if not self._native.available and not self.set_mode("private").get("available"):
+                return self.status()
+            mode = str(payload.get("mode", "private"))
+            if mode != "private":
+                self._native.hide()
+                return self.status()
+            geometry = payload.get("geometry") or {}
+            board = (geometry.get("screen_board") or geometry.get("board")) if isinstance(geometry, Mapping) else None
+            if not isinstance(board, Mapping):
+                self._native.hide()
+                with self._lock:
+                    self._state, self._reason = "hidden", "missing_board_geometry"
+                return self.status()
+            orientation = str(geometry.get("orientation", "white")) if isinstance(geometry, Mapping) else "white"
+            arrows: list[dict[str, object]] = []
+            raw_arrows = payload.get("arrows", [])
+            if not isinstance(raw_arrows, Sequence) or isinstance(raw_arrows, (str, bytes)):
+                raw_arrows = ()
+            for item in raw_arrows:
+                if not isinstance(item, Mapping):
+                    continue
+                uci = str(item.get("uci", ""))
+                if len(uci) < 4:
+                    continue
+                start = self._square_point(uci[:2], board, orientation)
+                end = self._square_point(uci[2:4], board, orientation)
+                arrows.append({"start": start, "end": end, "color": item.get("color", "#16c784"), "width": 5})
+            raw_messages = payload.get("messages", [])
+            if not isinstance(raw_messages, Sequence) or isinstance(raw_messages, (str, bytes)):
+                raw_messages = ()
+            message = " · ".join(str(item) for item in raw_messages[:2])
+            bounds = tuple(
+                int(float(cast(Any, board[key]))) for key in ("left", "top", "width", "height")
+            )
+            if self._native.update(arrows, message=message, bounds=bounds):
+                with self._lock:
+                    self._state, self._reason = "active", "capture_exclusion_verified"
             return self.status()
-        orientation = str(geometry.get("orientation", "white")) if isinstance(geometry, Mapping) else "white"
-        arrows: list[dict[str, object]] = []
-        raw_arrows = payload.get("arrows", [])
-        if not isinstance(raw_arrows, Sequence) or isinstance(raw_arrows, (str, bytes)):
-            raw_arrows = ()
-        for item in raw_arrows:
-            if not isinstance(item, Mapping):
-                continue
-            uci = str(item.get("uci", ""))
-            if len(uci) < 4:
-                continue
-            start = self._square_point(uci[:2], board, orientation)
-            end = self._square_point(uci[2:4], board, orientation)
-            arrows.append({"start": start, "end": end, "color": item.get("color", "#16c784"), "width": 5})
-        raw_messages = payload.get("messages", [])
-        if not isinstance(raw_messages, Sequence) or isinstance(raw_messages, (str, bytes)):
-            raw_messages = ()
-        message = " · ".join(str(item) for item in raw_messages[:2])
-        bounds = tuple(
-            int(float(cast(Any, board[key]))) for key in ("left", "top", "width", "height")
-        )
-        if self._native.update(arrows, message=message, bounds=bounds):
-            with self._lock:
-                self._state, self._reason = "active", "capture_exclusion_verified"
-        return self.status()
 
     def clear(
         self,
@@ -818,22 +876,35 @@ class PrivateOverlayController:
         generation: int | None = None,
         render_revision: int | None = None,
     ) -> dict[str, object]:
-        self._native.hide()
-        with self._lock:
-            if session_id is not None:
-                if not isinstance(session_id, str) or not session_id:
-                    raise ValueError("overlay clear session is invalid")
-                if generation is None or render_revision is None:
-                    raise ValueError("overlay clear revisions are required with a session")
-                cursor = (int(generation), int(render_revision))
-                if min(cursor) < 0:
-                    raise ValueError("overlay clear revisions are invalid")
-                if self._active_session_id and self._active_session_id != session_id:
-                    self._retired_sessions.add(self._active_session_id)
-                self._active_session_id = session_id
-                self._last_update_by_session[session_id] = cursor
-            self._state, self._reason = "hidden", str(reason)[:120]
-        return self.status()
+        with self._render_lock:
+            with self._lock:
+                if session_id is not None:
+                    if not isinstance(session_id, str) or not session_id:
+                        raise ValueError("overlay clear session is invalid")
+                    if generation is None or render_revision is None:
+                        raise ValueError("overlay clear revisions are required with a session")
+                    cursor = (int(generation), int(render_revision))
+                    if min(cursor) < 0:
+                        raise ValueError("overlay clear revisions are invalid")
+                    if session_id in self._retired_sessions:
+                        self._state, self._reason = "stale", "retired_session_clear_ignored"
+                        return self.status()
+                    # A clear from a new, non-retired session starts a new
+                    # lifecycle.  Only delayed clears from sessions that were
+                    # explicitly retired are ignored; otherwise a legitimate
+                    # navigation/refresh could never hide the previous frame.
+                    if self._active_session_id and self._active_session_id != session_id:
+                        self._retire_locked(self._active_session_id)
+                        self._active_session_id = session_id
+                    previous = self._last_update_by_session.get(session_id)
+                    if previous is not None and cursor < previous:
+                        self._state, self._reason = "stale", "stale_clear_ignored"
+                        return self.status()
+                    self._active_session_id = session_id
+                    self._last_update_by_session[session_id] = cursor
+                self._state, self._reason = "hidden", str(reason)[:120]
+            self._native.hide()
+            return self.status()
 
     def close(self) -> None:
         self._native.stop()

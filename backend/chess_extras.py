@@ -9,6 +9,7 @@ from __future__ import annotations
 import atexit
 import csv
 import functools
+import hashlib
 import io
 import os
 import shutil
@@ -22,6 +23,14 @@ import chess.pgn
 from config import CONFIG
 
 BASE = Path(__file__).resolve().parent
+
+
+def _engine_error_id(exc: BaseException) -> str:
+    digest = hashlib.sha256(
+        f"{type(exc).__name__}|{exc}".encode("utf-8", "replace")
+    ).hexdigest()[:12]
+    print(f"Stockfish-Fehler ({digest}):", repr(exc), flush=True)
+    return digest
 
 OPENING_OPTIONS = {
     'white': {
@@ -47,7 +56,7 @@ TROLL_OPENING_OPTIONS = {
     },
     'black': {
         'stafford': ('Stafford-Gambit', ('e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5', 'b8c6')),
-        'traxler': ('Traxler-Gegenangriff', ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'g1g5', 'f8c5')),
+        'traxler': ('Traxler-Gegenangriff', ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'f3g5', 'f8c5')),
     },
 }
 DEFAULT_OPENINGS = {'white': 'grob', 'black': 'englund'}
@@ -243,24 +252,33 @@ def position_facts(board: chess.Board) -> list[str]:
 
 
 def find_stockfish() -> str | None:
-    env = os.environ.get('STOCKFISH_PATH', CONFIG['stockfish_path']).strip().strip('\"')
-    if env:
-        candidate = Path(env)
+    def safe_candidate(value: str | Path) -> str | None:
+        candidate = Path(value).expanduser()
         if not candidate.is_file():
             return None
         try:
             resolved = candidate.resolve()
             allowed_root = BASE.resolve()
+            # Configured and PATH-discovered binaries are trusted only from
+            # the application directory unless the user explicitly opts in.
             if (os.environ.get('ALLIE_ALLOW_EXTERNAL_STOCKFISH') != '1'
                     and allowed_root not in resolved.parents):
                 return None
+            if os.name != 'nt' and not os.access(resolved, os.X_OK):
+                return None
         except OSError:
             return None
-        return str(candidate)
+        return str(resolved)
+
+    env = os.environ.get('STOCKFISH_PATH', CONFIG['stockfish_path']).strip().strip('\"')
+    if env:
+        return safe_candidate(env)
     for path in [BASE / 'stockfish.exe', *(BASE / 'engines').glob('stockfish*.exe')]:
-        if path.is_file() and (os.name == 'nt' or os.access(path, os.X_OK)):
-            return str(path)
-    return shutil.which('stockfish')
+        resolved = safe_candidate(path)
+        if resolved:
+            return resolved
+    path = shutil.which('stockfish')
+    return safe_candidate(path) if path else None
 
 
 _ENGINE_LOCK = threading.RLock()
@@ -362,7 +380,11 @@ def stockfish_lines(
         }
     except (OSError, chess.engine.EngineError, TimeoutError, ValueError) as exc:
         _close_stockfish()
-        return {'available': False, 'error': f'Stockfish-Fehler: {str(exc)[:160]}'}
+        error_id = _engine_error_id(exc)
+        return {
+            'available': False,
+            'error': f'Stockfish nicht verfügbar (Fehler-ID {error_id}).',
+        }
 
 
 def describe_candidate(board: chess.Board, uci: str) -> str:

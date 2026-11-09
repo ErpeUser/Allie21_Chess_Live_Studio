@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<title>Allie 2.1 – Port</title>
+<style>
+body{font:14px system-ui,sans-serif;max-width:34rem;margin:2rem auto;padding:0 1rem;color:#24170f}
+label{display:block;font-weight:700;margin:.8rem 0 .3rem}input{width:8rem;padding:.5rem}button{margin-top:1rem;padding:.55rem .8rem}#status{min-height:1.5em;color:#276749}
+</style>
+<h1>Allie 2.1 Verbindung</h1>
+<p>Der Port muss mit <code>ALLIE_PORT</code> des Launchers übereinstimmen.</p>
+<label for="port">Lokaler Port</label>
+<input id="port" type="number" min="1024" max="65535" step="1">
+<br><button id="save">Speichern</button>
+<p id="status" role="status"></p>
+<script>
+'use strict';
+const port=document.getElementById('port'),status=document.getElementById('status');
+chrome.storage.local.get({port:8765}, value => { port.value=Number(value.port)||8765; });
+document.getElementById('save').addEventListener('click', () => {
+  const value=Number(port.value);
+  if(!Number.isInteger(value)||value<1024||value>65535){status.textContent='Port muss zwischen 1024 und 65535 liegen.';return;}
+  chrome.storage.local.set({port:value}, () => {status.textContent='Gespeichert. Die Erweiterung verwendet jetzt Port '+value+'.';});
+});
+</script>

@@ -10,9 +10,21 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ROOT = Path(__file__).resolve().parents[1]
 PATH = ROOT / "config.json"
+APP_VERSION = "11.2.17"
 MODEL_ID = "yimingzhang/allie-2.1"
 MODEL_REVISION = "d2545701ff5af46a51ac947911844f779b355a08"
 TIME_CONTROL_RE = re.compile(r"\d{1,5}\+\d{1,4}")
+
+
+def parse_port(value: object = "8765") -> int:
+    """Validate the loopback service port at every entry point."""
+    try:
+        port = int(str(value).strip())
+    except (TypeError, ValueError) as exc:
+        raise ValueError("ALLIE_PORT muss eine ganze Zahl sein") from exc
+    if not 1024 <= port <= 65535:
+        raise ValueError("ALLIE_PORT muss zwischen 1024 und 65535 liegen")
+    return port
 
 
 def parse_time_control(value: str) -> tuple[int, int]:

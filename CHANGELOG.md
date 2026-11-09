@@ -1,3 +1,11 @@
+## v11.2.17
+
+- GUI opening selections are normalized once, persisted, sent with the analysis request, and echoed back as the applied repertoire selection.
+- Viewer settings persist between starts; browser settings are repaired and persisted when restored from storage.
+- Browser, viewer, and native overlay arrowheads terminate at the exact destination-square center; the blue best-premove uses the same geometry path.
+- Stale native-overlay updates and clears are session/cursor gated and serialized; malformed frames cannot clear a newer session.
+- Added bounded request/rate-limiter controls, chunked-body limits, strict origin/extension allowlists, verified Stockfish download handling, multi-game PGN rejection, cache canonicalization, and expanded CI checks.
+
 # Änderungen
 
 ## v11.2.16

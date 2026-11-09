@@ -39,13 +39,24 @@ class PositionTracker:
         self.complete_history = False
         self.turn_verified = False
         self.history_origin = "unknown"
+        self.last_error = ""
 
-    def set_notation(self, pgn: str, observed_fen: str | None = None, origin="notation") -> Change:
+    def set_notation(
+        self,
+        pgn: str,
+        observed_fen: str | None = None,
+        origin="notation",
+        *,
+        verify_turn: bool = True,
+    ) -> Change:
         """Accept only complete legal PGN which agrees with observed placement."""
         try:
-            game = chess.pgn.read_game(io.StringIO(pgn))
+            stream = io.StringIO(pgn)
+            game = chess.pgn.read_game(stream)
             if game is None or game.errors:
                 return Change(False, "Invalid notation")
+            if chess.pgn.read_game(stream) is not None:
+                return Change(False, "Multiple games are not supported")
             if game.board().fen() != chess.STARTING_FEN:
                 return Change(False, "Notation starts from a custom position")
             board = chess.Board()
@@ -57,8 +68,13 @@ class PositionTracker:
                 moves.append(move.uci())
             if not moves:
                 return Change(False, "No readable moves")
-            if observed_fen and board.board_fen() != chess.Board(observed_fen).board_fen():
-                return Change(False, "Notation does not match visible board")
+            if observed_fen:
+                observed = chess.Board(observed_fen)
+                if not self._is_valid_observation(observed, turn_known=verify_turn):
+                    return Change(False, "Visible board is not a valid chess position")
+                if (board.board_fen() != observed.board_fen()
+                        or (verify_turn and board.turn != observed.turn)):
+                    return Change(False, "Notation does not match visible board")
             if (
                 self.complete_history
                 and self.board
@@ -95,11 +111,32 @@ class PositionTracker:
             board.pop()
         return found
 
-    def observe(self, fen: str) -> Change:
+    @staticmethod
+    def _is_valid_observation(board: chess.Board, *, turn_known: bool) -> bool:
+        """Validate a FEN, allowing placement-only callers to omit turn."""
+        if turn_known:
+            return board.is_valid()
+        # Browser DOM snapshots contain only piece placement.  The synthetic
+        # ``w`` side in their FEN can be invalid when Black is actually in
+        # check, so accept either legal side-to-move interpretation.
+        for turn in (chess.WHITE, chess.BLACK):
+            candidate = board.copy(stack=False)
+            candidate.turn = turn
+            if candidate.is_valid():
+                return True
+        return False
+
+    @staticmethod
+    def _resulting_turn(board: chess.Board, sequence: tuple[chess.Move, ...]) -> chess.Color:
+        return board.turn if len(sequence) % 2 == 0 else not board.turn
+
+    def observe(self, fen: str, *, turn_known: bool = True) -> Change:
         try:
             observed = chess.Board(fen)
         except ValueError:
             return Change(False, "Recognition returned invalid FEN")
+        if not self._is_valid_observation(observed, turn_known=turn_known):
+            return Change(False, "Recognition returned an invalid chess position")
         placement = observed.board_fen()
         # Prevent corrupted detections from creating a false history.
         if len(observed.pieces(chess.KING, True)) != 1 or len(observed.pieces(chess.KING, False)) != 1:
@@ -112,6 +149,11 @@ class PositionTracker:
         # server restart. A unique legal first ply is complete observed history.
         fresh = chess.Board()
         fresh_moves = self._candidates(fresh, placement, depth=1)
+        if turn_known:
+            fresh_moves = [
+                sequence for sequence in fresh_moves
+                if self._resulting_turn(fresh, sequence) == observed.turn
+            ]
         fresh_uci = {sequence[0].uci() for sequence in fresh_moves}
         if len(fresh_uci) == 1 and (self.board is None or self.board.board_fen() != placement):
             move = fresh_moves[0][0]
@@ -140,6 +182,8 @@ class PositionTracker:
             self.history_origin = "initial-position" if self.complete_history else "partial-video"
             return Change(True, "Initial board acquired" if self.complete_history else "Started in midgame: unknown prior history")
         if self.board.board_fen() == placement:
+            if turn_known and self.board.turn != observed.turn:
+                return Change(False, "Side to move changed without a board move")
             return Change(False, "Position unchanged")
 
         # A bot-selection preview can be replaced by a real game between two
@@ -156,6 +200,8 @@ class PositionTracker:
         for base in variants:
             try:
                 for sequence in self._candidates(base, placement, depth=2):
+                    if turn_known and self._resulting_turn(base, sequence) != observed.turn:
+                        continue
                     matches.append((base, sequence))
             except (ValueError, AssertionError):
                 pass

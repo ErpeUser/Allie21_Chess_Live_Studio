@@ -22,7 +22,7 @@ from allie_local_server import HOST, MODEL_NAME, PORT, analyse_position
 from browser_session import BrowserTrackerPool
 from chess_extras import find_stockfish
 from chess_tcn import tcn_to_pgn
-from config import CONFIG, MODEL_REVISION, parse_time_control
+from config import APP_VERSION, CONFIG, MODEL_REVISION, parse_time_control
 from contracts import VisualUpdateRequest
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -50,12 +50,21 @@ PRIVATE_OVERLAY = PrivateOverlayController()
 REQUEST_LIMITER = RequestRateLimiter()
 ANALYZE_GATE = threading.Semaphore(1)
 FRAME_GATE = threading.Semaphore(1)
+MODEL_STATE_LOCK = threading.RLock()
+MODEL_STATE = 'not_started'
+ALLOWED_WEB_ORIGINS = frozenset({
+    'https://chess.com', 'https://www.chess.com',
+    'https://lichess.org', 'https://www.lichess.org',
+})
+ALLOWED_EXTENSION_ORIGINS = frozenset({
+    'chrome-extension://omboihgfgofgmidefcpkihgglhkiielo',
+})
 _CHESSCOM_HISTORY_CACHE: dict[str, tuple[float, str]] = {}
 _CHESSCOM_HISTORY_LOCK = threading.RLock()
 app = FastAPI(title="Allie21 Live Studio", docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^https://(?:[a-z0-9-]+\.)?chess\.com$|^https://lichess\.org$",
+    allow_origin_regex=r"^https://(?:www\.)?chess\.com$|^https://(?:www\.)?lichess\.org$|^chrome-extension://omboihgfgofgmidefcpkihgglhkiielo$",
     allow_methods=['GET', 'POST'],
     allow_headers=['Content-Type', 'Authorization', 'X-Allie-Overlay', 'X-Allie-Instance'],
     max_age=3600,
@@ -63,6 +72,9 @@ app.add_middleware(
 
 
 def _preload_model() -> None:
+    global MODEL_STATE
+    with MODEL_STATE_LOCK:
+        MODEL_STATE = 'loading'
     try:
         model = allie.get_model()
         allie.analyse_position({
@@ -74,13 +86,20 @@ def _preload_model() -> None:
             'analysis_source': 'allie',
             'preview': False,
         }, model=model)
+        with MODEL_STATE_LOCK:
+            MODEL_STATE = 'ready'
         print('Allie-Modell und Startstellungscache sind bereit.', flush=True)
     except Exception as exc:  # noqa: BLE001 - background warmup must not block HTTP startup
+        with MODEL_STATE_LOCK:
+            MODEL_STATE = 'failed'
         print('Allie-Modell konnte im Hintergrund nicht vorgewärmt werden:', repr(exc))
 
 
 def start_model_preload() -> threading.Thread:
     """Load Allie and warm its opening cache while the local UI starts."""
+    global MODEL_STATE
+    with MODEL_STATE_LOCK:
+        MODEL_STATE = 'loading'
     worker = threading.Thread(
         target=_preload_model, name='allie-model-warmup', daemon=True
     )
@@ -165,7 +184,7 @@ def _fetch_chesscom_tcn(game_id: str) -> str:
     request = URLRequest(
         f'https://www.chess.com/callback/live/game/{game_id}',
         headers={'Accept': 'application/json',
-                 'User-Agent': 'Mozilla/5.0 Allie21-Live-Studio/11.2.16'},
+                 'User-Agent': f'Mozilla/5.0 Allie21-Live-Studio/{APP_VERSION}'},
     )
     try:
         with urlopen(request, timeout=3) as response:
@@ -213,11 +232,8 @@ async def local_boundary(request: Request, call_next):
     if origin:
         parsed = urlparse(origin)
         local = parsed.scheme in {'http', 'https'} and parsed.hostname in {'127.0.0.1', 'localhost'}
-        website = parsed.scheme == 'https' and (
-            parsed.hostname == 'lichess.org' or parsed.hostname == 'chess.com'
-            or bool(parsed.hostname and parsed.hostname.endswith('.chess.com'))
-        )
-        extension = parsed.scheme in {'chrome-extension', 'extension'} and bool(parsed.hostname)
+        website = origin in ALLOWED_WEB_ORIGINS
+        extension = origin in ALLOWED_EXTENSION_ORIGINS
         preflight = (request.method == 'OPTIONS'
                      and 'x-allie-overlay' in request.headers.get('access-control-request-headers', '').lower())
         overlay = (website or extension) and (
@@ -237,12 +253,37 @@ async def local_boundary(request: Request, call_next):
             return error(exc.status_code, str(exc.detail))
     if request.method == 'POST':
         maximum = MAX_JPEG if request.url.path == '/api/frame' else MAX_JSON
-        try:
-            length = int(request.headers.get('content-length', '0'))
-        except ValueError:
-            length = 0
-        if not 0 < length <= maximum:
-            return error(413, 'Request too large or empty')
+        raw_length = request.headers.get('content-length')
+        if raw_length is not None:
+            try:
+                length = int(raw_length)
+            except ValueError:
+                return error(413, 'Request length invalid')
+            # An explicitly supplied zero length is still rejected for
+            # endpoints that require a body.  Requests using chunked transfer
+            # or HTTP/2 legitimately omit Content-Length and are bounded by
+            # the stream cap below.
+            body_required = request.url.path in {
+                '/analyze', '/api/start', '/api/frame', '/api/history',
+                '/api/recommendations', '/api/browser-position',
+                '/api/browser-position/reset', '/api/overlay/mode',
+                '/api/overlay/update',
+            }
+            if length < 0 or length > maximum or (length == 0 and body_required):
+                return error(413, 'Request too large or empty')
+        else:
+            # Chunked/HTTP2 requests have no Content-Length, so enforce the
+            # same bound while consuming the stream.  Cache the bounded body
+            # on Starlette's request object so FastAPI's downstream parser and
+            # the frame endpoint can still read it normally.
+            chunks: list[bytes] = []
+            total = 0
+            async for chunk in request.stream():
+                total += len(chunk)
+                if total > maximum:
+                    return error(413, 'Request too large')
+                chunks.append(chunk)
+            request._body = b''.join(chunks)  # type: ignore[attr-defined]
     response = await call_next(request)
     response.headers.update({
         'Cache-Control': 'no-store',
@@ -296,10 +337,13 @@ def extension_userscript():
 def health():
     model_loaded = allie._model is not None
     stockfish_available = bool(find_stockfish())
+    with MODEL_STATE_LOCK:
+        model_phase = MODEL_STATE
     return {'alive': True, 'ready': model_loaded and stockfish_available,
             'phase': 'ready' if model_loaded and stockfish_available else
             ('model_loading' if not model_loaded else 'stockfish_unavailable'),
             'model': MODEL_NAME, 'model_revision': MODEL_REVISION,
+            'app_version': APP_VERSION, 'model_phase': model_phase,
             'instance_id': INSTANCE_ID, 'api_version': API_VERSION,
             'schema_version': SCHEMA_VERSION,
             'model_loaded': model_loaded,
@@ -348,6 +392,22 @@ def state():
 
 @app.post('/analyze')
 def analyze(request: AnalysisRequest):
+    with MODEL_STATE_LOCK:
+        model_phase = MODEL_STATE
+    if request.analysis_source in ('allie', 'both') and model_phase == 'loading':
+        response = JSONResponse(
+            {'error': 'Allie-Modell wird noch geladen', 'phase': 'model_loading'},
+            status_code=503,
+            headers={'Retry-After': '5'},
+        )
+        return response
+    if request.analysis_source in ('allie', 'both') and model_phase == 'failed' and not allie._model:
+        response = JSONResponse(
+            {'error': 'Allie-Modell konnte nicht geladen werden', 'phase': 'model_failed'},
+            status_code=503,
+            headers={'Retry-After': '15'},
+        )
+        return response
     if not ANALYZE_GATE.acquire(blocking=False):
         raise HTTPException(429, 'Analyse bereits aktiv')
     try:
@@ -440,8 +500,15 @@ def overlay_update(request: VisualUpdateRequest):
         return PRIVATE_OVERLAY.update(request.model_dump())
     except (KeyError, TypeError, ValueError, OverflowError):
         # Never let malformed geometry reach a visible fallback.  The native
-        # controller is cleared and the request remains fail-closed.
-        return PRIVATE_OVERLAY.clear('invalid_overlay_payload')
+        # controller is cleared and the request remains fail-closed.  Scope
+        # that clear to the same cursor: a delayed malformed frame from a
+        # retired session must not hide a newer session's overlay.
+        return PRIVATE_OVERLAY.clear(
+            'invalid_overlay_payload',
+            session_id=request.session_id,
+            generation=request.generation,
+            render_revision=request.render_revision,
+        )
 
 
 @app.post('/api/overlay/clear')

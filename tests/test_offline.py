@@ -1,6 +1,7 @@
 """Fast checks that need no downloads or model inference."""
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import unittest
@@ -51,6 +52,15 @@ class StandaloneTests(unittest.TestCase):
         self.assertEqual(config.time_profile('600+0'), ('Rapid', 1.1))
         self.assertEqual(config.time_profile('1800+0'), ('Classical', 2.0))
 
+    def test_service_port_validation_is_shared(self):
+        self.assertEqual(config.parse_port('18765'), 18765)
+        with self.assertRaises(ValueError):
+            config.parse_port('80')
+        with self.assertRaises(ValueError):
+            config.parse_port('65536')
+        with self.assertRaises(ValueError):
+            config.parse_port('not-a-port')
+
     def test_ocr_needs_move_one(self):
         self.assertEqual(sanitize_ocr_history('3. Bb5 a6 4. Ba4'), '')
 
@@ -95,9 +105,10 @@ class StandaloneTests(unittest.TestCase):
         script = (ROOT / 'START_HIER.bat').read_text(encoding='utf-8')
         self.assertIn('uv 0.13.7', script)
         self.assertIn('UV_PROJECT_ENVIRONMENT=%~dp0.allie-venv', script)
-        self.assertIn('sync --frozen --all-extras --no-dev', script)
+        self.assertIn('sync --frozen --extra vision --no-dev', script)
         self.assertIn('backend\\download_stockfish.py', script)
         self.assertIn('backend\\live_server.py', script)
+        self.assertIn('Pruefe Stockfish 19', script)
         self.assertNotIn('AllieLauncher', script)
         self.assertNotIn('auto_setup.ps1', script)
 
@@ -137,6 +148,14 @@ class StandaloneTests(unittest.TestCase):
 
         self.assertEqual(opened, ['http://127.0.0.1:8765/viewer'])
 
+    def test_launcher_validates_and_propagates_custom_port(self):
+        with patch.dict(os.environ, {'ALLIE_PORT': '18765'}):
+            self.assertEqual(allie_launcher.configured_port(), 18765)
+            self.assertEqual(allie_launcher.viewer_url(), 'http://127.0.0.1:18765/viewer')
+        with patch.dict(os.environ, {'ALLIE_PORT': '80'}):
+            with self.assertRaises(RuntimeError):
+                allie_launcher.configured_port()
+
     def test_tray_image_is_visible_and_square(self):
         image = allie_launcher.create_tray_image()
         self.assertEqual(image.size, (64, 64))
@@ -153,6 +172,7 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn("--with 'pystray==0.19.5'", script)
         self.assertIn("--with 'pillow==13.0.0'", script)
         self.assertIn("--hidden-import 'pystray._win32'", script)
+        self.assertIn('expectedStockfishSha256', script)
         self.assertIn("--onedir", script)
         self.assertNotIn("--onefile", script)
 
@@ -169,9 +189,10 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('@version      11.2.17', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
         self.assertEqual(manifest['version_name'], '11.2.17')
-        self.assertIn('@match        https://*.chess.com/*', overlay)
+        self.assertIn('@match        https://www.chess.com/play/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
+        self.assertIn('const supportedPath=', overlay)
         self.assertIn('new MutationObserver', overlay)
         self.assertIn('ResizeObserver', overlay)
         self.assertIn('location.href', overlay)
@@ -209,10 +230,22 @@ class StandaloneTests(unittest.TestCase):
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
         self.assertEqual(manifest['background']['service_worker'], 'background.js')
         self.assertIn('alarms', manifest['permissions'])
+        self.assertIn('storage', manifest['permissions'])
+        self.assertEqual(manifest['options_page'], 'options.html')
+        self.assertIn('http://127.0.0.1/*', manifest['host_permissions'])
         background = (ROOT / 'browser/background.js').read_text(encoding='utf-8')
-        self.assertIn("http://127.0.0.1:8765/health", background)
+        self.assertIn("chrome.storage.local.get", background)
+        self.assertIn("allie21:get-port", background)
+        self.assertIn("serviceUrl(port, '/health')", background)
         self.assertIn("'X-Allie-Overlay': '1'", background)
         self.assertIn("setBadgeText", background)
+        options = (ROOT / 'browser/options.html').read_text(encoding='utf-8')
+        self.assertIn('chrome.storage.local.get', options)
+        self.assertIn('min="1024"', options)
+        overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
+        self.assertIn("id='port'", overlay)
+        self.assertIn('ensureServicePort()', overlay)
+        self.assertNotIn("http://127.0.0.1:8765/api/capability", overlay)
 
     def test_overlay_reads_separate_chesscom_figurine(self):
         result = subprocess.run(

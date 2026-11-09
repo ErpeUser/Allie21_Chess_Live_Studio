@@ -7,6 +7,7 @@ hard-coded fake 'human move' distribution. Requires standard chess move history.
 from __future__ import annotations
 
 import io
+import hashlib
 import json
 import math
 import os
@@ -30,10 +31,10 @@ from chess_extras import (
     standard_repertoire,
     stockfish_lines,
 )
-from config import MODEL_ID, MODEL_REVISION, time_profile
+from config import MODEL_ID, MODEL_REVISION, parse_port, time_profile
 
 HOST = "127.0.0.1"
-PORT = int(os.environ.get("ALLIE_PORT", "8765"))
+PORT = parse_port(os.environ.get("ALLIE_PORT", "8765"))
 MODEL_NAME = MODEL_ID
 MAX_BODY = 64 * 1024
 _model = None
@@ -42,6 +43,15 @@ _ANALYSIS_CACHE_LOCK = threading.RLock()
 _ANALYSIS_CACHE_TTL = 30.0
 _ANALYSIS_CACHE_MAX = 24
 _model_lock = threading.RLock()
+
+
+def _safe_error_id(scope: str, exc: BaseException) -> str:
+    """Log the diagnostic detail locally while returning only an opaque id."""
+    digest = hashlib.sha256(
+        f"{scope}|{type(exc).__name__}|{exc}".encode("utf-8", "replace")
+    ).hexdigest()[:12]
+    print(f"{scope} ({digest}):", repr(exc), flush=True)
+    return digest
 
 
 def get_model():
@@ -58,7 +68,11 @@ def get_model():
                 # Avoid a failed probe and use the supported Windows backend.
                 options["backend"] = "torch"
             _model = AutoModel.from_pretrained(
-                MODEL_NAME, revision=MODEL_REVISION, trust_remote_code=True, **options
+                MODEL_NAME,
+                revision=MODEL_REVISION,
+                code_revision=MODEL_REVISION,
+                trust_remote_code=True,
+                **options,
             )
         return _model
 
@@ -74,7 +88,8 @@ def parse_history(raw: str) -> tuple[list[str], chess.Board, list[float | None]]
     if " / " in raw and re.search(r"\b[wb]\b", raw):
         raise ValueError("FEN-only positions are not supported. Paste the moves from the start.")
     if "[" in raw or re.search(r"\b\d+\s*\.", raw):
-        game = chess.pgn.read_game(io.StringIO(raw))
+        stream = io.StringIO(raw)
+        game = chess.pgn.read_game(stream)
         if not game:
             raise ValueError("Cannot read PGN")
         if game.errors:
@@ -83,6 +98,13 @@ def parse_history(raw: str) -> tuple[list[str], chess.Board, list[float | None]]
             raise ValueError("Allie 2.1 requires standard chess from the initial position")
         if game.headers.get("Variant", "Standard") not in ("Standard", "Chess", ""):
             raise ValueError("This variant is not supported by the Allie 2.1 model")
+        # ``read_game`` intentionally consumes only one game.  Silently
+        # analysing the first game from a pasted multi-game PGN is dangerous:
+        # the displayed result can belong to a different game than the user
+        # intended.  Reject a second parsed game explicitly.
+        second = chess.pgn.read_game(stream)
+        if second is not None:
+            raise ValueError("Multiple games are not supported; paste one PGN")
         history: list[str] = []
         clocks: list[float | None] = []
         for node in game.mainline():
@@ -407,8 +429,11 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                     if result.get('think_time') is not None:
                         expected_think_time = round(float(result['think_time']), 2)
             except Exception as exc:  # noqa: BLE001 - optional model boundary must fail soft
-                allie_skip_reason = ('Allie 2.1 konnte nicht geladen oder ausgefuehrt werden: '
-                                     + str(exc)[:220])
+                error_id = _safe_error_id('Allie-Analyse fehlgeschlagen', exc)
+                allie_skip_reason = (
+                    'Allie 2.1 konnte nicht geladen oder ausgefuehrt werden '
+                    f'(Fehler-ID {error_id}).'
+                )
             if candidate_moves and payload.get('preview', True):
                 try:
                     with _model_lock:
@@ -464,7 +489,11 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                                 described = [describe_move(after_reply, uci, prob) for uci, prob in ranked]
                                 premove_branches.append((reply['probability'], described))
                 except Exception as exc:  # noqa: BLE001 - optional prediction branch must fail soft
-                    warnings.append('Allie-Gegnerprognose derzeit nicht verfuegbar: ' + str(exc)[:150])
+                    error_id = _safe_error_id('Allie-Gegnerprognose fehlgeschlagen', exc)
+                    warnings.append(
+                        'Allie-Gegnerprognose derzeit nicht verfuegbar '
+                        f'(Fehler-ID {error_id}).'
+                    )
 
     sf = None
     if selection in ('stockfish', 'both'):
@@ -546,7 +575,28 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     """
     if model is not None:
         return _analyse_position_uncached(payload, model)
-    key = json.dumps(payload, sort_keys=True, separators=(',', ':'), default=str)
+    # Session/render metadata controls publication in LiveSession but does not
+    # change chess analysis.  Excluding it makes the short-lived cache useful
+    # across repeated frames and tabs instead of creating one entry per job.
+    cache_payload = {
+        key: value for key, value in payload.items()
+        if key not in {'session_id', 'generation', 'render_revision', 'analysis_key'}
+    }
+    # Whitespace-only PGN/FEN changes are semantically identical and should
+    # share a cache entry.  Do not rewrite SAN/UCI or headers here because
+    # PGN clocks and tags can affect model inputs and must remain intact.
+    for field in ('pgn', 'fen'):
+        value = cache_payload.get(field)
+        if isinstance(value, str):
+            cache_payload[field] = value.strip()
+            if field == 'fen' and cache_payload[field]:
+                try:
+                    cache_payload[field] = chess.Board(cache_payload[field]).fen()
+                except ValueError:
+                    # Preserve the raw invalid value so error responses do
+                    # not collide with a valid cached position.
+                    pass
+    key = json.dumps(cache_payload, sort_keys=True, separators=(',', ':'), default=str)
     now = time.monotonic()
     with _ANALYSIS_CACHE_LOCK:
         cached = _ANALYSIS_CACHE.get(key)

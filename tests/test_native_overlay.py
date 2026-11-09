@@ -100,11 +100,17 @@ class NativeOverlayTests(unittest.TestCase):
         self.assertFalse(controller.available)
 
     def test_affinity_failure_stays_hidden_fail_closed(self):
-        controller = NativeOverlayController(api=FakeWin32(set_affinity=False))
+        fake = FakeWin32(set_affinity=False)
+        controller = NativeOverlayController(api=fake)
         self.assertFalse(controller.start())
         self.assertTrue(controller.failed_closed)
         self.assertFalse(controller.visible)
         self.assertFalse(controller.update([], "must not render"))
+        # A failed GUI-thread start must not poison the controller forever;
+        # after the underlying affinity problem is repaired, a retry is valid.
+        fake.set_affinity_result = True
+        self.assertTrue(controller.start())
+        controller.stop()
 
     @unittest.skipIf(os.name == "nt", "non-Windows fallback is only tested off Windows")
     def test_non_windows_without_injected_api_fails_closed(self):
@@ -149,6 +155,21 @@ class NativeOverlayTests(unittest.TestCase):
         private.clear('navigation', session_id='new', generation=0, render_revision=1)
         delayed = dict(first, generation=99, render_revision=99)
         self.assertEqual(private.update(delayed)['reason'], 'retired_session_ignored')
+        private.close()
+
+    def test_stale_clear_cannot_reactivate_retired_session_or_rewind_cursor(self):
+        private = PrivateOverlayController()
+        fake = FakeWin32()
+        private._native = NativeOverlayController(api=fake)
+        geometry = {'board': {'left': 10, 'top': 20, 'width': 320, 'height': 320}, 'orientation': 'white'}
+        first = {'session_id': 'first', 'generation': 2, 'render_revision': 4,
+                 'mode': 'private', 'geometry': geometry, 'arrows': []}
+        second = dict(first, session_id='second', generation=3, render_revision=1)
+        self.assertEqual(private.update(first)['state'], 'active')
+        self.assertEqual(private.update(second)['state'], 'active')
+        private.clear('old-clear', session_id='first', generation=1, render_revision=1)
+        self.assertEqual(private.update(first)['reason'], 'retired_session_ignored')
+        self.assertEqual(private.update(dict(second, render_revision=0))['reason'], 'stale_update_ignored')
         private.close()
 
 
