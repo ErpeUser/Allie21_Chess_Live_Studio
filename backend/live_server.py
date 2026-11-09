@@ -57,7 +57,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"^https://(?:[a-z0-9-]+\.)?chess\.com$|^https://lichess\.org$",
     allow_methods=['GET', 'POST'],
-    allow_headers=['Content-Type', 'Authorization', 'X-Allie-Overlay'],
+    allow_headers=['Content-Type', 'Authorization', 'X-Allie-Overlay', 'X-Allie-Instance'],
     max_age=3600,
 )
 
