@@ -16,6 +16,7 @@ if (-not (Test-Path -LiteralPath $uvx)) {
 
 & $uvx --python '3.12' --from 'pyinstaller==6.22.3' --with 'pystray==0.19.5' --with 'pillow==13.0.0' pyinstaller `
     --noconfirm --clean --onedir --windowed `
+    --icon (Join-Path $root 'assets\allie21_icon.ico') `
     --hidden-import 'pystray._win32' `
     --name 'Allie21 Chess Live Studio' `
     --distpath $dist `
@@ -32,7 +33,7 @@ New-Item -ItemType Directory -Force -Path $app, $runtime | Out-Null
 # Keep the release independent from a checkout, uv, and the user's PATH.  The
 # executable remains the small tray controller; the adjacent app/runtime hold
 # the server and its exact Python environment.
-foreach ($directory in @('backend', 'browser', 'viewer', 'beispiele')) {
+foreach ($directory in @('assets', 'backend', 'browser', 'viewer', 'beispiele')) {
     Copy-Item -LiteralPath (Join-Path $root $directory) -Destination $app -Recurse -Force
 }
 foreach ($file in @('config.json', 'pyproject.toml', 'uv.lock', 'README_DE.md',
