@@ -53,4 +53,13 @@ if (!source.includes("el('now').onclick=async()=>{markBrowserSessionReset()")) {
   throw new Error('manual analysis does not request a tracker reset');
 }
 
+// When an analysis slot is busy, a 429 must not become a server-offline error
+// or trigger a second request that immediately hits the same semaphore.
+if (!source.includes("if(error?.status===429)") ||
+    !source.includes("Analyse bereits aktiv – erneuter Versuch folgt.") ||
+    !source.includes("if(error.name==='AbortError'||error.status)throw error;") ||
+    !source.includes("(!pending&&!currentResult&&Date.now()>=retryAfter)")) {
+  throw new Error('busy analysis must be retried without a false connection error');
+}
+
 console.log('overlay round/style tests passed');
