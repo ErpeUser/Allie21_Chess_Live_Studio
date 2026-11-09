@@ -1,0 +1,10 @@
+title = "Allie21 Chess Live Studio secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Chrome MV3 public signing key; it is intentionally distributed in manifest.json"
+paths = ['''browser/manifest\.json$''']
+regexTarget = "line"
+regexes = ['''"key"\s*:\s*"[A-Za-z0-9+/=]{100,}"''']
