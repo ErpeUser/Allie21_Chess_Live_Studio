@@ -101,7 +101,7 @@ class HTTPBoundaryTests(unittest.TestCase):
             headers['X-Allie-Instance'] = app.INSTANCE_ID
         if preflight:
             headers['Access-Control-Request-Method'] = 'POST'
-            headers['Access-Control-Request-Headers'] = 'content-type,x-allie-overlay'
+            headers['Access-Control-Request-Headers'] = 'content-type,x-allie-overlay,authorization,x-allie-instance'
         body = json.dumps(payload).encode() if payload is not None else None
         client.request(method, path, body=body, headers=headers)
         response = client.getresponse()
