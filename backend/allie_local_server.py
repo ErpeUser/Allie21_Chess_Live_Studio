@@ -31,10 +31,10 @@ from chess_extras import (
     standard_repertoire,
     stockfish_lines,
 )
-from config import MODEL_ID, MODEL_REVISION, time_profile
+from config import MODEL_ID, MODEL_REVISION, parse_port, time_profile
 
 HOST = "127.0.0.1"
-PORT = int(os.environ.get("ALLIE_PORT", "8765"))
+PORT = parse_port(os.environ.get("ALLIE_PORT", "8765"))
 MODEL_NAME = MODEL_ID
 MAX_BODY = 64 * 1024
 _model = None

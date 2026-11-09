@@ -16,6 +16,17 @@ MODEL_REVISION = "d2545701ff5af46a51ac947911844f779b355a08"
 TIME_CONTROL_RE = re.compile(r"\d{1,5}\+\d{1,4}")
 
 
+def parse_port(value: object = "8765") -> int:
+    """Validate the loopback service port at every entry point."""
+    try:
+        port = int(str(value).strip())
+    except (TypeError, ValueError) as exc:
+        raise ValueError("ALLIE_PORT muss eine ganze Zahl sein") from exc
+    if not 1024 <= port <= 65535:
+        raise ValueError("ALLIE_PORT muss zwischen 1024 und 65535 liegen")
+    return port
+
+
 def parse_time_control(value: str) -> tuple[int, int]:
     value = str(value).strip()
     if not TIME_CONTROL_RE.fullmatch(value):

@@ -1,10 +1,24 @@
 'use strict';
 
-const HEALTH = 'http://127.0.0.1:8765/health';
+const DEFAULT_PORT = 8765;
+
+function configuredPort() {
+  return new Promise(resolve => {
+    chrome.storage.local.get({port: DEFAULT_PORT}, value => {
+      const port = Number(value.port);
+      resolve(Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : DEFAULT_PORT);
+    });
+  });
+}
+
+function serviceUrl(port, path) {
+  return `http://127.0.0.1:${port}${path}`;
+}
 
 async function refreshBadge() {
   try {
-    const response = await fetch(HEALTH, {cache: 'no-store', headers: {'X-Allie-Overlay': '1'}});
+    const port = await configuredPort();
+    const response = await fetch(serviceUrl(port, '/health'), {cache: 'no-store', headers: {'X-Allie-Overlay': '1'}});
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     await chrome.action.setBadgeText({text: 'OK'});
     await chrome.action.setBadgeBackgroundColor({color: '#16c784'});
@@ -15,6 +29,12 @@ async function refreshBadge() {
     await chrome.action.setTitle({title: 'Allie 2.1: Lokalen Server starten'});
   }
 }
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type !== 'allie21:get-port') return false;
+  configuredPort().then(port => sendResponse({port}));
+  return true;
+});
 
 chrome.runtime.onInstalled.addListener(refreshBadge);
 chrome.runtime.onStartup.addListener(refreshBadge);

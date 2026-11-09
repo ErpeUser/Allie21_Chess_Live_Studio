@@ -56,7 +56,7 @@ TROLL_OPENING_OPTIONS = {
     },
     'black': {
         'stafford': ('Stafford-Gambit', ('e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5', 'b8c6')),
-        'traxler': ('Traxler-Gegenangriff', ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'g1g5', 'f8c5')),
+        'traxler': ('Traxler-Gegenangriff', ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'f3g5', 'f8c5')),
     },
 }
 DEFAULT_OPENINGS = {'white': 'grob', 'black': 'englund'}

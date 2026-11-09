@@ -6,11 +6,13 @@
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt7jV+esSpySHjzLTEzXStFTbgv3HXPDB74nrcDWR8UNlqqOas7UdZYb/1qARGej4pzvjzbFecXjXZInmQWGWv83TvGolMPoD5Ass7cmMhQQzy2i4lT55yR7au0cpAAZiQgBpCciMH6UkQLKKMgIsaQL//0XRRiUREY4g6bv7yxG3wCGrXt9LAAwSYlviHdnyNmTJH85+SbyL7vLH2ed8qcichgRF9DYt1kT+PfoRATByXNTOJmKQCSlaaoEuQh3iAOtkgSJ8ve0gdwyB+KKJCd5a+cVB8vQ3HwQ4/ntIWWmzbqMJfd6g1J+/skM23LdGk76RNNrZQn8XgWZ2Fq9KAwIDAQAB",
   "description": "Lokale Allie-Zughinweise für Chess.com und Lichess.",
   "host_permissions": [
-    "http://127.0.0.1:8765/*"
+    "http://127.0.0.1/*"
   ],
   "permissions": [
-    "alarms"
+    "alarms",
+    "storage"
   ],
+  "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
   },

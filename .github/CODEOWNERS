@@ -1,0 +1,5 @@
+# Keep runtime, browser permissions and release workflows under maintainer review.
+* @ErpeUser
+/.github/ @ErpeUser
+/backend/ @ErpeUser
+/browser/ @ErpeUser

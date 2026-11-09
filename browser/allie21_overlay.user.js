@@ -32,7 +32,7 @@
  const loadPrivate=()=>{try{return JSON.parse(localStorage.getItem(PRIVATE_STORE)||'{"privateMode":false}')}catch{return{privateMode:false}}};
  const stored=load();
  const privateStored=loadPrivate();
- const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:privateStored.privateMode===true},stored);
+ const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:privateStored.privateMode===true},stored);
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -53,6 +53,7 @@
  <p class='small'>Allie schätzt menschliche Züge. Stockfish prüft sie objektiv.</p>
  <div class='row'><div><label>Elo</label><input id='elo' type='number' min='600' max='2800'/></div>
   <div><label>Zeitkontrolle</label><input id='tc' placeholder='300+0'/></div></div>
+ <label>Lokaler Server-Port</label><input id='port' type='number' min='1024' max='65535' step='1' title='Muss mit ALLIE_PORT übereinstimmen'/>
  <div class='row'><div><label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select></div>
  <div><label>Deine Farbe</label><select id='playerSide'><option value='auto'>Automatisch</option><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
  <label>Spielstil</label><select id='playStyle'><option value='normal'>Normal · menschlich wahrscheinlich</option><option value='aggressive'>Aggressiv · Matt und Königsdruck</option></select>
@@ -73,9 +74,11 @@
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
  const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
- const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;Object.assign(cfg,selectedOpeningSettings());save();invalidate();scheduleTick(true)};
- for(const field of ['elo','tc','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=privateUnavailable?'Privates Windows-Overlay ist hier nicht verfügbar – sichtbarer Browsermodus aktiv.':cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
+ const normalizePort=value=>{const port=Number(value);return Number.isInteger(port)&&port>=1024&&port<=65535?port:8765};
+ cfg.port=normalizePort(cfg.port);
+ const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.port=normalizePort(el('port').value);cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;Object.assign(cfg,selectedOpeningSettings());save();servicePort=cfg.port;invalidate();scheduleTick(true)};
+ for(const field of ['elo','tc','port','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
+ const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=privateUnavailable?'Privates Windows-Overlay ist hier nicht verfügbar – sichtbarer Browsermodus aktiv.':cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
  Object.assign(cfg,selectedOpeningSettings());save();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
  el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
@@ -383,16 +386,33 @@
   el('results').innerHTML=html;
   if(messages.length&&!panelDismissed){el('panel').classList.add('open');el('bubble').style.display='none';placePanel()}
  }
- let capabilityToken='',capabilityInstance='',capabilityPromise=null;
+ let capabilityToken='',capabilityInstance='',capabilityPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null;
+ function serviceUrl(path){return `http://127.0.0.1:${servicePort}${path}`}
+ function ensureServicePort(){
+  if(servicePortPromise)return servicePortPromise;
+  servicePortPromise=new Promise(resolve=>{
+   const fallback=()=>{servicePort=normalizePort(cfg.port);resolve(servicePort)};
+   try{
+    if(typeof chrome==='undefined'||!chrome.runtime?.sendMessage)return fallback();
+    let settled=false;
+    chrome.runtime.sendMessage({type:'allie21:get-port'},response=>{
+     if(settled)return;settled=true;
+     if(chrome.runtime?.lastError||!response)return fallback();
+     servicePort=normalizePort(response.port);resolve(servicePort);
+    });
+   }catch{fallback()}
+  }).finally(()=>{servicePortPromise=null});
+  return servicePortPromise;
+ }
  function ensureCapability(){
   if(capabilityToken)return Promise.resolve(capabilityToken);
-  if(!capabilityPromise){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);capabilityPromise=fetch('http://127.0.0.1:8765/api/capability',{headers:{'X-Allie-Overlay':'1'},cache:'no-store',signal:controller.signal}).then(async response=>{const data=await response.json();if(!response.ok||!data.token||!data.instance_id)throw Error(data.error||'Capability fehlt');capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken}).finally(()=>{clearTimeout(timer);capabilityPromise=null})}
+  if(!capabilityPromise){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);capabilityPromise=ensureServicePort().then(()=>fetch(serviceUrl('/api/capability'),{headers:{'X-Allie-Overlay':'1'},cache:'no-store',signal:controller.signal})).then(async response=>{const data=await response.json();if(!response.ok||!data.token||!data.instance_id)throw Error(data.error||'Capability fehlt');capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken}).finally(()=>{clearTimeout(timer);capabilityPromise=null})}
   return capabilityPromise;
  }
  function postJson(path,data,timeout=15000){
   const controller=new AbortController();let expired=false;
   const timer=setTimeout(()=>{expired=true;controller.abort()},timeout);
-  const promise=ensureCapability().then(token=>fetch('http://127.0.0.1:8765'+path,{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance},body:JSON.stringify(data),signal:controller.signal}))
+  const promise=ensureCapability().then(token=>fetch(serviceUrl(path),{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance},body:JSON.stringify(data),signal:controller.signal}))
    .then(async response=>{let parsed={};try{parsed=await response.json()}catch{}if(!response.ok){const error=new Error(parsed.error||String(response.status));error.status=response.status;throw error}return parsed})
    .catch(error=>{if(expired)throw Error('Lokale Analyse braucht zu lange.');if(error.name==='AbortError'||error.status)throw error;throw Error('Lokaler Allie-Server nicht erreichbar: '+error.message)})
    .finally(()=>clearTimeout(timer));
@@ -581,7 +601,8 @@
  async function syncPrivateMode(){
   try{
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
-   const response=await fetch('http://127.0.0.1:8765/api/overlay/status',{cache:'no-store',headers:{'X-Allie-Overlay':'1'},signal:controller.signal});clearTimeout(timer);
+   await ensureServicePort();
+   const response=await fetch(serviceUrl('/api/overlay/status'),{cache:'no-store',headers:{'X-Allie-Overlay':'1'},signal:controller.signal});clearTimeout(timer);
    if(response.ok){const state=await response.json();if(state?.ready===false||state?.instance_id&&capabilityInstance&&state.instance_id!==capabilityInstance){capabilityToken='';capabilityInstance=''}privateUnavailable=state?.available===false;if(privateUnavailable){cfg.privateMode=false;try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:false}))}catch{}}else if(state?.mode==='private'||state?.mode==='normal'){cfg.privateMode=state.mode==='private';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{}}fill()}
   }catch{privateUnavailable=true;cfg.privateMode=false;try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:false}))}catch{};fill()}
   sendOverlayMode(cfg.privateMode?'private':'normal');

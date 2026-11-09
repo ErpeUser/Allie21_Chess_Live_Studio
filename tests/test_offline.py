@@ -52,6 +52,15 @@ class StandaloneTests(unittest.TestCase):
         self.assertEqual(config.time_profile('600+0'), ('Rapid', 1.1))
         self.assertEqual(config.time_profile('1800+0'), ('Classical', 2.0))
 
+    def test_service_port_validation_is_shared(self):
+        self.assertEqual(config.parse_port('18765'), 18765)
+        with self.assertRaises(ValueError):
+            config.parse_port('80')
+        with self.assertRaises(ValueError):
+            config.parse_port('65536')
+        with self.assertRaises(ValueError):
+            config.parse_port('not-a-port')
+
     def test_ocr_needs_move_one(self):
         self.assertEqual(sanitize_ocr_history('3. Bb5 a6 4. Ba4'), '')
 
@@ -221,10 +230,22 @@ class StandaloneTests(unittest.TestCase):
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
         self.assertEqual(manifest['background']['service_worker'], 'background.js')
         self.assertIn('alarms', manifest['permissions'])
+        self.assertIn('storage', manifest['permissions'])
+        self.assertEqual(manifest['options_page'], 'options.html')
+        self.assertIn('http://127.0.0.1/*', manifest['host_permissions'])
         background = (ROOT / 'browser/background.js').read_text(encoding='utf-8')
-        self.assertIn("http://127.0.0.1:8765/health", background)
+        self.assertIn("chrome.storage.local.get", background)
+        self.assertIn("allie21:get-port", background)
+        self.assertIn("serviceUrl(port, '/health')", background)
         self.assertIn("'X-Allie-Overlay': '1'", background)
         self.assertIn("setBadgeText", background)
+        options = (ROOT / 'browser/options.html').read_text(encoding='utf-8')
+        self.assertIn('chrome.storage.local.get', options)
+        self.assertIn('min="1024"', options)
+        overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
+        self.assertIn("id='port'", overlay)
+        self.assertIn('ensureServicePort()', overlay)
+        self.assertNotIn("http://127.0.0.1:8765/api/capability", overlay)
 
     def test_overlay_reads_separate_chesscom_figurine(self):
         result = subprocess.run(

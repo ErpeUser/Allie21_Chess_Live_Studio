@@ -10,6 +10,11 @@ import webbrowser
 from pathlib import Path
 from threading import Thread
 
+BACKEND = Path(__file__).resolve().parents[1] / "backend"
+if str(BACKEND) not in sys.path:
+    sys.path.insert(0, str(BACKEND))
+from config import parse_port
+
 TITLE = "Allie21 Chess Live Studio"
 DEFAULT_PORT = 8765
 REQUIRED = (
@@ -58,12 +63,9 @@ def configured_port() -> int:
     """Return the validated loopback port shared by launcher and server."""
     raw = os.environ.get("ALLIE_PORT", str(DEFAULT_PORT)).strip()
     try:
-        port = int(raw)
+        return parse_port(raw)
     except ValueError as exc:
-        raise RuntimeError("ALLIE_PORT muss eine ganze Zahl sein") from exc
-    if not 1024 <= port <= 65535:
-        raise RuntimeError("ALLIE_PORT muss zwischen 1024 und 65535 liegen")
-    return port
+        raise RuntimeError(str(exc)) from exc
 
 
 def viewer_url(port: int | None = None) -> str:
