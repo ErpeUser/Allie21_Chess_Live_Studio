@@ -99,6 +99,7 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('sync --frozen --extra vision --no-dev', script)
         self.assertIn('backend\\download_stockfish.py', script)
         self.assertIn('backend\\live_server.py', script)
+        self.assertIn('Pruefe Stockfish 19', script)
         self.assertNotIn('AllieLauncher', script)
         self.assertNotIn('auto_setup.ps1', script)
 
@@ -162,6 +163,7 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn("--with 'pystray==0.19.5'", script)
         self.assertIn("--with 'pillow==13.0.0'", script)
         self.assertIn("--hidden-import 'pystray._win32'", script)
+        self.assertIn('expectedStockfishSha256', script)
         self.assertIn("--onedir", script)
         self.assertNotIn("--onefile", script)
 

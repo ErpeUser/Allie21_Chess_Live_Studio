@@ -34,6 +34,11 @@ $stockfish = Join-Path $root 'backend\engines\stockfish.exe'
 if (-not (Test-Path -LiteralPath $stockfish)) {
     throw 'Stockfish fehlt. Vor dem Build: uv run --frozen python backend\download_stockfish.py'
 }
+$expectedStockfishSha256 = '45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0'
+$actualStockfishSha256 = (Get-FileHash -LiteralPath $stockfish -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($actualStockfishSha256 -ne $expectedStockfishSha256) {
+    throw "Stockfish SHA-256 stimmt nicht: $actualStockfishSha256"
+}
 
 # Keep the release independent from a checkout, uv, and the user's PATH.  The
 # executable remains the small tray controller; the adjacent app/runtime hold

@@ -19,11 +19,9 @@ echo [Allie] Pruefe die reproduzierbare Python-Umgebung ...
 "%UV_EXE%" sync --frozen --extra vision --no-dev
 if errorlevel 1 goto :setup_error
 
-if not exist "backend\engines\stockfish.exe" (
-  echo [Allie] Lade Stockfish 19 von der offiziellen Quelle ...
-  "%UV_EXE%" run --frozen python backend\download_stockfish.py
-  if errorlevel 1 goto :stockfish_error
-)
+echo [Allie] Pruefe Stockfish 19 gegen den offiziellen SHA-256 ...
+"%UV_EXE%" run --frozen python backend\download_stockfish.py
+if errorlevel 1 goto :stockfish_error
 
 echo [Allie] Starte http://127.0.0.1:8765/viewer
 "%UV_EXE%" run --frozen python backend\live_server.py
