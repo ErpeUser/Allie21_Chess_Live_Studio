@@ -271,7 +271,7 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(repertoire_move_for([], 'white', 'bongcloud'), 'e2e4')
         self.assertEqual(repertoire_move_for(['e2e4', 'e7e5'], 'white', 'bongcloud'), 'e1e2')
         self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5'], 'black', 'stafford'), 'b8c6')
-        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'g1g5'], 'black', 'traxler'), 'f8c5')
+        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'f3g5'], 'black', 'traxler'), 'f8c5')
 
     def test_repertoire_move_is_only_returned_for_matching_legal_history(self):
         self.assertEqual(repertoire_move_for([], 'white'), 'g2g4')
