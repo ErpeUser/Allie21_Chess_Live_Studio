@@ -15,7 +15,7 @@ Das echte Allie-Modell wird beim Serverstart automatisch im Hintergrund mit der 
 ## Eingabewege
 
 - **Video/Fenster:** Im Viewer „Quelle auswählen“ anklicken und in Chrome oder Edge ein sichtbares Discord-, Browser- oder Monitorfenster freigeben. `chessvision` und optional RapidOCR werden erst beim ersten Frame geladen.
-- **Browser-Overlay:** `EDGE_OVERLAY_INSTALLIEREN.bat` öffnet die direkte Edge-Erweiterungsinstallation; `CHROME_OVERLAY_INSTALLIEREN.bat` macht dasselbe für Chrome. Sie unterstützen gezielt Chess.com und Lichess, beobachten DOM-Änderungen gebündelt und senden nur an den lokalen Dienst. Für Canvas-Bretter und andere Websites den Video- oder PGN-Weg verwenden.
+- **Browser-Overlay:** `EDGE_OVERLAY_INSTALLIEREN.bat` öffnet die direkte Edge-Erweiterungsinstallation. Sie unterstützt gezielt Chess.com und Lichess, beobachtet DOM-Änderungen gebündelt und sendet nur an den lokalen Dienst. Für Canvas-Bretter und andere Websites den Video- oder PGN-Weg verwenden.
 - **PGN/FEN:** „PGN oder FEN ohne Stream analysieren“ öffnen. Nur eine vollständige, bestätigte Partiegeschichte ab der Startstellung wird an Allie übergeben. FEN allein wird ausschließlich mit Stockfish analysiert.
 
 ## Korrektheit und Anzeigen
