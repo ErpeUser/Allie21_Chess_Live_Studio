@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ctypes
 import os
+import socket
 import subprocess
 import sys
 import webbrowser
@@ -10,7 +11,7 @@ from pathlib import Path
 from threading import Thread
 
 TITLE = "Allie21 Chess Live Studio"
-VIEWER = "http://127.0.0.1:8765/viewer"
+DEFAULT_PORT = 8765
 REQUIRED = (
     "START_HIER.bat",
     "pyproject.toml",
@@ -53,6 +54,37 @@ def validate(root: Path) -> list[str]:
     return [name for name in REQUIRED if not (root / name).is_file()]
 
 
+def configured_port() -> int:
+    """Return the validated loopback port shared by launcher and server."""
+    raw = os.environ.get("ALLIE_PORT", str(DEFAULT_PORT)).strip()
+    try:
+        port = int(raw)
+    except ValueError as exc:
+        raise RuntimeError("ALLIE_PORT muss eine ganze Zahl sein") from exc
+    if not 1024 <= port <= 65535:
+        raise RuntimeError("ALLIE_PORT muss zwischen 1024 und 65535 liegen")
+    return port
+
+
+def viewer_url(port: int | None = None) -> str:
+    return f"http://127.0.0.1:{port if port is not None else configured_port()}/viewer"
+
+
+def port_available(port: int) -> bool:
+    """Fail closed when another local process already owns the server port."""
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)
+        if exclusive is not None and os.name == "nt":
+            probe.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+        probe.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+    finally:
+        probe.close()
+
+
 def error(message: str) -> None:
     ctypes.windll.user32.MessageBoxW(None, message, TITLE, 0x10)
 
@@ -74,18 +106,25 @@ class TrayApp:
     def __init__(self, root: Path, process_factory=None, command_runner=None,
                  browser_open=None):
         self.root = root
+        self.port = configured_port()
         self.process_factory = process_factory or subprocess.Popen
         self.command_runner = command_runner or subprocess.run
         self.browser_open = browser_open or webbrowser.open
         self.process = None
 
     def start(self):
+        if not port_available(self.port):
+            raise RuntimeError(
+                f"Port 127.0.0.1:{self.port} ist bereits belegt; "
+                "Allie startet aus Sicherheitsgründen nicht."
+            )
         if is_portable_bundle(self.root):
             app_root = self.root / "app"
             runtime_python = self.root / "runtime" / "python.exe"
             environment = os.environ.copy()
             environment["ALLIE_PROJECT_ROOT"] = str(app_root)
             environment["PYTHONPATH"] = str(app_root / "backend")
+            environment["ALLIE_PORT"] = str(self.port)
             self.process = self.process_factory(
                 [str(runtime_python), str(app_root / "backend" / "live_server.py")],
                 cwd=app_root,
@@ -93,15 +132,18 @@ class TrayApp:
                 creationflags=subprocess.CREATE_NEW_CONSOLE,
             )
             return self.process
+        environment = os.environ.copy()
+        environment["ALLIE_PORT"] = str(self.port)
         self.process = self.process_factory(
             ["cmd.exe", "/d", "/c", str(self.root / "START_HIER.bat")],
             cwd=self.root,
+            env=environment,
             creationflags=subprocess.CREATE_NEW_CONSOLE,
         )
         return self.process
 
     def open_viewer(self, *_args) -> None:
-        self.browser_open(VIEWER)
+        self.browser_open(viewer_url(self.port))
 
     def stop_server(self) -> None:
         process = self.process

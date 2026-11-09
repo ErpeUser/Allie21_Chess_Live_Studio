@@ -7,6 +7,7 @@ hard-coded fake 'human move' distribution. Requires standard chess move history.
 from __future__ import annotations
 
 import io
+import hashlib
 import json
 import math
 import os
@@ -44,6 +45,15 @@ _ANALYSIS_CACHE_MAX = 24
 _model_lock = threading.RLock()
 
 
+def _safe_error_id(scope: str, exc: BaseException) -> str:
+    """Log the diagnostic detail locally while returning only an opaque id."""
+    digest = hashlib.sha256(
+        f"{scope}|{type(exc).__name__}|{exc}".encode("utf-8", "replace")
+    ).hexdigest()[:12]
+    print(f"{scope} ({digest}):", repr(exc), flush=True)
+    return digest
+
+
 def get_model():
     global _model
     with _model_lock:
@@ -58,7 +68,11 @@ def get_model():
                 # Avoid a failed probe and use the supported Windows backend.
                 options["backend"] = "torch"
             _model = AutoModel.from_pretrained(
-                MODEL_NAME, revision=MODEL_REVISION, trust_remote_code=True, **options
+                MODEL_NAME,
+                revision=MODEL_REVISION,
+                code_revision=MODEL_REVISION,
+                trust_remote_code=True,
+                **options,
             )
         return _model
 
@@ -415,8 +429,11 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                     if result.get('think_time') is not None:
                         expected_think_time = round(float(result['think_time']), 2)
             except Exception as exc:  # noqa: BLE001 - optional model boundary must fail soft
-                allie_skip_reason = ('Allie 2.1 konnte nicht geladen oder ausgefuehrt werden: '
-                                     + str(exc)[:220])
+                error_id = _safe_error_id('Allie-Analyse fehlgeschlagen', exc)
+                allie_skip_reason = (
+                    'Allie 2.1 konnte nicht geladen oder ausgefuehrt werden '
+                    f'(Fehler-ID {error_id}).'
+                )
             if candidate_moves and payload.get('preview', True):
                 try:
                     with _model_lock:
@@ -472,7 +489,11 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                                 described = [describe_move(after_reply, uci, prob) for uci, prob in ranked]
                                 premove_branches.append((reply['probability'], described))
                 except Exception as exc:  # noqa: BLE001 - optional prediction branch must fail soft
-                    warnings.append('Allie-Gegnerprognose derzeit nicht verfuegbar: ' + str(exc)[:150])
+                    error_id = _safe_error_id('Allie-Gegnerprognose fehlgeschlagen', exc)
+                    warnings.append(
+                        'Allie-Gegnerprognose derzeit nicht verfuegbar '
+                        f'(Fehler-ID {error_id}).'
+                    )
 
     sf = None
     if selection in ('stockfish', 'both'):

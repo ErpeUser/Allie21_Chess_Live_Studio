@@ -9,6 +9,7 @@ from __future__ import annotations
 import atexit
 import csv
 import functools
+import hashlib
 import io
 import os
 import shutil
@@ -22,6 +23,14 @@ import chess.pgn
 from config import CONFIG
 
 BASE = Path(__file__).resolve().parent
+
+
+def _engine_error_id(exc: BaseException) -> str:
+    digest = hashlib.sha256(
+        f"{type(exc).__name__}|{exc}".encode("utf-8", "replace")
+    ).hexdigest()[:12]
+    print(f"Stockfish-Fehler ({digest}):", repr(exc), flush=True)
+    return digest
 
 OPENING_OPTIONS = {
     'white': {
@@ -371,7 +380,11 @@ def stockfish_lines(
         }
     except (OSError, chess.engine.EngineError, TimeoutError, ValueError) as exc:
         _close_stockfish()
-        return {'available': False, 'error': f'Stockfish-Fehler: {str(exc)[:160]}'}
+        error_id = _engine_error_id(exc)
+        return {
+            'available': False,
+            'error': f'Stockfish nicht verfügbar (Fehler-ID {error_id}).',
+        }
 
 
 def describe_candidate(board: chess.Board, uci: str) -> str:

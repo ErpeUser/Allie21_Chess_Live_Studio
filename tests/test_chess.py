@@ -413,7 +413,8 @@ class ChessTests(unittest.TestCase):
         class Broken:
             def analyze(self, *args, **kwargs): raise RuntimeError('Unreachable')
         result = analyse_position({'pgn':'1. e4 e5', 'analysis_source':'allie'}, Broken())
-        self.assertIn('Unreachable', result['allie_skip_reason'])
+        self.assertIn('Fehler-ID', result['allie_skip_reason'])
+        self.assertNotIn('Unreachable', result['allie_skip_reason'])
 
     def test_midgame_unknown_turn_does_not_show_engine(self):
         tracker = PositionTracker()
@@ -472,7 +473,8 @@ class ChessTests(unittest.TestCase):
         }, BrokenAllie())
         self.assertEqual(result['repertoire']['selection'], 'alekhine')
         self.assertEqual(result['repertoire']['expected_move'], 'g8f6')
-        self.assertIn('Unreachable', result['allie_skip_reason'])
+        self.assertIn('Fehler-ID', result['allie_skip_reason'])
+        self.assertNotIn('Unreachable', result['allie_skip_reason'])
 
     def test_plan_messages_add_context_instead_of_repeating_arrows(self):
         messages = make_plan_messages({
