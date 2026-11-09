@@ -100,11 +100,17 @@ class NativeOverlayTests(unittest.TestCase):
         self.assertFalse(controller.available)
 
     def test_affinity_failure_stays_hidden_fail_closed(self):
-        controller = NativeOverlayController(api=FakeWin32(set_affinity=False))
+        fake = FakeWin32(set_affinity=False)
+        controller = NativeOverlayController(api=fake)
         self.assertFalse(controller.start())
         self.assertTrue(controller.failed_closed)
         self.assertFalse(controller.visible)
         self.assertFalse(controller.update([], "must not render"))
+        # A failed GUI-thread start must not poison the controller forever;
+        # after the underlying affinity problem is repaired, a retry is valid.
+        fake.set_affinity_result = True
+        self.assertTrue(controller.start())
+        controller.stop()
 
     @unittest.skipIf(os.name == "nt", "non-Windows fallback is only tested off Windows")
     def test_non_windows_without_injected_api_fails_closed(self):

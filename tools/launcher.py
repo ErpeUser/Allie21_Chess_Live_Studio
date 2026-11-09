@@ -152,7 +152,7 @@ class TrayApp:
         result = self.command_runner(
             ["taskkill", "/PID", str(process.pid), "/T", "/F"],
             capture_output=True,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             check=False,
         )
         if result.returncode and process.poll() is None:
@@ -200,11 +200,13 @@ def main() -> int:
         if sys.stdout is not None:
             print(f"{TITLE}: OK ({root})")
         return 0
-    app = TrayApp(root)
+    app = None
     try:
+        app = TrayApp(root)
         return app.run()
     except (ImportError, OSError, RuntimeError) as exc:
-        app.stop_server()
+        if app is not None:
+            app.stop_server()
         error(f"Der Start ist fehlgeschlagen:\n\n{exc}")
         return 1
 

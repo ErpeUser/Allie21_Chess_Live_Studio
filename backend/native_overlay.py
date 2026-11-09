@@ -641,6 +641,8 @@ class NativeOverlayController:
                 self._visible = False
                 self._capture_excluded = False
                 self._hwnd = None
+                self._started = False
+                self._thread = None
 
     def _window_proc(self, hwnd, message, wparam, lparam):  # pragma: no cover - Win32 callback
         if message == WM_NCHITTEST:
