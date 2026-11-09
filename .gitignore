@@ -13,3 +13,4 @@ tests/tmp*/
 # is ~1.1 GB and must be uploaded as a GitHub Release asset, not Git history.
 release/Allie21 Chess Live Studio/app/
 release/Allie21 Chess Live Studio/runtime/
+release/*.zip
