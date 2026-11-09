@@ -151,6 +151,21 @@ class NativeOverlayTests(unittest.TestCase):
         self.assertEqual(private.update(delayed)['reason'], 'retired_session_ignored')
         private.close()
 
+    def test_stale_clear_cannot_reactivate_retired_session_or_rewind_cursor(self):
+        private = PrivateOverlayController()
+        fake = FakeWin32()
+        private._native = NativeOverlayController(api=fake)
+        geometry = {'board': {'left': 10, 'top': 20, 'width': 320, 'height': 320}, 'orientation': 'white'}
+        first = {'session_id': 'first', 'generation': 2, 'render_revision': 4,
+                 'mode': 'private', 'geometry': geometry, 'arrows': []}
+        second = dict(first, session_id='second', generation=3, render_revision=1)
+        self.assertEqual(private.update(first)['state'], 'active')
+        self.assertEqual(private.update(second)['state'], 'active')
+        private.clear('old-clear', session_id='first', generation=1, render_revision=1)
+        self.assertEqual(private.update(first)['reason'], 'retired_session_ignored')
+        self.assertEqual(private.update(dict(second, render_revision=0))['reason'], 'stale_update_ignored')
+        private.close()
+
 
 if __name__ == "__main__":
     unittest.main()

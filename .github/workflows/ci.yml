@@ -30,6 +30,15 @@ jobs:
       - name: Run Python unittest suite
         run: uv run python -m unittest discover --start-directory tests --pattern 'test_*.py'
 
+      - name: Run Python pytest suite
+        run: uv run pytest -q
+
+      - name: Run static quality checks
+        run: |
+          uv run ruff check backend tools tests
+          uv run mypy backend --ignore-missing-imports
+          uv run python -m compileall backend tools
+
       - name: Check JavaScript syntax
         shell: pwsh
         run: |
@@ -37,3 +46,16 @@ jobs:
             Where-Object { $_.FullName -notmatch '[\\/]node_modules[\\/]' }
           if (-not $files) { throw 'No JavaScript files found.' }
           foreach ($file in $files) { node --check $file.FullName }
+
+      - name: Run JavaScript tests
+        run: node --test tests/*.js
+
+      - name: Verify release versions stay aligned
+        shell: pwsh
+        run: |
+          $project = [regex]::Match((Get-Content pyproject.toml -Raw), '(?m)^version\s*=\s*"([^"]+)"$').Groups[1].Value
+          $manifest = Get-Content browser/manifest.json -Raw | ConvertFrom-Json
+          $userscript = [regex]::Match((Get-Content browser/allie21_overlay.user.js -Raw), '@version\s+([^\r\n]+)').Groups[1].Value.Trim()
+          if (-not $project -or $manifest.version_name -ne $project -or $userscript -ne $project) {
+            throw "Version drift: project=$project manifest=$($manifest.version_name) userscript=$userscript"
+          }

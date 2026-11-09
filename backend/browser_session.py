@@ -16,6 +16,12 @@ from position_tracker import PositionTracker
 SESSION_RE = re.compile(r"^[A-Za-z0-9._:-]{1,180}$")
 
 
+def _with_turn(board: chess.Board, turn: chess.Color) -> chess.Board:
+    candidate = board.copy(stack=False)
+    candidate.turn = turn
+    return candidate
+
+
 class BrowserTrackerPool:
     def __init__(self, maximum: int = 16, ttl_seconds: float = 1800.0):
         self.maximum = maximum
@@ -50,6 +56,10 @@ class BrowserTrackerPool:
             raise ValueError("Sichtbare Brettstellung ist keine gültige FEN") from exc
         if len(board.pieces(chess.KING, chess.WHITE)) != 1 or len(board.pieces(chess.KING, chess.BLACK)) != 1:
             raise ValueError("Beide Könige müssen sichtbar sein")
+        # The browser sends placement only; the synthetic white turn may be
+        # illegal while the same placement is legal with Black to move.
+        if not any(_with_turn(board, turn).is_valid() for turn in (chess.WHITE, chess.BLACK)):
+            raise ValueError("Sichtbare Brettstellung ist keine reguläre Schachstellung")
         return board.fen()
 
     def observe(self, session_id: str, placement: str, notation: str = "",
@@ -62,12 +72,14 @@ class BrowserTrackerPool:
             for candidate in candidates:
                 if not candidate or candidate == "*":
                     continue
-                attempt = tracker.set_notation(candidate, visible_fen, origin="sichtbares Brett")
+                attempt = tracker.set_notation(
+                    candidate, visible_fen, origin="sichtbares Brett", verify_turn=False
+                )
                 change = attempt
                 if attempt.changed:
                     break
             if change is None or not change.changed:
-                change = tracker.observe(visible_fen)
+                change = tracker.observe(visible_fen, turn_known=False)
             synced = bool(
                 tracker.board
                 and tracker.board.board_fen() == chess.Board(visible_fen).board_fen()

@@ -3,8 +3,12 @@
 // @namespace    local.allie21.study
 // @version      11.2.17
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
-// @match        https://*.chess.com/*
-// @match        https://chess.com/*
+// @match        https://chess.com/play/*
+// @match        https://www.chess.com/play/*
+// @match        https://www.chess.com/game/*
+// @match        https://www.chess.com/analysis/*
+// @match        https://www.chess.com/watch/*
+// @match        https://www.chess.com/broadcast/*
 // @match        https://lichess.org/*
 // @run-at       document-idle
 // @noframes
@@ -16,6 +20,12 @@
 (() => {
  'use strict';
  if (window.top !== window.self || document.getElementById('allie21-auto-study-root')) return;
+ const host=location.hostname.toLowerCase(),path=location.pathname;
+ const supportedHost=host==='lichess.org'||host==='chess.com'||host==='www.chess.com';
+ const supportedPath=host==='lichess.org'
+   ? /^(?:\/[A-Za-z0-9]{8}(?:\/|$)|\/(?:analysis|study|broadcast|tv)(?:\/|$))/.test(path)
+   : /^(?:\/(?:play|game|analysis|watch|broadcast)(?:\/|$))/.test(path);
+ if(!supportedHost||!supportedPath)return;
  const STORE='allie21.auto.v11';
  const PRIVATE_STORE='allie21.private.v1';
  const load=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}};
@@ -55,15 +65,18 @@
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move. Allie klickt nie selbst.</p>
  </section>`;
  const el=id=>shadow.getElementById(id);
+ const OPENING_VALUES=Object.freeze({white:['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'],black:['englund','stafford','traxler','budapest','alekhine']});
+ function selectedOpeningSettings(){const white=el('whiteOpening').value,black=el('blackOpening').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
  const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
- const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;cfg.whiteOpening=el('whiteOpening').value;cfg.blackOpening=el('blackOpening').value;save();invalidate();scheduleTick(true)};
+ const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;Object.assign(cfg,selectedOpeningSettings());save();invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
  const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=privateUnavailable?'Privates Windows-Overlay ist hier nicht verfügbar – sichtbarer Browsermodus aktiv.':cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
+ Object.assign(cfg,selectedOpeningSettings());save();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
  el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
  let sessionHash=Date.now()>>>0;
@@ -267,6 +280,7 @@
   return{viewport,device_pixel_ratio:dpr,board:boardRect,screen_board:screenBoard,orientation};
  }
  function visualSource(){return /(^|\.)lichess\.org$/.test(location.hostname)?'lichess_dom':/\.chess\.com$/.test('.'+location.hostname)?'chesscom_dom':'unknown'}
+ function shortAnalysisKey(value){let hash=2166136261;for(const char of String(value||'')){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619)}return (hash>>>0).toString(16).padStart(8,'0')}
  function visualArrows(data){
   const out=[];
   for(const [items,color] of [[(data?.opponent_moves||[]).slice(0,2),[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[(data?.my_moves||[]).slice(0,2),[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[data?.premove].filter(Boolean),[ARROW_COLORS.premove]]])for(const [index,item] of items.entries())if(/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(item?.uci||''))out.push({uci:item.uci,color:color[index]||color[0],opacity:index?0.65:0.96});
@@ -274,7 +288,7 @@
  }
  function visualPayload(mode='stale',data={}){
   const board=boardElement();
-  return{schema_version:1,session_id:boardSessionId,generation:analysisSerial,render_revision:++visualRevision,analysis_key:analysisKey||'',fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:mode==='normal'&&!cfg.privateMode&&cfg.enabled};
+  return{schema_version:1,session_id:boardSessionId,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:mode==='normal'&&!cfg.privateMode&&cfg.enabled};
  }
  function sendVisualUpdate(mode='stale',data={}){
   const payload=visualPayload(mode,data);
@@ -300,8 +314,8 @@
   const mk=(tag,props)=>{let a=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(props).forEach(([k,val])=>a.setAttribute(k,val));svg.appendChild(a)};
   const width=Math.max(4,Math.min(10,rect.width/72));
   mk('line',{x1:sx,y1:sy,x2:tx,y2:ty,stroke:color,'stroke-width':width,'stroke-linecap':'round',opacity});
-  let angle=Math.atan2(dy,dx),size=Math.max(14,Math.min(30,rect.width/22));
-  let points=[[tx,ty],[tx-size*Math.cos(angle-.48),ty-size*Math.sin(angle-.48)],[tx-size*Math.cos(angle+.48),ty-size*Math.sin(angle+.48)]];
+  let angle=Math.atan2(dy,dx),size=Math.max(14,Math.min(30,rect.width/22)),tip=[u,v];
+  let points=[[tip[0],tip[1]],[tip[0]-size*Math.cos(angle-.48),tip[1]-size*Math.sin(angle-.48)],[tip[0]-size*Math.cos(angle+.48),tip[1]-size*Math.sin(angle+.48)]];
   mk('polygon',{points:points.map(p=>p.join(',')).join(' '),fill:color,opacity});
  }
  function atHistoryEnd(){
@@ -361,7 +375,7 @@
  }
  function show(data){let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
-  if(data.repertoire?.primary)html+=`<p class='small'><b>Repertoire:</b> ${escape(data.repertoire.primary)}${data.repertoire.expected_san?` · nächster Wunschzug ${escape(data.repertoire.expected_san)}`:''}</p>`;
+  if(data.repertoire?.primary)html+=`<p class='small'><b>Repertoire:</b> ${escape(data.repertoire.primary)}${data.repertoire.selection?` · Auswahl ${escape(data.repertoire.selection)}`:''}${data.repertoire.expected_san?` · nächster Wunschzug ${escape(data.repertoire.expected_san)}`:''}</p>`;
   const messages=insightLines(data);
   if(messages.length)html+=`<div class='analysis-title'><span>Allie \u00b7 Spielanalyse</span><span>${messages.length} Hinweise</span></div>`;
   for(const message of messages)html+=`<div class='insight'>${escape(message)}</div>`;
@@ -453,13 +467,13 @@
  function playerSideFor(orientation,detected){return cfg.playerSide==='auto'?(detected||orientation||'white'):cfg.playerSide}
  function analyze(pgn,placement='',fen='',playerSide='white'){
    if(pending||!cfg.enabled)return;
-   const basis=pgn||fen,key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle,cfg.whiteOpening,cfg.blackOpening]);analysisKey=key;
+   const basis=pgn||fen,openingSettings=selectedOpeningSettings(),key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle,openingSettings.opening_white,openingSettings.opening_black]);analysisKey=key;
    const serial=++analysisSerial;
    pending=true;el('status').textContent='Allie analysiert den aktuellen Zug...';
    const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
    const request=(source,preview,final)=>{
      const fallback=source==='stockfish'&&!fen;
-     const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,opening_white:cfg.whiteOpening,opening_black:cfg.blackOpening,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
+     const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,...openingSettings,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
     const fail=error=>{
      if(serial!==analysisSerial)return;
      activeRequest=null;

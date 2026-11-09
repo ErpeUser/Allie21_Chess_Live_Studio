@@ -40,7 +40,7 @@ for (const option of [
 ]) {
   if (!source.includes(option)) throw new Error(`troll opening selector is missing: ${option}`);
 }
-if (!source.includes('opening_white:cfg.whiteOpening') || !source.includes('opening_black:cfg.blackOpening')) {
+if (!source.includes('function selectedOpeningSettings()') || !source.includes('...openingSettings')) {
   throw new Error('opening selections are not sent to the analysis service');
 }
 if (!source.includes('review_finished:false')) {

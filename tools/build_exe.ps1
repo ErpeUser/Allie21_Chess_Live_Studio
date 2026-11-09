@@ -30,6 +30,11 @@ $app = Join-Path $bundle 'app'
 $runtime = Join-Path $bundle 'runtime'
 New-Item -ItemType Directory -Force -Path $app, $runtime | Out-Null
 
+$stockfish = Join-Path $root 'backend\engines\stockfish.exe'
+if (-not (Test-Path -LiteralPath $stockfish)) {
+    throw 'Stockfish fehlt. Vor dem Build: uv run --frozen python backend\download_stockfish.py'
+}
+
 # Keep the release independent from a checkout, uv, and the user's PATH.  The
 # executable remains the small tray controller; the adjacent app/runtime hold
 # the server and its exact Python environment.

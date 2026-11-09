@@ -74,7 +74,8 @@ def parse_history(raw: str) -> tuple[list[str], chess.Board, list[float | None]]
     if " / " in raw and re.search(r"\b[wb]\b", raw):
         raise ValueError("FEN-only positions are not supported. Paste the moves from the start.")
     if "[" in raw or re.search(r"\b\d+\s*\.", raw):
-        game = chess.pgn.read_game(io.StringIO(raw))
+        stream = io.StringIO(raw)
+        game = chess.pgn.read_game(stream)
         if not game:
             raise ValueError("Cannot read PGN")
         if game.errors:
@@ -83,6 +84,13 @@ def parse_history(raw: str) -> tuple[list[str], chess.Board, list[float | None]]
             raise ValueError("Allie 2.1 requires standard chess from the initial position")
         if game.headers.get("Variant", "Standard") not in ("Standard", "Chess", ""):
             raise ValueError("This variant is not supported by the Allie 2.1 model")
+        # ``read_game`` intentionally consumes only one game.  Silently
+        # analysing the first game from a pasted multi-game PGN is dangerous:
+        # the displayed result can belong to a different game than the user
+        # intended.  Reject a second parsed game explicitly.
+        second = chess.pgn.read_game(stream)
+        if second is not None:
+            raise ValueError("Multiple games are not supported; paste one PGN")
         history: list[str] = []
         clocks: list[float | None] = []
         for node in game.mainline():
@@ -546,7 +554,28 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     """
     if model is not None:
         return _analyse_position_uncached(payload, model)
-    key = json.dumps(payload, sort_keys=True, separators=(',', ':'), default=str)
+    # Session/render metadata controls publication in LiveSession but does not
+    # change chess analysis.  Excluding it makes the short-lived cache useful
+    # across repeated frames and tabs instead of creating one entry per job.
+    cache_payload = {
+        key: value for key, value in payload.items()
+        if key not in {'session_id', 'generation', 'render_revision', 'analysis_key'}
+    }
+    # Whitespace-only PGN/FEN changes are semantically identical and should
+    # share a cache entry.  Do not rewrite SAN/UCI or headers here because
+    # PGN clocks and tags can affect model inputs and must remain intact.
+    for field in ('pgn', 'fen'):
+        value = cache_payload.get(field)
+        if isinstance(value, str):
+            cache_payload[field] = value.strip()
+            if field == 'fen' and cache_payload[field]:
+                try:
+                    cache_payload[field] = chess.Board(cache_payload[field]).fen()
+                except ValueError:
+                    # Preserve the raw invalid value so error responses do
+                    # not collide with a valid cached position.
+                    pass
+    key = json.dumps(cache_payload, sort_keys=True, separators=(',', ':'), default=str)
     now = time.monotonic()
     with _ANALYSIS_CACHE_LOCK:
         cached = _ANALYSIS_CACHE.get(key)

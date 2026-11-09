@@ -300,25 +300,32 @@ class LiveSession:
                 continue
             revision, payload = job
             fallback_used = False
+            fallback_attempted = False
             try:
                 result = analyse_position(payload)
                 if (payload.get('analysis_source') == 'allie'
                         and (not result or not result.get('moves')
                              or result.get('allie_skip_reason'))):
+                    fallback_attempted = True
                     fallback_payload = dict(payload)
                     fallback_payload['analysis_source'] = 'stockfish'
                     fallback_payload['preview'] = False
                     result = analyse_position(fallback_payload)
                     fallback_used = True
+                if result is None:
+                    raise RuntimeError('Analyse lieferte kein Ergebnis')
                 error = None
             except Exception as exc:  # noqa: BLE001 - worker errors are returned in session state
-                if payload.get('analysis_source') == 'allie':
+                if payload.get('analysis_source') == 'allie' and not fallback_attempted:
                     try:
+                        fallback_attempted = True
                         fallback_payload = dict(payload)
                         fallback_payload['analysis_source'] = 'stockfish'
                         fallback_payload['preview'] = False
                         result = analyse_position(fallback_payload)
                         fallback_used = True
+                        if result is None:
+                            raise RuntimeError('Fallback-Analyse lieferte kein Ergebnis')
                         error = None
                     except Exception as fallback_exc:  # noqa: BLE001
                         result, error = None, str(fallback_exc)[:220]

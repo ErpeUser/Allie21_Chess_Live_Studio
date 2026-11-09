@@ -226,9 +226,9 @@ class HTTPBoundaryTests(unittest.TestCase):
     def test_edge_extension_origin_is_allowed_only_for_overlay_requests(self):
         payload = {'session_id': 'web-edge', 'placement': '8/8/8/3k4/8/8/4K3/8', 'pgn': '*'}
         self.assertEqual(self.call('POST', '/api/browser-position',
-                                   origin='chrome-extension://allie', payload=payload)[0], 403)
+                                   origin='chrome-extension://untrusted', payload=payload)[0], 403)
         self.assertEqual(self.call('POST', '/api/browser-position',
-                                   origin='chrome-extension://allie', overlay=True, payload=payload)[0], 200)
+                                   origin='chrome-extension://omboihgfgofgmidefcpkihgglhkiielo', overlay=True, payload=payload)[0], 200)
 
     def test_overlay_request_must_explicitly_identify_itself(self):
         payload = {'session_id': 'web-test', 'placement': '8/8/8/3k4/8/8/4K3/8', 'pgn': '*'}

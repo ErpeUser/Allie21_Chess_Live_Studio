@@ -243,24 +243,33 @@ def position_facts(board: chess.Board) -> list[str]:
 
 
 def find_stockfish() -> str | None:
-    env = os.environ.get('STOCKFISH_PATH', CONFIG['stockfish_path']).strip().strip('\"')
-    if env:
-        candidate = Path(env)
+    def safe_candidate(value: str | Path) -> str | None:
+        candidate = Path(value).expanduser()
         if not candidate.is_file():
             return None
         try:
             resolved = candidate.resolve()
             allowed_root = BASE.resolve()
+            # Configured and PATH-discovered binaries are trusted only from
+            # the application directory unless the user explicitly opts in.
             if (os.environ.get('ALLIE_ALLOW_EXTERNAL_STOCKFISH') != '1'
                     and allowed_root not in resolved.parents):
                 return None
+            if os.name != 'nt' and not os.access(resolved, os.X_OK):
+                return None
         except OSError:
             return None
-        return str(candidate)
+        return str(resolved)
+
+    env = os.environ.get('STOCKFISH_PATH', CONFIG['stockfish_path']).strip().strip('\"')
+    if env:
+        return safe_candidate(env)
     for path in [BASE / 'stockfish.exe', *(BASE / 'engines').glob('stockfish*.exe')]:
-        if path.is_file() and (os.name == 'nt' or os.access(path, os.X_OK)):
-            return str(path)
-    return shutil.which('stockfish')
+        resolved = safe_candidate(path)
+        if resolved:
+            return resolved
+    path = shutil.which('stockfish')
+    return safe_candidate(path) if path else None
 
 
 _ENGINE_LOCK = threading.RLock()

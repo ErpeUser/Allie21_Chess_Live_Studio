@@ -3,15 +3,34 @@
   "name": "Allie 2.1 Live Overlay",
   "version": "11.2.17.0",
   "version_name": "11.2.17",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt7jV+esSpySHjzLTEzXStFTbgv3HXPDB74nrcDWR8UNlqqOas7UdZYb/1qARGej4pzvjzbFecXjXZInmQWGWv83TvGolMPoD5Ass7cmMhQQzy2i4lT55yR7au0cpAAZiQgBpCciMH6UkQLKKMgIsaQL//0XRRiUREY4g6bv7yxG3wCGrXt9LAAwSYlviHdnyNmTJH85+SbyL7vLH2ed8qcichgRF9DYt1kT+PfoRATByXNTOJmKQCSlaaoEuQh3iAOtkgSJ8ve0gdwyB+KKJCd5a+cVB8vQ3HwQ4/ntIWWmzbqMJfd6g1J+/skM23LdGk76RNNrZQn8XgWZ2Fq9KAwIDAQAB",
   "description": "Lokale Allie-Zughinweise für Chess.com und Lichess.",
-  "host_permissions": ["http://127.0.0.1:8765/*"],
-  "permissions": ["alarms"],
-  "background": {"service_worker": "background.js"},
-  "action": {"default_title": "Allie 2.1 Live Overlay"},
+  "host_permissions": [
+    "http://127.0.0.1:8765/*"
+  ],
+  "permissions": [
+    "alarms"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Allie 2.1 Live Overlay"
+  },
   "content_scripts": [
     {
-      "matches": ["https://chess.com/*", "https://*.chess.com/*", "https://lichess.org/*"],
-      "js": ["allie21_overlay.user.js"],
+      "matches": [
+        "https://chess.com/play/*",
+        "https://www.chess.com/play/*",
+        "https://www.chess.com/game/*",
+        "https://www.chess.com/analysis/*",
+        "https://www.chess.com/watch/*",
+        "https://www.chess.com/broadcast/*",
+        "https://lichess.org/*"
+      ],
+      "js": [
+        "allie21_overlay.user.js"
+      ],
       "run_at": "document_idle"
     }
   ]
