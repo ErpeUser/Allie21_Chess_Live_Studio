@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.15
+// @version      11.2.16
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://*.chess.com/*
 // @match        https://lichess.org/*
@@ -16,9 +16,12 @@
  'use strict';
  if (window.top !== window.self || document.getElementById('allie21-auto-study-root')) return;
  const STORE='allie21.auto.v11';
+ const PRIVATE_STORE='allie21.private.v1';
  const load=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}};
+ const loadPrivate=()=>{try{return JSON.parse(localStorage.getItem(PRIVATE_STORE)||'{"privateMode":true}')}catch{return{privateMode:true}}};
  const stored=load();
- const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund'},stored);
+ const privateStored=loadPrivate();
+ const cfg=Object.assign({elo:1950,tc:'300+0',enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:privateStored.privateMode!==false},stored);
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -42,26 +45,29 @@
  <div class='row'><div><label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select></div>
  <div><label>Deine Farbe</label><select id='playerSide'><option value='auto'>Automatisch</option><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
  <label>Spielstil</label><select id='playStyle'><option value='normal'>Normal · menschlich wahrscheinlich</option><option value='aggressive'>Aggressiv · Matt und Königsdruck</option></select>
- <div class='row'><div><label>Weißes Opening</label><select id='whiteOpening'><option value='grob'>Grob Gambit · Ragebait</option><option value='vienna'>Wiener Gambit</option><option value='danish'>Dänisches Gambit</option></select></div>
-  <div><label>Schwarzes Opening</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
+ <div class='row'><div><label>Weißes Opening</label><select id='whiteOpening'><option value='grob'>Grob Gambit · Ragebait</option><option value='bongcloud'>Bongcloud</option><option value='halloween'>Halloween-Gambit</option><option value='vienna'>Wiener Gambit</option><option value='steinitz'>Steinitz-Gambit</option><option value='frankenstein'>Frankenstein-Dracula</option><option value='danish'>Dänisches Gambit</option></select></div>
+  <div><label>Schwarzes Opening</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='stafford'>Stafford-Gambit</option><option value='traxler'>Traxler-Gegenangriff</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
+ <label class='private-row'><input id='privateMode' type='checkbox'> Privater Modus (keine DOM-/SVG-HUDs)</label>
+ <p id='privateStatus' class='small'>Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.</p>
  <p id='status' class='stat'>Warte auf ein Brett. Die Verbindung startet automatisch.</p>
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move. Allie klickt nie selbst.</p>
  </section>`;
  const el=id=>shadow.getElementById(id);
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='';
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
- const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({})};
+ const invalidate=()=>{cancelAnalysis();lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
  const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;cfg.whiteOpening=el('whiteOpening').value;cfg.blackOpening=el('blackOpening').value;save();invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`};fill();
+ const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
+ el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
  const sessionSeed=location.hostname+location.pathname;
  let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
- const boardSessionId='web-'+(sessionHash>>>0).toString(36);
+ let boardSessionId='web-'+(sessionHash>>>0).toString(36);
  const selectors=['wc-simple-move-list [data-node]','wc-vertical-move-list [data-node]','wc-horizontal-move-list [data-node]','wc-move-list [data-node]','wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
  const sanPattern=/^(?:O-O(?:-O)?|0-0(?:-0)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][+#]?)$/;
  // Lichess changes its short custom tag names regularly. Locate the current
@@ -227,9 +233,9 @@
   return Array.from(document.querySelectorAll(selector)).filter(node=>!node.closest('#allie21-auto-study-root')).sort(sortByArea);
  }
  function readBoardSnapshot(){
-  if(currentBoard?.isConnected){const snapshot=placementFromBoard(currentBoard);if(snapshot)return{board:currentBoard,...snapshot}}
-  for(const board of boardCandidates()){const snapshot=placementFromBoard(board);if(snapshot){currentBoard=board;return{board,...snapshot}}}
-  currentBoard=null;return null;
+   if(currentBoard?.isConnected){const snapshot=placementFromBoard(currentBoard);if(snapshot)return{board:currentBoard,...snapshot}}
+   for(const board of boardCandidates()){const snapshot=placementFromBoard(board);if(snapshot){currentBoard=board;return{board,...snapshot}}}
+   currentBoard=null;return null;
  }
  function boardElement(){return readBoardSnapshot()?.board||null;}
  function isStandardStartPosition(){
@@ -237,8 +243,54 @@
  }
  const layer=document.createElement('div');
  layer.style.cssText='position:fixed;inset:0;z-index:2147482999;pointer-events:none;overflow:hidden';
- document.documentElement.appendChild(layer);
- function clearOverlay(){layer.replaceChildren()}
+  document.documentElement.appendChild(layer);
+  function requestRepaint(){
+   if(repaintFrame)return;
+   const run=()=>{repaintFrame=0;if(currentResult)paint(currentResult);else if(currentBoard)sendVisualUpdate('stale')};
+   if(typeof requestAnimationFrame==='function')repaintFrame=requestAnimationFrame(run);else repaintFrame=setTimeout(run,0);
+  }
+  function observeBoardGeometry(board){
+   if(board===observedBoard)return;
+   boardResizeObserver?.disconnect?.();for(const [event,handler] of boardAnimationHandlers)observedBoard?.removeEventListener?.(event,handler);boardAnimationHandlers=[];observedBoard=board||null;
+   if(!board||typeof ResizeObserver!=='function')return;
+   boardResizeObserver=new ResizeObserver(()=>requestRepaint());
+   boardResizeObserver.observe(board);
+   for(const event of ['transitionrun','transitionstart','transitionend','animationstart','animationiteration','animationend']){const handler=()=>requestRepaint();board.addEventListener?.(event,handler,{passive:true});boardAnimationHandlers.push([event,handler])}
+  }
+ function visualGeometry(board){
+  const rect=board?.getBoundingClientRect?.();
+  const dpr=Number(window.devicePixelRatio||1),viewport={width:window.innerWidth,height:window.innerHeight};
+  if(!rect)return{viewport,device_pixel_ratio:dpr,board:null};
+  const boardRect={left:Math.round(rect.left),top:Math.round(rect.top),width:Math.round(rect.width),height:Math.round(rect.height)};
+  const screenBoard={left:Math.round((Number(window.screenX||0)+rect.left)*dpr),top:Math.round((Number(window.screenY||0)+rect.top)*dpr),width:Math.round(rect.width*dpr),height:Math.round(rect.height*dpr)};
+  const orientation=typeof boardOrientation==='function'?boardOrientation(board,pieceNodes(board)):'white';
+  return{viewport,device_pixel_ratio:dpr,board:boardRect,screen_board:screenBoard,orientation};
+ }
+ function visualSource(){return /(^|\.)lichess\.org$/.test(location.hostname)?'lichess_dom':/\.chess\.com$/.test('.'+location.hostname)?'chesscom_dom':'unknown'}
+ function visualArrows(data){
+  const out=[];
+  for(const [items,color] of [[(data?.opponent_moves||[]).slice(0,2),[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[(data?.my_moves||[]).slice(0,2),[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[data?.premove].filter(Boolean),[ARROW_COLORS.premove]]])for(const [index,item] of items.entries())if(/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(item?.uci||''))out.push({uci:item.uci,color:color[index]||color[0],opacity:index?0.65:0.96});
+  return out.slice(0,8);
+ }
+ function visualPayload(mode='stale',data={}){
+  const board=boardElement();
+  return{schema_version:1,session_id:boardSessionId,generation:analysisSerial,render_revision:++visualRevision,analysis_key:analysisKey||'',fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:mode==='normal'&&!cfg.privateMode&&cfg.enabled};
+ }
+ function sendVisualUpdate(mode='stale',data={}){
+  const payload=visualPayload(mode,data);
+  visualRequest?.abort?.();
+  const request=postJson('/api/overlay/update',payload,4000);
+  visualRequest=request;
+  request.promise.catch(()=>{}).finally(()=>{if(visualRequest===request)visualRequest=null});
+ }
+ function sendOverlayMode(mode){
+  postJson('/api/overlay/mode',{mode},4000).promise.catch(()=>{});
+ }
+ function clearRemoteOverlay(reason='stale'){
+  visualRequest?.abort?.();visualRequest=null;
+  postJson('/api/overlay/clear',{session_id:boardSessionId,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
+ }
+ function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display='none'}
  function center(s,rect,ori){let file=s.charCodeAt(0)-97,rank=Number(s[1])-1;if(ori==='black'){file=7-file}else{rank=7-rank}return [rect.left+(file+.5)*rect.width/8,rect.top+(rank+.5)*rect.height/8]}
  function drawArrow(svg,rect,ori,uci,color,opacity=.87){
   if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci||''))return;
@@ -269,19 +321,30 @@
    }
    return true;
  }
- function paint(data){currentResult=data;if(data?.reviewed_finished_game||!cfg.enabled||!atHistoryEnd())return clearOverlay();
-  const board=boardElement();if(!board)return clearOverlay();const rect=board.getBoundingClientRect();
+ function paint(data){currentResult=data;if(data?.reviewed_finished_game||!cfg.enabled||cfg.privateMode||!atHistoryEnd()){clearOverlay();sendVisualUpdate(cfg.privateMode?'private':'stale',data);return}
+   const board=boardElement();if(!board)return clearOverlay();observeBoardGeometry(board);const rect=board.getBoundingClientRect();
   if(rect.width<130||rect.height<130)return clearOverlay();
+  // Render in board-local pixels instead of a viewport-sized SVG.  A global
+  // viewBox was sensitive to browser zoom/scroll and made arrows drift away
+  // from their squares on Chess.com responsive boards.
+  const svgRect={left:0,top:0,width:rect.width,height:rect.height};
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('width','100%');svg.setAttribute('height','100%');
-  svg.setAttribute('viewBox',`0 0 ${window.innerWidth} ${window.innerHeight}`);
+  svg.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
+   svg.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2147482999';
   // Use the same piece-aware orientation as placementFromBoard(). Re-running
   // the resolver without pieces falls back to white on boards without an
   // explicit CSS orientation marker and mirrors arrows on black boards.
   let ori=boardOrientation(board,pieceNodes(board));
-  (data.opponent_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,rect,ori,m.uci,i===0?ARROW_COLORS.opponentTop1:ARROW_COLORS.opponentTop2,i===0?.96:.62));
-  (data.my_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,rect,ori,m.uci,i===0?ARROW_COLORS.ownTop1:ARROW_COLORS.ownTop2,i===0?.96:.65));
-  if(data.premove)drawArrow(svg,rect,ori,data.premove.uci,ARROW_COLORS.premove,.96);
-  layer.replaceChildren(svg);
+  (data.opponent_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,svgRect,ori,m.uci,i===0?ARROW_COLORS.opponentTop1:ARROW_COLORS.opponentTop2,i===0?.96:.62));
+  (data.my_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,svgRect,ori,m.uci,i===0?ARROW_COLORS.ownTop1:ARROW_COLORS.ownTop2,i===0?.96:.65));
+  if(data.premove)drawArrow(svg,svgRect,ori,data.premove.uci,ARROW_COLORS.premove,.96);
+   layer.style.display='';layer.replaceChildren();
+   if(renderedSvg?.isConnected)renderedSvg.remove();
+   if(renderedBoard&&renderedBoard!==board&&renderedPosition)renderedBoard.style.position=renderedInlinePosition;
+   renderedBoard=board;renderedSvg=svg;
+   const computed=window.getComputedStyle?.(board);renderedPosition=computed?.position||'';renderedInlinePosition=board.style.position||'';
+   if(renderedPosition==='static')board.style.position='relative';
+   board.appendChild(svg);sendVisualUpdate('normal',data);
  }
  function insightLines(data){
   return (Array.isArray(data?.plan_messages)?data.plan_messages:[]).filter(Boolean).slice(0,6);
@@ -296,7 +359,7 @@
   const pos=panelPosition(board.getBoundingClientRect(),window.innerWidth,window.innerHeight);
   wrapper.style.left=`${pos.left}px`;wrapper.style.top=`${pos.top}px`;wrapper.style.right='auto';wrapper.style.bottom='auto';
  }
- function show(data){let html='';
+ function show(data){if(cfg.privateMode){el('results').replaceChildren();el('panel').classList.remove('open');el('bubble').style.display='';return}let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
   const messages=insightLines(data);
   if(messages.length)html+=`<div class='analysis-title'><span>Allie \u00b7 Spielanalyse</span><span>${messages.length} Hinweise</span></div>`;
@@ -409,10 +472,18 @@
  }
   el('now').onclick=async()=>{markBrowserSessionReset();updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';await tick(true)};
  async function tick(manual=false){
-  if(trackingPending)return;
-  const visibleBoard=readBoardSnapshot();wrapper.style.display=visibleBoard?'':'none';if(visibleBoard)placePanel(visibleBoard.board);
-  if(!visibleBoard){if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();show({})}return}
-  if(!cfg.enabled){clearOverlay();return}
+   if(trackingPending)return;
+   const previousBoard=currentBoard;const visibleBoard=readBoardSnapshot();
+   if(previousBoard&&visibleBoard&&previousBoard!==visibleBoard.board)resetBoardSession('board_changed');
+   observeBoardGeometry(visibleBoard?.board||null);
+   wrapper.style.display=visibleBoard&&!cfg.privateMode?'':'none';if(visibleBoard&&!cfg.privateMode)placePanel(visibleBoard.board);
+  if(!visibleBoard){if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();clearRemoteOverlay('stale');show({})}return}
+  // Private mode hides all page-owned DOM/SVG HUDs, but it must not stop the
+  // browser tracker or analysis pipeline.  The native protected window gets
+  // its frames from paint() after analysis; returning here made private mode
+  // permanently invisible because no position was ever analysed.
+  if(cfg.privateMode)clearOverlay();
+  if(!cfg.enabled){clearOverlay();clearRemoteOverlay('stale');return}
   if(!visibleBoard.authoritative&&!boardFrameIsStable(visibleBoard.placement)){
    if(visibleBoard.placement!==lastPlacement){currentResult=null;clearOverlay();if(pending)cancelAnalysis()}
    scheduleTick();return;
@@ -421,7 +492,7 @@
   try{
    const history=await historyFromVisibleBoard(),pgn=history.pgn,fen=history.fen||'',basis=pgn||fen;
    if(!basis||!atHistoryEnd()){
-    if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();show({})}
+    if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();clearRemoteOverlay('stale');show({})}
     if(manual||history.message)el('status').textContent=history.message||'Brett erkannt – warte auf eine vollständige Zugfolge ab der Startstellung.';
     if(!basis){
      if(history.placement!==unsettledPlacement){unsettledPlacement=history.placement;unsettledRetries=0}
@@ -434,17 +505,52 @@
     const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle,cfg.whiteOpening,cfg.blackOpening]);
     if(basis!==lastPGN||wanted!==analysisKey){
      currentResult=null;clearOverlay();show(pendingInsights(history));
+     // Keep the protected native HUD alive while the model is thinking.  In
+     // private mode a normal-mode payload is deliberately rejected by the
+     // fail-closed router, which used to make the overlay disappear during
+     // every analysis request.
+     sendVisualUpdate(cfg.privateMode?'private':'normal',pendingInsights(history));
      if(pending)cancelAnalysis();
      if(Date.now()>=retryAfter){lastPGN=basis;analyze(pgn,history.placement,fen,playerSide)}
     }
   }catch(error){if(manual)el('status').textContent=error.message||String(error)}finally{trackingPending=false}
  }
- window.addEventListener('resize',()=>{placePanel();if(currentResult)paint(currentResult)});
- window.addEventListener('scroll',()=>{placePanel();if(currentResult)paint(currentResult)},true);
+ window.addEventListener('resize',()=>{placePanel();requestRepaint()},{passive:true});
+ window.addEventListener('scroll',()=>{placePanel();requestRepaint()},true);
+ window.visualViewport?.addEventListener('resize',requestRepaint,{passive:true});
+ window.visualViewport?.addEventListener('scroll',requestRepaint,{passive:true});
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
+ function hideForInactive(){clearOverlay();clearRemoteOverlay(document.hidden?'stale':'focus_lost')}
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else scheduleTick(true)},{passive:true});
+ window.addEventListener('blur',hideForInactive,{passive:true});
+ window.addEventListener('focus',()=>scheduleTick(true),{passive:true});
+ function resetBoardSession(reason='navigation'){
+  clearRemoteOverlay(reason);
+  cancelAnalysis();
+  currentResult=null;lastPGN='';trackedPGN='';trackedFen='';analysisKey='';lastPlacement='';unsettledPlacement='';unsettledRetries=0;currentBoard=null;markBrowserSessionReset();
+  sessionHash=Math.imul(sessionHash^Date.now(),16777619);boardSessionId='web-'+(sessionHash>>>0).toString(36);
+  clearOverlay();show({});scheduleTick(true);
+ }
+ function installNavigationLifecycle(){
+  for(const method of ['pushState','replaceState']){
+   const original=history[method];if(typeof original!=='function')continue;
+   history[method]=function(...args){const before=location.href;const result=original.apply(this,args);if(location.href!==before)resetBoardSession('navigation');return result};
+  }
+  window.addEventListener('popstate',()=>resetBoardSession('navigation'),{passive:true});
+  window.addEventListener('hashchange',()=>resetBoardSession('navigation'),{passive:true});
+ }
+ async function syncPrivateMode(){
+  try{
+   const response=await fetch('http://127.0.0.1:8765/api/overlay/status',{cache:'no-store',headers:{'X-Allie-Overlay':'1'}});
+   if(response.ok){const state=await response.json();if(state?.mode==='private'||state?.mode==='normal'){cfg.privateMode=state.mode==='private';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill()}}
+  }catch{}
+  sendOverlayMode(cfg.privateMode?'private':'normal');
+  if(cfg.privateMode)clearOverlay();
+ }
+ installNavigationLifecycle();
  new MutationObserver(changes=>{
-   if(changes.every(change=>wrapper.contains(change.target)||layer.contains(change.target)))return;
-   scheduleTick();
- }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','data-ply','data-piece','data-orientation']});
- setInterval(scheduleTick,5000);tick();
+    if(changes.every(change=>wrapper.contains(change.target)||layer.contains(change.target)||change.target===renderedBoard||renderedSvg?.contains?.(change.target)))return;
+    scheduleTick();
+  }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','data-ply','data-piece','data-orientation']});
+ setInterval(scheduleTick,5000);window.addEventListener('beforeunload',()=>clearRemoteOverlay('stopped'));syncPrivateMode();tick();
 })();

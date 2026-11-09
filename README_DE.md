@@ -8,7 +8,7 @@ Lokale Windows-Anwendung für menschliche Zugprognosen mit Allie 2.1 und objekti
 2. **`release\Allie21 Chess Live Studio\Allie21 Chess Live Studio.exe` doppelklicken.**
 3. Warten, bis `http://127.0.0.1:8765/viewer` geöffnet wird.
 
-Die EXE startet den einzigen Installationsweg `START_HIER.bat`. Er installiert bei Bedarf `uv 0.13.7`, richtet die isolierte `.allie-venv` mit Python 3.12 und allen Paketen aus `uv.lock` ein und lädt Stockfish 19 nur dann, wenn die Engine fehlt. Die Konsole zeigt verständliche Fehler. Solange Allie läuft, erscheint rechts unten im Windows-Infobereich ein Allie-Symbol: Doppelklick oder „Allie öffnen“ öffnet den Viewer, „Allie beenden“ schließt Server und Symbol vollständig.
+Die EXE ist ein portables Onedir: Im selben Ordner liegen `app` (Server, Viewer und Assets) und `runtime` (Python 3.12 mit den eingefrorenen Paketen). Sie benötigt für den Start weder Checkout, `uv` noch eine globale Python-Installation. Beim ersten Modellstart können die Allie-Gewichte weiterhin in den lokalen Hugging-Face-Cache geladen werden; Stockfish liegt im App-Ordner. Solange Allie läuft, erscheint rechts unten im Windows-Infobereich ein Allie-Symbol: Doppelklick oder „Allie öffnen“ öffnet den Viewer, „Allie beenden“ schließt Server und Symbol vollständig.
 
 Das echte Allie-Modell wird beim Serverstart automatisch im Hintergrund mit der Startstellung vorgewärmt. Die Gewichte benötigen ungefähr 18,4 GB Speicherplatz; der CPU-Betrieb benötigt viel Arbeitsspeicher. Sobald im Viewer „Allie geladen“ steht, ist der erste Live-Zug ohne Modell-Kaltstart bereit.
 
@@ -50,6 +50,12 @@ uv run --frozen python backend/doctor.py
 ```
 
 Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begrenzt JSON und JPEG-Größen und speichert keine Videoframes. Exakte geprüfte Versionen, Modellrevisionen, Hashes und Messwerte stehen in `VERSIONEN.md`; Lizenzen in `QUELLEN_LIZENZEN.md`.
+
+## Wiederaufnahme- und Release-Status (09.11.2026)
+
+Der aktuelle Checkpoint steht in `AGENT_PROGRESS.md`, der vollständige Auftrag in `AGENT_TASK.md`. Nach einem Session- oder Kontextlimit zuerst diese beiden Dateien und anschließend den dort genannten nächsten Befehl lesen; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
+
+Der lokale PyInstaller-Onedir-Build wurde erfolgreich erzeugt. Der portable `--check` läuft direkt aus dem Release-Ordner; der mitgelieferte Runtime-Python importiert FastAPI, Chess und PIL, und der Server beantwortet `/health` mit HTTP 200. Der erste Health-Smoke lief mit deaktiviertem Modell-Preload (`model_loaded=false`), damit kein mehrgigabytegroßer Download Teil des Paketchecks wird. Echte Windows-Capture-Proben und ein privater GitHub-Release sind weiterhin offen und werden nicht als erledigt behauptet. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
 
 ## Grenzen
 

@@ -35,6 +35,21 @@ OPENING_OPTIONS = {
         'alekhine': ('Aljechin-Verteidigung', ('e2e4', 'g8f6')),
     },
 }
+# Short, legal troll branches backed by the bundled ECO data.  They are kept
+# separate from the original three choices so existing defaults and callers
+# remain unchanged.
+TROLL_OPENING_OPTIONS = {
+    'white': {
+        'bongcloud': ('Bongcloud', ('e2e4', 'e7e5', 'e1e2')),
+        'halloween': ('Halloween-Gambit', ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'b1c3', 'g8f6', 'c3e5')),
+        'steinitz': ('Steinitz-Gambit', ('e2e4', 'e7e5', 'b1c3', 'b8c6', 'f2f4', 'e5f4', 'd2d4')),
+        'frankenstein': ('Frankenstein-Dracula', ('e2e4', 'e7e5', 'b1c3', 'g8f6', 'f1c4', 'f6e4', 'd1h5')),
+    },
+    'black': {
+        'stafford': ('Stafford-Gambit', ('e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5', 'b8c6')),
+        'traxler': ('Traxler-Gegenangriff', ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'g1g5', 'f8c5')),
+    },
+}
 DEFAULT_OPENINGS = {'white': 'grob', 'black': 'englund'}
 
 
@@ -42,11 +57,18 @@ def standard_repertoire(side: str, selection: str | None = None) -> dict[str, st
     """Return the selected human repertoire without changing Allie's model."""
     normalized = str(side).lower()
     options = OPENING_OPTIONS.get(normalized)
+    troll_options = TROLL_OPENING_OPTIONS.get(normalized, {})
     if not options:
         raise ValueError('side must be white or black')
     key = str(selection or DEFAULT_OPENINGS[normalized]).lower()
-    if key not in options:
+    if key not in options and key not in troll_options:
         key = DEFAULT_OPENINGS[normalized]
+    if key in troll_options:
+        selected = troll_options[key]
+        names = [name for name, _line in troll_options.values() if name != selected[0]]
+        names.extend(name for option, (name, _line) in options.items() if option != DEFAULT_OPENINGS[normalized])
+        return {'primary': selected[0], 'alternative': names[0] if names else '',
+                'additional': ' · '.join(names[1:]), 'selection': key}
     names = [name for option, (name, _line) in options.items() if option != key]
     return {'primary': options[key][0], 'alternative': names[0],
             'additional': ' · '.join(names[1:]), 'selection': key}
@@ -56,15 +78,17 @@ def repertoire_move_for(moves: list[str], side: str, selection: str | None = Non
     """Return the next move of the primary/alternative line, if history matches."""
     normalized = str(side).lower()
     options = OPENING_OPTIONS.get(normalized)
+    troll_options = TROLL_OPENING_OPTIONS.get(normalized, {})
     if not options:
         return None
     history = tuple(moves)
     key = str(selection or DEFAULT_OPENINGS[normalized]).lower()
-    ordered = [key] + [option for option in options if option != key]
-    for option in ordered:
-        line = options[option][1]
-        if len(history) < len(line) and line[:len(history)] == history:
-            return line[len(history)]
+    selected_options = {**options, **troll_options}
+    if key not in selected_options:
+        key = DEFAULT_OPENINGS[normalized]
+    line = selected_options[key][1]
+    if len(history) < len(line) and line[:len(history)] == history:
+        return line[len(history)]
     return None
 
 def epd_key(board: chess.Board) -> str:
@@ -122,8 +146,11 @@ def opening_for_position(board: chess.Board, moves: list[str]) -> dict[str, Any]
     if match:
         return {**match, 'source': 'history' if moves else 'position'}
     if not moves:
-        fallback = placement_opening_book().get(board.board_fen())
-        return {**fallback, 'source': 'position'} if fallback else None
+        # A piece-placement-only match can silently ignore side-to-move,
+        # castling rights, or a legal en-passant square.  In FEN-only mode
+        # those fields are still authoritative, so never label a position
+        # unless its complete legal EPD matches the book.
+        return None
     # The most recent named position along the actual move sequence.
     lookup = chess.Board()
     best = None

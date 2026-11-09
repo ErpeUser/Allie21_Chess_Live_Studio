@@ -157,13 +157,15 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.2.15', overlay)
+        self.assertIn('@version      11.2.16', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
-        self.assertEqual(manifest['version_name'], '11.2.15')
+        self.assertEqual(manifest['version_name'], '11.2.16')
         self.assertIn('@match        https://*.chess.com/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
         self.assertIn('new MutationObserver', overlay)
+        self.assertIn('ResizeObserver', overlay)
+        self.assertIn('location.href', overlay)
         self.assertIn('setTimeout(()=>tick(manual),120)', overlay)
         self.assertIn('unsettledRetries<4', overlay)
         self.assertIn('unsettledRetries++;scheduleTick()', overlay)
@@ -192,6 +194,15 @@ class StandaloneTests(unittest.TestCase):
         self.assertNotIn("querySelectorAll('*')", overlay)
         self.assertIn("'[class*=\"move-list\"] button'", overlay)
         self.assertNotIn("if(!roots.some(startsAtMoveOne))return ''", overlay)
+
+    def test_extension_badge_reports_local_server_state(self):
+        manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
+        self.assertEqual(manifest['background']['service_worker'], 'background.js')
+        self.assertIn('alarms', manifest['permissions'])
+        background = (ROOT / 'browser/background.js').read_text(encoding='utf-8')
+        self.assertIn("http://127.0.0.1:8765/health", background)
+        self.assertIn("'X-Allie-Overlay': '1'", background)
+        self.assertIn("setBadgeText", background)
 
     def test_overlay_reads_separate_chesscom_figurine(self):
         result = subprocess.run(

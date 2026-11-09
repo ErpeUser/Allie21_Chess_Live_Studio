@@ -28,11 +28,13 @@ from browser_session import BrowserTrackerPool
 from chess_extras import find_stockfish
 from config import CONFIG, MODEL_REVISION, parse_time_control
 from live_session import LiveSession, MAX_JPEG
+from native_overlay import PrivateOverlayController
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_JSON = 64 * 1024
 SESSION = LiveSession()
 BROWSER_TRACKERS = BrowserTrackerPool()
+PRIVATE_OVERLAY = PrivateOverlayController()
 _CHESSCOM_HISTORY_CACHE: dict[str, tuple[float, str]] = {}
 _CHESSCOM_HISTORY_LOCK = threading.RLock()
 app = FastAPI(title="Allie21 Live Studio", docs_url=None, redoc_url=None, openapi_url=None)
@@ -99,8 +101,9 @@ class AnalysisRequest(StartRequest):
     preview: bool = True
     recommendations_enabled: bool = True
     ocr_history: bool = False
-    opening_white: Literal['grob', 'vienna', 'danish'] = 'grob'
-    opening_black: Literal['englund', 'budapest', 'alekhine'] = 'englund'
+    opening_white: Literal['grob', 'vienna', 'danish', 'bongcloud', 'halloween', 'steinitz', 'frankenstein'] = 'grob'
+    opening_black: Literal['englund', 'budapest', 'alekhine', 'stafford', 'traxler'] = 'englund'
+    show_moves: bool = True
 
 
 class HistoryRequest(InputModel):
@@ -124,8 +127,36 @@ class BrowserSessionRequest(InputModel):
     session_id: str = Field(min_length=1, max_length=180)
 
 
+class OverlayModeRequest(InputModel):
+    mode: Literal['private', 'normal']
+
+
+class OverlayClearRequest(InputModel):
+    session_id: str | None = Field(None, min_length=1, max_length=180)
+    generation: int | None = Field(None, ge=0)
+    render_revision: int | None = Field(None, ge=0)
+    reason: str = Field('cleared', max_length=120)
+
+
+class VisualUpdateRequest(InputModel):
+    schema_version: int = Field(1, ge=1, le=1)
+    session_id: str = Field(min_length=1, max_length=180)
+    generation: int = Field(0, ge=0)
+    render_revision: int = Field(0, ge=0)
+    analysis_key: str = Field('', max_length=256)
+    fen: str = Field('', max_length=200)
+    mode: Literal['private', 'normal', 'unsupported', 'exclusion_error', 'stale', 'stopped']
+    source: Literal['chesscom_dom', 'lichess_dom', 'video', 'manual', 'unknown'] = 'unknown'
+    geometry: dict = Field(default_factory=dict)
+    arrows: list[dict] = Field(default_factory=list, max_length=8)
+    messages: list[str] = Field(default_factory=list, max_length=8)
+    visible: bool = False
+
+
 def _fetch_chesscom_tcn(game_id: str) -> str:
     """Best-effort full live history for virtualised spectator move lists."""
+    if os.environ.get('ALLIE_ENABLE_CHESSCOM_CALLBACK', '0') != '1':
+        return ''
     now = time.monotonic()
     with _CHESSCOM_HISTORY_LOCK:
         cached = _CHESSCOM_HISTORY_CACHE.get(game_id)
@@ -134,7 +165,7 @@ def _fetch_chesscom_tcn(game_id: str) -> str:
     request = URLRequest(
         f'https://www.chess.com/callback/live/game/{game_id}',
         headers={'Accept': 'application/json',
-                 'User-Agent': 'Mozilla/5.0 Allie21-Live-Studio/11.2.4'},
+                 'User-Agent': 'Mozilla/5.0 Allie21-Live-Studio/11.2.16'},
     )
     try:
         with urlopen(request, timeout=3) as response:
@@ -251,7 +282,8 @@ def extension_userscript():
 def health():
     return {'alive': True, 'model': MODEL_NAME, 'model_revision': MODEL_REVISION,
             'model_loaded': allie._model is not None,
-            'stockfish_available': bool(find_stockfish())}
+            'stockfish_available': bool(find_stockfish()),
+            'overlay': PRIVATE_OVERLAY.status()}
 
 
 @app.get('/api/state')
@@ -266,17 +298,25 @@ def analyze(request: AnalysisRequest):
 
 @app.post('/api/start')
 def start(request: StartRequest):
-    return run(lambda: SESSION.start(request.model_dump()))
+    return run(lambda: (PRIVATE_OVERLAY.clear('session-start'), SESSION.start(request.model_dump()))[1])
 
 
 @app.post('/api/stop')
 def stop():
+    PRIVATE_OVERLAY.clear('session-stop')
     return SESSION.stop()
 
 
 @app.post('/api/frame')
 async def frame(request: Request):
-    raw = await request.body()
+    chunks: list[bytes] = []
+    total = 0
+    async for chunk in request.stream():
+        total += len(chunk)
+        if total > MAX_JPEG:
+            raise HTTPException(413, 'Videoframe zu groß (maximal 3,5 MB)')
+        chunks.append(chunk)
+    raw = b''.join(chunks)
     return run(lambda: SESSION.submit_frame(raw), 'Bretterkennung nicht verfügbar')
 
 
@@ -309,6 +349,37 @@ def reset_browser_position(request: BrowserSessionRequest):
     return run(lambda: (BROWSER_TRACKERS.reset(request.session_id), {'ok': True})[1])
 
 
+@app.get('/api/overlay/status')
+def overlay_status():
+    return PRIVATE_OVERLAY.status()
+
+
+@app.post('/api/overlay/mode')
+def overlay_mode(request: OverlayModeRequest):
+    return run(lambda: PRIVATE_OVERLAY.set_mode(request.mode))
+
+
+@app.post('/api/overlay/update')
+def overlay_update(request: VisualUpdateRequest):
+    try:
+        return PRIVATE_OVERLAY.update(request.model_dump())
+    except (KeyError, TypeError, ValueError, OverflowError):
+        # Never let malformed geometry reach a visible fallback.  The native
+        # controller is cleared and the request remains fail-closed.
+        return PRIVATE_OVERLAY.clear('invalid_overlay_payload')
+
+
+@app.post('/api/overlay/clear')
+def overlay_clear(request: OverlayClearRequest | None = None):
+    data = request.model_dump() if request is not None else {}
+    return run(lambda: PRIVATE_OVERLAY.clear(
+        data.get('reason', 'cleared'),
+        session_id=data.get('session_id'),
+        generation=data.get('generation'),
+        render_revision=data.get('render_revision'),
+    ))
+
+
 def main():
     print('Allie 2.1 Live Studio v11 (nur lokal)')
     print('Viewer:', f'http://{HOST}:{PORT}/viewer')
@@ -321,6 +392,7 @@ def main():
         uvicorn.run(app, host=HOST, port=PORT, access_log=False, server_header=False)
     finally:
         SESSION.stop()
+        PRIVATE_OVERLAY.close()
 
 
 if __name__ == '__main__':

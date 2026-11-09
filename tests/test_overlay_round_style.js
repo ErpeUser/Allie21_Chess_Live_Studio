@@ -34,6 +34,12 @@ if (!source.includes("whiteOpening:'grob'")) {
 if (!source.includes("blackOpening:'englund'")) {
   throw new Error('ragebait black opening is not the default');
 }
+for (const option of [
+  "value='bongcloud'", "value='halloween'", "value='steinitz'", "value='frankenstein'",
+  "value='stafford'", "value='traxler'",
+]) {
+  if (!source.includes(option)) throw new Error(`troll opening selector is missing: ${option}`);
+}
 if (!source.includes('opening_white:cfg.whiteOpening') || !source.includes('opening_black:cfg.blackOpening')) {
   throw new Error('opening selections are not sent to the analysis service');
 }

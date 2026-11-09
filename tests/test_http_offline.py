@@ -184,6 +184,15 @@ class HTTPBoundaryTests(unittest.TestCase):
         self.assertEqual(status, 200, data)
         self.assertEqual(app.BROWSER_TRACKERS.reset_session, 'web-new-game')
 
+    def test_overlay_clear_carries_session_boundary(self):
+        status, data = self.call(
+            'POST', '/api/overlay/clear', origin='https://www.chess.com', overlay=True,
+            payload={'session_id': 'web-clear-boundary', 'generation': 3,
+                     'render_revision': 7, 'reason': 'navigation'},
+        )
+        self.assertEqual(status, 200, data)
+        self.assertEqual(json.loads(data)['reason'], 'navigation')
+
     def test_chesscom_tcn_becomes_complete_pgn_candidate(self):
         payload = {'session_id': 'web-spectator',
                    'placement': '8/8/8/3k4/8/8/4K3/8',
@@ -225,10 +234,10 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, page = self.call('GET', '/install')
         self.assertEqual(status, 200)
         self.assertIn(b'edge://extensions', page)
-        self.assertIn(b'11.2.15', page)
+        self.assertIn(b'11.2.16', page)
         status, script = self.call('GET', '/install/allie21_overlay.user.js')
         self.assertEqual(status, 200)
-        self.assertIn(b'@version      11.2.15', script)
+        self.assertIn(b'@version      11.2.16', script)
 
 
 if __name__ == '__main__':

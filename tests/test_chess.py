@@ -39,6 +39,11 @@ class FakeAllie:
                 'think_time': 2.5}
 
 
+class BrokenAllie:
+    def analyze(self, *args, **kwargs):
+        raise RuntimeError('Unreachable')
+
+
 class FoolMateAllie:
     def analyze(self, _moves, **_kwargs):
         return {'moves': {'a7a6': .72, 'd8h4': .08}, 'wdl': [.3, .3, .4]}
@@ -257,11 +262,27 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(standard_repertoire('black', 'alekhine')['primary'], 'Aljechin-Verteidigung')
         self.assertEqual(repertoire_move_for(['e2e4'], 'black', 'alekhine'), 'g8f6')
 
+    def test_troll_repertoire_uses_existing_legal_opening_lines(self):
+        self.assertEqual(standard_repertoire('white', 'halloween')['primary'], 'Halloween-Gambit')
+        self.assertEqual(repertoire_move_for([], 'white', 'bongcloud'), 'e2e4')
+        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5'], 'white', 'bongcloud'), 'e1e2')
+        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5'], 'black', 'stafford'), 'b8c6')
+        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'g1g5'], 'black', 'traxler'), 'f8c5')
+
     def test_repertoire_move_is_only_returned_for_matching_legal_history(self):
         self.assertEqual(repertoire_move_for([], 'white'), 'g2g4')
-        self.assertEqual(repertoire_move_for(['e2e4'], 'black'), 'g8f6')
+        self.assertIsNone(repertoire_move_for(['e2e4'], 'black'))
         self.assertEqual(repertoire_move_for(['d2d4'], 'black'), 'e7e5')
         self.assertIsNone(repertoire_move_for(['e2e4', 'e7e5', 'b1c3'], 'black'))
+
+    def test_repertoire_does_not_switch_to_another_line_after_deviation(self):
+        # The selected Vienna line diverges on 2.d4; Danish must not be used
+        # as an implicit fallback just because its prefix happens to match.
+        self.assertIsNone(repertoire_move_for(
+            ['e2e4', 'e7e5', 'd2d4'], 'white', 'vienna'))
+        # Likewise, Englund must not silently become Budapest after 1.d4 Nf6.
+        self.assertIsNone(repertoire_move_for(
+            ['d2d4', 'g8f6'], 'black', 'englund'))
 
     def test_aggressive_style_promotes_immediate_mate_for_player(self):
         result = analyse_position({
@@ -370,6 +391,20 @@ class ChessTests(unittest.TestCase):
         self.assertFalse(result['opponent_moves'])
         self.assertTrue(result['allie_skip_reason'])
 
+    def test_incomplete_history_can_analyse_but_cannot_publish_concrete_moves(self):
+        with patch('allie_local_server.stockfish_lines', return_value={
+            'available': True, 'engine': 'Stockfish', 'scope': 'position',
+            'lines': [{'san': 'e4', 'uci': 'e2e4', 'score': '+0.20', 'variation': '1. e4'}],
+        }):
+            result = analyse_position({
+                'fen': chess.STARTING_FEN, 'analysis_source': 'stockfish',
+                'player_side': 'white', 'show_moves': False,
+            })
+        self.assertFalse(result['my_moves'])
+        self.assertFalse(result['opponent_moves'])
+        self.assertIsNone(result['premove'])
+        self.assertEqual(result['uncertainty']['level'], 'warning')
+
     def test_model_failure_is_visible(self):
         class Broken:
             def analyze(self, *args, **kwargs): raise RuntimeError('Unreachable')
@@ -406,6 +441,34 @@ class ChessTests(unittest.TestCase):
         for uci in ('e2e4', 'b8c6'):
             board.push_uci(uci); moves.append(uci)
         self.assertEqual(opening_for_position(board, moves)['name'], 'Nimzowitsch Defense')
+
+    def test_opening_lookup_resolves_a_real_epd_transposition(self):
+        first = chess.Board()
+        first_moves = ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1b5')
+        for uci in first_moves:
+            first.push_uci(uci)
+        transposed = chess.Board()
+        transposed_moves = ('e2e4', 'e7e5', 'f1b5', 'b8c6', 'g1f3')
+        for uci in transposed_moves:
+            transposed.push_uci(uci)
+        self.assertEqual(first.epd(en_passant='legal'), transposed.epd(en_passant='legal'))
+        self.assertEqual(opening_for_position(transposed, list(transposed_moves))['name'], 'Ruy Lopez')
+
+    def test_opening_lookup_does_not_ignore_castling_rights_in_fen_only_mode(self):
+        board = chess.Board()
+        for uci in ('e2e4', 'e7e5'):
+            board.push_uci(uci)
+        board.castling_rights = 0
+        self.assertIsNone(opening_for_position(board, []))
+
+    def test_analysis_uses_the_selected_black_repertoire_and_keeps_allie_fallback(self):
+        result = analyse_position({
+            'pgn': '1. e4', 'analysis_source': 'allie',
+            'player_side': 'black', 'opening_black': 'alekhine',
+        }, BrokenAllie())
+        self.assertEqual(result['repertoire']['selection'], 'alekhine')
+        self.assertEqual(result['repertoire']['expected_move'], 'g8f6')
+        self.assertIn('Unreachable', result['allie_skip_reason'])
 
     def test_plan_messages_add_context_instead_of_repeating_arrows(self):
         messages = make_plan_messages({

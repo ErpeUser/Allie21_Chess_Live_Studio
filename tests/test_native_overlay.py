@@ -1,0 +1,156 @@
+"""Cross-platform tests for the optional ctypes-only native overlay."""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import sys
+import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
+
+from native_overlay import (  # noqa: E402
+    HTTRANSPARENT,
+    NativeOverlayController,
+    PrivateOverlayController,
+    OverlayArrow,
+    WDA_EXCLUDEFROMCAPTURE,
+    normalize_arrows,
+    is_overlay_update_newer,
+)
+
+
+class FakeWin32:
+    def __init__(self, *, set_affinity=True, affinity=WDA_EXCLUDEFROMCAPTURE):
+        self.set_affinity_result = set_affinity
+        self.affinity = affinity
+        self.calls = []
+
+    def create_window(self, _controller):
+        self.calls.append(("create_window",))
+        return 42
+
+    def set_window_display_affinity(self, hwnd, value):
+        self.calls.append(("set_affinity", hwnd, value))
+        return self.set_affinity_result
+
+    def get_window_display_affinity(self, hwnd):
+        self.calls.append(("get_affinity", hwnd))
+        return self.affinity
+
+    def show_window(self, hwnd, command):
+        self.calls.append(("show_window", hwnd, command))
+
+    def move_window(self, hwnd, x, y, width, height):
+        self.calls.append(("move_window", hwnd, x, y, width, height))
+
+    def post_message(self, hwnd, message, wparam, lparam):
+        self.calls.append(("post_message", hwnd, message, wparam, lparam))
+
+    def message_loop(self, controller):
+        controller._stop.wait(1.0)
+
+
+class NativeOverlayTests(unittest.TestCase):
+    def test_overlay_update_order_is_monotonic_per_session(self):
+        self.assertTrue(is_overlay_update_newer('s', 2, 1, {'s': (1, 99)}))
+        self.assertFalse(is_overlay_update_newer('s', 1, 100, {'s': (2, 1)}))
+        self.assertFalse(is_overlay_update_newer('s', 2, 1, {'s': (2, 1)}))
+        self.assertTrue(is_overlay_update_newer('other', 0, 1, {'s': (99, 9)}))
+    def test_normalize_arrows_accepts_mapping_and_caps_payload(self):
+        arrows = normalize_arrows(
+            {"from": (1, 2), "to": (30, 40), "color": "#2f80ed", "width": 7}
+            for _ in range(40)
+        )
+        self.assertEqual(len(arrows), 32)
+        self.assertEqual(arrows[0], OverlayArrow((1.0, 2.0), (30.0, 40.0), "#2f80ed", 7))
+
+    def test_normalize_arrows_rejects_non_finite_or_invalid_colour(self):
+        with self.assertRaises(ValueError):
+            normalize_arrows([{"start": (float("nan"), 2), "end": (3, 4)}])
+        with self.assertRaises(ValueError):
+            normalize_arrows([{"start": (1, 2), "end": (3, 4), "color": "red"}])
+
+    def test_affinity_must_be_set_and_read_back_exactly(self):
+        fake = FakeWin32()
+        controller = NativeOverlayController(api=fake)
+        self.assertTrue(controller._verify_capture_exclusion(42))
+        self.assertIn(("set_affinity", 42, WDA_EXCLUDEFROMCAPTURE), fake.calls)
+
+        fake_bad = FakeWin32(affinity=0)
+        self.assertFalse(NativeOverlayController(api=fake_bad)._verify_capture_exclusion(42))
+
+    def test_mocked_controller_is_thread_safe_and_renders_only_after_verification(self):
+        fake = FakeWin32()
+        controller = NativeOverlayController(api=fake)
+        self.assertTrue(controller.start())
+        self.assertTrue(controller.available)
+        self.assertTrue(
+            controller.update(
+                [{"start": (5, 6), "end": (70, 80), "color": "#16c784"}],
+                "Allie bereit",
+                bounds=(10, 20, 300, 300),
+            )
+        )
+        self.assertTrue(controller.visible)
+        self.assertEqual(controller.snapshot.message, "Allie bereit")
+        self.assertIn(("move_window", 42, 10, 20, 300, 300), fake.calls)
+        controller.hide()
+        self.assertFalse(controller.visible)
+        controller.stop()
+        self.assertFalse(controller.available)
+
+    def test_affinity_failure_stays_hidden_fail_closed(self):
+        controller = NativeOverlayController(api=FakeWin32(set_affinity=False))
+        self.assertFalse(controller.start())
+        self.assertTrue(controller.failed_closed)
+        self.assertFalse(controller.visible)
+        self.assertFalse(controller.update([], "must not render"))
+
+    @unittest.skipIf(os.name == "nt", "non-Windows fallback is only tested off Windows")
+    def test_non_windows_without_injected_api_fails_closed(self):
+        controller = NativeOverlayController()
+        self.assertFalse(controller.start())
+        self.assertTrue(controller.failed_closed)
+        self.assertFalse(controller.update([], "hidden"))
+
+    def test_click_through_constant_is_explicit(self):
+        self.assertEqual(HTTRANSPARENT, -1)
+
+    def test_private_controller_rejects_delayed_frames_and_retired_sessions(self):
+        private = PrivateOverlayController()
+        fake = FakeWin32()
+        private._native = NativeOverlayController(api=fake)
+        geometry = {'board': {'left': 10, 'top': 20, 'width': 320, 'height': 320}, 'orientation': 'white'}
+        first = {'session_id': 's1', 'generation': 1, 'render_revision': 1,
+                 'mode': 'private', 'geometry': geometry,
+                 'arrows': [{'uci': 'e2e4', 'color': '#16c784'}]}
+        self.assertEqual(private.update(first)['state'], 'active')
+        snapshot = private._native.snapshot
+        delayed = dict(first, arrows=[{'uci': 'a1a2', 'color': '#ef3340'}])
+        self.assertEqual(private.update(delayed)['reason'], 'stale_update_ignored')
+        self.assertEqual(private._native.snapshot, snapshot)
+        newer = dict(first, session_id='s2', generation=0, render_revision=1)
+        self.assertEqual(private.update(newer)['state'], 'active')
+        current = private._native.snapshot
+        retired = dict(first, generation=99, render_revision=99)
+        self.assertEqual(private.update(retired)['reason'], 'retired_session_ignored')
+        self.assertEqual(private._native.snapshot, current)
+        private.close()
+
+    def test_clear_with_new_session_retires_old_frames(self):
+        private = PrivateOverlayController()
+        fake = FakeWin32()
+        private._native = NativeOverlayController(api=fake)
+        geometry = {'board': {'left': 10, 'top': 20, 'width': 320, 'height': 320}, 'orientation': 'white'}
+        first = {'session_id': 'old', 'generation': 1, 'render_revision': 2,
+                 'mode': 'private', 'geometry': geometry,
+                 'arrows': [{'uci': 'e2e4', 'color': '#16c784'}]}
+        self.assertEqual(private.update(first)['state'], 'active')
+        private.clear('navigation', session_id='new', generation=0, render_revision=1)
+        delayed = dict(first, generation=99, render_revision=99)
+        self.assertEqual(private.update(delayed)['reason'], 'retired_session_ignored')
+        private.close()
+
+
+if __name__ == "__main__":
+    unittest.main()

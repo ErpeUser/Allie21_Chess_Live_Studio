@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ctypes
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -17,6 +18,16 @@ REQUIRED = (
     "uv.lock",
     "backend/live_server.py",
 )
+PORTABLE_REQUIRED = (
+    "app/backend/live_server.py",
+    "app/viewer/index.html",
+    "runtime/python.exe",
+)
+
+
+def is_portable_bundle(root: Path) -> bool:
+    """Return whether *root* is a self-contained release directory."""
+    return all((root / name).is_file() for name in PORTABLE_REQUIRED)
 
 
 def find_project_root(start: Path) -> Path:
@@ -30,11 +41,16 @@ def find_project_root(start: Path) -> Path:
 
 def project_root() -> Path:
     if getattr(sys, "frozen", False):
-        return find_project_root(Path(sys.executable).parent)
+        executable_root = Path(sys.executable).parent
+        if is_portable_bundle(executable_root):
+            return executable_root
+        return find_project_root(executable_root)
     return find_project_root(Path(__file__).parents[1])
 
 
 def validate(root: Path) -> list[str]:
+    if is_portable_bundle(root):
+        return []
     return [name for name in REQUIRED if not (root / name).is_file()]
 
 
@@ -65,6 +81,19 @@ class TrayApp:
         self.process = None
 
     def start(self):
+        if is_portable_bundle(self.root):
+            app_root = self.root / "app"
+            runtime_python = self.root / "runtime" / "python.exe"
+            environment = os.environ.copy()
+            environment["ALLIE_PROJECT_ROOT"] = str(app_root)
+            environment["PYTHONPATH"] = str(app_root / "backend")
+            self.process = self.process_factory(
+                [str(runtime_python), str(app_root / "backend" / "live_server.py")],
+                cwd=app_root,
+                env=environment,
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+            )
+            return self.process
         self.process = self.process_factory(
             ["cmd.exe", "/d", "/c", str(self.root / "START_HIER.bat")],
             cwd=self.root,

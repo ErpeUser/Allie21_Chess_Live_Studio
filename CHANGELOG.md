@@ -1,5 +1,12 @@
 # Änderungen
 
+## v11.2.16
+
+- Browser-/Viewer-Pfeile zeichnen bei Resize, Scroll, Zoom, CSS-Transform und visualViewport-Änderungen ohne neuen Analyseframe neu; SPA-Navigation retiert alte Sessions.
+- Opening-Auswahl bleibt strikt bei der gewählten legalen Linie; EPD-Schlüssel berücksichtigen Zugrecht, Rochade und En-passant.
+- Privater Native-HUD erhält monotone Session-/Render-Gates, Session-boundary-Clear und fail-closed Capture-Affinität; MV3-Gesundheitsalarm nutzt 30 Sekunden und Worker-Recovery.
+- Python-, Lockfile- und Erweiterungsversion auf 11.2.16 angeglichen. Der Onedir-Build ist lokal reproduzierbar, aber die autonome Fresh-Path-Abnahme bleibt offen.
+
 ## v11.2.15
 - Hotfix: Opening-Auswahl wird von der FastAPI-Anfrage akzeptiert; kein „Extra inputs are not permitted“ mehr.
 

@@ -349,7 +349,9 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     player_to_move = player_side == ('white' if board.turn else 'black')
     requested_opening = payload.get('opening_white' if player_side == 'white' else 'opening_black')
     repertoire = standard_repertoire(player_side, requested_opening)
-    repertoire['expected_move'] = repertoire_move_for(moves, player_side, repertoire['selection'])
+    repertoire['expected_move'] = None
+    if player_to_move:
+        repertoire['expected_move'] = repertoire_move_for(moves, player_side, repertoire['selection'])
     if repertoire['expected_move']:
         try:
             expected = chess.Move.from_uci(repertoire['expected_move'])
@@ -500,6 +502,16 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
         'note': ('Allie-Prozentwerte sind menschliche Zugwahrscheinlichkeiten. '
                  'Stockfish liefert Varianten und Bewertungen, aber keine menschlichen Zugwahrscheinlichkeiten.'),
     }
+    if not bool(payload.get('show_moves', True)):
+        output['my_moves'] = []
+        output['opponent_moves'] = []
+        output['premove'] = None
+        output['uncertainty'] = {
+            'level': 'warning',
+            'reasons': ['history_incomplete_or_turn_unverified'],
+        }
+    else:
+        output['uncertainty'] = {'level': 'none', 'reasons': []}
     output['plan_messages'] = make_plan_messages(output)
     output['brief'] = make_brief(output)
     return output

@@ -5,6 +5,7 @@ video uploads. Only small JPEG frames are passed to localhost for chessvision.
 """
 from __future__ import annotations
 from io import BytesIO
+import hashlib
 from PIL import Image, UnidentifiedImageError
 from threading import Event, RLock, Thread
 import json
@@ -16,6 +17,7 @@ from position_tracker import PositionTracker
 from vision import BoardVision
 
 MAX_JPEG = 3_500_000
+MAX_JPEG_PIXELS = 2_200 * 2_200
 class LiveSession:
     def __init__(self):
         self.lock = RLock()
@@ -31,6 +33,7 @@ class LiveSession:
         self.stable_count = 0
         self.unmatched_frames = 0
         self.state = {}
+        self.render_revision = 0
         self._reset_state(False)
         Thread(target=self._analysis_worker, name='allie-first-analysis', daemon=True).start()
 
@@ -40,7 +43,9 @@ class LiveSession:
                       'detection': None, 'result': None, 'analysing': False,
                       'history_complete': False, 'turn_verified': False,
                       'history_source': 'unknown', 'moves_seen': 0, 'model': MODEL_ID,
-                      'recommendations_enabled': recommendations_enabled}
+                      'recommendations_enabled': recommendations_enabled,
+                      'session_id': str(self.session_id), 'generation': self.generation,
+                      'render_revision': self.render_revision}
 
     def get_state(self):
         with self.lock:
@@ -59,6 +64,7 @@ class LiveSession:
         with self.lock:
             self.generation += 1
             self.session_id += 1
+            self.render_revision += 1
             self.tracker = PositionTracker()
             self.vision = None
             self.analysis_job = None
@@ -81,6 +87,7 @@ class LiveSession:
         with self.lock:
             self.generation += 1
             self.session_id += 1
+            self.render_revision += 1
             self.analysis_job = None
             self.failed_key = None
             self.analysis_event.clear()
@@ -106,15 +113,25 @@ class LiveSession:
         text = self.tracker.pgn_uci if self.tracker.complete_history else board.fen()
         payload = dict(self.settings)
         payload[field] = text
+        payload['show_moves'] = bool(self.tracker.complete_history)
         job_key = (field, text)
         if job_key == self.failed_key:
             return
         self.generation += 1
         revision = self.generation
         payload['analysis_source'] = 'both' if self.tracker.complete_history else 'stockfish'
+        payload['session_id'] = str(self.session_id)
+        payload['generation'] = revision
+        payload['history_complete'] = bool(self.tracker.complete_history)
+        payload['turn_verified'] = bool(self.tracker.turn_verified)
+        payload['analysis_key'] = hashlib.sha256(f"{field}:{text}".encode('utf-8')).hexdigest()
         self.analysis_job = (revision, payload)
         self.state['result'] = None
         self.state['analysing'] = True
+        self.state['generation'] = revision
+        self.state['session_id'] = str(self.session_id)
+        self.render_revision += 1
+        self.state['render_revision'] = self.render_revision
         self.analysis_event.set()
 
     def set_recommendations(self, enabled: bool):
@@ -184,7 +201,9 @@ class LiveSession:
                     vision = self.vision
         try:
             with Image.open(BytesIO(data)) as source:
-                if source.format != 'JPEG' or max(source.size) > 2200 or min(source.size) < 200:
+                if (source.format != 'JPEG' or max(source.size) > 2200
+                        or min(source.size) < 200
+                        or source.size[0] * source.size[1] > MAX_JPEG_PIXELS):
                     raise ValueError('Erwartet: JPEG zwischen 200 und 2200 Pixeln')
                 frame = source.convert('RGB')
         except (UnidentifiedImageError, OSError) as exc:
@@ -279,6 +298,15 @@ class LiveSession:
                 if not self.state['running'] or revision != self.generation:
                     continue
                 result = self._with_stream_warning(result, payload)
+                if result is not None:
+                    result.update({
+                        'session_id': payload.get('session_id'),
+                        'generation': revision,
+                        'analysis_key': payload.get('analysis_key', ''),
+                        'history_complete': bool(payload.get('history_complete')),
+                        'turn_verified': bool(payload.get('turn_verified')),
+                        'render_revision': self.state.get('render_revision', 0),
+                    })
                 self.state['result'] = result
                 self.state['analysing'] = False
                 if error:
