@@ -61,7 +61,7 @@ jobs:
       - name: Verify release versions stay aligned
         shell: pwsh
         run: |
-$project = [regex]::Match((Get-Content pyproject.toml -Raw), '(?m)^version\s*=\s*"([^"]+)"\r?$').Groups[1].Value
+          $project = [regex]::Match((Get-Content pyproject.toml -Raw), '(?m)^version\s*=\s*"([^"]+)"\r?$').Groups[1].Value
           $manifest = Get-Content browser/manifest.json -Raw | ConvertFrom-Json
           $userscript = [regex]::Match((Get-Content browser/allie21_overlay.user.js -Raw), '@version\s+([^\r\n]+)').Groups[1].Value.Trim()
           if (-not $project -or $manifest.version_name -ne $project -or $userscript -ne $project) {
