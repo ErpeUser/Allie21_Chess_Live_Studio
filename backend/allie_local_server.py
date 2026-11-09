@@ -252,6 +252,9 @@ def make_plan_messages(output: dict[str, Any]) -> list[str]:
         if repertoire.get('expected_move'):
             messages.append('Allie-Kandidat aus dem Repertoire: ' +
                             str(repertoire.get('expected_san') or repertoire['expected_move']) + '.')
+    elif repertoire.get('expected_move'):
+        messages.append('Ausgewähltes Repertoire folgt weiter: ' +
+                        str(repertoire.get('expected_san') or repertoire['expected_move']) + '.')
     opening = output.get('opening') or {}
     if opening.get('name'):
         eco = f" ({opening['eco']})" if opening.get('eco') else ''
@@ -394,6 +397,8 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                         expected = repertoire.get('expected_move')
                         if expected:
                             match = next((move for move in candidate_moves if move['uci'] == expected), None)
+                            if match:
+                                match['repertoire'] = True
                             if match and (not candidate_moves or
                                           float(candidate_moves[0].get('probability', 0.0)) -
                                           float(match.get('probability', 0.0)) <= .18):

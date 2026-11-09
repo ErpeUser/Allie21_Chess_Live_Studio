@@ -79,6 +79,9 @@ class LiveSession:
             self.settings = {'white_elo': white, 'black_elo': black,
                              'player_side': player_side, 'time_control': tc,
                              'preview': CONFIG['preview_opponent_replies'],
+                             'play_style': str(settings.get('play_style', 'normal')),
+                             'opening_white': str(settings.get('opening_white', 'grob')),
+                             'opening_black': str(settings.get('opening_black', 'englund')),
                              'ocr_history': bool(settings.get('ocr_history', CONFIG['ocr_history'])),
                              'recommendations_enabled': bool(settings.get('recommendations_enabled', True))}
             self._reset_state(True)
@@ -123,7 +126,9 @@ class LiveSession:
             return
         self.generation += 1
         revision = self.generation
-        payload['analysis_source'] = 'both' if self.tracker.complete_history else 'stockfish'
+        # A complete history goes to Allie first. Stockfish is used for
+        # incomplete histories and the explicit fallback in the worker.
+        payload['analysis_source'] = 'allie' if self.tracker.complete_history else 'stockfish'
         payload['session_id'] = str(self.session_id)
         payload['generation'] = revision
         payload['history_complete'] = bool(self.tracker.complete_history)
@@ -294,11 +299,31 @@ class LiveSession:
             if job is None:
                 continue
             revision, payload = job
+            fallback_used = False
             try:
                 result = analyse_position(payload)
+                if (payload.get('analysis_source') == 'allie'
+                        and (not result or not result.get('moves')
+                             or result.get('allie_skip_reason'))):
+                    fallback_payload = dict(payload)
+                    fallback_payload['analysis_source'] = 'stockfish'
+                    fallback_payload['preview'] = False
+                    result = analyse_position(fallback_payload)
+                    fallback_used = True
                 error = None
             except Exception as exc:  # noqa: BLE001 - worker errors are returned in session state
-                result, error = None, str(exc)[:220]
+                if payload.get('analysis_source') == 'allie':
+                    try:
+                        fallback_payload = dict(payload)
+                        fallback_payload['analysis_source'] = 'stockfish'
+                        fallback_payload['preview'] = False
+                        result = analyse_position(fallback_payload)
+                        fallback_used = True
+                        error = None
+                    except Exception as fallback_exc:  # noqa: BLE001
+                        result, error = None, str(fallback_exc)[:220]
+                else:
+                    result, error = None, str(exc)[:220]
             with self.lock:
                 if not self.state['running'] or revision != self.generation:
                     continue
@@ -317,7 +342,10 @@ class LiveSession:
                 if error:
                     self.failed_key = ('pgn', payload['pgn']) if 'pgn' in payload else ('fen', payload.get('fen', ''))
                     self.state['message'] = 'Analysefehler: ' + error
+                elif fallback_used:
+                    reason = (result or {}).get('allie_skip_reason') or 'Allie nicht verfügbar'
+                    self.state['message'] = 'Stockfish-Fallback aktiv · ' + str(reason)[:140]
                 elif not self.state['history_complete']:
                     self.state['message'] = 'Stockfish aktuell · Allie benötigt die Zugfolge ab Zug 1'
                 else:
-                    self.state['message'] = 'Allie + Stockfish aktuell'
+                    self.state['message'] = 'Allie aktuell · Stockfish nur als Fallback'

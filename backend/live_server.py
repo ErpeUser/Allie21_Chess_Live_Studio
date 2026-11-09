@@ -100,6 +100,8 @@ class StartRequest(InputModel):
     ocr_history: bool = CONFIG['ocr_history']
     recommendations_enabled: bool = True
     play_style: Literal['normal', 'aggressive'] = 'normal'
+    opening_white: Literal['grob', 'vienna', 'danish', 'bongcloud', 'halloween', 'steinitz', 'frankenstein'] = 'grob'
+    opening_black: Literal['englund', 'budapest', 'alekhine', 'stafford', 'traxler'] = 'englund'
 
     @field_validator('time_control')
     @classmethod
@@ -116,8 +118,6 @@ class AnalysisRequest(StartRequest):
     preview: bool = True
     recommendations_enabled: bool = True
     ocr_history: bool = False
-    opening_white: Literal['grob', 'vienna', 'danish', 'bongcloud', 'halloween', 'steinitz', 'frankenstein'] = 'grob'
-    opening_black: Literal['englund', 'budapest', 'alekhine', 'stafford', 'traxler'] = 'englund'
     show_moves: bool = True
 
 

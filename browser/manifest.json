@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Allie 2.1 Live Overlay",
-  "version": "11.2.16.0",
-  "version_name": "11.2.16",
+  "version": "11.2.17.0",
+  "version_name": "11.2.17",
   "description": "Lokale Allie-Zughinweise für Chess.com und Lichess.",
   "host_permissions": ["http://127.0.0.1:8765/*"],
   "permissions": ["alarms"],
@@ -10,7 +10,7 @@
   "action": {"default_title": "Allie 2.1 Live Overlay"},
   "content_scripts": [
     {
-      "matches": ["https://*.chess.com/*", "https://lichess.org/*"],
+      "matches": ["https://chess.com/*", "https://*.chess.com/*", "https://lichess.org/*"],
       "js": ["allie21_overlay.user.js"],
       "run_at": "document_idle"
     }

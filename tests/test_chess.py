@@ -544,7 +544,7 @@ class ChessTests(unittest.TestCase):
         finally:
             live.stop()
 
-    def test_complete_live_history_runs_one_combined_latest_job(self):
+    def test_complete_live_history_runs_one_allie_latest_job(self):
         live = LiveSession()
         live.start({})
         calls = []
@@ -572,9 +572,74 @@ class ChessTests(unittest.TestCase):
                 while state.get('analysing') and time.monotonic() < deadline:
                     time.sleep(.02)
                     state = live.get_state()
-                self.assertEqual(calls, ['both'])
+                self.assertEqual(calls, ['allie'])
                 self.assertEqual(state['result']['moves'][0]['uci'], 'e2e4')
                 self.assertFalse(state['analysing'])
+        finally:
+            live.stop()
+
+    def test_live_history_passes_selected_openings_to_allie(self):
+        live = LiveSession()
+        live.start({'opening_white': 'vienna', 'opening_black': 'alekhine',
+                    'play_style': 'aggressive'})
+        captured = []
+
+        def fake_analysis(payload):
+            captured.append(payload.copy())
+            return {'fen': chess.STARTING_FEN, 'opening': None, 'position_facts': [],
+                    'tactical_warnings': [], 'allie_skip_reason': None, 'brief': [],
+                    'model': 'yimingzhang/allie-2.1', 'stockfish': None,
+                    'moves': [{'san': 'e4', 'uci': 'e2e4', 'probability': .5}],
+                    'wdl': None, 'expected_think_time_s': None,
+                    'my_moves': [], 'opponent_moves': [], 'premove': None,
+                    'plan_messages': []}
+
+        try:
+            with patch('live_session.analyse_position', side_effect=fake_analysis):
+                with live.lock:
+                    live.tracker.observe(chess.STARTING_FEN)
+                    live._update_history_locked()
+                    live._queue_locked()
+                deadline = time.monotonic() + 3
+                state = live.get_state()
+                while state.get('analysing') and time.monotonic() < deadline:
+                    time.sleep(.02)
+                    state = live.get_state()
+            self.assertEqual(len(captured), 1)
+            self.assertEqual(captured[0]['analysis_source'], 'allie')
+            self.assertEqual(captured[0]['opening_white'], 'vienna')
+            self.assertEqual(captured[0]['opening_black'], 'alekhine')
+            self.assertEqual(captured[0]['play_style'], 'aggressive')
+        finally:
+            live.stop()
+
+    def test_live_history_falls_back_to_stockfish_when_allie_has_no_moves(self):
+        live = LiveSession()
+        live.start({})
+        calls = []
+
+        def fake_analysis(payload):
+            calls.append(payload['analysis_source'])
+            if payload['analysis_source'] == 'allie':
+                return {'fen': chess.STARTING_FEN, 'moves': [],
+                        'allie_skip_reason': 'Allie nicht verfügbar'}
+            return {'fen': chess.STARTING_FEN, 'moves': [],
+                    'allie_skip_reason': 'Allie nicht verfügbar', 'stockfish': {
+                        'available': True, 'lines': []}}
+
+        try:
+            with patch('live_session.analyse_position', side_effect=fake_analysis):
+                with live.lock:
+                    live.tracker.observe(chess.STARTING_FEN)
+                    live._update_history_locked()
+                    live._queue_locked()
+                deadline = time.monotonic() + 3
+                state = live.get_state()
+                while state.get('analysing') and time.monotonic() < deadline:
+                    time.sleep(.02)
+                    state = live.get_state()
+            self.assertEqual(calls, ['allie', 'stockfish'])
+            self.assertEqual(state['message'], 'Stockfish-Fallback aktiv · Allie nicht verfügbar')
         finally:
             live.stop()
 
