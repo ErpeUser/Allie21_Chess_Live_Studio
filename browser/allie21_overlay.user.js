@@ -65,9 +65,8 @@
  const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
  el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
- const sessionSeed=location.hostname+location.pathname;
- let sessionHash=2166136261;for(const char of sessionSeed){sessionHash^=char.charCodeAt(0);sessionHash=Math.imul(sessionHash,16777619)}
- let boardSessionId='web-'+(sessionHash>>>0).toString(36);
+ let sessionHash=Date.now()>>>0;
+ let boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
  const selectors=['wc-simple-move-list [data-node]','wc-vertical-move-list [data-node]','wc-horizontal-move-list [data-node]','wc-move-list [data-node]','wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
  const sanPattern=/^(?:O-O(?:-O)?|0-0(?:-0)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][+#]?)$/;
  // Lichess changes its short custom tag names regularly. Locate the current
@@ -368,10 +367,16 @@
   el('results').innerHTML=html;
   if(messages.length&&!panelDismissed){el('panel').classList.add('open');el('bubble').style.display='none';placePanel()}
  }
+ let capabilityToken='',capabilityInstance='',capabilityPromise=null;
+ function ensureCapability(){
+  if(capabilityToken)return Promise.resolve(capabilityToken);
+  if(!capabilityPromise){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);capabilityPromise=fetch('http://127.0.0.1:8765/api/capability',{headers:{'X-Allie-Overlay':'1'},cache:'no-store',signal:controller.signal}).then(async response=>{const data=await response.json();if(!response.ok||!data.token||!data.instance_id)throw Error(data.error||'Capability fehlt');capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken}).finally(()=>{clearTimeout(timer);capabilityPromise=null})}
+  return capabilityPromise;
+ }
  function postJson(path,data,timeout=15000){
   const controller=new AbortController();let expired=false;
   const timer=setTimeout(()=>{expired=true;controller.abort()},timeout);
-  const promise=fetch('http://127.0.0.1:8765'+path,{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1'},body:JSON.stringify(data),signal:controller.signal})
+  const promise=ensureCapability().then(token=>fetch('http://127.0.0.1:8765'+path,{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance},body:JSON.stringify(data),signal:controller.signal}))
    .then(async response=>{let parsed={};try{parsed=await response.json()}catch{}if(!response.ok)throw Error(parsed.error||String(response.status));return parsed})
    .catch(error=>{if(expired)throw Error('Lokale Analyse braucht zu lange.');if(error.name==='AbortError')throw error;throw Error('Lokaler Allie-Server nicht erreichbar: '+error.message)})
    .finally(()=>clearTimeout(timer));
@@ -528,7 +533,7 @@
   clearRemoteOverlay(reason);
   cancelAnalysis();
   currentResult=null;lastPGN='';trackedPGN='';trackedFen='';analysisKey='';lastPlacement='';unsettledPlacement='';unsettledRetries=0;currentBoard=null;markBrowserSessionReset();
-  sessionHash=Math.imul(sessionHash^Date.now(),16777619);boardSessionId='web-'+(sessionHash>>>0).toString(36);
+  sessionHash=Math.imul(sessionHash^Date.now(),16777619);boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
   clearOverlay();show({});scheduleTick(true);
  }
  function installNavigationLifecycle(){
@@ -541,8 +546,9 @@
  }
  async function syncPrivateMode(){
   try{
-   const response=await fetch('http://127.0.0.1:8765/api/overlay/status',{cache:'no-store',headers:{'X-Allie-Overlay':'1'}});
-   if(response.ok){const state=await response.json();if(state?.mode==='private'||state?.mode==='normal'){cfg.privateMode=state.mode==='private';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill()}}
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
+   const response=await fetch('http://127.0.0.1:8765/api/overlay/status',{cache:'no-store',headers:{'X-Allie-Overlay':'1'},signal:controller.signal});clearTimeout(timer);
+   if(response.ok){const state=await response.json();if(state?.ready===false||state?.instance_id&&capabilityInstance&&state.instance_id!==capabilityInstance){capabilityToken='';capabilityInstance=''}if(state?.mode==='private'||state?.mode==='normal'){cfg.privateMode=state.mode==='private';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill()}}
   }catch{}
   sendOverlayMode(cfg.privateMode?'private':'normal');
   if(cfg.privateMode)clearOverlay();
@@ -552,5 +558,5 @@
     if(changes.every(change=>wrapper.contains(change.target)||layer.contains(change.target)||change.target===renderedBoard||renderedSvg?.contains?.(change.target)))return;
     scheduleTick();
   }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','data-ply','data-piece','data-orientation']});
- setInterval(scheduleTick,5000);window.addEventListener('beforeunload',()=>clearRemoteOverlay('stopped'));syncPrivateMode();tick();
+ setInterval(scheduleTick,5000);setInterval(syncPrivateMode,10000);window.addEventListener('beforeunload',()=>clearRemoteOverlay('stopped'));syncPrivateMode();tick();
 })();

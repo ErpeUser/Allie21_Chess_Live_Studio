@@ -84,7 +84,8 @@ class HTTPBoundaryTests(unittest.TestCase):
         (app.SESSION, app.BROWSER_TRACKERS, app.analyse_position,
          app.find_stockfish) = cls.originals
 
-    def call(self, method, path, origin='', host=None, payload=None, overlay=False, preflight=False):
+    def call(self, method, path, origin='', host=None, payload=None, overlay=False,
+             preflight=False, auth=True):
         client = HTTPConnection('127.0.0.1', self.port, timeout=5)
         headers = {}
         if origin:
@@ -95,6 +96,9 @@ class HTTPBoundaryTests(unittest.TestCase):
             headers['Content-Type'] = 'application/json'
         if overlay:
             headers['X-Allie-Overlay'] = '1'
+        if auth and method.upper() == 'POST':
+            headers['Authorization'] = f'Bearer {app.CAPABILITY_TOKEN}'
+            headers['X-Allie-Instance'] = app.INSTANCE_ID
         if preflight:
             headers['Access-Control-Request-Method'] = 'POST'
             headers['Access-Control-Request-Headers'] = 'content-type,x-allie-overlay'
@@ -123,6 +127,54 @@ class HTTPBoundaryTests(unittest.TestCase):
             'preview': False,
         }, model=fake_model)
 
+    def test_mutating_request_requires_current_capability_token(self):
+        status, _ = self.call('POST', '/api/start', payload={}, auth=False)
+        self.assertEqual(status, 401)
+        status, _ = self.call('POST', '/api/start', payload={},
+                              auth=False)
+        self.assertEqual(status, 401)
+
+        client = HTTPConnection('127.0.0.1', self.port, timeout=5)
+        client.request('POST', '/api/start', body=b'{}', headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer wrong-token',
+        })
+        response = client.getresponse()
+        self.assertEqual(response.status, 401)
+        response.read()
+        client.close()
+
+    def test_capability_handshake_returns_instance_metadata(self):
+        status, data = self.call('GET', '/api/capability',
+                                 origin='https://www.chess.com', overlay=True)
+        self.assertEqual(status, 200, data)
+        capability = json.loads(data)
+        self.assertEqual(capability['token'], app.CAPABILITY_TOKEN)
+        self.assertEqual(capability['instance_id'], app.INSTANCE_ID)
+        self.assertEqual(capability['api_version'], app.API_VERSION)
+        self.assertEqual(capability['schema_version'], app.SCHEMA_VERSION)
+
+    def test_overlay_payload_is_strictly_typed(self):
+        payload = {
+            'schema_version': 1, 'session_id': 'contract-test',
+            'mode': 'private', 'geometry': {
+                'board': {'left': 0, 'top': 0, 'width': 800, 'height': 800,
+                          'unexpected': 1},
+            },
+        }
+        status, _ = self.call('POST', '/api/overlay/update',
+                              origin='https://www.chess.com', overlay=True,
+                              payload=payload)
+        self.assertEqual(status, 400)
+
+    def test_browser_position_is_rate_limited(self):
+        payload = {'session_id': 'rate-limited',
+                   'placement': '8/8/8/3k4/8/8/4K3/8', 'pgn': '*'}
+        statuses = [self.call('POST', '/api/browser-position',
+                              origin='https://www.chess.com', overlay=True,
+                              payload=payload)[0] for _ in range(11)]
+        self.assertEqual(statuses[-1], 429)
+
     def test_viewer_has_no_access_key_ui_or_placeholder(self):
         status, data = self.call('GET', '/viewer')
         self.assertEqual(status, 200)
@@ -132,6 +184,23 @@ class HTTPBoundaryTests(unittest.TestCase):
     def test_health_and_state_work_locally_without_key(self):
         self.assertEqual(self.call('GET', '/health')[0], 200)
         self.assertEqual(self.call('GET', '/api/state')[0], 200)
+
+    def test_readyz_reports_model_phase_without_internal_details(self):
+        with patch.object(app.allie, '_model', None):
+            response = app.readyz()
+        self.assertEqual(response.status_code, 503)
+        payload = json.loads(response.body)
+        self.assertEqual(payload, {
+            'ready': False, 'phase': 'model_loading',
+            'error_id': 'model_not_loaded',
+        })
+
+    def test_readyz_success_has_structured_shape(self):
+        with patch.object(app.allie, '_model', object()), patch.object(
+            app, 'find_stockfish', return_value='stockfish'
+        ):
+            payload = app.readyz()
+        self.assertEqual(payload, {'ready': True, 'phase': 'ready', 'error_id': None})
 
     def test_analysis_accepts_only_known_play_styles(self):
         self.assertEqual(self.call('POST', '/analyze', payload={

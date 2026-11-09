@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import warnings
 from io import BytesIO
 from threading import Event, RLock, Thread
 
@@ -19,6 +20,8 @@ from vision import BoardVision
 
 MAX_JPEG = 3_500_000
 MAX_JPEG_PIXELS = 2_200 * 2_200
+Image.MAX_IMAGE_PIXELS = MAX_JPEG_PIXELS
+warnings.simplefilter('error', Image.DecompressionBombWarning)
 class LiveSession:
     def __init__(self):
         self.lock = RLock()
@@ -207,7 +210,8 @@ class LiveSession:
                         or source.size[0] * source.size[1] > MAX_JPEG_PIXELS):
                     raise ValueError('Erwartet: JPEG zwischen 200 und 2200 Pixeln')
                 frame = source.convert('RGB')
-        except (UnidentifiedImageError, OSError) as exc:
+        except (UnidentifiedImageError, OSError, Image.DecompressionBombError,
+                Image.DecompressionBombWarning) as exc:
             raise ValueError('Das Videoframe ist nicht lesbar') from exc
         detected = vision.recognize(frame)
         with self.lock:

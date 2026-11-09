@@ -7,11 +7,15 @@ hard-coded fake 'human move' distribution. Requires standard chess move history.
 from __future__ import annotations
 
 import io
+import json
 import math
 import os
 import re
 import sys
 import threading
+import time
+from collections import OrderedDict
+from copy import deepcopy
 from typing import Any
 
 import chess
@@ -33,6 +37,10 @@ PORT = int(os.environ.get("ALLIE_PORT", "8765"))
 MODEL_NAME = MODEL_ID
 MAX_BODY = 64 * 1024
 _model = None
+_ANALYSIS_CACHE: OrderedDict[str, tuple[float, dict[str, Any]]] = OrderedDict()
+_ANALYSIS_CACHE_LOCK = threading.RLock()
+_ANALYSIS_CACHE_TTL = 30.0
+_ANALYSIS_CACHE_MAX = 24
 _model_lock = threading.RLock()
 
 
@@ -292,7 +300,7 @@ def make_plan_messages(output: dict[str, Any]) -> list[str]:
     return messages[:6]
 
 
-def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
+def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str, Any]:
     raw = payload.get("pgn", "")
     fen = payload.get("fen", "")
     if not isinstance(raw, str) or not isinstance(fen, str):
@@ -523,3 +531,29 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
     output['plan_messages'] = make_plan_messages(output)
     output['brief'] = make_brief(output)
     return output
+
+
+def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
+    """Analyse a position, reusing a short-lived production result cache.
+
+    Tests and callers that inject a model bypass the cache so deterministic
+    test doubles never leak state between cases.
+    """
+    if model is not None:
+        return _analyse_position_uncached(payload, model)
+    key = json.dumps(payload, sort_keys=True, separators=(',', ':'), default=str)
+    now = time.monotonic()
+    with _ANALYSIS_CACHE_LOCK:
+        cached = _ANALYSIS_CACHE.get(key)
+        if cached and now - cached[0] <= _ANALYSIS_CACHE_TTL:
+            _ANALYSIS_CACHE.move_to_end(key)
+            return deepcopy(cached[1])
+        if cached:
+            _ANALYSIS_CACHE.pop(key, None)
+    result = _analyse_position_uncached(payload)
+    with _ANALYSIS_CACHE_LOCK:
+        _ANALYSIS_CACHE[key] = (time.monotonic(), deepcopy(result))
+        _ANALYSIS_CACHE.move_to_end(key)
+        while len(_ANALYSIS_CACHE) > _ANALYSIS_CACHE_MAX:
+            _ANALYSIS_CACHE.popitem(last=False)
+    return result

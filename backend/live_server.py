@@ -7,6 +7,7 @@ import json
 import os
 import threading
 import time
+import uuid
 import webbrowser
 from pathlib import Path
 from typing import Literal
@@ -22,6 +23,7 @@ from browser_session import BrowserTrackerPool
 from chess_extras import find_stockfish
 from chess_tcn import tcn_to_pgn
 from config import CONFIG, MODEL_REVISION, parse_time_control
+from contracts import VisualUpdateRequest
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,20 +31,33 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from live_session import MAX_JPEG, LiveSession
 from native_overlay import PrivateOverlayController
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from security import (
+    API_VERSION,
+    CAPABILITY_TOKEN,
+    INSTANCE_ID,
+    SCHEMA_VERSION,
+    RequestRateLimiter,
+    capability_payload,
+    require_capability,
+)
+from starlette.concurrency import run_in_threadpool
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_JSON = 64 * 1024
 SESSION = LiveSession()
 BROWSER_TRACKERS = BrowserTrackerPool()
 PRIVATE_OVERLAY = PrivateOverlayController()
+REQUEST_LIMITER = RequestRateLimiter()
+ANALYZE_GATE = threading.Semaphore(1)
+FRAME_GATE = threading.Semaphore(1)
 _CHESSCOM_HISTORY_CACHE: dict[str, tuple[float, str]] = {}
 _CHESSCOM_HISTORY_LOCK = threading.RLock()
 app = FastAPI(title="Allie21 Live Studio", docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"^https://(?:[a-z0-9-]+\.)?chess\.com$|^https://lichess\.org$",
-    allow_methods=['POST'],
-    allow_headers=['Content-Type', 'X-Allie-Overlay'],
+    allow_methods=['GET', 'POST'],
+    allow_headers=['Content-Type', 'Authorization', 'X-Allie-Overlay'],
     max_age=3600,
 )
 
@@ -138,21 +153,6 @@ class OverlayClearRequest(InputModel):
     reason: str = Field('cleared', max_length=120)
 
 
-class VisualUpdateRequest(InputModel):
-    schema_version: int = Field(1, ge=1, le=1)
-    session_id: str = Field(min_length=1, max_length=180)
-    generation: int = Field(0, ge=0)
-    render_revision: int = Field(0, ge=0)
-    analysis_key: str = Field('', max_length=256)
-    fen: str = Field('', max_length=200)
-    mode: Literal['private', 'normal', 'unsupported', 'exclusion_error', 'stale', 'stopped']
-    source: Literal['chesscom_dom', 'lichess_dom', 'video', 'manual', 'unknown'] = 'unknown'
-    geometry: dict = Field(default_factory=dict)
-    arrows: list[dict] = Field(default_factory=list, max_length=8)
-    messages: list[str] = Field(default_factory=list, max_length=8)
-    visible: bool = False
-
-
 def _fetch_chesscom_tcn(game_id: str) -> str:
     """Best-effort full live history for virtualised spectator move lists."""
     if os.environ.get('ALLIE_ENABLE_CHESSCOM_CALLBACK', '0') != '1':
@@ -225,6 +225,16 @@ async def local_boundary(request: Request, call_next):
         )
         if not (local or overlay):
             return error(403, 'Local host or origin invalid')
+    if request.method != 'OPTIONS' and request.url.path in {
+        '/analyze', '/api/start', '/api/stop', '/api/frame', '/api/history',
+        '/api/recommendations', '/api/browser-position',
+        '/api/browser-position/reset', '/api/overlay/mode',
+        '/api/overlay/update', '/api/overlay/clear',
+    }:
+        try:
+            require_capability(request)
+        except HTTPException as exc:
+            return error(exc.status_code, str(exc.detail))
     if request.method == 'POST':
         maximum = MAX_JPEG if request.url.path == '/api/frame' else MAX_JSON
         try:
@@ -250,15 +260,19 @@ def run(action, unavailable='Analyse nicht verfügbar'):
     except (ValueError, TypeError, KeyError) as exc:
         raise HTTPException(400, str(exc)[:240]) from exc
     except Exception as exc:
-        print(unavailable + ':', repr(exc))
-        raise HTTPException(503, unavailable + ': ' + str(exc)[:180]) from exc
+        error_id = f'err-{uuid.uuid4().hex[:12]}'
+        print(f'{unavailable} ({error_id}):', repr(exc), flush=True)
+        raise HTTPException(503, f'{unavailable} (Fehler-ID {error_id})') from exc
 
 
 @app.get('/', response_class=HTMLResponse)
 @app.get('/viewer', response_class=HTMLResponse)
 def viewer():
     body = (ROOT / 'viewer' / 'index.html').read_text(encoding='utf-8')
-    return body.replace('__ALLIE_CONFIG__', json.dumps(CONFIG, ensure_ascii=False).replace('<', '\\u003c'))
+    viewer_config = dict(CONFIG, capability_token=CAPABILITY_TOKEN,
+                         instance_id=INSTANCE_ID, api_version=API_VERSION,
+                         schema_version=SCHEMA_VERSION)
+    return body.replace('__ALLIE_CONFIG__', json.dumps(viewer_config, ensure_ascii=False).replace('<', '\\u003c'))
 
 
 @app.get('/install', response_class=HTMLResponse)
@@ -280,10 +294,51 @@ def extension_userscript():
 
 @app.get('/health')
 def health():
-    return {'alive': True, 'model': MODEL_NAME, 'model_revision': MODEL_REVISION,
-            'model_loaded': allie._model is not None,
-            'stockfish_available': bool(find_stockfish()),
+    model_loaded = allie._model is not None
+    stockfish_available = bool(find_stockfish())
+    return {'alive': True, 'ready': model_loaded and stockfish_available,
+            'phase': 'ready' if model_loaded and stockfish_available else
+            ('model_loading' if not model_loaded else 'stockfish_unavailable'),
+            'model': MODEL_NAME, 'model_revision': MODEL_REVISION,
+            'instance_id': INSTANCE_ID, 'api_version': API_VERSION,
+            'schema_version': SCHEMA_VERSION,
+            'model_loaded': model_loaded,
+            'stockfish_available': stockfish_available,
             'overlay': PRIVATE_OVERLAY.status()}
+
+
+@app.get('/readyz')
+def readyz():
+    """Report whether the local analysis service can accept work.
+
+    Readiness failures intentionally expose only a coarse phase and an opaque
+    error identifier.  Internal exception messages (which may contain paths,
+    model details, or credentials) never cross the HTTP boundary.
+    """
+    try:
+        if allie._model is None:
+            return JSONResponse(
+                {'ready': False, 'phase': 'model_loading',
+                 'error_id': 'model_not_loaded'}, status_code=503)
+        if not find_stockfish():
+            return JSONResponse(
+                {'ready': False, 'phase': 'stockfish_unavailable',
+                 'error_id': 'stockfish_unavailable'}, status_code=503)
+        return {'ready': True, 'phase': 'ready', 'error_id': None}
+    except Exception:  # noqa: BLE001 - readiness must not leak internals
+        error_id = f'readyz-{uuid.uuid4().hex[:12]}'
+        print(f'readyz failed ({error_id})', flush=True)
+        return JSONResponse(
+            {'ready': False, 'phase': 'error', 'error_id': error_id},
+            status_code=503,
+        )
+
+
+@app.get('/api/capability')
+def capability(request: Request):
+    if not request.headers.get('origin') or request.headers.get('x-allie-overlay') != '1':
+        raise HTTPException(403, 'Capability-Handshake benötigt eine erlaubte Overlay-Herkunft')
+    return capability_payload()
 
 
 @app.get('/api/state')
@@ -293,7 +348,12 @@ def state():
 
 @app.post('/analyze')
 def analyze(request: AnalysisRequest):
-    return run(lambda: analyse_position(request.model_dump()))
+    if not ANALYZE_GATE.acquire(blocking=False):
+        raise HTTPException(429, 'Analyse bereits aktiv')
+    try:
+        return run(lambda: analyse_position(request.model_dump()))
+    finally:
+        ANALYZE_GATE.release()
 
 
 @app.post('/api/start')
@@ -317,7 +377,14 @@ async def frame(request: Request):
             raise HTTPException(413, 'Videoframe zu groß (maximal 3,5 MB)')
         chunks.append(chunk)
     raw = b''.join(chunks)
-    return run(lambda: SESSION.submit_frame(raw), 'Bretterkennung nicht verfügbar')
+    if not FRAME_GATE.acquire(blocking=False):
+        raise HTTPException(429, 'Bretterkennung bereits aktiv')
+    try:
+        return await run_in_threadpool(
+            lambda: run(lambda: SESSION.submit_frame(raw), 'Bretterkennung nicht verfügbar')
+        )
+    finally:
+        FRAME_GATE.release()
 
 
 @app.post('/api/history')
@@ -332,6 +399,8 @@ def recommendations(request: RecommendationRequest):
 
 @app.post('/api/browser-position')
 def browser_position(request: BrowserPositionRequest):
+    if not REQUEST_LIMITER.allow(f'browser:{request.session_id}', 10, 1.0):
+        raise HTTPException(429, 'Zu viele Browser-Positionsupdates')
     candidates = list(request.pgn_candidates)
     tcn = request.tcn or (_fetch_chesscom_tcn(request.game_id) if request.game_id else '')
     if tcn:
@@ -365,6 +434,8 @@ def overlay_mode(request: OverlayModeRequest):
 
 @app.post('/api/overlay/update')
 def overlay_update(request: VisualUpdateRequest):
+    if not REQUEST_LIMITER.allow(f'overlay:{request.session_id}', 30, 1.0):
+        raise HTTPException(429, 'Zu viele Overlay-Updates')
     try:
         return PRIVATE_OVERLAY.update(request.model_dump())
     except (KeyError, TypeError, ValueError, OverflowError):

@@ -39,6 +39,8 @@ def time_profile(value: str) -> tuple[str, float]:
 
 
 class AppConfig(BaseModel):
+    # Keep valid settings when a future version adds a key, but report every
+    # unknown key so a typo is never silently accepted.
     model_config = ConfigDict(extra="ignore")
 
     white_elo: int = Field(1950, ge=600, le=2800)
@@ -63,6 +65,10 @@ class AppConfig(BaseModel):
 def load_config() -> dict:
     try:
         raw = json.loads(PATH.read_text(encoding="utf-8-sig"))
+        if isinstance(raw, dict):
+            unknown = sorted(set(raw) - set(AppConfig.model_fields))
+            if unknown:
+                print(f"WARNING: unbekannte Konfigurationsschlüssel: {', '.join(unknown)}")
         return AppConfig.model_validate(raw).model_dump()
     except FileNotFoundError:
         return AppConfig().model_dump()

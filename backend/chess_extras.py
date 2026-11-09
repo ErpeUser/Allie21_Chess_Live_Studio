@@ -245,7 +245,18 @@ def position_facts(board: chess.Board) -> list[str]:
 def find_stockfish() -> str | None:
     env = os.environ.get('STOCKFISH_PATH', CONFIG['stockfish_path']).strip().strip('\"')
     if env:
-        return env if Path(env).is_file() else None
+        candidate = Path(env)
+        if not candidate.is_file():
+            return None
+        try:
+            resolved = candidate.resolve()
+            allowed_root = BASE.resolve()
+            if (os.environ.get('ALLIE_ALLOW_EXTERNAL_STOCKFISH') != '1'
+                    and allowed_root not in resolved.parents):
+                return None
+        except OSError:
+            return None
+        return str(candidate)
     for path in [BASE / 'stockfish.exe', *(BASE / 'engines').glob('stockfish*.exe')]:
         if path.is_file() and (os.name == 'nt' or os.access(path, os.X_OK)):
             return str(path)

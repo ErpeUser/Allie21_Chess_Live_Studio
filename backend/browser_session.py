@@ -6,6 +6,7 @@ fields, private APIs, game-type labels, or website-specific notation are needed.
 from __future__ import annotations
 
 import re
+import time
 from collections import OrderedDict
 from threading import RLock
 
@@ -16,18 +17,27 @@ SESSION_RE = re.compile(r"^[A-Za-z0-9._:-]{1,180}$")
 
 
 class BrowserTrackerPool:
-    def __init__(self, maximum: int = 16):
+    def __init__(self, maximum: int = 16, ttl_seconds: float = 1800.0):
         self.maximum = maximum
+        self.ttl_seconds = ttl_seconds
         self.lock = RLock()
         self.trackers: OrderedDict[str, PositionTracker] = OrderedDict()
+        self.last_seen: dict[str, float] = {}
 
     def _tracker(self, session_id: str) -> PositionTracker:
         if not SESSION_RE.fullmatch(session_id):
             raise ValueError("Ungültige lokale Brett-Sitzung")
+        now = time.monotonic()
+        for stale in tuple(self.last_seen):
+            if now - self.last_seen[stale] > self.ttl_seconds:
+                self.last_seen.pop(stale, None)
+                self.trackers.pop(stale, None)
         tracker = self.trackers.pop(session_id, None) or PositionTracker()
         self.trackers[session_id] = tracker
+        self.last_seen[session_id] = now
         while len(self.trackers) > self.maximum:
-            self.trackers.popitem(last=False)
+            old, _ = self.trackers.popitem(last=False)
+            self.last_seen.pop(old, None)
         return tracker
 
     @staticmethod
@@ -84,3 +94,4 @@ class BrowserTrackerPool:
     def reset(self, session_id: str) -> None:
         with self.lock:
             self.trackers.pop(session_id, None)
+            self.last_seen.pop(session_id, None)
