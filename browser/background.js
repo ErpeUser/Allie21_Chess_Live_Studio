@@ -32,7 +32,7 @@ async function pairingCode() {
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
-  if (!/^\\d{8}$/.test(String(data?.pairing_code || ''))) {
+  if (!/^\d{8}$/.test(String(data?.pairing_code || ''))) {
     throw new Error('Pairing-Code fehlt');
   }
   return String(data.pairing_code);
