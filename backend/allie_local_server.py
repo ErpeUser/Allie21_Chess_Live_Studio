@@ -590,7 +590,7 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                 candidate_moves = safe_aggressive_order(candidate_moves, sf)
 
     engine_moves = []
-    if selection == 'stockfish' and sf and sf.get('available'):
+    if selection in ('stockfish', 'both') and sf and sf.get('available'):
         engine_moves = [{**item, 'source': 'stockfish'} for item in sf.get('lines', [])[:2]]
     if fen_only and not allie_skip_reason:
         allie_skip_reason = ('Allie wartet auf die vollständige Partiegeschichte; '
@@ -687,3 +687,4 @@ def analyse_position(payload: dict[str, Any], model=None) -> dict[str, Any]:
         while len(_ANALYSIS_CACHE) > _ANALYSIS_CACHE_MAX:
             _ANALYSIS_CACHE.popitem(last=False)
     return result
+

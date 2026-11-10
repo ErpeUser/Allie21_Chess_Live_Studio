@@ -4,7 +4,9 @@
   const wake = document.getElementById('wakeWorker');
   const update = document.getElementById('checkUpdate');
   const auto = document.getElementById('autoReload');
-  document.getElementById('extensionVersion').textContent = chrome.runtime.getManifest().version;
+  const manifest = (typeof chrome.runtime.getManifest === 'function'
+    ? chrome.runtime.getManifest() : {}) || {};
+  document.getElementById('extensionVersion').textContent = manifest.version || 'unbekannt';
   function ask(type) {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('Worker antwortet nicht. Erweiterung neu laden.')), 6000);
@@ -40,3 +42,4 @@
   chrome.storage.local.get({autoReloadUnpacked: true}, values => {auto.checked = values.autoReloadUnpacked !== false;});
   auto.onchange = () => chrome.storage.local.set({autoReloadUnpacked: auto.checked});
 })();
+

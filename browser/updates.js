@@ -6,8 +6,12 @@ var AllieUpdates = (() => {
   async function checkOnce() {
     if (reloadRequested) return {state: 'reloading'};
     try {
-      const self = await chrome.management.getSelf();
-      if (self.installType !== 'development') return {state: 'store-managed'};
+      // The optional management permission is intentionally not required. A
+      // packaged store install normally has no allie-build.json stamp and will
+      // therefore stop at awaiting-deployment; unpacked deployments can still
+      // use the same update check without requesting a user-visible permission.
+      const self = await chrome.management?.getSelf?.();
+      if (self && self.installType !== 'development') return {state: 'store-managed'};
       const settings = await chrome.storage.local.get({autoReloadUnpacked: true});
       if (settings.autoReloadUnpacked === false) return {state: 'disabled'};
       const response = await fetch(chrome.runtime.getURL('manifest.json'), {cache: 'no-store'});
@@ -47,3 +51,4 @@ var AllieUpdates = (() => {
     return pending;
   }};
 })();
+

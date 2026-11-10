@@ -19,8 +19,8 @@ try {
         & (Join-Path $releaseVenv 'Scripts\python.exe') (Join-Path $root 'backend\download_stockfish.py')
         if ($LASTEXITCODE -ne 0) { throw 'Stockfish download failed.' }
     }
-    $expected = '45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0'
-    if ((Get-FileHash -LiteralPath $stockfish -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) {
+    $expectedStockfishSha256 = '45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0'
+    if ((Get-FileHash -LiteralPath $stockfish -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedStockfishSha256) {
         throw 'Stockfish SHA-256 mismatch.'
     }
     $bundle = Join-Path $DistPath 'Allie21 Chess Live Studio'
@@ -70,3 +70,4 @@ try {
     $lines | Set-Content -LiteralPath $manifest -Encoding utf8
     Write-Host "Build ready for smoke test: $bundle"
 } finally { Pop-Location }
+

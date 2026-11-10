@@ -101,6 +101,12 @@ test('native unavailable never switches the extension back to visible recommenda
   assert.ok(!app.elements.get('privateStatus').textContent.includes('Browsermodus aktiv'));
 });
 
+test('first run defaults to private mode until explicitly disabled', () => {
+  const app = loadBrowser({stored:{},privateStored:{}});
+  assert.equal(app.hooks.cfg.privateMode,true);
+  assert.equal(app.elements.get('privateMode').checked,true);
+});
+
 test('changing server port invalidates cached capability before the next request', async () => {
   const app = loadBrowser({response:async (url) => url.endsWith('/api/capability')
     ? {token:new URL(url).port,instance_id:new URL(url).port} : {ok:true}});
@@ -148,3 +154,4 @@ test('normal extension health polling does not disable another client native mod
   const app=loadBrowser();await app.hooks.syncPrivateMode();await settle();
   assert.equal(app.requests.some(x=>x.url.endsWith('/api/overlay/mode')),false);
 });
+

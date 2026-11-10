@@ -56,12 +56,17 @@ Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begr
 
 Die Browser-Erweiterung öffnet über ihre Optionen die Einstellung „Lokaler Port“ und speichert sie in `chrome.storage.local`; das Userscript bietet denselben Port im Allie-Menü. Beide müssen mit `ALLIE_PORT` des Servers übereinstimmen. Die Erweiterung verwendet für localhost bewusst eine Port-Wildcard und fragt den konfigurierten Port über den MV3-Service-Worker ab.
 
-## Wiederaufnahme- und Release-Status (09.11.2026)
+## Wiederaufnahme- und Release-Status (10.11.2026, main 13131c8)
 
 Der technische Checkpoint steht in `VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
+
+Die Anwendung/Userscript-Version ist 11.2.17. Die separat versionierte Edge-
+Erweiterung ist 11.2.18.0/11.2.18; `tools/check_versions.py` prüft diese beiden
+Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt.
 
 Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `release/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
 
 ## Grenzen
 
 Videoerkennung hängt von Größe, Design, Kompression und Sichtbarkeit des Brettes ab. Das Originalfenster wird nicht verändert; Pfeile erscheinen im Viewer oder im optionalen Overlay. Der geprüfte Allie-Python-Code liegt unter `backend/vendor/allie_model`; der Loader verwendet `trust_remote_code=False`, `local_files_only=True` und prüft das SHA-256-Manifest vor dem Start.
+

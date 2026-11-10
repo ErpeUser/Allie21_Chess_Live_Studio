@@ -142,7 +142,7 @@ $('install').href='/install';
 $('white').value=FORM_SETTINGS.white_elo;$('black').value=FORM_SETTINGS.black_elo;$('tc').value=FORM_SETTINGS.time_control;$('playerSide').value=FORM_SETTINGS.player_side;$('ocr').checked=FORM_SETTINGS.ocr_history;
 $('openingWhite').value=FORM_SETTINGS.opening_white||'grob';$('openingBlack').value=FORM_SETTINGS.opening_black||'englund';
 try{$('recommendationsToggle').checked=localStorage.getItem('allie-live-recommendations')!=='off'}catch{}
-try{$('privateOverlayToggle').checked=localStorage.getItem('allie-private-overlay')==='on'}catch{}
+try{$('privateOverlayToggle').checked=localStorage.getItem('allie-private-overlay')!=='off'}catch{$('privateOverlayToggle').checked=true}
  let stream=null,timer=null,busyId=null,lastState=null,tickId=0,geometryRefreshTimer=0,geometryRevision=0,privateOverlayAvailable=false;
  let privateOverlayStatus=null,privateOverlayPending=false,overlaySyncPromise=null,overlayOwnerToken='';
 let overlayPublishBusy=false,overlayPublishQueued=null,viewerFocused=true;
@@ -459,3 +459,4 @@ window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.sto
 </script>
 </body>
 </html>
+

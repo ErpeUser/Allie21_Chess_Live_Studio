@@ -395,6 +395,22 @@ class ChessTests(unittest.TestCase):
         self.assertFalse(result['opponent_moves'])
         self.assertTrue(result['allie_skip_reason'])
 
+    def test_fen_both_uses_stockfish_arrows_when_allie_has_no_history(self):
+        lines = [
+            {'san': 'e4', 'uci': 'e2e4', 'score': '+0.20', 'variation': '1. e4'},
+            {'san': 'd4', 'uci': 'd2d4', 'score': '+0.10', 'variation': '1. d4'},
+        ]
+        with patch('allie_local_server.stockfish_lines', return_value={
+            'available': True, 'engine': 'Stockfish', 'scope': 'position', 'lines': lines,
+        }):
+            result = analyse_position({
+                'fen': chess.STARTING_FEN, 'analysis_source': 'both',
+                'player_side': 'white',
+            })
+        self.assertEqual([move['uci'] for move in result['my_moves']], ['e2e4', 'd2d4'])
+        self.assertFalse(result['opponent_moves'])
+        self.assertTrue(result['allie_skip_reason'])
+
     def test_incomplete_history_can_analyse_but_cannot_publish_concrete_moves(self):
         with patch('allie_local_server.stockfish_lines', return_value={
             'available': True, 'engine': 'Stockfish', 'scope': 'position',
@@ -677,3 +693,4 @@ class ChessTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

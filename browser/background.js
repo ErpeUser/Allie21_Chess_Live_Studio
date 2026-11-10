@@ -108,8 +108,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   return false;
 });
-chrome.action.onClicked.addListener(() => {
-  chrome.runtime.openOptionsPage().catch(() => {});
+chrome.action?.onClicked?.addListener(() => {
+  const pending = chrome.runtime.openOptionsPage?.();
+  pending?.catch?.(() => {});
 });
 chrome.runtime.onInstalled.addListener(refreshBadge);
 chrome.runtime.onStartup.addListener(refreshBadge);
@@ -133,3 +134,4 @@ chrome.alarms.onAlarm.addListener(alarm => {
 ensureHealthAlarm();
 refreshBadge();
 AllieUpdates.check();
+

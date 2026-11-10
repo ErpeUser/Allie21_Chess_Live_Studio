@@ -83,7 +83,7 @@ def browser_page():
             # HTML with deterministic in-memory HTTP and capture boundaries.
             page.evaluate("""configuration => {
               window.fixtureConfig=configuration;
-              const storage=new Map(configuration.private_requested ? [['allie-private-overlay','on']] : []);
+              const storage=new Map([['allie-private-overlay', configuration.private_requested ? 'on' : 'off']]);
               Object.defineProperty(window,'localStorage',{configurable:true,value:{
                 getItem:key=>storage.get(key)??null,
                 setItem:(key,value)=>storage.set(key,String(value))
@@ -197,3 +197,4 @@ def test_manual_fen_uses_stockfish_not_allie_history_api(browser_page):
     assert analyses[0]["analysis_source"] == "stockfish"
     assert analyses[0]["fen"] == FEN
     assert not errors
+

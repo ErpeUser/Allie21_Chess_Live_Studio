@@ -8,6 +8,19 @@
 
 # Änderungen
 
+## Wartungsfixes für main (10.11.2026)
+
+- FEN-/`both`-Analysen zeigen Stockfish-Linien als sicheren Fallback, wenn Allie
+  ohne vollständige Partiegeschichte keine menschliche Zugfolge liefern kann;
+  vorhandene Allie-Reihenfolgen bleiben unverändert vorrangig.
+- MV3-Optionsseite und Service-Worker bleiben auch bei partiellen Browser-API-
+  Stubs stabil; der lokale Update-Check benötigt keine sichtbare `management`-
+  Berechtigung mehr und verwendet weiterhin den signierten Deployment-Stempel.
+- Privater Modus ist beim ersten Start standardmäßig aktiv und kann nur bewusst
+  über die lokale Einstellung ausgeschaltet werden.
+- Windows-Build verwendet den benannten Stockfish-Hashvertrag; Versions- und
+  Installer-Fixtures entsprechen der unabhängig versionierten Erweiterung.
+
 ## v11.2.16
 
 - Browser-/Viewer-Pfeile zeichnen bei Resize, Scroll, Zoom, CSS-Transform und visualViewport-Änderungen ohne neuen Analyseframe neu; SPA-Navigation retiert alte Sessions.
@@ -162,3 +175,4 @@
 - Rekonstruktion nicht beobachteter Eröffnungszüge entfernt. Allie erhält nur bestätigte vollständige Historien.
 - Overlay auf Chess.com/Lichess begrenzt, ereignisgesteuert gebündelt und gegen veraltete Antworten abgesichert.
 - Tests für Reihenfolge, Stoppen/Neustart, veraltete Antworten, fehlende Historie, HTTP-Grenzen und den neuen Startweg ergänzt.
+

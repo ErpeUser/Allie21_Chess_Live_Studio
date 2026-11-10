@@ -197,7 +197,7 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn("--with 'pystray==0.19.5'", script)
         self.assertIn("--with 'pillow==13.0.0'", script)
         self.assertIn("--hidden-import 'pystray._win32'", script)
-        self.assertIn('expectedStockfishSha256', script)
+        self.assertIn('$expectedStockfishSha256', script)
         self.assertIn("--onedir", script)
         self.assertNotIn("--onefile", script)
 
@@ -213,7 +213,7 @@ class StandaloneTests(unittest.TestCase):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
         self.assertIn('@version      11.2.17', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
-        self.assertEqual(manifest['version_name'], '11.2.17')
+        self.assertEqual(manifest['version_name'], manifest['version'].rsplit('.', 1)[0])
         self.assertIn('@match        https://www.chess.com/play/*', overlay)
         self.assertIn('@match        https://lichess.org/*', overlay)
         self.assertNotIn('@match        *://*/*', overlay)
@@ -383,3 +383,4 @@ class StandaloneTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

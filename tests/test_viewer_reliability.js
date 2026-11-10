@@ -32,7 +32,8 @@ function loadViewer({privateRequested = false, response} = {}) {
   for (const match of html.matchAll(/\bid="([^"]+)"/g)) {
     elements.set(match[1], new Element());
   }
-  const values = new Map(privateRequested ? [['allie-private-overlay', 'on']] : []);
+  const values = new Map(privateRequested === true ? [['allie-private-overlay', 'on']]
+    : privateRequested === false ? [['allie-private-overlay', 'off']] : []);
   const requests = [];
   const settings = {
     white_elo: 1800, black_elo: 2000, player_side: 'white', time_control: '300+0',
@@ -77,6 +78,12 @@ test('viewer initialises using real HTML IDs and wires capture and overlay contr
   assert.equal(typeof viewer.elements.get('start').onclick, 'function');
   assert.equal(typeof viewer.elements.get('privateOverlayToggle').onchange, 'function');
   await settle();
+});
+
+test('viewer first run defaults to private mode', async () => {
+  const viewer = loadViewer({privateRequested: null});
+  await settle();
+  assert.equal(viewer.elements.get('privateOverlayToggle').checked, true);
 });
 
 test('private failure preserves request and suppresses browser fallback', async () => {
@@ -132,3 +139,4 @@ test('an idle normal viewer does not switch off another client native overlay', 
   const viewer=loadViewer(); await settle();
   assert.equal(viewer.requests.some(x=>x.url==='/api/overlay/mode'),false);
 });
+

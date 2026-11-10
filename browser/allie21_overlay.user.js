@@ -33,8 +33,9 @@
  const loadPrivate=()=>readObject(PRIVATE_STORE);
  const stored=load();
  const privateStored=loadPrivate();
- const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:privateStored.privateMode===true},stored);
- cfg.privateMode=typeof privateStored.privateMode==='boolean'?privateStored.privateMode:stored.privateMode===true;
+ const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:true},stored);
+ cfg.privateMode=typeof privateStored.privateMode==='boolean'?privateStored.privateMode:
+   typeof stored.privateMode==='boolean'?stored.privateMode:true;
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -714,3 +715,4 @@
   }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','data-ply','data-piece','data-orientation']});
  setInterval(scheduleTick,5000);setInterval(syncPrivateMode,10000);window.addEventListener('beforeunload',()=>clearRemoteOverlay('stopped'));syncPrivateMode();tick();
 })();
+

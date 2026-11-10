@@ -112,3 +112,36 @@ Beim Fortsetzen zuerst diese Datei, `AGENT_TASK.md` und die referenzierten Agent
 - Browser-/Paket-Smokes erneut PASS: neun Node-Fixtures, `node --check` für Userscript/Service Worker, Manifest-JSON, `compileall`, Launcher-Check im Checkout und im portablen Ordner.
 - Onedir-Build nach Freigabe eines ausschließlich projektbezogenen Stockfish-/Release-Prozesslocks erneut erfolgreich: EXE 2.625.831 Byte, Distribution 1.180.055.514 Byte. Aktuelle Hashes stehen in `VERSIONEN.md`.
 - Verbleibende Grenzen unverändert: echte Edge-/Playwright-Zoom-/DPI-E2E, HWND-Affinitäts-Rücklesung sowie reale OBS/getDisplayMedia-/Discord-/Zoom-/Teams-Capture-Proben sind in dieser Umgebung nicht ausgeführt; diese Ziele bleiben UNTESTED/BLOCKED und werden nicht als PASS behauptet.
+
+## Checkpoint 10.11.2026 — main 13131c8, gezielte Abschlusskorrekturen
+
+- Die historische v11.2.16-/G10-Aussage oben bleibt als Übergabe erhalten; sie
+  bezieht sich nicht auf den aktuellen `main`-Stand `13131c8`, der bislang noch
+  keinen neuen Tag/Release besitzt.
+- Behoben: `analysis_source=both` mit FEN oder leerer Allie-Kandidatenliste
+  übernimmt verfügbare Stockfish-Linien in `my_moves`/`opponent_moves`, ohne
+  eine vorhandene Allie-Reihenfolge zu ersetzen. Regression in
+  `tests/test_chess.py` rot und anschließend grün ausgeführt.
+- Behoben: MV3-Worker-/Options-Sandboxen ohne `chrome.action`,
+  `runtime.getManifest()` oder optionale `management`-Berechtigung brechen nicht
+  mehr; der Update-Check verwendet bei fehlender Management-API den lokalen
+  Deployment-Stempel. Die 58 Node-Fixtures einschließlich der neuen Fälle sind
+  grün.
+- Behoben: Userscript und Viewer starten standardmäßig im privaten Modus;
+  `off` bleibt eine explizite lokale Einstellung. Browser-/Viewer-Erststart-
+  Regressionen sind abgedeckt.
+- Behoben: Build-Skript verwendet den erwarteten benannten
+  `$expectedStockfishSha256`-Vertrag. Installer-/Versions-Fixtures wurden auf
+  die aktuelle unabhängige Edge-Version 11.2.18 aktualisiert; App/Userscript
+  bleiben 11.2.17.
+- Dokumentation: `VERSIONEN.md`, `README_DE.md` und `CHANGELOG.md` trennen den
+  aktuellen `main`-Prüfstand vom historischen v11.2.16-Release.
+- Letzte gezielte Befehle: `.venv2/bin/python -m unittest ...test_chess...` für
+  den FEN-Fallback PASS; `node --test tests/*.js` 58/58 PASS; `python
+  tools/check_versions.py` PASS. Der vollständige Python-Lauf ist noch nicht
+  als PASS zu melden, solange die Projektumgebung nicht vollständig mit dem
+  gelockten Torch-/Playwright-Stack installiert ist.
+- Offene externe Nachweise: echter Windows-Onedir-Build/Fresh-Path, Edge-Reload,
+  HWND-/OBS-/getDisplayMedia-Capture und GitHub-Actions-Nachlauf am neuen
+  Commit. Keine EXE oder Release-URL wird für diesen Arbeitsstand behauptet.
+

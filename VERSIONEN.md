@@ -1,6 +1,15 @@
 # Reproduzierbare Versionen und Prüfstand
 
-## Update 11.2.17
+## Update 11.2.17 / Edge-Erweiterung 11.2.18
+
+Der aktuelle `main`-Stand trennt die WebExtension-Version bewusst von der
+Anwendungs-/Userscript-Version. `pyproject.toml` und Userscript bleiben bei
+11.2.17; `browser/manifest.json` ist 11.2.18.0 mit `version_name` 11.2.18.
+Die feste Erweiterungs-ID bleibt unverändert.
+
+Der nachfolgende Wartungsstand basiert auf Commit `13131c8` vom 10. November
+2026. Historische Angaben zu `v11.2.16` beziehen sich auf den früheren Branch
+`codex/allie-first-exe` und sind kein Nachweis für diesen `main`-Stand.
 
 - Opening-Einstellungen werden in Viewer und Browser-GUI normalisiert, persistent gespeichert, an den Server gesendet und als angewandte Repertoire-Auswahl zurückgemeldet.
 - Viewer-Einstellungen überleben Neustarts; der Browser-Port kann in der Erweiterungs-Optionsseite oder im Userscript gesetzt werden und muss mit `ALLIE_PORT` übereinstimmen.
@@ -74,3 +83,4 @@ Die folgenden Werte sind historische Messungen und keine aktuelle Release-Freiga
 - Viewer: lokaler Uvicorn-Start, sichtbarer v11-Status, Spielerfarbe, Empfehlungsschalter und echte PGN-Allie-Ausgabe im Browser geprüft.
 
 Die Videoerkennung wurde bis zur echten Initialisierung und über den Frame-/Stabilitäts-Integrationstest geprüft. Die direkte entpackte Edge-Erweiterung wurde auf Chess.com sichtbar geladen; ihre lokale CORS-Verbindung und der Stockfish-Fallback wurden zusätzlich per echtem HTTP-Aufruf geprüft.
+
