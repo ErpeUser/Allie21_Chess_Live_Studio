@@ -51,7 +51,8 @@ class VisionOCRTests(unittest.TestCase):
         vision.ocr_unavailable = False
         vision.last_ocr = -100
         vision.ocr = _OCR('left')
-        with patch.dict(sys.modules, {'numpy': types.SimpleNamespace(asarray=lambda image: image)}):
+        fake_numpy = types.SimpleNamespace(asarray=lambda image: image)
+        with patch.dict(sys.modules, {'numpy': fake_numpy}):
             actual = vision.read_notation(_Frame(), (1100, 120, 640, 640))
         self.assertEqual(
             actual,
@@ -63,7 +64,8 @@ class VisionOCRTests(unittest.TestCase):
         vision.ocr_unavailable = False
         vision.last_ocr = -100
         vision.ocr = _OCR('right')
-        with patch.dict(sys.modules, {'numpy': types.SimpleNamespace(asarray=lambda image: image)}):
+        fake_numpy = types.SimpleNamespace(asarray=lambda image: image)
+        with patch.dict(sys.modules, {'numpy': fake_numpy}):
             actual = vision.read_notation(_Frame(), (120, 120, 640, 640))
         self.assertEqual(
             actual,
