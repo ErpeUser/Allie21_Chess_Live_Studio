@@ -18,6 +18,8 @@ for (const needle of [
   "(!cfg.privateMode&&document.hasFocus?.()===false)",
   "if(document.hidden||!cfg.privateMode)clearRemoteOverlay",
   "if(cfg.privateMode&&!overlayOwnerToken)",
+  "if(mode!=='private'&&!overlayOwnerToken)return Promise.resolve(null)",
+  "if(!cfg.privateMode||!overlayOwnerToken)return",
 ]) {
   if (!source.includes(needle)) throw new Error(`private overlay plumbing missing: ${needle}`);
 }
