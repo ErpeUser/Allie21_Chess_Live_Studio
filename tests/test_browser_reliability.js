@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const {test} = require('node:test');
 const source = fs.readFileSync(path.join(__dirname, '..', 'browser', 'allie21_overlay.user.js'), 'utf8');
 
-function loadBrowser({stored = {}, privateStored = {privateMode: false}, response, chrome} = {}) {
+function loadBrowser({stored = {}, privateStored = {privateMode: false}, response, chrome, hostname = 'lichess.org', pathname = '/analysis'} = {}) {
   const values = new Map([
     ['allie21.auto.v11', JSON.stringify(stored)],
     ['allie21.private.v1', JSON.stringify(privateStored)],
@@ -40,7 +40,7 @@ function loadBrowser({stored = {}, privateStored = {privateMode: false}, respons
   const window = {innerWidth: 1400, innerHeight: 900, scrollX: 0, scrollY: 0, addEventListener() {}, devicePixelRatio: 1};
   window.top = window.self = window;
   const context = {
-    window, location: {hostname: 'lichess.org', pathname: '/analysis', href: 'https://lichess.org/analysis'},
+    window, location: {hostname, pathname, href: `https://${hostname}${pathname}`},
     history: {}, document: {hidden: false, hasFocus: () => true, documentElement: new Element(), body: new Element(),
       getElementById: () => null, querySelectorAll: () => [], createElement: () => new Element(), createElementNS: () => new Element(), addEventListener() {}},
     localStorage: {getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value)},
@@ -52,13 +52,14 @@ function loadBrowser({stored = {}, privateStored = {privateMode: false}, respons
       requests.push({url, options});
       const data = response ? await response(url, options) : url.endsWith('/api/capability')
         ? {token: 'token', instance_id: 'instance'} : {available: false, capture_excluded: false, mode: 'private', state: 'unsupported'};
+      if (data && typeof data === 'object' && typeof data.json === 'function' && 'status' in data) return data;
       return {ok: true, status: 200, json: async () => data};
     },
   };
   window.getComputedStyle = context.getComputedStyle;
   const marker = '\n installNavigationLifecycle();';
   assert.ok(source.includes(marker));
-  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,placePanel,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,el,wrapper,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
+  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,placePanel,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,el,wrapper,readBoardSnapshot,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
   vm.createContext(context);
   vm.runInContext(code, context, {filename: 'allie21_overlay.user.js'});
   return {hooks: context.hooks, context, values, elements, requests, timers, Element};
@@ -107,6 +108,29 @@ test('first run defaults to private mode until explicitly disabled', () => {
   assert.equal(app.elements.get('privateMode').checked,true);
 });
 
+test('current Lichess game URLs mount the overlay before board detection', () => {
+  const app = loadBrowser({pathname: '/game/gW1oBGF2OQyM'});
+  assert.ok(app.context.document.documentElement.children.length >= 2);
+});
+
+test('piece detection can read a Chess.com board inside a shadow root', () => {
+  const app = loadBrowser({hostname: 'www.chess.com', pathname: '/play/computer'});
+  const board = new app.Element();
+  board.rect = {left: 300, top: 100, right: 940, bottom: 740, width: 640, height: 640};
+  const shadow = new app.Element();
+  const piece = (className, left, top) => {
+    const item = new app.Element(); item.className = className;
+    item.rect = {left, top, right: left + 60, bottom: top + 60, width: 60, height: 60};
+    return item;
+  };
+  const pieces = [piece('white king', 660, 680), piece('black king', 660, 100), piece('white rook', 300, 680), piece('black rook', 300, 100)];
+  shadow.querySelectorAll = selector => selector === '*' ? pieces : pieces;
+  board.shadowRoot = shadow;
+  app.context.document.querySelectorAll = selector => selector.includes('wc-chess-board') ? [board] : [];
+  const snapshot = app.hooks.readBoardSnapshot();
+  assert.equal(snapshot?.pieces, 4);
+});
+
 test('changing server port invalidates cached capability before the next request', async () => {
   const app = loadBrowser({response:async (url) => url.endsWith('/api/capability')
     ? {token:new URL(url).port,instance_id:new URL(url).port} : {ok:true}});
@@ -117,6 +141,17 @@ test('changing server port invalidates cached capability before the next request
   const last = app.requests.filter(x=>x.url.endsWith('/test')).at(-1);
   assert.equal(last.url,'http://127.0.0.1:18765/test');
   assert.equal(last.options.headers.Authorization,'Bearer 18765');
+});
+
+test('pairing rejection is surfaced once instead of being mislabeled as a server outage', async () => {
+  const app = loadBrowser({response: async url => url.endsWith('/api/capability')
+    ? {ok: false, status: 429, json: async () => ({detail: 'Zu viele Pairing-Versuche'})}
+    : {ok: true, status: 200, json: async () => ({})}});
+  await assert.rejects(app.hooks.postJson('/test', {}).promise, error => {
+    assert.equal(error.code, 'pairing');
+    assert.match(error.message, /Zu viele Pairing-Versuche/);
+    return true;
+  });
 });
 
 test('extension port discovery has a bounded fallback if the worker never answers', async () => {
@@ -154,4 +189,3 @@ test('normal extension health polling does not disable another client native mod
   const app=loadBrowser();await app.hooks.syncPrivateMode();await settle();
   assert.equal(app.requests.some(x=>x.url.endsWith('/api/overlay/mode')),false);
 });
-

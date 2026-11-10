@@ -23,7 +23,7 @@
  const host=location.hostname.toLowerCase(),path=location.pathname;
  const supportedHost=host==='lichess.org'||host==='chess.com'||host==='www.chess.com';
  const supportedPath=host==='lichess.org'
-   ? /^(?:\/[A-Za-z0-9]{8}(?:\/|$)|\/(?:analysis|study|broadcast|tv)(?:\/|$))/.test(path)
+   ? /^(?:\/game\/[A-Za-z0-9]{8,16}(?:\/|$)|\/[A-Za-z0-9]{8}(?:\/|$)|\/(?:analysis|study|broadcast|tv)(?:\/|$))/.test(path)
    : /^(?:\/(?:play|game|analysis|watch|broadcast)(?:\/|$))/.test(path);
  if(!supportedHost||!supportedPath)return;
  const STORE='allie21.auto.v11';
@@ -203,9 +203,18 @@
   }
   return color&&type?color+type:'';
  }
+ function boardQueryAll(board,selector){
+  const roots=[],seen=new Set(),addRoot=root=>{if(root&&!seen.has(root)){seen.add(root);roots.push(root)}};
+  addRoot(board);addRoot(board?.shadowRoot);
+  for(let index=0;index<roots.length;index++){
+   const root=roots[index];
+   for(const element of Array.from(root.querySelectorAll?.('*')||[]))addRoot(element.shadowRoot);
+  }
+  return Array.from(new Set(roots.flatMap(root=>Array.from(root.querySelectorAll?.(selector)||[]))));
+ }
  function pieceNodes(board){
   const selector='piece,.piece,[data-piece],[data-figurine],img[alt*="pawn" i],img[alt*="knight" i],img[alt*="bishop" i],img[alt*="rook" i],img[alt*="queen" i],img[alt*="king" i],[aria-label*="pawn" i],[aria-label*="knight" i],[aria-label*="bishop" i],[aria-label*="rook" i],[aria-label*="queen" i],[aria-label*="king" i]';
-  return Array.from(new Set(board.querySelectorAll(selector))).filter(node=>pieceCode(node)&&!isTransientPieceNode(node));
+  return boardQueryAll(board,selector).filter(node=>pieceCode(node)&&!isTransientPieceNode(node));
  }
  function boardOrientation(board,pieces){
   if(cfg.orientation!=='auto')return cfg.orientation;
@@ -445,7 +454,7 @@
   el('results').innerHTML=html;
   if(messages.length&&!panelDismissed){el('panel').classList.add('open');el('bubble').style.display='none';placePanel()}
  }
- let capabilityToken='',capabilityInstance='',capabilityPromise=null,pairingCode='',pairingPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null,serviceEpoch=0;
+ let capabilityToken='',capabilityInstance='',capabilityPromise=null,capabilityRetryAfter=0,pairingCode='',pairingPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null,serviceEpoch=0;
  function serviceUrl(path){return `http://127.0.0.1:${servicePort}${path}`}
  function resetCapability(){serviceEpoch++;capabilityToken='';capabilityInstance='';capabilityPromise=null;pairingCode='';pairingPromise=null;}
  function setServicePort(value){const port=normalizePort(value);if(port!==servicePort){servicePort=port;resetCapability()}return port;}
@@ -481,10 +490,11 @@
  function ensureCapability(){
   return ensureServicePort().then(()=>{
    if(capabilityToken)return capabilityToken;
+   if(Date.now()<capabilityRetryAfter){const error=Error('Browser-Pairing erforderlich. Edge-Erweiterung laden und Tab neu laden.');error.code='pairing';error.status=401;throw error}
    if(capabilityPromise)return capabilityPromise;
    const epoch=serviceEpoch,controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
    const pending=ensurePairingCode().then(pairing=>fetch(serviceUrl('/api/capability'),{headers:{'X-Allie-Overlay':'1',...(pairing?{'X-Allie-Pairing':pairing}:{})},cache:'no-store',signal:controller.signal}))
-    .then(async response=>{const data=await response.json();if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');if(!response.ok||!data.token||!data.instance_id)throw Error(data.error||'Capability fehlt');capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken})
+    .then(async response=>{const data=await response.json();if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');if(!response.ok||!data.token||!data.instance_id){const error=Error(data.error||data.detail||`HTTP ${response.status}`);if(response.status===401||response.status===429){error.code='pairing';error.status=response.status;capabilityRetryAfter=Date.now()+30000}throw error}capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken})
     .finally(()=>{clearTimeout(timer);if(capabilityPromise===pending)capabilityPromise=null});
    capabilityPromise=pending;
    return pending;
@@ -586,6 +596,11 @@
      if(serial!==analysisSerial)return;
      activeRequest=null;
      const message=typeof error==='string'?error:(error?.message||String(error));
+     if(error?.code==='pairing'){
+       pending=false;busyRetries=0;retryAfter=Date.now()+30000;
+       if(current())el('status').textContent=message;
+       return;
+     }
      if(error?.status===429){
        // The server is working on another request; Stockfish would hit the same gate.
        pending=false;
@@ -715,4 +730,3 @@
   }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','data-ply','data-piece','data-orientation']});
  setInterval(scheduleTick,5000);setInterval(syncPrivateMode,10000);window.addEventListener('beforeunload',()=>clearRemoteOverlay('stopped'));syncPrivateMode();tick();
 })();
-
