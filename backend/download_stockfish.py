@@ -1,18 +1,48 @@
 #!/usr/bin/env python3
-"""Download and verify the official Stockfish 19 Windows release."""
+"""Stream and atomically install the hash-pinned Stockfish Windows release."""
 from __future__ import annotations
 
 import hashlib
-import io
 import os
+import sys
+import tempfile
 import zipfile
 from pathlib import Path
+from typing import BinaryIO
 from urllib.request import Request, urlopen
 
 URL = 'https://github.com/official-stockfish/Stockfish/releases/download/sf_19/stockfish-windows-x86-64-universal.zip'
 EXPECTED_SHA256 = '3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7'
 EXPECTED_EXE_SHA256 = '45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0'
 DEST = Path(__file__).resolve().parent / 'engines'
+MAX_ARCHIVE_SIZE = 125_000_000
+MAX_EXE_SIZE = 175_000_000
+CHUNK_SIZE = 1024 * 1024
+
+
+def verified_executable(path: Path) -> bool:
+    """Check the actual binary, without starting it or accessing the network."""
+    try:
+        if not path.is_file() or not 0 < path.stat().st_size <= MAX_EXE_SIZE:
+            return False
+        with path.open('rb') as source:
+            return hashlib.file_digest(source, 'sha256').hexdigest() == EXPECTED_EXE_SHA256
+    except OSError:
+        return False
+
+
+def _copy_verified(source: BinaryIO, destination: BinaryIO, limit: int, expected: str) -> int:
+    digest = hashlib.sha256()
+    total = 0
+    while chunk := source.read(CHUNK_SIZE):
+        total += len(chunk)
+        if total > limit:
+            raise RuntimeError('Stockfish file exceeds the allowed size')
+        digest.update(chunk)
+        destination.write(chunk)
+    if total == 0 or digest.hexdigest() != expected:
+        raise RuntimeError('Stockfish SHA-256 verification failed')
+    return total
 
 
 def download() -> bool:
@@ -21,41 +51,55 @@ def download() -> bool:
         return False
     DEST.mkdir(exist_ok=True, parents=True)
     target = DEST / 'stockfish.exe'
-    if target.is_file():
-        digest = hashlib.sha256()
-        with target.open('rb') as source:
-            for chunk in iter(lambda: source.read(1024 * 1024), b''):
-                digest.update(chunk)
-        if digest.hexdigest().lower() == EXPECTED_EXE_SHA256:
-            print('Stockfish ist verifiziert:', target)
-            return True
-        print('Vorhandene Stockfish-EXE hat einen falschen SHA-256; sie wird ersetzt.')
-    # Never trust an existing executable based only on size. Re-download the
-    # signed-off archive when the bundled executable is missing or fails its
-    # exact hash check.
-    print('Downloading official Stockfish 19 (around 81 MB)...')
-    with urlopen(Request(URL, headers={'User-Agent': 'Allie21ChessLabEasy/7.0'}), timeout=120) as response:
-        data = response.read(125_000_000)
-    if len(data) >= 125_000_000:
-        raise RuntimeError('Download unexpectedly large')
-    if hashlib.sha256(data).hexdigest().lower() != EXPECTED_SHA256:
-        raise RuntimeError('Stockfish archive failed official SHA256 verification')
-    z = zipfile.ZipFile(io.BytesIO(data))
-    exe_files = [f for f in z.infolist() if f.filename.lower().endswith('.exe')
-                 and 'stockfish' in f.filename.lower() and not f.is_dir()]
-    if not exe_files:
-        raise RuntimeError('No Stockfish executable found in official archive')
-    chosen = max(exe_files, key=lambda x: x.file_size)
-    if chosen.file_size > 175_000_000:
-        raise RuntimeError('Executable unexpectedly large')
-    temporary = target.with_suffix('.download')
-    with z.open(chosen) as source, temporary.open('wb') as output:
-        while chunk := source.read(1024 * 1024):
-            output.write(chunk)
-    temporary.replace(target)
-    print('Installed:', target, f'({chosen.file_size:,} bytes)')
+    if verified_executable(target):
+        print('Stockfish ist verifiziert:', target)
+        return True
+    print('Pruefe und installiere die offizielle Stockfish-19-Datei ...')
+    request = Request(URL, headers={'User-Agent': 'Allie21ChessLiveStudio/Stockfish19'})
+    # Disk-backed archive avoids retaining the entire download in RAM. The old
+    # executable is untouched until both independent digest checks succeeded.
+    with tempfile.TemporaryFile(dir=DEST) as archive_file:
+        with urlopen(request, timeout=120) as response:
+            _copy_verified(response, archive_file, MAX_ARCHIVE_SIZE, EXPECTED_SHA256)
+        archive_file.seek(0)
+        with zipfile.ZipFile(archive_file) as archive:
+            candidates = [entry for entry in archive.infolist()
+                          if not entry.is_dir() and entry.filename.lower().endswith('.exe')
+                          and 'stockfish' in entry.filename.lower()]
+            if len(candidates) != 1:
+                raise RuntimeError('Expected exactly one Stockfish executable in the pinned archive')
+            entry = candidates[0]
+            if not 0 < entry.file_size <= MAX_EXE_SIZE:
+                raise RuntimeError('Stockfish executable size is invalid')
+            temporary = None
+            try:
+                # Unique name also prevents concurrent installers from writing
+                # the same partial file. Close it before replace on Windows.
+                with tempfile.NamedTemporaryFile(
+                    dir=DEST, prefix='.stockfish-', suffix='.part', delete=False
+                ) as output:
+                    temporary = target.with_name(os.path.basename(output.name))
+                    with archive.open(entry) as source:
+                        size = _copy_verified(source, output, MAX_EXE_SIZE, EXPECTED_EXE_SHA256)
+                    if size != entry.file_size:
+                        raise RuntimeError('Stockfish executable was truncated')
+                    output.flush()
+                    os.fsync(output.fileno())
+                temporary.replace(target)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
+    print('Installed and verified:', target)
     return True
 
 
+def main() -> int:
+    try:
+        return 0 if download() else 1
+    except (OSError, RuntimeError, zipfile.BadZipFile) as exc:
+        print(f'Stockfish-Installation fehlgeschlagen: {exc}', file=sys.stderr)
+        return 1
+
+
 if __name__ == '__main__':
-    download()
+    raise SystemExit(main())

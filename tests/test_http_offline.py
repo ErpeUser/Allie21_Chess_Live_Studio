@@ -186,7 +186,8 @@ class HTTPBoundaryTests(unittest.TestCase):
         self.assertEqual(self.call('GET', '/api/state')[0], 200)
 
     def test_readyz_reports_model_phase_without_internal_details(self):
-        with patch.object(app.allie, '_model', None):
+        with (patch.object(app.allie, '_model', None),
+              patch.object(app, 'MODEL_STATE', 'loading')):
             response = app.readyz()
         self.assertEqual(response.status_code, 503)
         payload = json.loads(response.body)
@@ -201,6 +202,23 @@ class HTTPBoundaryTests(unittest.TestCase):
         ):
             payload = app.readyz()
         self.assertEqual(payload, {'ready': True, 'phase': 'ready', 'error_id': None})
+
+    def test_engine_specific_readiness_is_exposed_over_http(self):
+        with (patch.object(app.allie, '_model', None),
+              patch.object(app, 'MODEL_STATE', 'failed'),
+              patch.object(app, 'find_stockfish', return_value='stockfish')):
+            status, data = self.call('GET', '/readyz?source=stockfish')
+            self.assertEqual(status, 200, data)
+            self.assertTrue(json.loads(data)['ready'])
+            status, data = self.call('GET', '/readyz?source=allie')
+            self.assertEqual(status, 503, data)
+            self.assertEqual(json.loads(data)['phase'], 'model_failed')
+
+    def test_fen_route_remains_available_during_model_loading(self):
+        with patch.object(app, 'MODEL_STATE', 'loading'):
+            status, data = self.call('POST', '/analyze', payload={
+                'fen': '8/8/8/3k4/8/8/4K3/8 w - - 0 1', 'analysis_source': 'both'})
+        self.assertEqual(status, 200, data)
 
     def test_analysis_accepts_only_known_play_styles(self):
         self.assertEqual(self.call('POST', '/analyze', payload={

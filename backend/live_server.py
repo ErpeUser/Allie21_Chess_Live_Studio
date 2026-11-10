@@ -9,10 +9,10 @@ import threading
 import time
 import uuid
 import webbrowser
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal
 from urllib.error import URLError
-from urllib.parse import urlparse
 from urllib.request import Request as URLRequest
 from urllib.request import urlopen
 
@@ -26,8 +26,8 @@ from config import APP_VERSION, CONFIG, MODEL_REVISION, parse_time_control
 from contracts import VisualUpdateRequest
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, Response
+from http_boundary import LocalBoundaryMiddleware
 from live_session import MAX_JPEG, LiveSession
 from native_overlay import PrivateOverlayController
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -38,8 +38,8 @@ from security import (
     SCHEMA_VERSION,
     RequestRateLimiter,
     capability_payload,
-    require_capability,
 )
+from service_status import readiness_status
 from starlette.concurrency import run_in_threadpool
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,23 +52,10 @@ ANALYZE_GATE = threading.Semaphore(1)
 FRAME_GATE = threading.Semaphore(1)
 MODEL_STATE_LOCK = threading.RLock()
 MODEL_STATE = 'not_started'
-ALLOWED_WEB_ORIGINS = frozenset({
-    'https://chess.com', 'https://www.chess.com',
-    'https://lichess.org', 'https://www.lichess.org',
-})
-ALLOWED_EXTENSION_ORIGINS = frozenset({
-    'chrome-extension://omboihgfgofgmidefcpkihgglhkiielo',
-})
 _CHESSCOM_HISTORY_CACHE: dict[str, tuple[float, str]] = {}
 _CHESSCOM_HISTORY_LOCK = threading.RLock()
 app = FastAPI(title="Allie21 Live Studio", docs_url=None, redoc_url=None, openapi_url=None)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex=r"^https://(?:www\.)?chess\.com$|^https://(?:www\.)?lichess\.org$|^chrome-extension://omboihgfgofgmidefcpkihgglhkiielo$",
-    allow_methods=['GET', 'POST'],
-    allow_headers=['Content-Type', 'Authorization', 'X-Allie-Overlay', 'X-Allie-Instance'],
-    max_age=3600,
-)
+app.add_middleware(LocalBoundaryMiddleware, max_json=MAX_JSON, max_frame=MAX_JPEG)
 
 
 def _preload_model() -> None:
@@ -207,8 +194,8 @@ def _fetch_chesscom_tcn(game_id: str) -> str:
     return value
 
 
-def error(status: int, message: str) -> JSONResponse:
-    return JSONResponse({'error': message[:240]}, status_code=status)
+def error(status: int, message: str, headers: Mapping[str, str] | None = None) -> JSONResponse:
+    return JSONResponse({'error': message[:240]}, status_code=status, headers=headers)
 
 
 @app.exception_handler(RequestValidationError)
@@ -220,79 +207,8 @@ async def validation_error(_request: Request, exc: RequestValidationError):
 
 @app.exception_handler(HTTPException)
 async def http_error(_request: Request, exc: HTTPException):
-    return error(exc.status_code, str(exc.detail))
+    return error(exc.status_code, str(exc.detail), headers=exc.headers)
 
-
-@app.middleware('http')
-async def local_boundary(request: Request, call_next):
-    host = request.headers.get('host', '').split(':', 1)[0].lower()
-    if host not in {'127.0.0.1', 'localhost', 'testserver'}:
-        return error(403, 'Host not allowed')
-    origin = request.headers.get('origin', '')
-    if origin:
-        parsed = urlparse(origin)
-        local = parsed.scheme in {'http', 'https'} and parsed.hostname in {'127.0.0.1', 'localhost'}
-        website = origin in ALLOWED_WEB_ORIGINS
-        extension = origin in ALLOWED_EXTENSION_ORIGINS
-        preflight = (request.method == 'OPTIONS'
-                     and 'x-allie-overlay' in request.headers.get('access-control-request-headers', '').lower())
-        overlay = (website or extension) and (
-            request.headers.get('x-allie-overlay') == '1' or preflight
-        )
-        if not (local or overlay):
-            return error(403, 'Local host or origin invalid')
-    if request.method != 'OPTIONS' and request.url.path in {
-        '/analyze', '/api/start', '/api/stop', '/api/frame', '/api/history',
-        '/api/recommendations', '/api/browser-position',
-        '/api/browser-position/reset', '/api/overlay/mode',
-        '/api/overlay/update', '/api/overlay/clear',
-    }:
-        try:
-            require_capability(request)
-        except HTTPException as exc:
-            return error(exc.status_code, str(exc.detail))
-    if request.method == 'POST':
-        maximum = MAX_JPEG if request.url.path == '/api/frame' else MAX_JSON
-        raw_length = request.headers.get('content-length')
-        if raw_length is not None:
-            try:
-                length = int(raw_length)
-            except ValueError:
-                return error(413, 'Request length invalid')
-            # An explicitly supplied zero length is still rejected for
-            # endpoints that require a body.  Requests using chunked transfer
-            # or HTTP/2 legitimately omit Content-Length and are bounded by
-            # the stream cap below.
-            body_required = request.url.path in {
-                '/analyze', '/api/start', '/api/frame', '/api/history',
-                '/api/recommendations', '/api/browser-position',
-                '/api/browser-position/reset', '/api/overlay/mode',
-                '/api/overlay/update',
-            }
-            if length < 0 or length > maximum or (length == 0 and body_required):
-                return error(413, 'Request too large or empty')
-        else:
-            # Chunked/HTTP2 requests have no Content-Length, so enforce the
-            # same bound while consuming the stream.  Cache the bounded body
-            # on Starlette's request object so FastAPI's downstream parser and
-            # the frame endpoint can still read it normally.
-            chunks: list[bytes] = []
-            total = 0
-            async for chunk in request.stream():
-                total += len(chunk)
-                if total > maximum:
-                    return error(413, 'Request too large')
-                chunks.append(chunk)
-            request._body = b''.join(chunks)  # type: ignore[attr-defined]
-    response = await call_next(request)
-    response.headers.update({
-        'Cache-Control': 'no-store',
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'Referrer-Policy': 'no-referrer',
-        'Content-Security-Policy': "default-src 'self' 'unsafe-inline' blob: data:; connect-src 'self'; media-src blob:; object-src 'none'; frame-ancestors 'none'",
-    })
-    return response
 
 
 def run(action, unavailable='Analyse nicht verfügbar'):
@@ -339,9 +255,10 @@ def health():
     stockfish_available = bool(find_stockfish())
     with MODEL_STATE_LOCK:
         model_phase = MODEL_STATE
-    return {'alive': True, 'ready': model_loaded and stockfish_available,
-            'phase': 'ready' if model_loaded and stockfish_available else
-            ('model_loading' if not model_loaded else 'stockfish_unavailable'),
+    report = readiness_status(model_loaded=model_loaded,
+                              stockfish_available=stockfish_available,
+                              model_phase=model_phase)
+    return {'alive': True, **report,
             'model': MODEL_NAME, 'model_revision': MODEL_REVISION,
             'app_version': APP_VERSION, 'model_phase': model_phase,
             'instance_id': INSTANCE_ID, 'api_version': API_VERSION,
@@ -352,23 +269,19 @@ def health():
 
 
 @app.get('/readyz')
-def readyz():
-    """Report whether the local analysis service can accept work.
-
-    Readiness failures intentionally expose only a coarse phase and an opaque
-    error identifier.  Internal exception messages (which may contain paths,
-    model details, or credentials) never cross the HTTP boundary.
-    """
+def readyz(source: Literal['allie', 'stockfish', 'both'] = 'both'):
+    """Report readiness for one engine or the default combined service."""
     try:
-        if allie._model is None:
-            return JSONResponse(
-                {'ready': False, 'phase': 'model_loading',
-                 'error_id': 'model_not_loaded'}, status_code=503)
-        if not find_stockfish():
-            return JSONResponse(
-                {'ready': False, 'phase': 'stockfish_unavailable',
-                 'error_id': 'stockfish_unavailable'}, status_code=503)
-        return {'ready': True, 'phase': 'ready', 'error_id': None}
+        with MODEL_STATE_LOCK:
+            model_phase = MODEL_STATE
+        report = readiness_status(
+            model_loaded=allie._model is not None,
+            stockfish_available=bool(find_stockfish()),
+            model_phase=model_phase, source=source,
+        )
+        if not report['ready']:
+            return JSONResponse(report, status_code=503)
+        return report
     except Exception:  # noqa: BLE001 - readiness must not leak internals
         error_id = f'readyz-{uuid.uuid4().hex[:12]}'
         print(f'readyz failed ({error_id})', flush=True)
@@ -392,16 +305,19 @@ def state():
 
 @app.post('/analyze')
 def analyze(request: AnalysisRequest):
+    if request.fen.strip() and request.pgn.strip():
+        raise HTTPException(400, 'Bitte entweder PGN oder FEN angeben, nicht beide gleichzeitig.')
+    needs_model = request.analysis_source in ('allie', 'both') and not request.fen.strip()
     with MODEL_STATE_LOCK:
         model_phase = MODEL_STATE
-    if request.analysis_source in ('allie', 'both') and model_phase == 'loading':
+    if needs_model and model_phase == 'loading':
         response = JSONResponse(
             {'error': 'Allie-Modell wird noch geladen', 'phase': 'model_loading'},
             status_code=503,
             headers={'Retry-After': '5'},
         )
         return response
-    if request.analysis_source in ('allie', 'both') and model_phase == 'failed' and not allie._model:
+    if needs_model and model_phase == 'failed' and allie._model is None:
         response = JSONResponse(
             {'error': 'Allie-Modell konnte nicht geladen werden', 'phase': 'model_failed'},
             status_code=503,
@@ -409,7 +325,7 @@ def analyze(request: AnalysisRequest):
         )
         return response
     if not ANALYZE_GATE.acquire(blocking=False):
-        raise HTTPException(429, 'Analyse bereits aktiv')
+        raise HTTPException(429, 'Analyse bereits aktiv', headers={'Retry-After': '2'})
     try:
         return run(lambda: analyse_position(request.model_dump()))
     finally:

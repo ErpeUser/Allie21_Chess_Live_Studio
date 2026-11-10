@@ -11,10 +11,15 @@ from security import RequestRateLimiter
 
 class RegressionTests(unittest.TestCase):
     def test_rate_limiter_has_a_hard_key_bound(self):
-        limiter = RequestRateLimiter(max_keys=4)
+        now = [0.0]
+        limiter = RequestRateLimiter(clock=lambda: now[0], max_keys=4)
         for index in range(20):
-            self.assertTrue(limiter.allow(f"session-{index}", 1, 60))
+            self.assertEqual(limiter.allow(f"session-{index}", 1, 60), index < 4)
         self.assertLessEqual(limiter.key_count, 4)
+        # A fresh key must not evict an exhausted window and reset its budget.
+        self.assertFalse(limiter.allow("session-0", 1, 60))
+        now[0] = 60.0
+        self.assertTrue(limiter.allow("new-session", 1, 60))
 
     def test_parse_history_rejects_multiple_games(self):
         try:

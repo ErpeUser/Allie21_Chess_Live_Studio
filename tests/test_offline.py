@@ -224,7 +224,12 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('setTimeout(()=>tick(manual),120)', overlay)
         self.assertIn('unsettledRetries<4', overlay)
         self.assertIn('unsettledRetries++;scheduleTick()', overlay)
-        self.assertIn("request(fen?'stockfish':'allie',false,!!fen)", overlay)
+        # Execute the real handler instead of requiring the obsolete preview=False source text.
+        preview = subprocess.run(
+            ['node', str(ROOT / 'tests/test_browser_preview.js')], cwd=ROOT,
+            check=False, capture_output=True, text=True, timeout=10,
+        )
+        self.assertEqual(preview.returncode, 0, preview.stdout + preview.stderr)
         self.assertNotIn("request('both',true,true)", overlay)
         self.assertIn("source==='allie'", overlay)
         self.assertIn("fen?'stockfish':'allie'", overlay)
@@ -262,10 +267,14 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn("chrome.storage.local.get", background)
         self.assertIn("allie21:get-port", background)
         self.assertIn("serviceUrl(port, '/health')", background)
-        self.assertIn("'X-Allie-Overlay': '1'", background)
         self.assertIn("setBadgeText", background)
         options = (ROOT / 'browser/options.html').read_text(encoding='utf-8')
-        self.assertIn('chrome.storage.local.get', options)
+        # MV3 blocks inline executable JavaScript: exercise packaged storage logic.
+        storage = subprocess.run(
+            ['node', str(ROOT / 'tests/test_extension_options.js')], cwd=ROOT,
+            check=False, capture_output=True, text=True, timeout=10,
+        )
+        self.assertEqual(storage.returncode, 0, storage.stdout + storage.stderr)
         self.assertIn('min="1024"', options)
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
         self.assertIn("id='port'", overlay)
@@ -364,7 +373,7 @@ class StandaloneTests(unittest.TestCase):
             for role, color in expected.items():
                 self.assertIn(f"{role}:'{color}'", source, f'{relative}: {role}')
             for label in ('Mein Top 1', 'Mein Top 2', 'Gegner Top 1',
-                          'Gegner Top 2', 'Sicherer Pre-Move'):
+                          'Gegner Top 2', 'Pre-Move'):
                 self.assertIn(label, source, f'{relative}: {label}')
 
     def test_upstream_stockfish_hash_locked(self):

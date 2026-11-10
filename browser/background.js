@@ -1,13 +1,23 @@
 'use strict';
+importScripts('connection.js');
 
-const DEFAULT_PORT = 8765;
+const DEFAULT_PORT = AllieConnection.DEFAULT_PORT;
+let healthRevision = 0;
+let healthController = null;
 
 function configuredPort() {
   return new Promise(resolve => {
-    chrome.storage.local.get({port: DEFAULT_PORT}, value => {
-      const port = Number(value.port);
-      resolve(Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : DEFAULT_PORT);
-    });
+    const timer = setTimeout(() => resolve(DEFAULT_PORT), 1500);
+    try {
+      chrome.storage.local.get({port: DEFAULT_PORT}, value => {
+        clearTimeout(timer);
+        const failed = chrome.runtime.lastError;
+        resolve(failed ? DEFAULT_PORT : AllieConnection.parsePort(value?.port) ?? DEFAULT_PORT);
+      });
+    } catch {
+      clearTimeout(timer);
+      resolve(DEFAULT_PORT);
+    }
   });
 }
 
@@ -16,40 +26,53 @@ function serviceUrl(port, path) {
 }
 
 async function refreshBadge() {
+  const revision = ++healthRevision;
+  healthController?.abort();
+  const controller = new AbortController();
+  healthController = controller;
+  const timer = setTimeout(() => controller.abort(), 5000);
+  let info;
   try {
     const port = await configuredPort();
-    const response = await fetch(serviceUrl(port, '/health'), {cache: 'no-store', headers: {'X-Allie-Overlay': '1'}});
+    if (revision !== healthRevision) return;
+    const response = await fetch(serviceUrl(port, '/health'), {
+      cache:'no-store', signal:controller.signal, headers:{'X-Allie-Overlay':'1'},
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    await chrome.action.setBadgeText({text: 'OK'});
-    await chrome.action.setBadgeBackgroundColor({color: '#16c784'});
-    await chrome.action.setTitle({title: 'Allie 2.1: Server aktiv'});
+    info = AllieConnection.healthStatus(await response.json());
   } catch {
-    await chrome.action.setBadgeText({text: '!'});
-    await chrome.action.setBadgeBackgroundColor({color: '#ef3340'});
-    await chrome.action.setTitle({title: 'Allie 2.1: Lokalen Server starten'});
+    info = {text:'!', color:'#ef3340', title:'Allie 2.1: Server/Port pruefen oder lokalen Server starten.'};
+  } finally {
+    clearTimeout(timer);
+    if (healthController === controller) healthController = null;
+  }
+  if (revision !== healthRevision) return;
+  try {
+    await chrome.action.setBadgeText({text:info.text});
+    if (revision !== healthRevision) return;
+    await chrome.action.setBadgeBackgroundColor({color:info.color});
+    if (revision !== healthRevision) return;
+    await chrome.action.setTitle({title:info.title});
+  } catch {
+    // The extension may have been unloaded during a pending badge operation.
   }
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== 'allie21:get-port') return false;
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== 'allie21:get-port' || sender.id !== chrome.runtime.id) return false;
   configuredPort().then(port => sendResponse({port}));
   return true;
 });
-
 chrome.runtime.onInstalled.addListener(refreshBadge);
 chrome.runtime.onStartup.addListener(refreshBadge);
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.port) refreshBadge();
+});
 
-// MV3 alarms are allowed to run while the worker is suspended, but current
-// Chromium enforces a 30-second minimum period.  Create the alarm from
-// lifecycle events and avoid resetting an existing alarm on every worker
-// wake-up.
+// Reuse the persisted MV3 alarm instead of resetting its schedule on wakeup.
 function ensureHealthAlarm() {
-  if (typeof chrome.alarms.get !== 'function') {
-    chrome.alarms.create('allie-health', {periodInMinutes: 0.5});
-    return;
-  }
   chrome.alarms.get('allie-health', alarm => {
-    if (!alarm) chrome.alarms.create('allie-health', {periodInMinutes: 0.5});
+    if (!alarm) chrome.alarms.create('allie-health', {periodInMinutes:0.5});
   });
 }
 chrome.runtime.onInstalled.addListener(ensureHealthAlarm);
