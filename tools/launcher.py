@@ -10,10 +10,37 @@ import webbrowser
 from pathlib import Path
 from threading import Thread
 
-BACKEND = Path(__file__).resolve().parents[1] / "backend"
+
+def resolve_backend_path(
+    script_path: Path,
+    *,
+    frozen: bool,
+    executable: Path,
+) -> Path:
+    """Locate backend modules in both a source checkout and an onedir bundle."""
+    if frozen:
+        return executable.resolve().parent / "app" / "backend"
+    return script_path.resolve().parents[1] / "backend"
+
+
+BACKEND = resolve_backend_path(
+    Path(__file__),
+    frozen=bool(getattr(sys, "frozen", False)),
+    executable=Path(sys.executable),
+)
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
-from config import parse_port
+
+
+def parse_port(value: object = "8765") -> int:
+    """Validate the loopback port without importing the heavyweight backend config."""
+    try:
+        port = int(str(value).strip())
+    except (TypeError, ValueError) as exc:
+        raise ValueError("ALLIE_PORT muss eine ganze Zahl sein") from exc
+    if not 1024 <= port <= 65535:
+        raise ValueError("ALLIE_PORT muss zwischen 1024 und 65535 liegen")
+    return port
 
 TITLE = "Allie21 Chess Live Studio"
 DEFAULT_PORT = 8765

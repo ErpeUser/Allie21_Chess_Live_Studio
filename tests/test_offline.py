@@ -1,4 +1,5 @@
 """Fast checks that need no downloads or model inference."""
+import builtins
 import importlib.util
 import json
 import os
@@ -166,6 +167,29 @@ class StandaloneTests(unittest.TestCase):
     def test_launcher_finds_project_above_onedir_bundle(self):
         nested = ROOT / 'release' / 'Allie21 Chess Live Studio'
         self.assertEqual(allie_launcher.find_project_root(nested), ROOT)
+
+    def test_launcher_resolves_backend_inside_frozen_bundle(self):
+        bundle = ROOT / 'release' / 'Allie21 Chess Live Studio'
+        script = bundle / '_internal' / 'launcher.py'
+        executable = bundle / 'Allie21 Chess Live Studio.exe'
+        self.assertEqual(
+            allie_launcher.resolve_backend_path(script, frozen=True, executable=executable),
+            bundle / 'app' / 'backend',
+        )
+
+    def test_launcher_import_does_not_require_backend_config(self):
+        launcher = ROOT / 'tools' / 'launcher.py'
+        original_import = builtins.__import__
+
+        def reject_config(name, *args, **kwargs):
+            if name == 'config':
+                raise AssertionError('launcher imported the heavyweight backend config')
+            return original_import(name, *args, **kwargs)
+
+        spec = importlib.util.spec_from_file_location('lightweight_launcher', launcher)
+        module = importlib.util.module_from_spec(spec)
+        with patch('builtins.__import__', reject_config):
+            spec.loader.exec_module(module)
 
     def test_exe_build_pins_tray_dependencies(self):
         script = (ROOT / 'tools/build_exe.ps1').read_text(encoding='utf-8')
