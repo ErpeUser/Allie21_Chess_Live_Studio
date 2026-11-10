@@ -445,7 +445,7 @@
  }
  let capabilityToken='',capabilityInstance='',capabilityPromise=null,pairingCode='',pairingPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null,serviceEpoch=0;
  function serviceUrl(path){return `http://127.0.0.1:${servicePort}${path}`}
- function resetCapability(){serviceEpoch++;capabilityToken='';capabilityInstance='';capabilityPromise=null;}
+ function resetCapability(){serviceEpoch++;capabilityToken='';capabilityInstance='';capabilityPromise=null;pairingCode='';pairingPromise=null;}
  function setServicePort(value){const port=normalizePort(value);if(port!==servicePort){servicePort=port;resetCapability()}return port;}
  function ensureServicePort(){
   if(servicePortPromise)return servicePortPromise;
@@ -471,7 +471,7 @@
   if(pairingPromise)return pairingPromise;
   pairingPromise=new Promise(resolve=>{
    if(typeof chrome==='undefined'||!chrome.runtime?.sendMessage){resolve('');return}
-   let settled=false,timer=setTimeout(()=>{if(!settled){settled=true;resolve('')}},1500);
+   let settled=false,timer=setTimeout(()=>{if(!settled){settled=true;resolve('')}},5000);
    try{chrome.runtime.sendMessage({type:'allie21:get-pairing'},response=>{if(settled)return;settled=true;clearTimeout(timer);const value=String(response?.pairing_code||'');if(/^\d{8}$/.test(value))pairingCode=value;resolve(pairingCode)})}catch{clearTimeout(timer);resolve('')}
   }).finally(()=>{pairingPromise=null});
   return pairingPromise;
