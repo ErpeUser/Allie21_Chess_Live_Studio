@@ -1,6 +1,7 @@
 import sys
 import types
 import unittest
+from unittest.mock import patch
 
 from backend.vision import BoardVision, sanitize_ocr_history
 
@@ -44,9 +45,10 @@ class VisionOCRTests(unittest.TestCase):
         vision.ocr_unavailable = False
         vision.last_ocr = -100
         vision.ocr = _OCR('left')
-        sys.modules.setdefault('numpy', types.SimpleNamespace(asarray=lambda image: image))
+        with patch.dict(sys.modules, {'numpy': types.SimpleNamespace(asarray=lambda image: image)}):
+            actual = vision.read_notation(_Frame(), (1100, 120, 640, 640))
         self.assertEqual(
-            vision.read_notation(_Frame(), (1100, 120, 640, 640)),
+            actual,
             '1. e4 e5 2. Nf3 Nc6',
         )
 
@@ -55,9 +57,10 @@ class VisionOCRTests(unittest.TestCase):
         vision.ocr_unavailable = False
         vision.last_ocr = -100
         vision.ocr = _OCR('right')
-        sys.modules.setdefault('numpy', types.SimpleNamespace(asarray=lambda image: image))
+        with patch.dict(sys.modules, {'numpy': types.SimpleNamespace(asarray=lambda image: image)}):
+            actual = vision.read_notation(_Frame(), (120, 120, 640, 640))
         self.assertEqual(
-            vision.read_notation(_Frame(), (120, 120, 640, 640)),
+            actual,
             '1. e4 e5 2. Nf3 Nc6',
         )
 
