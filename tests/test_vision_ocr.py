@@ -40,6 +40,12 @@ class VisionOCRTests(unittest.TestCase):
             '1. e4 e5 2. Nf3 Nc6',
         )
 
+    def test_sanitizer_normalizes_lichess_figurines_and_columnized_history(self):
+        self.assertEqual(
+            sanitize_ocr_history('1 e3 d5 2 d3 e5 3 f3 ♞c6 4 g3 ♞f6'),
+            '1. e3 d5 2. d3 e5 3. f3 Nc6 4. g3 Nf6',
+        )
+
     def test_read_notation_uses_left_crop_when_board_is_on_right(self):
         vision = BoardVision.__new__(BoardVision)
         vision.ocr_unavailable = False
