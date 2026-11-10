@@ -33,6 +33,14 @@ jobs:
       - name: Install locked runtime and test dependencies
         run: uv sync --frozen --extra quality
 
+      - name: Verify vendored Allie model manifest
+        shell: pwsh
+        run: |
+          uv run --frozen python -c "import sys; sys.path.insert(0, 'backend'); from allie_local_server import verify_vendor_integrity; verify_vendor_integrity()"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
       - name: Verify lockfile consistency
         run: uv lock --check
 
@@ -42,11 +50,29 @@ jobs:
       - name: Run Python pytest suite
         run: uv run pytest -q
 
-      - name: Run static quality checks
+      - name: Ruff
+        shell: pwsh
         run: |
-          uv run ruff check backend tools tests
-          uv run mypy backend --ignore-missing-imports
-          uv run python -m compileall backend tools
+          uv run --frozen ruff check backend tools tests
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Mypy
+        shell: pwsh
+        run: |
+          uv run --frozen mypy backend --ignore-missing-imports
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Compileall
+        shell: pwsh
+        run: |
+          uv run --frozen python -m compileall -q backend tools
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
 
       - name: Check JavaScript syntax
         shell: pwsh

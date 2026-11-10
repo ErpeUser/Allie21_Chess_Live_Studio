@@ -6,7 +6,7 @@ Lokale Windows-Anwendung für menschliche Zugprognosen mit Allie 2.1 und objekti
 
 1. Projekt vollständig entpacken.
 2. **`START_HIER.bat` doppelklicken** oder den portablen Onedir-Build aus `tools/build_exe.ps1` starten.
-3. Warten, bis `http://127.0.0.1:8765/viewer` geöffnet wird. Mit `ALLIE_PORT=18765` lässt sich ein anderer Port verwenden.
+3. Warten, bis `http://127.0.0.1:8765/viewer` geöffnet wird. Mit `ALLIE_PORT=18765` wird der benutzerdefinierte Port auch in der Startmeldung verwendet.
 
 Die EXE ist ein portables Onedir: Im selben Ordner liegen `app` (Server, Viewer und Assets) und `runtime` (Python 3.12 mit den eingefrorenen Paketen). Sie benötigt für den Start weder Checkout, `uv` noch eine globale Python-Installation. Beim ersten Modellstart können die Allie-Gewichte weiterhin in den lokalen Hugging-Face-Cache geladen werden; Stockfish liegt im App-Ordner. Solange Allie läuft, erscheint rechts unten im Windows-Infobereich ein Allie-Symbol: Doppelklick oder „Allie öffnen“ öffnet den Viewer, „Allie beenden“ schließt Server und Symbol vollständig.
 
@@ -64,4 +64,4 @@ Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lo
 
 ## Grenzen
 
-Videoerkennung hängt von Größe, Design, Kompression und Sichtbarkeit des Brettes ab. Das Originalfenster wird nicht verändert; Pfeile erscheinen im Viewer oder im optionalen Overlay. Das Allie-Modell vertraut dem offiziellen Repository-Code über `trust_remote_code=True`; die verwendete Revision ist deshalb fest gepinnt.
+Videoerkennung hängt von Größe, Design, Kompression und Sichtbarkeit des Brettes ab. Das Originalfenster wird nicht verändert; Pfeile erscheinen im Viewer oder im optionalen Overlay. Der geprüfte Allie-Python-Code liegt unter `backend/vendor/allie_model`; der Loader verwendet `trust_remote_code=False`, `local_files_only=True` und prüft das SHA-256-Manifest vor dem Start.

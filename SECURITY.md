@@ -36,9 +36,11 @@ account, kernel-level malware, or an intentionally internet-facing deployment.
    change instead of mixing files from different releases.
 3. Do not include browser profiles, captured frames, model caches, or local
    logs in an uploaded issue or release archive.
-4. Treat `trust_remote_code=True` for the pinned Allie model as a supply-chain
-   decision: update the revision only after reviewing the upstream change and
-   refreshing the recorded hashes.
+4. The Allie Python implementation is vendored under `backend/vendor/` and
+   loaded with `trust_remote_code=False` and `local_files_only=True`. The
+   SHA-256 manifest is checked before model startup; update the pinned revision
+   only after reviewing the upstream MIT-licensed source and refreshing the
+   manifest.
 
 ## Reporting
 
@@ -55,6 +57,7 @@ time. Release readiness and known verification gaps are tracked in
 
 - The launcher validates `ALLIE_PORT`, probes the loopback port before starting, and forwards the selected port to the server. A port already owned by another process fails closed. The browser extension and userscript store the selected port explicitly; configure the same value as `ALLIE_PORT` in the launcher.
 - The MV3 manifest contains a fixed public key and the server allowlists only the resulting extension origin `chrome-extension://omboihgfgofgmidefcpkihgglhkiielo`; arbitrary extension origins are rejected.
-- The pinned Allie weights and remote model code both use `MODEL_REVISION`. The model still requires `trust_remote_code=True`; review that pinned upstream revision before changing it. Full removal requires vendoring and hashing the upstream Python model code.
+- The pinned Allie weights and vendored model code use `MODEL_REVISION`; the
+  loader rejects missing or modified vendored Python files before startup.
 - Model and Stockfish diagnostics are logged locally under opaque error IDs. Raw provider, path, and process details are not returned in API responses.
 - CI runs SHA-pinned CodeQL analysis for Python and JavaScript and a full-history Gitleaks scan in addition to the locked test and quality workflow.

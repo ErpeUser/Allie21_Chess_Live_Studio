@@ -33,3 +33,13 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+exclude = ["backend/vendor"]
+
+[tool.mypy]
+exclude = "^backend/vendor/"
+
+[[tool.mypy.overrides]]
+module = ["vendor.allie_model.*"]
+ignore_errors = true

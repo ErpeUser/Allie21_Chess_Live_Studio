@@ -1,13 +1,12 @@
 import os
 import sys
-import tempfile
 import unittest
 from unittest.mock import patch
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(ROOT, "backend"))
 
-from security import RequestRateLimiter  # noqa: E402
+from security import RequestRateLimiter
 
 
 class RegressionTests(unittest.TestCase):

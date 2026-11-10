@@ -273,12 +273,12 @@ def find_stockfish() -> str | None:
     env = os.environ.get('STOCKFISH_PATH', CONFIG['stockfish_path']).strip().strip('\"')
     if env:
         return safe_candidate(env)
-    for path in [BASE / 'stockfish.exe', *(BASE / 'engines').glob('stockfish*.exe')]:
-        resolved = safe_candidate(path)
+    for candidate_path in [BASE / 'stockfish.exe', *(BASE / 'engines').glob('stockfish*.exe')]:
+        resolved = safe_candidate(candidate_path)
         if resolved:
             return resolved
-    path = shutil.which('stockfish')
-    return safe_candidate(path) if path else None
+    which_path = shutil.which('stockfish')
+    return safe_candidate(which_path) if which_path else None
 
 
 _ENGINE_LOCK = threading.RLock()

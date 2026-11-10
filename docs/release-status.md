@@ -2,7 +2,7 @@
 
 ## Current branch
 
-The reviewed implementation is on branch `codex/allie-full-fix` at version **11.2.17**. The browser extension and userscript now support the configured local port. The branch contains the GUI opening-setting synchronization, persistent viewer settings, centered arrowheads, blue premove rendering, bounded request handling, and the native-overlay lifecycle fixes.
+The reviewed implementation is on the permanent `main` branch at version **11.2.17**. The browser extension and userscript support the configured local port. The release contains GUI opening-setting synchronization, persistent viewer settings, centered arrowheads, blue premove rendering, bounded request handling, native-overlay lifecycle fixes, and the offline-vendored Allie model loader.
 
 ## Automated evidence
 

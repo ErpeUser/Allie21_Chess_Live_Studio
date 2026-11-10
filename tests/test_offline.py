@@ -109,6 +109,8 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('backend\\download_stockfish.py', script)
         self.assertIn('backend\\live_server.py', script)
         self.assertIn('Pruefe Stockfish 19', script)
+        self.assertIn('if "%ALLIE_PORT%"=="" set "ALLIE_PORT=8765"', script)
+        self.assertIn('127.0.0.1:%ALLIE_PORT%/viewer', script)
         self.assertNotIn('AllieLauncher', script)
         self.assertNotIn('auto_setup.ps1', script)
 
@@ -152,9 +154,8 @@ class StandaloneTests(unittest.TestCase):
         with patch.dict(os.environ, {'ALLIE_PORT': '18765'}):
             self.assertEqual(allie_launcher.configured_port(), 18765)
             self.assertEqual(allie_launcher.viewer_url(), 'http://127.0.0.1:18765/viewer')
-        with patch.dict(os.environ, {'ALLIE_PORT': '80'}):
-            with self.assertRaises(RuntimeError):
-                allie_launcher.configured_port()
+        with patch.dict(os.environ, {'ALLIE_PORT': '80'}), self.assertRaises(RuntimeError):
+            allie_launcher.configured_port()
 
     def test_tray_image_is_visible_and_square(self):
         image = allie_launcher.create_tray_image()

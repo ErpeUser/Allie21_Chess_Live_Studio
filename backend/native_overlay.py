@@ -12,6 +12,7 @@ only validates and publishes an immutable snapshot.
 from __future__ import annotations
 
 import ctypes
+import logging
 import math
 import os
 from collections import deque
@@ -49,6 +50,7 @@ COLOR_KEY = 0x00FF00FF  # magenta, transparent through the color-keyed layer
 TRANSPARENT = 1
 PS_SOLID = 0
 WDA_EXCLUDEFROMCAPTURE = 0x00000011
+LOGGER = logging.getLogger(__name__)
 
 
 def is_overlay_update_newer(
@@ -490,8 +492,8 @@ class NativeOverlayController:
             if hwnd is not None:
                 try:
                     self._bindings().post_message(hwnd, WM_CLOSE, 0, 0)
-                except Exception:  # noqa: BLE001 - timeout cleanup is best effort
-                    pass
+                except Exception as exc:  # noqa: BLE001 - timeout cleanup is best effort
+                    LOGGER.warning("Native overlay cleanup failed (timeout): %s", type(exc).__name__)
             self._fail_closed()
             if thread and thread is not __import__("threading").current_thread():
                 thread.join(max(0.05, min(float(timeout), 2.0)))
@@ -630,8 +632,11 @@ class NativeOverlayController:
                 if destroy is not None:
                     try:
                         destroy(hwnd)
-                    except Exception:  # noqa: BLE001 - cleanup is best effort
-                        pass
+                    except Exception as cleanup_exc:  # noqa: BLE001 - cleanup is best effort
+                        LOGGER.warning(
+                            "Native overlay cleanup failed (window thread): %s",
+                            type(cleanup_exc).__name__,
+                        )
             with self._lock:
                 self._failure_reason = f"{type(exc).__name__}: {exc}"[:240]
                 self._fail_locked()

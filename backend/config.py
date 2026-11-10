@@ -83,10 +83,10 @@ def load_config() -> dict:
                 print(f"WARNING: unbekannte Konfigurationsschlüssel: {', '.join(unknown)}")
         return AppConfig.model_validate(raw).model_dump()
     except FileNotFoundError:
-        return AppConfig().model_dump()
+        return AppConfig.model_validate({}).model_dump()
     except (OSError, ValueError) as exc:
         print(f"WARNING: config.json ist ungültig ({exc}); verwende Standardwerte")
-        return AppConfig().model_dump()
+        return AppConfig.model_validate({}).model_dump()
 
 
 CONFIG = load_config()

@@ -14,6 +14,7 @@ Stand der Prüfung: 9. November 2026. Abhängigkeiten sind in `pyproject.toml` d
 - JavaScript: 10/10 Node-Fixtures bestanden; Userscript und Service-Worker bestehen `node --check`.
 - Native-/Regression-Regressionen: 14 Tests ausgeführt, 12 bestanden, 2 wegen fehlendem globalem `python-chess` übersprungen. Die vollständige locked-Umgebung führt die chess-abhängigen Tests aus.
 - Python-Syntax, `compileall`, YAML-Parsing und `git diff --check` bestanden.
+- Locked-Quality-Lauf: `114 passed, 1 skipped` in Pytest, `115` Unittests OK / 1 Skip, Ruff 0 und Mypy 0.
 - Portable Release-Binaries werden absichtlich nicht in Git versioniert; `tools/build_exe.ps1` erzeugt sie lokal und verifiziert Stockfish vor dem Packaging.
 - Windows-HWND-Affinität, OBS/getDisplayMedia, echte Extension-Origin und ein vollständiger Stockfish-/EXE-Smoke bleiben manuelle Windows-Gates.
 
@@ -45,6 +46,7 @@ PyTorch 2.15.0 ist für die veröffentlichte Allie-2.1-CPU-Implementierung beibe
 
 - Modell: `yimingzhang/allie-2.1`
 - Hugging-Face-Revision: `d2545701ff5af46a51ac947911844f779b355a08`
+- Vendorter Allie-Code: `backend/vendor/allie_model`, SHA-256-Manifest geprüft; Modellstart offline sowie echte `analyze()`-/`predict()`-Aufrufe geprüft.
 - Stockfish-Release: `sf_19`
 - Stockfish-Archiv SHA-256: `3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7`
 - Installierte `stockfish.exe` SHA-256: `45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`

@@ -6,8 +6,9 @@ hard-coded fake 'human move' distribution. Requires standard chess move history.
 """
 from __future__ import annotations
 
-import io
+import csv
 import hashlib
+import io
 import json
 import math
 import os
@@ -17,6 +18,7 @@ import threading
 import time
 from collections import OrderedDict
 from copy import deepcopy
+from pathlib import Path
 from typing import Any
 
 import chess
@@ -36,6 +38,8 @@ from config import MODEL_ID, MODEL_REVISION, parse_port, time_profile
 HOST = "127.0.0.1"
 PORT = parse_port(os.environ.get("ALLIE_PORT", "8765"))
 MODEL_NAME = MODEL_ID
+VENDOR_DIR = Path(__file__).resolve().parent / "vendor" / "allie_model"
+VENDOR_MANIFEST = Path(__file__).resolve().parent / "vendor" / "allie_model.sha256.csv"
 MAX_BODY = 64 * 1024
 _model = None
 _ANALYSIS_CACHE: OrderedDict[str, tuple[float, dict[str, Any]]] = OrderedDict()
@@ -43,6 +47,56 @@ _ANALYSIS_CACHE_LOCK = threading.RLock()
 _ANALYSIS_CACHE_TTL = 30.0
 _ANALYSIS_CACHE_MAX = 24
 _model_lock = threading.RLock()
+
+
+def verify_vendor_integrity(
+    vendor_dir: Path = VENDOR_DIR, manifest: Path = VENDOR_MANIFEST
+) -> None:
+    """Fail closed unless every vendored Python module matches its SHA-256 manifest."""
+    if not manifest.is_file():
+        raise RuntimeError(f"vendor manifest missing: {manifest}")
+    try:
+        with manifest.open(newline="", encoding="utf-8") as handle:
+            rows = list(csv.DictReader(handle))
+    except (OSError, csv.Error) as exc:
+        raise RuntimeError(f"vendor manifest unreadable: {manifest}") from exc
+    expected = {str(row.get("path", "")): str(row.get("sha256", "")).lower() for row in rows}
+    actual = {path.relative_to(vendor_dir).as_posix() for path in vendor_dir.rglob("*.py")}
+    if set(expected) != actual:
+        missing = sorted(set(expected) - actual)
+        extra = sorted(actual - set(expected))
+        detail = ", ".join([*(f"missing {path}" for path in missing), *(f"unexpected {path}" for path in extra)])
+        raise RuntimeError(f"vendor manifest file set mismatch: {detail}")
+    for relative, expected_hash in expected.items():
+        if not expected_hash or len(expected_hash) != 64:
+            raise RuntimeError(f"invalid vendor hash for {relative}")
+        path = vendor_dir / relative
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest != expected_hash:
+            raise RuntimeError(f"vendor hash mismatch: {relative}")
+
+
+def _register_local_allie_classes() -> None:
+    """Register the reviewed vendored classes for Transformers' non-remote loader."""
+    import transformers
+
+    AutoConfig = getattr(transformers, "AutoConfig", None)
+    AutoModel = getattr(transformers, "AutoModel", None)
+    if AutoConfig is None or AutoModel is None:
+        # Lightweight test doubles may expose only AutoModel; real Transformers
+        # installations always provide AutoConfig for the registration below.
+        return
+    from vendor.allie_model.configuration_allie import AllieConfig
+    from vendor.allie_model.modeling_allie import AllieModel
+
+    try:
+        AutoConfig.register(AllieConfig.model_type, AllieConfig)
+    except ValueError:
+        pass
+    try:
+        AutoModel.register(AllieConfig, AllieModel)
+    except ValueError:
+        pass
 
 
 def _safe_error_id(scope: str, exc: BaseException) -> str:
@@ -58,8 +112,8 @@ def get_model():
     global _model
     with _model_lock:
         if _model is None:
-            # Remote code is the model author's official API implementation.
-            # Review Hugging Face repository source before enabling remote code.
+            verify_vendor_integrity()
+            _register_local_allie_classes()
             from transformers import AutoModel
             print(f"Loading actual model {MODEL_NAME} (CPU int8 weights use about 9.8 GB)...", flush=True)
             options = {"active_experts": 8}
@@ -70,8 +124,8 @@ def get_model():
             _model = AutoModel.from_pretrained(
                 MODEL_NAME,
                 revision=MODEL_REVISION,
-                code_revision=MODEL_REVISION,
-                trust_remote_code=True,
+                trust_remote_code=False,
+                local_files_only=True,
                 **options,
             )
         return _model
@@ -395,9 +449,9 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
         repertoire['expected_move'] = repertoire_move_for(moves, player_side, repertoire['selection'])
     if repertoire['expected_move']:
         try:
-            expected = chess.Move.from_uci(repertoire['expected_move'])
-            if expected in board.legal_moves:
-                repertoire['expected_san'] = board.san(expected)
+            expected_move = chess.Move.from_uci(repertoire['expected_move'])
+            if expected_move in board.legal_moves:
+                repertoire['expected_san'] = board.san(expected_move)
         except ValueError:
             pass
     if selection in ('allie', 'both'):
@@ -416,9 +470,9 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                     candidate_moves = [describe_move(board, uci, prob) for uci, prob in choices]
                     if player_to_move:
                         candidate_moves = rank_allie_candidates(board, candidate_moves, play_style)
-                        expected = repertoire.get('expected_move')
-                        if expected:
-                            match = next((move for move in candidate_moves if move['uci'] == expected), None)
+                        expected_uci = repertoire.get('expected_move')
+                        if isinstance(expected_uci, str) and expected_uci:
+                            match = next((move for move in candidate_moves if move['uci'] == expected_uci), None)
                             if match:
                                 match['repertoire'] = True
                             if match and (not candidate_moves or
@@ -456,11 +510,11 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                                 shown = rank_allie_candidates(after, shown, play_style)
                             if index == 0:
                                 prediction_top = shown
-                                for reply in after.legal_moves:
+                                for legal_reply in after.legal_moves:
                                     probe = after.copy(stack=False)
-                                    probe.push(reply)
+                                    probe.push(legal_reply)
                                     if probe.is_checkmate():
-                                        warnings.append('Achtung: Gegner kann nach dieser Wahl sofort mattsetzen: ' + after.san(reply))
+                                        warnings.append('Achtung: Gegner kann nach dieser Wahl sofort mattsetzen: ' + after.san(legal_reply))
                                         if len(warnings) >= 2:
                                             break
                                 if not warnings and shown:
@@ -475,19 +529,19 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                             # the single most likely opponent reply. A second
                             # speculative branch doubled latency without
                             # changing the requested top-reply pre-move.
-                            for reply in prediction_top[:1]:
+                            for predicted_reply in prediction_top[:1]:
                                 after_reply = board.copy(stack=False)
                                 after_reply.push_uci(candidate_moves[0]['uci'])
-                                after_reply.push_uci(reply['uci'])
+                                after_reply.push_uci(predicted_reply['uci'])
                                 if after_reply.is_game_over():
                                     continue
                                 continuation = model.predict(
-                                    moves + [candidate_moves[0]['uci'], reply['uci']],
+                                    moves + [candidate_moves[0]['uci'], predicted_reply['uci']],
                                     white_elo=white_elo, black_elo=black_elo,
                                     time_control=tc, clocks=clocks + [None, None])
                                 ranked = list(continuation.items())[:5]
                                 described = [describe_move(after_reply, uci, prob) for uci, prob in ranked]
-                                premove_branches.append((reply['probability'], described))
+                                premove_branches.append((predicted_reply['probability'], described))
                 except Exception as exc:  # noqa: BLE001 - optional prediction branch must fail soft
                     error_id = _safe_error_id('Allie-Gegnerprognose fehlgeschlagen', exc)
                     warnings.append(

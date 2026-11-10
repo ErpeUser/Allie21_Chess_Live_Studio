@@ -2,6 +2,7 @@
 setlocal
 cd /d "%~dp0"
 set "PYTHONUTF8=1"
+if "%ALLIE_PORT%"=="" set "ALLIE_PORT=8765"
 set "UV_CACHE_DIR=%~dp0.uv-cache"
 set "UV_PROJECT_ENVIRONMENT=%~dp0.allie-venv"
 set "UV_EXE=uv"
@@ -23,7 +24,7 @@ echo [Allie] Pruefe Stockfish 19 gegen den offiziellen SHA-256 ...
 "%UV_EXE%" run --frozen python backend\download_stockfish.py
 if errorlevel 1 goto :stockfish_error
 
-echo [Allie] Starte http://127.0.0.1:8765/viewer
+echo [Allie] Starte http://127.0.0.1:%ALLIE_PORT%/viewer
 "%UV_EXE%" run --frozen python backend\live_server.py
 if errorlevel 1 goto :server_error
 exit /b 0
@@ -45,7 +46,7 @@ goto :failed
 
 :server_error
 echo.
-echo FEHLER: Der lokale Server konnte nicht starten. Ist Port 8765 bereits belegt?
+echo FEHLER: Der lokale Server konnte nicht starten. Ist Port %ALLIE_PORT% bereits belegt?
 
 :failed
 pause
