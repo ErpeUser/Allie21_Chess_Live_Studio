@@ -28,11 +28,13 @@
  if(!supportedHost||!supportedPath)return;
  const STORE='allie21.auto.v11';
  const PRIVATE_STORE='allie21.private.v1';
- const load=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}};
- const loadPrivate=()=>{try{return JSON.parse(localStorage.getItem(PRIVATE_STORE)||'{"privateMode":false}')}catch{return{privateMode:false}}};
+ const readObject=key=>{try{const value=JSON.parse(localStorage.getItem(key)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch{return{}}};
+ const load=()=>readObject(STORE);
+ const loadPrivate=()=>readObject(PRIVATE_STORE);
  const stored=load();
  const privateStored=loadPrivate();
  const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:privateStored.privateMode===true},stored);
+ cfg.privateMode=typeof privateStored.privateMode==='boolean'?privateStored.privateMode:stored.privateMode===true;
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -61,12 +63,18 @@
   <div><label>Schwarzes Opening</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='stafford'>Stafford-Gambit</option><option value='traxler'>Traxler-Gegenangriff</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <label class='private-row'><input id='privateMode' type='checkbox'> Privater Modus (keine DOM-/SVG-HUDs)</label>
+ <button id='retryPrivate' type='button'>Privates Overlay erneut pruefen</button>
  <p id='privateStatus' class='small'>Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.</p>
  <p id='status' class='stat'>Warte auf ein Brett. Die Verbindung startet automatisch.</p>
- <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move. Allie klickt nie selbst.</p>
+ <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move (bedingt): gilt nur fuer die vorhergesagte Fortsetzung, nicht garantiert. Allie klickt nie selbst.</p>
  </section>`;
  const el=id=>shadow.getElementById(id);
  const OPENING_VALUES=Object.freeze({white:['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'],black:['englund','stafford','traxler','budapest','alekhine']});
+ for(const [side,legacy] of [['white','whiteOpening'],['black','blackOpening']]){
+  const choice=stored['opening_'+side]??stored[legacy];
+  cfg[legacy]=OPENING_VALUES[side].includes(choice)?choice:(side==='white'?'grob':'englund');
+ }
+ function persistOpeningSelection(){const selected=selectedOpeningSettings();Object.assign(cfg,selected,{whiteOpening:selected.opening_white,blackOpening:selected.opening_black});}
  function selectedOpeningSettings(){const white=el('whiteOpening').value,black=el('blackOpening').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false;
@@ -76,12 +84,13 @@
  const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
  const normalizePort=value=>{const port=Number(value);return Number.isInteger(port)&&port>=1024&&port<=65535?port:8765};
  cfg.port=normalizePort(cfg.port);
- const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.port=normalizePort(el('port').value);cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;Object.assign(cfg,selectedOpeningSettings());save();servicePort=cfg.port;invalidate();scheduleTick(true)};
+ const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.port=normalizePort(el('port').value);cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;persistOpeningSelection();save();setServicePort(cfg.port);try{chrome?.storage?.local?.set?.({port:cfg.port})}catch{};invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','port','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=privateUnavailable?'Privates Windows-Overlay ist hier nicht verfügbar – sichtbarer Browsermodus aktiv.':cfg.privateMode?'Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.':'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
- Object.assign(cfg,selectedOpeningSettings());save();
+ const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privates Overlay nicht bereit. Hinweise bleiben verborgen; erneut pruefen oder bewusst ausschalten.':'Privater Modus angefordert: Hinweise nur im verifizierten Windows-Overlay.'):'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
+ persistOpeningSelection();save();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
  el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
+ el('retryPrivate').onclick=()=>syncPrivateMode(true);
  let sessionHash=Date.now()>>>0;
  let boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
  const selectors=['wc-simple-move-list [data-node]','wc-vertical-move-list [data-node]','wc-horizontal-move-list [data-node]','wc-move-list [data-node]','wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
@@ -278,7 +287,10 @@
   const dpr=Number(window.devicePixelRatio||1),viewport={width:window.innerWidth,height:window.innerHeight};
   if(!rect)return{viewport,device_pixel_ratio:dpr,board:null};
   const boardRect={left:Math.round(rect.left),top:Math.round(rect.top),width:Math.round(rect.width),height:Math.round(rect.height)};
-  const screenBoard={left:Math.round((Number(window.screenX||0)+rect.left)*dpr),top:Math.round((Number(window.screenY||0)+rect.top)*dpr),width:Math.round(rect.width*dpr),height:Math.round(rect.height*dpr)};
+  // Browser chrome is an estimate; real mixed-DPI capture still needs Windows acceptance.
+  const border=Math.max(0,((Number(window.outerWidth)||window.innerWidth)-window.innerWidth)/2);
+  const chromeTop=Math.max(0,(Number(window.outerHeight)||window.innerHeight)-window.innerHeight-border);
+  const screenBoard={left:Math.round((Number(window.screenX||0)+border+rect.left)*dpr),top:Math.round((Number(window.screenY||0)+chromeTop+rect.top)*dpr),width:Math.round(rect.width*dpr),height:Math.round(rect.height*dpr)};
   const orientation=typeof boardOrientation==='function'?boardOrientation(board,pieceNodes(board)):'white';
   return{viewport,device_pixel_ratio:dpr,board:boardRect,screen_board:screenBoard,orientation};
  }
@@ -294,20 +306,31 @@
   return{schema_version:1,session_id:boardSessionId,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:mode==='normal'&&!cfg.privateMode&&cfg.enabled};
  }
  function sendVisualUpdate(mode='stale',data={}){
+  if(!cfg.privateMode||!cfg.enabled||document.hidden||document.hasFocus?.()===false)return;
   const payload=visualPayload(mode,data);
   visualRequest?.abort?.();
   const request=postJson('/api/overlay/update',payload,4000);
   visualRequest=request;
   request.promise.catch(()=>{}).finally(()=>{if(visualRequest===request)visualRequest=null});
  }
+ function applyPrivateStatus(state){
+  privateUnavailable=cfg.privateMode&&!(state?.available===true&&state?.capture_excluded===true&&state?.mode==='private');
+  fill();
+  if(privateUnavailable&&state?.reason)el('privateStatus').textContent+=' '+String(state.reason).slice(0,160);
+  if(cfg.privateMode){el('results').replaceChildren();clearOverlay();}
+ }
  function sendOverlayMode(mode){
-  postJson('/api/overlay/mode',{mode},4000).promise.catch(()=>{});
+  return postJson('/api/overlay/mode',{mode},6000).promise.then(state=>{
+   if((mode==='private')===cfg.privateMode)applyPrivateStatus(state);
+   return state;
+  }).catch(error=>{if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null;});
  }
  function clearRemoteOverlay(reason='stale'){
+  if(!cfg.privateMode)return;
   visualRequest?.abort?.();visualRequest=null;
   postJson('/api/overlay/clear',{session_id:boardSessionId,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
  }
- function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display='none'}
+ function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display=cfg.privateMode?'':'none';if(cfg.privateMode)el('results').replaceChildren()}
  function center(s,rect,ori){let file=s.charCodeAt(0)-97,rank=Number(s[1])-1;if(ori==='black'){file=7-file}else{rank=7-rank}return [rect.left+(file+.5)*rect.width/8,rect.top+(rank+.5)*rect.height/8]}
  function drawArrow(svg,rect,ori,uci,color,opacity=.87){
   if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci||''))return;
@@ -358,27 +381,48 @@
    layer.style.display='';layer.replaceChildren();
    if(renderedSvg?.isConnected)renderedSvg.remove();
    if(renderedBoard&&renderedBoard!==board&&renderedPosition)renderedBoard.style.position=renderedInlinePosition;
+   if(renderedBoard!==board){
+    const computed=window.getComputedStyle?.(board);renderedPosition=computed?.position||'';renderedInlinePosition=board.style.position||'';
+    if(renderedPosition==='static')board.style.position='relative';
+   }
    renderedBoard=board;renderedSvg=svg;
-   const computed=window.getComputedStyle?.(board);renderedPosition=computed?.position||'';renderedInlinePosition=board.style.position||'';
-   if(renderedPosition==='static')board.style.position='relative';
    board.appendChild(svg);sendVisualUpdate('normal',data);
  }
  function insightLines(data){
   return (Array.isArray(data?.plan_messages)?data.plan_messages:[]).filter(Boolean).slice(0,6);
  }
- function panelPosition(rect,viewportWidth,viewportHeight,panelWidth=350){
-  const gap=12,margin=10;
-  let left=viewportWidth-rect.right>=panelWidth+gap?rect.right+gap:rect.left>=panelWidth+gap?rect.left-panelWidth-gap:Math.max(margin,viewportWidth-panelWidth-margin);
-  return{left:Math.round(left),top:Math.round(Math.max(margin,Math.min(rect.top,viewportHeight-180)))};
+ // Use space outside the board; on a full-screen board the panel is placed
+ // below it in document coordinates and remains accessible by scrolling.
+ function panelPosition(rect,viewportWidth,viewportHeight,panelWidth=350,panelHeight=360){
+  const gap=12,margin=10,width=Math.max(120,Math.min(panelWidth,viewportWidth-2*margin));
+  const height=Math.max(100,Math.min(panelHeight,viewportHeight-2*margin));
+  const top=Math.max(margin,Math.min(rect.top,viewportHeight-height-margin));
+  if(viewportWidth-rect.right>=width+gap+margin)return{left:Math.round(rect.right+gap),top:Math.round(top),width,maxHeight:height,position:'fixed'};
+  if(rect.left>=width+gap+margin)return{left:Math.round(rect.left-width-gap),top:Math.round(top),width,maxHeight:height,position:'fixed'};
+  const left=Math.max(margin,Math.min(rect.left,viewportWidth-width-margin));
+  const below=viewportHeight-rect.bottom-gap-margin;
+  if(below>=100)return{left:Math.round(left),top:Math.round(rect.bottom+gap),width,maxHeight:Math.min(height,below),position:'fixed'};
+  const above=rect.top-gap-margin;
+  if(above>=100)return{left:Math.round(left),top:Math.round(Math.max(margin,rect.top-gap-height)),width,maxHeight:Math.min(height,above),position:'fixed'};
+  return{left:Math.round(left),top:Math.round(Math.max(margin,rect.bottom+gap)),width,maxHeight:height,position:'absolute'};
  }
  function placePanel(board=currentBoard||boardElement()){
   if(!board)return;
-  const pos=panelPosition(board.getBoundingClientRect(),window.innerWidth,window.innerHeight);
-  wrapper.style.left=`${pos.left}px`;wrapper.style.top=`${pos.top}px`;wrapper.style.right='auto';wrapper.style.bottom='auto';
+  const pos=panelPosition(board.getBoundingClientRect(),window.innerWidth,window.innerHeight,360);
+  const documentSpace=pos.position==='absolute';
+  wrapper.style.position=pos.position;
+  wrapper.style.left=`${pos.left+(documentSpace?Number(window.scrollX||0):0)}px`;
+  wrapper.style.top=`${pos.top+(documentSpace?Number(window.scrollY||0):0)}px`;
+  wrapper.style.right='auto';wrapper.style.bottom='auto';
+  el('panel').style.width=`${pos.width}px`;el('panel').style.maxHeight=`${pos.maxHeight}px`;
  }
- function show(data){let html='';
+ function show(data){if(cfg.privateMode){el('results').replaceChildren();el('results').hidden=true;return}el('results').hidden=false;let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
   if(data.repertoire?.primary)html+=`<p class='small'><b>Repertoire:</b> ${escape(data.repertoire.primary)}${data.repertoire.selection?` · Auswahl ${escape(data.repertoire.selection)}`:''}${data.repertoire.expected_san?` · nächster Wunschzug ${escape(data.repertoire.expected_san)}`:''}</p>`;
+  const choices=Array.isArray(data.moves)?data.moves.slice(0,5):[];
+  if(choices.length){html+='<h3>Menschliche Zugwahrscheinlichkeit</h3>';for(const choice of choices){const probability=Number(choice.probability);html+=`<div class='item'><span>${escape(choice.san||choice.uci||'')}</span><span>${Number.isFinite(probability)&&probability>=0&&probability<=1?(100*probability).toFixed(1)+' %':'unbekannt'}</span></div>`}html+="<p class='small'>Allie-Modellausgabe, keine Gewinnchance. Stil und Repertoire koennen die Reihenfolge beeinflussen.</p>";}
+  const thinkTime=Number(data.expected_think_time_s);
+  if(data.expected_think_time_s!=null&&Number.isFinite(thinkTime)&&thinkTime>=0)html+=`<p class='small'>Erwartete Bedenkzeit: ${thinkTime.toFixed(1)} s</p>`;
   const messages=insightLines(data);
   if(messages.length)html+=`<div class='analysis-title'><span>Allie \u00b7 Spielanalyse</span><span>${messages.length} Hinweise</span></div>`;
   for(const message of messages)html+=`<div class='insight'>${escape(message)}</div>`;
@@ -386,36 +430,55 @@
   el('results').innerHTML=html;
   if(messages.length&&!panelDismissed){el('panel').classList.add('open');el('bubble').style.display='none';placePanel()}
  }
- let capabilityToken='',capabilityInstance='',capabilityPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null;
+ let capabilityToken='',capabilityInstance='',capabilityPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null,serviceEpoch=0;
  function serviceUrl(path){return `http://127.0.0.1:${servicePort}${path}`}
+ function resetCapability(){serviceEpoch++;capabilityToken='';capabilityInstance='';capabilityPromise=null;}
+ function setServicePort(value){const port=normalizePort(value);if(port!==servicePort){servicePort=port;resetCapability()}return port;}
  function ensureServicePort(){
   if(servicePortPromise)return servicePortPromise;
-  servicePortPromise=new Promise(resolve=>{
-   const fallback=()=>{servicePort=normalizePort(cfg.port);resolve(servicePort)};
+  const pending=new Promise(resolve=>{
+   let settled=false,timer;
+   const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(setServicePort(value));};
+   const fallback=()=>finish(cfg.port);
    try{
     if(typeof chrome==='undefined'||!chrome.runtime?.sendMessage)return fallback();
-    let settled=false;
+    timer=setTimeout(fallback,1000);
     chrome.runtime.sendMessage({type:'allie21:get-port'},response=>{
-     if(settled)return;settled=true;
      if(chrome.runtime?.lastError||!response)return fallback();
-     servicePort=normalizePort(response.port);resolve(servicePort);
+     finish(response.port);
     });
    }catch{fallback()}
-  }).finally(()=>{servicePortPromise=null});
-  return servicePortPromise;
+  });
+  servicePortPromise=pending;
+  pending.finally(()=>{if(servicePortPromise===pending)servicePortPromise=null});
+  return pending;
  }
  function ensureCapability(){
-  if(capabilityToken)return Promise.resolve(capabilityToken);
-  if(!capabilityPromise){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);capabilityPromise=ensureServicePort().then(()=>fetch(serviceUrl('/api/capability'),{headers:{'X-Allie-Overlay':'1'},cache:'no-store',signal:controller.signal})).then(async response=>{const data=await response.json();if(!response.ok||!data.token||!data.instance_id)throw Error(data.error||'Capability fehlt');capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken}).finally(()=>{clearTimeout(timer);capabilityPromise=null})}
-  return capabilityPromise;
+  return ensureServicePort().then(()=>{
+   if(capabilityToken)return capabilityToken;
+   if(capabilityPromise)return capabilityPromise;
+   const epoch=serviceEpoch,controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
+   const pending=fetch(serviceUrl('/api/capability'),{headers:{'X-Allie-Overlay':'1'},cache:'no-store',signal:controller.signal})
+    .then(async response=>{const data=await response.json();if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');if(!response.ok||!data.token||!data.instance_id)throw Error(data.error||'Capability fehlt');capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken})
+    .finally(()=>{clearTimeout(timer);if(capabilityPromise===pending)capabilityPromise=null});
+   capabilityPromise=pending;
+   return pending;
+  });
  }
  function postJson(path,data,timeout=15000){
   const controller=new AbortController();let expired=false;
   const timer=setTimeout(()=>{expired=true;controller.abort()},timeout);
-  const promise=ensureCapability().then(token=>fetch(serviceUrl(path),{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance},body:JSON.stringify(data),signal:controller.signal}))
-   .then(async response=>{let parsed={};try{parsed=await response.json()}catch{}if(!response.ok){const error=new Error(parsed.error||String(response.status));error.status=response.status;throw error}return parsed})
-   .catch(error=>{if(expired)throw Error('Lokale Analyse braucht zu lange.');if(error.name==='AbortError'||error.status)throw error;throw Error('Lokaler Allie-Server nicht erreichbar: '+error.message)})
-   .finally(()=>clearTimeout(timer));
+  const send=async(retry=true)=>{
+   const token=await ensureCapability();
+   if(controller.signal.aborted)throw new DOMException('Request aborted','AbortError');
+   const epoch=serviceEpoch;
+   const response=await fetch(serviceUrl(path),{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance},body:JSON.stringify(data),signal:controller.signal});
+   if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');
+   if(response.status===401&&retry){resetCapability();markBrowserSessionReset();return send(false)}
+   let parsed={};try{parsed=await response.json()}catch{}
+   if(!response.ok){const error=new Error(parsed.error||String(response.status));error.status=response.status;throw error}return parsed;
+  };
+  const promise=send().catch(error=>{if(expired)throw Error('Lokale Analyse braucht zu lange.');if(error.name==='AbortError'||error.status)throw error;throw Error('Lokaler Allie-Server nicht erreichbar: '+error.message)}).finally(()=>clearTimeout(timer));
   return{promise,abort:()=>controller.abort()};
  }
  const localPost=(path,data,timeout)=>postJson(path,data,timeout).promise;
@@ -526,7 +589,7 @@
       pending=false;busyRetries=0;el('status').textContent=source==='stockfish'?(fallback?'Stockfish-Fallback aktuell':'Stockfish aktuell'):`Allie aktuell · ${parsed.move_count} Halbzuege`;
      }catch(e){fail('Analyse: '+e.message)}}).catch(error=>fail(error.name==='AbortError'?'Analyse abgebrochen.':error));
    };
-   request(fen?'stockfish':'allie',false,!!fen);
+   request(fen?'stockfish':'allie',!fen,true);
  }
   el('now').onclick=async()=>{markBrowserSessionReset();updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';await tick(true)};
  async function tick(manual=false){
@@ -598,15 +661,27 @@
   window.addEventListener('popstate',()=>resetBoardSession('navigation'),{passive:true});
   window.addEventListener('hashchange',()=>resetBoardSession('navigation'),{passive:true});
  }
- async function syncPrivateMode(){
-  try{
+ let privateSync=null,privateModeSent=null;
+ async function syncPrivateMode(force=false){
+  if(privateSync)return privateSync;
+  const requested=Boolean(cfg.privateMode);
+  if(!requested){fill();return null;}
+  const pending=(async()=>{
+   if(force||privateModeSent!==requested){privateModeSent=requested;return sendOverlayMode(requested?'private':'normal')}
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
-   await ensureServicePort();
-   const response=await fetch(serviceUrl('/api/overlay/status'),{cache:'no-store',headers:{'X-Allie-Overlay':'1'},signal:controller.signal});clearTimeout(timer);
-   if(response.ok){const state=await response.json();if(state?.ready===false||state?.instance_id&&capabilityInstance&&state.instance_id!==capabilityInstance){capabilityToken='';capabilityInstance=''}privateUnavailable=state?.available===false;if(privateUnavailable){cfg.privateMode=false;try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:false}))}catch{}}else if(state?.mode==='private'||state?.mode==='normal'){cfg.privateMode=state.mode==='private';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{}}fill()}
-  }catch{privateUnavailable=true;cfg.privateMode=false;try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:false}))}catch{};fill()}
-  sendOverlayMode(cfg.privateMode?'private':'normal');
-  if(cfg.privateMode)clearOverlay();
+   try{
+    await ensureServicePort();
+    if(controller.signal.aborted)throw new DOMException('Request aborted','AbortError');
+    const response=await fetch(serviceUrl('/api/overlay/status'),{cache:'no-store',headers:{'X-Allie-Overlay':'1'},signal:controller.signal});
+    if(!response.ok)throw Error(`HTTP ${response.status}`);
+    const state=await response.json();
+    if(requested===cfg.privateMode)applyPrivateStatus(state);
+    return state;
+   }catch(error){if(requested&&cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null}
+   finally{clearTimeout(timer)}
+  })();
+  privateSync=pending;
+  try{return await pending}finally{if(privateSync===pending)privateSync=null}
  }
  installNavigationLifecycle();
  new MutationObserver(changes=>{

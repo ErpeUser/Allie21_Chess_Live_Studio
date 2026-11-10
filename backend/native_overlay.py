@@ -19,7 +19,7 @@ from collections import deque
 from collections.abc import Iterable, Mapping, Sequence
 from ctypes import wintypes
 from dataclasses import dataclass
-from threading import Event, RLock, Thread
+from threading import Event, RLock, Thread, current_thread
 from typing import Any, cast
 
 # Window styles and messages.  Keeping the values local makes the module easy
@@ -132,6 +132,16 @@ class _MSG(ctypes.Structure):
         ("lParam", wintypes.LPARAM),
         ("time", wintypes.DWORD),
         ("pt", _POINT),
+        ("lPrivate", wintypes.DWORD),
+    ]
+
+
+class _MONITORINFO(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", wintypes.DWORD),
+        ("rcMonitor", _RECT),
+        ("rcWork", _RECT),
+        ("dwFlags", wintypes.DWORD),
     ]
 
 
@@ -150,6 +160,7 @@ class OverlaySnapshot:
     arrows: tuple[OverlayArrow, ...] = ()
     message: str = ""
     bounds: tuple[int, int, int, int] | None = None
+    message_rect: tuple[int, int, int, int] | None = None
 
 
 def _rgb(value: str) -> int:
@@ -243,27 +254,72 @@ class _Win32:
             pass
 
     def _configure(self) -> None:
-        self.user32.CreateWindowExW.argtypes = (
-            wintypes.DWORD, wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD,
-            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
-            wintypes.HWND, wintypes.HMENU, wintypes.HINSTANCE, ctypes.c_void_p,
-        )
-        self.user32.CreateWindowExW.restype = wintypes.HWND
-        self.user32.RegisterClassExW.restype = wintypes.ATOM
-        self.user32.DefWindowProcW.argtypes = (wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
-        self.user32.DefWindowProcW.restype = ctypes.c_ssize_t
-        self.user32.SetWindowDisplayAffinity.argtypes = (wintypes.HWND, wintypes.DWORD)
-        self.user32.SetWindowDisplayAffinity.restype = wintypes.BOOL
-        self.user32.GetWindowDisplayAffinity.argtypes = (wintypes.HWND, ctypes.POINTER(wintypes.DWORD))
-        self.user32.GetWindowDisplayAffinity.restype = wintypes.BOOL
-        self.user32.GetMessageW.restype = wintypes.BOOL
-        self.user32.FillRect.argtypes = (wintypes.HDC, ctypes.POINTER(_RECT), wintypes.HBRUSH)
-        self.kernel32.GetModuleHandleW.restype = wintypes.HMODULE
-        self.gdi32.CreatePen.restype = wintypes.HGDIOBJ
-        self.gdi32.CreateSolidBrush.restype = wintypes.HGDIOBJ
-        self.gdi32.CreateFontW.restype = wintypes.HGDIOBJ
-        self.gdi32.DeleteObject.argtypes = (wintypes.HGDIOBJ,)
-        self.gdi32.SelectObject.argtypes = (wintypes.HDC, wintypes.HGDIOBJ)
+        """Declare every used Win32 ABI, including pointer-sized return values.
+
+        ctypes defaults to C int. Leaving a handle argument or result implicit
+        truncates values on Win64, sometimes before display affinity is set.
+        """
+        def bind(library, name, result, *arguments):
+            function = getattr(library, name)
+            function.argtypes = arguments
+            function.restype = result
+
+        u, g, k = self.user32, self.gdi32, self.kernel32
+        pointer = ctypes.POINTER
+        bind(k, "GetModuleHandleW", wintypes.HMODULE, wintypes.LPCWSTR)
+        bind(u, "CreateWindowExW", wintypes.HWND,
+             wintypes.DWORD, wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD,
+             ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+             wintypes.HWND, wintypes.HMENU, wintypes.HINSTANCE, ctypes.c_void_p)
+        bind(u, "RegisterClassExW", wintypes.ATOM, pointer(_WNDCLASSEXW))
+        bind(u, "UnregisterClassW", wintypes.BOOL, wintypes.LPCWSTR, wintypes.HINSTANCE)
+        bind(u, "LoadCursorW", HCURSOR, wintypes.HINSTANCE, ctypes.c_void_p)
+        bind(u, "DefWindowProcW", ctypes.c_ssize_t,
+             wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
+        bind(u, "SetLayeredWindowAttributes", wintypes.BOOL,
+             wintypes.HWND, wintypes.DWORD, wintypes.BYTE, wintypes.DWORD)
+        bind(u, "SetWindowDisplayAffinity", wintypes.BOOL, wintypes.HWND, wintypes.DWORD)
+        bind(u, "GetWindowDisplayAffinity", wintypes.BOOL, wintypes.HWND, pointer(wintypes.DWORD))
+        bind(u, "GetMessageW", ctypes.c_int, pointer(_MSG), wintypes.HWND, wintypes.UINT, wintypes.UINT)
+        bind(u, "TranslateMessage", wintypes.BOOL, pointer(_MSG))
+        bind(u, "DispatchMessageW", ctypes.c_ssize_t, pointer(_MSG))
+        bind(u, "ShowWindow", wintypes.BOOL, wintypes.HWND, ctypes.c_int)
+        bind(u, "SetWindowPos", wintypes.BOOL, wintypes.HWND, wintypes.HWND,
+             ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.UINT)
+        bind(u, "PostMessageW", wintypes.BOOL,
+             wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
+        bind(u, "IsWindow", wintypes.BOOL, wintypes.HWND)
+        bind(u, "DestroyWindow", wintypes.BOOL, wintypes.HWND)
+        bind(u, "PostQuitMessage", None, ctypes.c_int)
+        bind(u, "InvalidateRect", wintypes.BOOL, wintypes.HWND, pointer(_RECT), wintypes.BOOL)
+        bind(u, "BeginPaint", wintypes.HDC, wintypes.HWND, pointer(_PAINTSTRUCT))
+        bind(u, "EndPaint", wintypes.BOOL, wintypes.HWND, pointer(_PAINTSTRUCT))
+        bind(u, "FillRect", ctypes.c_int, wintypes.HDC, pointer(_RECT), wintypes.HBRUSH)
+        bind(u, "DrawTextW", ctypes.c_int,
+             wintypes.HDC, wintypes.LPCWSTR, ctypes.c_int, pointer(_RECT), wintypes.UINT)
+        bind(u, "MonitorFromRect", wintypes.HANDLE, pointer(_RECT), wintypes.DWORD)
+        bind(u, "GetMonitorInfoW", wintypes.BOOL, wintypes.HANDLE, pointer(_MONITORINFO))
+        bind(g, "CreatePen", wintypes.HGDIOBJ, ctypes.c_int, ctypes.c_int, wintypes.DWORD)
+        bind(g, "CreateSolidBrush", wintypes.HGDIOBJ, wintypes.DWORD)
+        bind(g, "CreateFontW", wintypes.HGDIOBJ,
+             *([ctypes.c_int] * 5), *([wintypes.DWORD] * 8), wintypes.LPCWSTR)
+        bind(g, "DeleteObject", wintypes.BOOL, wintypes.HGDIOBJ)
+        bind(g, "SelectObject", wintypes.HGDIOBJ, wintypes.HDC, wintypes.HGDIOBJ)
+        bind(g, "MoveToEx", wintypes.BOOL, wintypes.HDC, ctypes.c_int, ctypes.c_int, pointer(_POINT))
+        bind(g, "LineTo", wintypes.BOOL, wintypes.HDC, ctypes.c_int, ctypes.c_int)
+        bind(g, "Polygon", wintypes.BOOL, wintypes.HDC, pointer(_POINT), ctypes.c_int)
+        bind(g, "SetBkMode", ctypes.c_int, wintypes.HDC, ctypes.c_int)
+        bind(g, "SetTextColor", wintypes.DWORD, wintypes.HDC, wintypes.DWORD)
+
+    def get_work_area(self, x: int, y: int, width: int, height: int) -> tuple[int, int, int, int]:
+        rectangle = _RECT(x, y, x + width, y + height)
+        monitor = self.user32.MonitorFromRect(ctypes.byref(rectangle), 2)
+        info = _MONITORINFO()
+        info.cbSize = ctypes.sizeof(info)
+        if not monitor or not self.user32.GetMonitorInfoW(monitor, ctypes.byref(info)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        area = info.rcWork
+        return area.left, area.top, area.right, area.bottom
 
     def create_window(self, controller: NativeOverlayController) -> int:
         callback_type = getattr(ctypes, "WINFUNCTYPE", ctypes.CFUNCTYPE)
@@ -310,15 +366,18 @@ class _Win32:
         if not hwnd:
             raise ctypes.WinError(ctypes.get_last_error())
         if not self.user32.SetLayeredWindowAttributes(hwnd, COLOR_KEY, 0, LWA_COLORKEY):
+            failure = ctypes.WinError(ctypes.get_last_error())
             self.user32.DestroyWindow(hwnd)
-            raise ctypes.WinError(ctypes.get_last_error())
+            raise failure
         return int(hwnd)
 
     def message_loop(self, controller: NativeOverlayController) -> None:
         msg = _MSG()
         while not controller._stop.is_set():
             result = self.user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
-            if result <= 0:
+            if result == -1:
+                raise ctypes.WinError(ctypes.get_last_error())
+            if result == 0:
                 break
             self.user32.TranslateMessage(ctypes.byref(msg))
             self.user32.DispatchMessageW(ctypes.byref(msg))
@@ -336,21 +395,32 @@ class _Win32:
         self.user32.ShowWindow(hwnd, command)
 
     def move_window(self, hwnd: int, x: int, y: int, width: int, height: int) -> None:
-        self.user32.SetWindowPos(
+        success = self.user32.SetWindowPos(
             hwnd,
             HWND_TOPMOST,
             x,
             y,
             width,
             height,
-            SWP_NOACTIVATE | SWP_SHOWWINDOW,
+            SWP_NOACTIVATE,
         )
+        if not success:
+            raise ctypes.WinError(ctypes.get_last_error())
 
     def post_message(self, hwnd: int, message: int, wparam: int, lparam: int) -> None:
-        self.user32.PostMessageW(hwnd, message, wparam, lparam)
+        if not self.user32.PostMessageW(hwnd, message, wparam, lparam):
+            raise ctypes.WinError(ctypes.get_last_error())
 
     def destroy_window(self, hwnd: int) -> None:
-        self.user32.DestroyWindow(hwnd)
+        if self.user32.IsWindow(hwnd) and not self.user32.DestroyWindow(hwnd):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    def unregister_class(self, name: str) -> None:
+        instance = self.kernel32.GetModuleHandleW(None)
+        if not self.user32.UnregisterClassW(name, instance):
+            code = ctypes.get_last_error()
+            if code != 1411:  # ERROR_CLASS_DOES_NOT_EXIST
+                raise ctypes.WinError(code)
 
     def post_quit(self, code: int) -> None:
         self.user32.PostQuitMessage(code)
@@ -364,6 +434,8 @@ class _Win32:
     def begin_paint(self, hwnd: int):
         paint = _PAINTSTRUCT()
         hdc = self.user32.BeginPaint(hwnd, ctypes.byref(paint))
+        if not hdc:
+            raise ctypes.WinError(ctypes.get_last_error())
         return hdc, paint
 
     def end_paint(self, hwnd: int, paint: _PAINTSTRUCT) -> None:
@@ -403,13 +475,29 @@ class _Win32:
         right = _POINT(int(ex - ux * size + uy * size * 0.55), int(ey - uy * size - ux * size * 0.55))
         tip = _POINT(ex, ey)
         points = (_POINT * 3)(tip, left, right)
-        self.gdi32.Polygon(hdc, ctypes.byref(points), 3)
+        brush = self.gdi32.CreateSolidBrush(_color)
+        previous = self.gdi32.SelectObject(hdc, brush)
+        try:
+            self.gdi32.Polygon(hdc, points, 3)
+        finally:
+            self.gdi32.SelectObject(hdc, previous)
+            self.gdi32.DeleteObject(brush)
 
-    def draw_text(self, hdc, message: str) -> None:
-        rect = _RECT(12, 12, 620, 100)
+    def draw_text(self, hdc, message: str, bounds: tuple[int, int, int, int] | None = None) -> None:
+        x, y, width, height = bounds or (12, 12, 608, 88)
+        background = _RECT(x, y, x + width, y + height)
+        brush = self.gdi32.CreateSolidBrush(_rgb("#2a1d17"))
+        if not brush:
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            self.user32.FillRect(hdc, ctypes.byref(background), brush)
+        finally:
+            self.gdi32.DeleteObject(brush)
+        padding = min(6, max(0, min(width, height) // 4))
+        rect = _RECT(x + padding, y + padding, x + width - padding, y + height - padding)
         self.gdi32.SetBkMode(hdc, TRANSPARENT)
         self.gdi32.SetTextColor(hdc, 0x00FFFFFF)
-        self.user32.DrawTextW(hdc, message, -1, ctypes.byref(rect), 0x00000000)
+        self.user32.DrawTextW(hdc, message, -1, ctypes.byref(rect), 0x00000010 | 0x00000800)
 
 
 class NativeOverlayController:
@@ -472,8 +560,9 @@ class NativeOverlayController:
 
         with self._lock:
             if self._started:
-                return self._start_result
+                return self._start_result and self.available and not self._stop.is_set()
             if self._api is None and os.name != "nt":
+                self._failure_reason = "native_overlay_requires_windows"
                 self._fail_locked()
                 return False
             self._started = True
@@ -486,6 +575,7 @@ class NativeOverlayController:
             self._thread.start()
         if not self._ready.wait(max(0.05, float(timeout))):
             with self._lock:
+                self._failure_reason = "native_overlay_start_timeout"
                 self._stop.set()
                 thread = self._thread
                 hwnd = self._hwnd
@@ -495,10 +585,10 @@ class NativeOverlayController:
                 except Exception as exc:  # noqa: BLE001 - timeout cleanup is best effort
                     LOGGER.warning("Native overlay cleanup failed (timeout): %s", type(exc).__name__)
             self._fail_closed()
-            if thread and thread is not __import__("threading").current_thread():
+            if thread and thread is not current_thread():
                 thread.join(max(0.05, min(float(timeout), 2.0)))
         with self._lock:
-            return self._start_result
+            return self._start_result and self.available and not self._stop.is_set()
 
     def stop(self, timeout: float = 2.0) -> None:
         with self._lock:
@@ -510,14 +600,21 @@ class NativeOverlayController:
                 self._bindings().post_message(hwnd, WM_CLOSE, 0, 0)
             except Exception:  # noqa: BLE001,S110 - overlay cleanup is best effort
                 pass
-        if thread and thread is not __import__("threading").current_thread():
+        if thread and thread is not current_thread():
             thread.join(max(0.05, float(timeout)))
         with self._lock:
             self._visible = False
-            self._started = False
+            self._start_result = False
             self._capture_excluded = False
-            self._hwnd = None
-            self._thread = None
+            if thread is not None and thread.is_alive():
+                # Do not permit another GUI thread to reuse this controller.
+                self._started = True
+                self._failed_closed = True
+                self._failure_reason = "native_overlay_stop_timeout"
+            else:
+                self._started = False
+                self._hwnd = None
+                self._thread = None
 
     def show(self) -> bool:
         with self._lock:
@@ -549,6 +646,7 @@ class NativeOverlayController:
         arrows: Iterable[OverlayArrow | Mapping[str, object]],
         message: str = "",
         bounds: Sequence[int] | None = None,
+        message_rect: tuple[int, int, int, int] | None = None,
     ) -> bool:
         """Publish a validated frame and show it only after privacy checks."""
 
@@ -561,7 +659,12 @@ class NativeOverlayController:
                 rect = (int(bounds[0]), int(bounds[1]), int(bounds[2]), int(bounds[3]))
                 if rect[2] <= 0 or rect[3] <= 0:
                     raise ValueError("overlay bounds must be positive")
-            snapshot = OverlaySnapshot(normalized, str(message)[:500], rect)
+            if message_rect is not None:
+                if len(message_rect) != 4 or message_rect[2] <= 0 or message_rect[3] <= 0:
+                    raise ValueError("message bounds must be x,y,width,height")
+                message_rect = (int(message_rect[0]), int(message_rect[1]),
+                                int(message_rect[2]), int(message_rect[3]))
+            snapshot = OverlaySnapshot(normalized, str(message)[:500], rect, message_rect)
         except (TypeError, ValueError, OverflowError):
             self.hide()
             return False
@@ -609,6 +712,7 @@ class NativeOverlayController:
     # binding object is intentionally small so tests can provide a fake API.
     def _window_thread(self) -> None:
         hwnd = None
+        api = None
         try:
             api = self._bindings()
             hwnd = api.create_window(self)
@@ -618,6 +722,7 @@ class NativeOverlayController:
                 destroy = getattr(api, "destroy_window", None)
                 if destroy is not None:
                     destroy(hwnd)
+                hwnd = None
                 return
             with self._lock:
                 self._hwnd = hwnd
@@ -628,10 +733,11 @@ class NativeOverlayController:
             api.message_loop(self)
         except Exception as exc:  # noqa: BLE001 - GUI thread must fail closed on any Win32 error
             if hwnd:
-                destroy = getattr(self._bindings(), "destroy_window", None)
+                destroy = getattr(api, "destroy_window", None)
                 if destroy is not None:
                     try:
                         destroy(hwnd)
+                        hwnd = None
                     except Exception as cleanup_exc:  # noqa: BLE001 - cleanup is best effort
                         LOGGER.warning(
                             "Native overlay cleanup failed (window thread): %s",
@@ -640,14 +746,28 @@ class NativeOverlayController:
             with self._lock:
                 self._failure_reason = f"{type(exc).__name__}: {exc}"[:240]
                 self._fail_locked()
-            self._ready.set()
         finally:
+            if hwnd is not None:
+                destroy = getattr(api, "destroy_window", None)
+                if destroy is not None:
+                    try:
+                        destroy(hwnd)
+                    except Exception as cleanup_exc:  # noqa: BLE001 - best effort on GUI owner thread
+                        LOGGER.warning("Native overlay final cleanup failed: %s", type(cleanup_exc).__name__)
+            unregister = getattr(api, "unregister_class", None)
+            if unregister is not None:
+                try:
+                    unregister(self._class_name)
+                except Exception as cleanup_exc:  # noqa: BLE001 - keep failure diagnostic and release waiter
+                    LOGGER.warning("Native overlay class cleanup failed: %s", type(cleanup_exc).__name__)
             with self._lock:
                 self._visible = False
                 self._capture_excluded = False
+                self._start_result = False
                 self._hwnd = None
                 self._started = False
                 self._thread = None
+            self._ready.set()
 
     def _window_proc(self, hwnd, message, wparam, lparam):  # pragma: no cover - Win32 callback
         if message == WM_NCHITTEST:
@@ -655,7 +775,13 @@ class NativeOverlayController:
         if message == WM_ERASEBKGND:
             return 1
         if message == WM_PAINT:
-            self._paint(hwnd)
+            try:
+                self._paint(hwnd)
+            except Exception as exc:  # noqa: BLE001 - exceptions must never escape a Win32 callback
+                LOGGER.warning("Native overlay painting failed: %s", type(exc).__name__)
+                with self._lock:
+                    self._failure_reason = "native_overlay_paint_failed"
+                self._fail_closed()
             return 0
         if message == WM_CLOSE:
             self._bindings().show_window(hwnd, SW_HIDE)
@@ -672,24 +798,30 @@ class NativeOverlayController:
     def _paint(self, hwnd):  # pragma: no cover - Win32 GDI callback
         api = self._bindings()
         hdc, paint = api.begin_paint(hwnd)
-        objects = []
         try:
             api.fill_color_key(hdc, paint.rcPaint)
             with self._lock:
                 snapshot = self._snapshot
             for arrow in snapshot.arrows:
                 pen = api.create_pen(arrow.width, _rgb(arrow.color))
-                objects.append(pen)
-                api.select_object(hdc, pen)
-                api.draw_arrow(hdc, arrow.start, arrow.end, arrow.width, _rgb(arrow.color))
+                previous = api.select_object(hdc, pen)
+                try:
+                    api.draw_arrow(hdc, arrow.start, arrow.end, arrow.width, _rgb(arrow.color))
+                finally:
+                    api.select_object(hdc, previous)
+                    api.delete_object(pen)
             if snapshot.message:
                 font = api.create_font(18)
-                objects.append(font)
-                api.select_object(hdc, font)
-                api.draw_text(hdc, snapshot.message)
+                previous = api.select_object(hdc, font)
+                try:
+                    if snapshot.message_rect is None:
+                        api.draw_text(hdc, snapshot.message)
+                    else:
+                        api.draw_text(hdc, snapshot.message, snapshot.message_rect)
+                finally:
+                    api.select_object(hdc, previous)
+                    api.delete_object(font)
         finally:
-            for obj in objects:
-                api.delete_object(obj)
             api.end_paint(hwnd, paint)
 
 
@@ -736,13 +868,18 @@ class PrivateOverlayController:
 
     def status(self) -> dict[str, object]:
         with self._lock:
+            available, visible = self._native.available, self._native.visible
+            state, reason = ("active" if visible else self._state), self._reason
+            if self._mode == "private" and not available and state in {"active", "ready"}:
+                state = "unavailable"
+                reason = self._native._failure_reason or "native_window_stopped"
             return {
                 "mode": self._mode,
-                "state": "active" if self._native.visible else self._state,
-                "reason": self._reason,
-                "available": self._native.available,
-                "visible": self._native.visible,
-                "capture_excluded": self._native.available,
+                "state": state,
+                "reason": reason,
+                "available": available,
+                "visible": visible,
+                "capture_excluded": available,
             }
 
     def _retire_locked(self, session_id: str | None) -> None:
@@ -848,6 +985,15 @@ class PrivateOverlayController:
                     self._state, self._reason = "hidden", "missing_board_geometry"
                 return self.status()
             orientation = str(geometry.get("orientation", "white")) if isinstance(geometry, Mapping) else "white"
+            board_values = tuple(float(cast(Any, board[key])) for key in ("left", "top", "width", "height"))
+            if not all(math.isfinite(value) for value in board_values) or min(board_values[2:]) <= 0:
+                raise ValueError("invalid screen board rectangle")
+            left, top = math.floor(board_values[0]), math.floor(board_values[1])
+            width = math.ceil(board_values[0] + board_values[2]) - left
+            height = math.ceil(board_values[1] + board_values[3]) - top
+            bounds = (left, top, width, height)
+            local_board = {"left": board_values[0] - left, "top": board_values[1] - top,
+                           "width": board_values[2], "height": board_values[3]}
             arrows: list[dict[str, object]] = []
             raw_arrows = payload.get("arrows", [])
             if not isinstance(raw_arrows, Sequence) or isinstance(raw_arrows, (str, bytes)):
@@ -858,17 +1004,50 @@ class PrivateOverlayController:
                 uci = str(item.get("uci", ""))
                 if len(uci) < 4:
                     continue
-                start = self._square_point(uci[:2], board, orientation)
-                end = self._square_point(uci[2:4], board, orientation)
+                start = self._square_point(uci[:2], local_board, orientation)
+                end = self._square_point(uci[2:4], local_board, orientation)
                 arrows.append({"start": start, "end": end, "color": item.get("color", "#16c784"), "width": 5})
             raw_messages = payload.get("messages", [])
             if not isinstance(raw_messages, Sequence) or isinstance(raw_messages, (str, bytes)):
                 raw_messages = ()
             message = " · ".join(str(item) for item in raw_messages[:2])
-            bounds = tuple(
-                int(float(cast(Any, board[key]))) for key in ("left", "top", "width", "height")
-            )
-            if self._native.update(arrows, message=message, bounds=bounds):
+            message_rect = None
+            if message:
+                # Extend the transparent window beside/below the board, never
+                # print over pieces. If no monitor space exists, omit the text.
+                api = self._native._bindings()
+                get_area = getattr(api, "get_work_area", None)
+                try:
+                    area = get_area(*bounds) if get_area is not None else None
+                except OSError:
+                    LOGGER.warning("Native overlay work area unavailable; omitting message panel")
+                    area = (left, top, left + width, top + height)
+                gap, panel_width, panel_height = 12, 320, 144
+                candidates = [
+                    (left + width + gap, top, panel_width, min(height, 320)),
+                    (left - panel_width - gap, top, panel_width, min(height, 320)),
+                    (left, top + height + gap, width, panel_height),
+                    (left, top - panel_height - gap, width, panel_height),
+                ]
+                for px, py, pw, ph in candidates:
+                    if area is not None and not (px >= area[0] and py >= area[1]
+                            and px + pw <= area[2] and py + ph <= area[3]):
+                        continue
+                    origin_x, origin_y = min(left, px), min(top, py)
+                    bounds = (origin_x, origin_y,
+                              max(left + width, px + pw) - origin_x,
+                              max(top + height, py + ph) - origin_y)
+                    dx, dy = left - origin_x, top - origin_y
+                    for arrow in arrows:
+                        for key in ("start", "end"):
+                            point = cast(tuple[float, float], arrow[key])
+                            arrow[key] = (point[0] + dx, point[1] + dy)
+                    message_rect = (px - origin_x + 8, py - origin_y + 8,
+                                    max(1, pw - 16), max(1, ph - 16))
+                    break
+                if message_rect is None:
+                    message = ""
+            if self._native.update(arrows, message=message, bounds=bounds, message_rect=message_rect):
                 with self._lock:
                     self._state, self._reason = "active", "capture_exclusion_verified"
             return self.status()

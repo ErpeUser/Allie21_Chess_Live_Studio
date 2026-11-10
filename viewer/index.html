@@ -22,9 +22,9 @@ h1{font-size:clamp(20px,2vw,27px);line-height:1.1;margin:0;letter-spacing:-.025e
 .actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.btn{border:1px solid transparent;border-radius:9px;padding:10px 14px;min-height:42px;cursor:pointer;color:#fff7eb;background:#704c32;font-weight:650;transition:background .15s ease,border-color .15s ease;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}.btn:hover:not(:disabled){background:#8a5d3a}.btn.primary{color:#2a1b12;background:#d6ad67;border-color:#f0c98a;box-shadow:0 2px 8px #160b0866}.btn.primary:hover:not(:disabled){background:#e5bd79}.btn.secondary{border-color:#8c6547;background:#563a29}.btn.ghost{border-color:#765538;background:transparent;color:#dfc7a7}.btn.danger{border-color:#8a4c43;background:#4a2826;color:#ffd4c5}.btn:disabled{opacity:.46;cursor:not-allowed;box-shadow:none}.btn .spinner{width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .75s linear infinite}@keyframes spin{to{transform:rotate(1turn)}}
 .stage{position:relative;overflow:hidden;min-height:360px;display:grid;place-items:center;border:1px solid #765538;border-radius:15px;background-color:#241711;background-image:linear-gradient(45deg,#5e402826 25%,transparent 25%),linear-gradient(-45deg,#5e402826 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#5e402826 75%),linear-gradient(-45deg,transparent 75%,#5e402826 75%);background-size:28px 28px;background-position:0 0,0 14px,14px -14px,-14px 0;box-shadow:inset 0 0 80px #160b08aa}
 #screen{position:relative;width:100%;max-width:100%;display:none;margin:auto}#video{display:block;width:100%;height:100%;object-fit:contain;background:#1a100c}#arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#allieBubble{position:absolute;z-index:3;width:min(330px,calc(100% - 24px));max-height:72%;overflow:auto;padding:13px 14px;border:1px solid #c39a63c7;border-radius:14px;background:#2a1d17ed;box-shadow:0 16px 36px #160b08b8;backdrop-filter:blur(9px);pointer-events:none}#allieBubble[hidden]{display:none}#allieBubble::before{content:"";position:absolute;left:-9px;top:24px;width:16px;height:16px;background:#2a1d17;border-left:1px solid #c39a63c7;border-bottom:1px solid #c39a63c7;transform:rotate(45deg)}.bubble-title{color:#e1bd7c;font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}.bubble-idea{color:#e2cdb2;font-size:12px;line-height:1.4;margin:0 0 8px}.bubble-move{border-top:1px solid #694b35;padding:8px 0 2px}.bubble-move:first-of-type{border-top:0}.bubble-move.secondary{opacity:.88}.bubble-move-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.bubble-label{color:#c2a37e;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.bubble-san{color:#f0c27b;font-size:17px;font-weight:900}.bubble-move.secondary .bubble-san{color:#f4d19a}.bubble-prob{font-size:12px;color:#f4e3cd;font-weight:800}.bubble-reply{color:#cbb59b;font-size:11px;line-height:1.4;margin-top:3px}
+#allieBubble{position:relative;width:100%;box-sizing:border-box;overflow:auto;padding:13px 14px;border:1px solid #c39a63c7;border-radius:14px;background:#2a1d17;max-height:65vh}#allieBubble[hidden]{display:none}.analysis-companion{display:grid;gap:12px;min-width:0}.analysis-companion:has(> [hidden]):not(:has(> :not([hidden]))){display:none}.bubble-title{color:#e1bd7c;font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}.bubble-idea{color:#e2cdb2;font-size:12px;line-height:1.4;margin:0 0 8px}.bubble-move{border-top:1px solid #694b35;padding:8px 0 2px}.bubble-move:first-of-type{border-top:0}.bubble-move.secondary{opacity:.88}.bubble-move-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.bubble-label{color:#c2a37e;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.bubble-san{color:#f0c27b;font-size:17px;font-weight:900}.bubble-move.secondary .bubble-san{color:#f4d19a}.bubble-prob{font-size:12px;color:#f4e3cd;font-weight:800}.bubble-reply{color:#cbb59b;font-size:11px;line-height:1.4;margin-top:3px}
 #placeholder{max-width:460px;text-align:center;padding:40px 24px;color:#cdb99e}.placeholder-icon{width:74px;height:74px;margin:0 auto 16px;display:grid;place-items:center;border-radius:22px;border:1px solid #876242;background:#3b291e;color:#e1bd7c;font-size:31px;box-shadow:0 15px 34px #160b0866}.placeholder-title{font-weight:800;font-size:17px;color:#fff0dc;margin-bottom:5px}
-#hud{position:absolute;left:12px;bottom:12px;width:min(500px,calc(100% - 24px));background:#2a1d17ed;border:1px solid #a77a4da8;border-radius:12px;padding:12px 14px;max-height:56%;overflow:auto;pointer-events:none;backdrop-filter:blur(8px);box-shadow:0 12px 32px #160b08aa}#hud[hidden]{display:none}#hud strong{display:block;color:#e1bd7c;font-size:11px;letter-spacing:.1em;text-transform:uppercase}.tip{margin:5px 0;font-size:12px;line-height:1.45}
+#hud{position:relative;width:100%;box-sizing:border-box;background:#2a1d17;border:1px solid #a77a4da8;border-radius:12px;padding:12px 14px;max-height:40vh;overflow:auto}#hud[hidden]{display:none}#hud strong{display:block;color:#e1bd7c;font-size:11px;letter-spacing:.1em;text-transform:uppercase}.tip{margin:5px 0;font-size:12px;line-height:1.45}
 .status-wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;margin-top:14px}.status{position:relative;border:1px solid #765538;background:#3a281e;border-radius:12px;padding:12px 14px 12px 42px;min-height:48px;overflow-wrap:anywhere}.status::before{content:"";position:absolute;left:16px;top:17px;width:11px;height:11px;border-radius:50%;background:#9f886c;box-shadow:0 0 0 5px #9f886c1c}.status[data-kind="busy"]::before{background:var(--accent-2);box-shadow:0 0 0 5px #c99a5c1c;animation:pulse 1.4s infinite}.status[data-kind="good"]::before{background:var(--accent)}.status[data-kind="error"]{border-color:#8a4c43;color:#ffd1c5}.status[data-kind="error"]::before{background:var(--danger)}@keyframes pulse{50%{box-shadow:0 0 0 10px transparent}}
 .source{color:var(--muted);font-size:12px;text-align:right;max-width:340px}.progress-rail{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.step{border:1px solid #644832;border-radius:10px;padding:8px 10px;color:#a78c6d;font-size:12px}.step::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#80664b;margin-right:7px}.step.active{color:#f0dfc7;border-color:#a77a4d;background:#432d20}.step.active::before{background:var(--accent-2)}.step.done{color:#e7d0ad;border-color:#795f40}.step.done::before{background:var(--accent)}
 .section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 11px}.section-title h2{font-size:14px;font-weight:650;letter-spacing:-.01em;color:#f0dfc7;margin:0}.health-row{display:flex;gap:7px;flex-wrap:wrap}.health{font-size:11px;padding:4px 7px;border:1px solid #765538;border-radius:999px;color:#bda887}.health.good{color:#d7e7b4;border-color:#6f7949}.health.warn{color:#f0c27b;border-color:#87653a}
@@ -53,15 +53,19 @@ details{border-top:1px solid #644832;margin-top:13px;padding-top:3px}summary{cur
       <div class="hero">
         <div><h2>Schachbrett zeigen, Analyse starten</h2><p>Teile ein Fenster oder einen Bildschirm. Allie erkennt das Brett und zeigt die Hinweise nur lokal.</p></div>
       </div>
+      <div class="field"><label for="captureSource">Bevorzugte Aufnahmequelle</label>
+        <select class="control stream-setting" id="captureSource"><option value="window">Fenster</option><option value="browser">Browser-Tab</option><option value="monitor">Bildschirm</option></select>
+        <p class="hint">Der Browser fragt immer nach deiner Freigabe. Die Auswahl ist eine Praeferenz, keine Einschraenkung.</p>
+      </div>
       <div class="actions">
         <button class="btn primary" id="start">Quelle auswählen</button>
         <button class="btn danger" id="stop" disabled>Analyse stoppen</button>
         <a class="btn ghost install" href="#" id="install">Browser-Overlay einrichten</a>
       </div>
 
-      <div class="stage">
+      <div class="stage" id="stage">
         <div id="placeholder"><div class="placeholder-icon" aria-hidden="true">♟</div><div class="placeholder-title">Noch kein Brett sichtbar</div><div>Wähle das Fenster mit dem Schachbrett. Ein geteiltes Fenster muss sichtbar bleiben.</div></div>
-        <div id="screen"><video id="video" autoplay playsinline muted></video><svg id="arrows" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg><div id="allieBubble" hidden aria-live="polite"></div><div id="hud" hidden><strong>Eröffnung · Zugwahl · Gefahren</strong><div id="tips"></div></div></div>
+        <div id="screen"><video id="video" autoplay playsinline muted></video><svg id="arrows" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg></div>
       </div>
 
       <div class="status-wrap">
@@ -81,17 +85,26 @@ details{border-top:1px solid #644832;margin-top:13px;padding-top:3px}summary{cur
     </main>
 
     <aside class="sidebar">
+      <section class="analysis-companion" aria-label="Erklaerungen neben dem Brett">
+        <div id="allieBubble" hidden aria-live="polite"></div>
+        <div id="hud" hidden><strong>Eröffnung · Zugwahl · Gefahren</strong><div id="tips"></div></div>
+      </section>
       <section class="card side-card">
         <div class="section-title"><h2>System</h2><div class="health-row"><span class="health" id="engineHealth">Stockfish prüft …</span><span class="health" id="modelHealth">Allie prüft …</span></div></div>
         <div class="section-title"><h2>Einstellungen</h2></div>
         <label class="recommendation-switch" id="recommendationSwitch"><span><strong>Live-Zugpfeile &amp; Empfehlungen</strong><small>Zum Spielen mit Freunden einfach ausschalten.</small></span><span class="switch-state" id="recommendationState">Ein</span><span class="switch-control"><input type="checkbox" id="recommendationsToggle" checked aria-label="Live-Zugpfeile und Empfehlungen ein- oder ausschalten"><span class="switch-track" aria-hidden="true"></span></span></label>
-        <label class="recommendation-switch" id="privateOverlaySwitch"><span><strong>Privates Windows-Overlay</strong><small>HUD außerhalb des Browser-Captures; nur bei verfügbarer nativer Unterstützung.</small></span><span class="switch-state" id="privateOverlayState">Aus</span><span class="switch-control"><input type="checkbox" id="privateOverlayToggle" aria-label="Privates Windows-Overlay ein- oder ausschalten"><span class="switch-track" aria-hidden="true"></span></span></label>
-        <p class="hint" id="privateOverlayStatus">Capture-Schutz wird geprüft ...</p>
+        <label class="recommendation-switch" id="privateOverlaySwitch"><span><strong>Privates Windows-Overlay</strong><small>Separates Windows-Fenster. Aufnahmeausschluss muss mit deiner Capture-Methode geprueft werden.</small></span><span class="switch-state" id="privateOverlayState">Aus</span><span class="switch-control"><input type="checkbox" id="privateOverlayToggle" aria-label="Privates Windows-Overlay ein- oder ausschalten"><span class="switch-track" aria-hidden="true"></span></span></label>
+        <p class="hint" id="privateOverlayStatus" role="status" aria-live="polite">Capture-Schutz wird geprueft ...</p>
+        <button class="btn ghost" id="retryPrivateOverlay" hidden>Privates Overlay erneut pruefen</button>
+        <div class="field"><label for="playStyle">Menschliches Analyseprofil</label>
+          <select class="control stream-setting" id="playStyle"><option value="normal">Allie - normales Profil</option><option value="aggressive">Aggressiv - heuristische Umordnung</option></select>
+          <p class="hint">Elo, Zeitkontrolle und echte Partiegeschichte steuern Allie. Keine zufaelligen Scheinwahrscheinlichkeiten.</p>
+        </div>
         <div class="field-grid"><div class="field"><label for="white">Weiß-Elo</label><input class="control stream-setting" id="white" type="number" min="600" max="2800" step="50"></div><div class="field"><label for="black">Schwarz-Elo</label><input class="control stream-setting" id="black" type="number" min="600" max="2800" step="50"></div></div>
         <div class="field-grid"><div class="field"><label for="tc">Zeitkontrolle</label><input class="control stream-setting" id="tc" placeholder="300+0" pattern="[0-9]{1,5}\+[0-9]{1,4}" aria-describedby="tcHint"><p class="hint" id="tcHint">Sekunden + Inkrement, z. B. 300+0</p></div><div class="field"><label for="playerSide">Deine Farbe</label><select class="control stream-setting" id="playerSide"><option value="white">Weiß</option><option value="black">Schwarz</option></select><p class="hint">Unabhängig von der Brettorientierung</p></div></div>
         <div class="field-grid"><div class="field"><label for="openingWhite">Weißes Opening</label><select class="control stream-setting" id="openingWhite"><option value="grob">Grob Gambit · Ragebait</option><option value="bongcloud">Bongcloud</option><option value="halloween">Halloween-Gambit</option><option value="vienna">Wiener Gambit</option><option value="steinitz">Steinitz-Gambit</option><option value="frankenstein">Frankenstein-Dracula</option><option value="danish">Dänisches Gambit</option></select></div><div class="field"><label for="openingBlack">Schwarzes Opening</label><select class="control stream-setting" id="openingBlack"><option value="englund">Englund Gambit · Ragebait</option><option value="stafford">Stafford-Gambit</option><option value="traxler">Traxler-Gegenangriff</option><option value="budapest">Budapester Gambit</option><option value="alekhine">Aljechin-Verteidigung</option></select></div></div>
         <label class="check"><input type="checkbox" class="stream-setting" id="ocr"><span>Sichtbare Zugfolge per OCR lesen <span class="hint">(optional, benötigt mehr Leistung)</span></span></label>
-        <label class="check"><input type="checkbox" id="hudToggle" checked><span>Hinweise über dem Streambild anzeigen</span></label>
+        <label class="check"><input type="checkbox" id="hudToggle" checked><span>Hinweise neben dem Streambild anzeigen</span></label>
         <div id="settingsDirty" class="dirty">Änderungen gelten beim nächsten Start.</div>
       </section>
 
@@ -123,12 +136,17 @@ const FORM_SETTINGS={...SETTINGS,...STORED_USER_SETTINGS};
 if(!['white','black'].includes(FORM_SETTINGS.player_side))FORM_SETTINGS.player_side=SETTINGS.player_side||'white';
 if(!['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'].includes(FORM_SETTINGS.opening_white))FORM_SETTINGS.opening_white='grob';
 if(!['englund','stafford','traxler','budapest','alekhine'].includes(FORM_SETTINGS.opening_black))FORM_SETTINGS.opening_black='englund';
+$('playStyle').value=['normal','aggressive'].includes(FORM_SETTINGS.play_style)?FORM_SETTINGS.play_style:'normal';
+$('captureSource').value=['window','browser','monitor'].includes(FORM_SETTINGS.capture_source)?FORM_SETTINGS.capture_source:'window';
 $('install').href='/install';
 $('white').value=FORM_SETTINGS.white_elo;$('black').value=FORM_SETTINGS.black_elo;$('tc').value=FORM_SETTINGS.time_control;$('playerSide').value=FORM_SETTINGS.player_side;$('ocr').checked=FORM_SETTINGS.ocr_history;
 $('openingWhite').value=FORM_SETTINGS.opening_white||'grob';$('openingBlack').value=FORM_SETTINGS.opening_black||'englund';
 try{$('recommendationsToggle').checked=localStorage.getItem('allie-live-recommendations')!=='off'}catch{}
 try{$('privateOverlayToggle').checked=localStorage.getItem('allie-private-overlay')==='on'}catch{}
  let stream=null,timer=null,busyId=null,lastState=null,tickId=0,geometryRefreshTimer=0,geometryRevision=0,privateOverlayAvailable=false;
+let privateOverlayStatus=null,privateOverlayPending=false,overlaySyncPromise=null;
+let overlayPublishBusy=false,overlayPublishQueued=null,viewerFocused=true;
+let captureStarting=false,captureStopPromise=null,captureStartRequest=null,captureAbort=null;
  const viewerSessionId='viewer-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
 const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d',{alpha:false});
  function fitStage(){const v=$('video');if(!v.videoWidth||!v.videoHeight)return;$('screen').style.aspectRatio=`${v.videoWidth}/${v.videoHeight}`;}
@@ -138,57 +156,300 @@ const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d',{
  window.visualViewport?.addEventListener('resize',refreshViewerGeometry,{passive:true});
  window.visualViewport?.addEventListener('scroll',refreshViewerGeometry,{passive:true});
  $('video').addEventListener('loadedmetadata',refreshViewerGeometry,{passive:true});
- if(typeof ResizeObserver==='function')new ResizeObserver(refreshViewerGeometry).observe($('stage'));
+ if(typeof ResizeObserver==='function')new ResizeObserver(refreshViewerGeometry).observe($('video'));
 function errorText(err){return err?.message||String(err)}
 function setStatus(text,kind='idle'){$('status').textContent=text;$('status').dataset.kind=kind;}
 function setButtonBusy(button,busy,label){button.disabled=busy;button.dataset.label??=button.innerHTML;button.innerHTML=busy?`<span class="spinner" aria-hidden="true"></span>${label}`:button.dataset.label;}
 function setRunning(running){for(const el of document.querySelectorAll('.stream-setting'))el.disabled=running;$('start').disabled=running;$('stop').disabled=!running;$('settingsDirty').classList.remove('show');}
 function recommendationsEnabled(state=lastState){return $('recommendationsToggle').checked&&state?.recommendations_enabled!==false}
-function privateOverlayEnabled(){return privateOverlayAvailable===true&&$('privateOverlayToggle').checked}
-function updatePrivateOverlayLabel(status){const enabled=privateOverlayEnabled();$('privateOverlayState').textContent=enabled?'Ein':'Aus';$('privateOverlaySwitch').classList.toggle('off',!enabled);if(status){$('privateOverlayStatus').textContent=`Privates Overlay: ${status.state||'unbekannt'}${status.reason?' · '+status.reason:''}`;$('privateOverlayStatus').className='hint '+(status.available?'good':'warning')}}
-async function syncPrivateOverlay(){try{const requested=$('privateOverlayToggle').checked;const status=await(await req('/api/overlay/mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:requested?'private':'normal'})})).json();privateOverlayAvailable=Boolean(status.available);if(!privateOverlayAvailable){if(requested){try{localStorage.setItem('allie-private-overlay','off')}catch{};$('privateOverlayToggle').checked=false;setStatus('Privates Overlay nicht verfügbar – sichtbarer Browsermodus aktiv.','idle')}updatePrivateOverlayLabel(status);return status}updatePrivateOverlayLabel(status);if(requested&&status.mode!=='private'){return syncPrivateOverlay()}return status}catch(e){const wasEnabled=$('privateOverlayToggle').checked;$('privateOverlayToggle').checked=false;privateOverlayAvailable=false;try{localStorage.setItem('allie-private-overlay','off')}catch{}updatePrivateOverlayLabel({state:'fehlerhaft',available:false,reason:errorText(e)});if(wasEnabled)setStatus('Privates Overlay nicht verfügbar – sichtbarer Browsermodus aktiv.','idle');return null}}
- function overlayGeometry(det){const stage=$('stage').getBoundingClientRect(),viewport=window.visualViewport,dpr=window.devicePixelRatio||1,box=det?.box;if(!box)return null;const[bx,by,bw,bh]=box;const fw=det.frame?.[0]||stage.width,fh=det.frame?.[1]||stage.height,left=stage.left+bx*stage.width/fw,top=stage.top+by*stage.height/fh,width=bw*stage.width/fw,height=bh*stage.height/fh;const screenLeft=(Number(window.screenX)||0)+(viewport?.offsetLeft||0)+left,screenTop=(Number(window.screenY)||0)+(viewport?.offsetTop||0)+top;return{viewport:{width:window.innerWidth,height:window.innerHeight,offset_left:viewport?.offsetLeft||0,offset_top:viewport?.offsetTop||0,scale:viewport?.scale||1},device_pixel_ratio:dpr,orientation:det.orientation||'white',board:{left,top,width,height},screen_board:{left:Math.round(screenLeft*dpr),top:Math.round(screenTop*dpr),width:Math.round(width*dpr),height:Math.round(height*dpr)},revision:geometryRevision}}
+function privateOverlayRequested(){return $('privateOverlayToggle').checked}
+function privateOverlayEnabled(){
+  return privateOverlayRequested() && !privateOverlayPending && privateOverlayAvailable
+    && privateOverlayStatus?.mode==='private';
+}
+function hideBrowserHints(){
+  $('arrows').replaceChildren();
+  $('allieBubble').replaceChildren();$('allieBubble').hidden=true;
+  $('hud').hidden=true;
+  $('analysis').textContent='Privater Modus: Hinweise werden nicht im Browser angezeigt.';
+  $('manualResult').replaceChildren();
+}
+function updatePrivateOverlayLabel(status){
+  if(status){
+    privateOverlayStatus=status;
+    privateOverlayAvailable=status.available===true && status.capture_excluded===true;
+  }
+  const requested=privateOverlayRequested(),enabled=privateOverlayEnabled();
+  $('privateOverlayState').textContent=privateOverlayPending
+    ? (requested?'Startet ...':'Stoppt ...')
+    : !requested?'Aus':enabled?(privateOverlayStatus?.visible?'Ein':'Bereit'):'Nicht verfuegbar';
+  $('privateOverlaySwitch').classList.toggle('off',!requested);
+  $('privateOverlaySwitch').setAttribute('aria-busy',String(privateOverlayPending));
+  $('privateOverlayToggle').disabled=privateOverlayPending;
+  $('retryPrivateOverlay').hidden=!requested || enabled || privateOverlayPending;
+  const detail=privateOverlayStatus?.reason || privateOverlayStatus?.state || 'Status wird geprueft';
+  $('privateOverlayStatus').textContent=!requested?'Privates Overlay ausgeschaltet.':
+    privateOverlayPending?'Windows-Overlay wird geprueft; Browserhinweise bleiben verborgen.':
+    enabled?`Windows-Aufnahmeausschluss bestaetigt. ${privateOverlayStatus?.visible?'Hinweise aktiv.':'Warte auf eine verifizierte Stellung.'}`:
+    `Privates Overlay nicht bereit: ${detail}. Browserhinweise bleiben verborgen. Erneut pruefen oder bewusst ausschalten.`;
+  $('privateOverlayStatus').className='hint '+(enabled?'good':requested?'warning':'');
+  if(requested)hideBrowserHints();
+}
+function syncPrivateOverlay(explicit=false){
+  if(!privateOverlayRequested()&&!explicit){updatePrivateOverlayLabel();return Promise.resolve(null);}
+  if(overlaySyncPromise)return overlaySyncPromise;
+  const requested=privateOverlayRequested();
+  privateOverlayPending=true;updatePrivateOverlayLabel();
+  overlaySyncPromise=(async()=>{
+    try{
+      const status=await post('/api/overlay/mode',{mode:requested?'private':'normal'});
+      privateOverlayStatus=status;
+      privateOverlayAvailable=status.available===true && status.capture_excluded===true;
+      return status;
+    }catch(error){
+      privateOverlayAvailable=false;
+      privateOverlayStatus={mode:requested?'private':'normal',state:'error',reason:errorText(error),available:false,capture_excluded:false};
+      return null;
+    }finally{
+      privateOverlayPending=false;overlaySyncPromise=null;updatePrivateOverlayLabel();
+      if(privateOverlayRequested()!==requested)syncPrivateOverlay();
+    }
+  })();
+  return overlaySyncPromise;
+}
+function overlayGeometry(det){
+  const video=$('video'),rect=video.getBoundingClientRect(),viewport=window.visualViewport;
+  const [fw,fh]=det?.frame||[],box=det?.box,dpr=window.devicePixelRatio||1;
+  if(!box||!fw||!fh||!rect.width||!rect.height)return null;
+  // object-fit:contain can letterbox; use the displayed video, never the stage.
+  const scale=Math.min(rect.width/fw,rect.height/fh),[bx,by,bw,bh]=box;
+  const left=rect.left+(rect.width-fw*scale)/2+bx*scale;
+  const top=rect.top+(rect.height-fh*scale)/2+by*scale;
+  const width=bw*scale,height=bh*scale;
+  // Browser chrome sizes are a fallback estimate, not native HWND calibration.
+  const border=Math.max(0,(window.outerWidth-window.innerWidth)/2)||0;
+  const chromeTop=Math.max(0,window.outerHeight-window.innerHeight-border)||0;
+  const screenLeft=(Number(window.screenX)||0)+border+left;
+  const screenTop=(Number(window.screenY)||0)+chromeTop+top;
+  return {viewport:{width:window.innerWidth,height:window.innerHeight,
+    offset_left:viewport?.offsetLeft||0,offset_top:viewport?.offsetTop||0,scale:viewport?.scale||1},
+    device_pixel_ratio:dpr,orientation:det.orientation||'white',board:{left,top,width,height},
+    screen_board:{left:Math.round(screenLeft*dpr),top:Math.round(screenTop*dpr),
+      width:Math.round(width*dpr),height:Math.round(height*dpr)},revision:geometryRevision};
+}
 let overlayRevision=0;
-function clearPrivateOverlay(reason='cleared'){return post('/api/overlay/clear',{session_id:viewerSessionId,generation:lastState?.generation||0,render_revision:++overlayRevision,reason})}
-async function publishPrivateOverlay(state){if(!privateOverlayEnabled()){try{await clearPrivateOverlay('normal')}catch{}return}const det=state?.detection,result=state?.result;if(!det||!result||result.fen!==det.fen||state.history_complete!==true||state.turn_verified!==true){try{await clearPrivateOverlay('stale')}catch{}return}const arrows=[];for(const group of [[result.opponent_moves||[],['#ef3340','#ff9299']],[result.my_moves||[],['#16c784','#7ee2b8']],[[result.premove].filter(Boolean),['#2f80ed']]])for(const [items,colors] of [group])for(const [index,item] of items.slice(0,2).entries())arrows.push({uci:item.uci,color:colors[index]||colors[0]});try{await post('/api/overlay/update',{schema_version:1,session_id:viewerSessionId,generation:state.generation||0,render_revision:++overlayRevision,analysis_key:result.analysis_key||result.fen,fen:result.fen,mode:'private',source:'video',geometry:overlayGeometry(det),arrows,messages:(result.plan_messages||[]).slice(0,2),visible:true})}catch{}}
+function clearPrivateOverlay(reason='cleared'){if(!privateOverlayRequested())return Promise.resolve(null);return post('/api/overlay/clear',{session_id:viewerSessionId,generation:lastState?.generation||0,render_revision:++overlayRevision,reason})}
+async function publishPrivateOverlay(state){
+  if(!privateOverlayEnabled())return;
+  if(!stream||document.hidden||!viewerFocused||!recommendationsEnabled(state)){
+    await clearPrivateOverlay('hidden').catch(()=>{});return;
+  }
+  overlayPublishQueued=state;
+  if(overlayPublishBusy)return;
+  overlayPublishBusy=true;
+  try{
+    while(overlayPublishQueued && privateOverlayEnabled()){
+      const current=overlayPublishQueued;overlayPublishQueued=null;
+      const det=current?.detection,result=current?.result;
+      if(!det||!result||result.fen!==det.fen||current.history_complete!==true||current.turn_verified!==true){
+        await clearPrivateOverlay('stale');continue;
+      }
+      const geometry=overlayGeometry(det);if(!geometry)continue;
+      const arrows=[];
+      const groups=[[result.opponent_moves||[],[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],
+        [result.my_moves||[],[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],
+        [[result.premove].filter(Boolean),[ARROW_COLORS.premove]]];
+      for(const [items,colors] of groups)for(const [index,item] of items.slice(0,2).entries()){
+        arrows.push({uci:item.uci,color:colors[index]||colors[0]});
+      }
+      const status=await post('/api/overlay/update',{
+        schema_version:1,session_id:viewerSessionId,generation:current.generation||0,
+        render_revision:++overlayRevision,analysis_key:result.analysis_key||result.fen,
+        fen:result.fen,mode:'private',source:'video',geometry,arrows,
+        messages:(result.plan_messages||[]).slice(0,2),visible:true});
+      if(privateOverlayRequested()&&!privateOverlayPending)updatePrivateOverlayLabel(status);
+    }
+  }catch(error){
+    updatePrivateOverlayLabel({mode:'private',state:'error',available:false,capture_excluded:false,reason:errorText(error)});
+  }finally{overlayPublishBusy=false;}
+}
 function updateRecommendationLabel(){const enabled=$('recommendationsToggle').checked;$('recommendationState').textContent=enabled?'Ein':'Aus';$('recommendationSwitch').classList.toggle('off',!enabled);if(!stream){$('analysis').className='panel empty';$('analysis').textContent=enabled?'Die Ergebnisse erscheinen nach einer bestätigten Stellung.':'Live-Zugpfeile und Empfehlungen sind ausgeschaltet.';updateSteps(lastState)}}
 function updateSteps(state){const running=Boolean(stream),det=Boolean(state?.detection),enabled=recommendationsEnabled(state),ready=Boolean(enabled&&det&&state?.result?.fen===state.detection.fen);$('stepSource').className='step '+(running?'done':'');$('stepBoard').className='step '+(det?'done':running?'active':'');$('stepAnalysis').textContent=enabled?'3 · Analyse':'3 · Empfehlungen aus';$('stepAnalysis').className='step '+(ready?'done':enabled&&state?.analysing?'active':'');}
-async function req(url,options={}){const headers={...(options.headers||{})};if(SETTINGS.capability_token){headers.Authorization=`Bearer ${SETTINGS.capability_token}`;headers['X-Allie-Instance']=SETTINGS.instance_id||''}const controller=new AbortController(),timeout=Number(options.timeout)||15000,timer=setTimeout(()=>controller.abort(),timeout);try{const r=await fetch(url,{...options,cache:'no-store',headers,signal:options.signal||controller.signal});if(!r.ok){let data={};try{data=await r.json()}catch{}throw Error(data.error||`HTTP ${r.status}`)}return r}finally{clearTimeout(timer)}}
+async function req(url,options={}){
+  const {signal:externalSignal,timeout=15000,...fetchOptions}=options;
+  const headers={...(fetchOptions.headers||{})};
+  if(SETTINGS.capability_token){headers.Authorization=`Bearer ${SETTINGS.capability_token}`;headers['X-Allie-Instance']=SETTINGS.instance_id||'';}
+  const controller=new AbortController();
+  const onAbort=()=>controller.abort(externalSignal?.reason);
+  if(externalSignal?.aborted)onAbort();else externalSignal?.addEventListener('abort',onAbort,{once:true});
+  const timer=setTimeout(()=>controller.abort(),Math.max(1,Number(timeout)||15000));
+  try{
+    const response=await fetch(url,{...fetchOptions,cache:'no-store',headers,signal:controller.signal});
+    if(!response.ok){
+      let data={};try{data=await response.json();}catch{}
+      const error=new Error(data.error||`HTTP ${response.status}`);error.status=response.status;throw error;
+    }
+    return response;
+  }finally{clearTimeout(timer);externalSignal?.removeEventListener('abort',onAbort);}
+}
 async function post(path,data){return(await req(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json()}
 const OPENING_VALUES=Object.freeze({white:['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'],black:['englund','stafford','traxler','budapest','alekhine']});
 function selectedOpeningSettings(){const white=$('openingWhite').value,black=$('openingBlack').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
-function settings(){return{white_elo:Number($('white').value),black_elo:Number($('black').value),player_side:$('playerSide').value,time_control:$('tc').value.trim(),ocr_history:$('ocr').checked,recommendations_enabled:$('recommendationsToggle').checked,...selectedOpeningSettings()}}
-function persistSettings(){try{const current=settings();localStorage.setItem(USER_SETTINGS_KEY,JSON.stringify(current))}catch{}}
+function settings(){return{white_elo:Number($('white').value),black_elo:Number($('black').value),player_side:$('playerSide').value,play_style:$('playStyle').value==='aggressive'?'aggressive':'normal',time_control:$('tc').value.trim(),ocr_history:$('ocr').checked,recommendations_enabled:$('recommendationsToggle').checked,...selectedOpeningSettings()}}
+function persistSettings(){try{localStorage.setItem(USER_SETTINGS_KEY,JSON.stringify({...settings(),capture_source:$('captureSource').value}))}catch{}}
 function validSettings(){for(const el of [$('white'),$('black'),$('tc')]){if(!el.checkValidity()){el.reportValidity();return false}}return true;}
 const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function format(d){
   if(!d)return'<div class="empty">Noch keine Engine-Ergebnisse.</div>';let h='';
-  h+='<div class="arrow-legend"><span class="green">Mein Top 1 / Mein Top 2</span><span class="red">Gegner Top 1 / Gegner Top 2</span><span class="blue">Sicherer Pre-Move</span></div>';
+  h+='<div class="arrow-legend"><span class="green">Mein Top 1 / Mein Top 2</span><span class="red">Gegner Top 1 / Gegner Top 2</span><span class="blue">Sicherer Pre-Move (bedingt)</span></div>';
   if(d.repertoire?.primary){h+=`<div class="chat-message"><b>Repertoire:</b> ${esc(d.repertoire.primary)}${d.repertoire.selection?` · Auswahl ${esc(d.repertoire.selection)}`:''}${d.repertoire.expected_san?` · nächster Wunschzug ${esc(d.repertoire.expected_san)}`:''}</div>`}
   for(const message of d.plan_messages||[])h+=`<div class="chat-message">${esc(message)}</div>`;
+  if(Array.isArray(d.moves)&&d.moves.length){
+    h+='<div class="analysis-title">Allie - menschliche Zugwahrscheinlichkeiten</div>';
+    for(const move of d.moves.slice(0,5)){
+      const probability=move.probability;
+      const label=typeof probability==='number'&&Number.isFinite(probability)&&probability>=0&&probability<=1
+        ? (probability*100).toFixed(1)+' %':'keine Wahrscheinlichkeit';
+      h+=`<div class="choice"><span>${esc(move.san||move.uci)}</span><b>${esc(label)}</b></div>`;
+    }
+    h+='<p class="hint">Modellwahrscheinlichkeit, keine Gewinnchance. Profil und Repertoire koennen die Reihenfolge aendern. Ein Premove ist nur unter der vorhergesagten Antwort sinnvoll.</p>';
+  }
+  if(typeof d.expected_think_time_s==='number'&&Number.isFinite(d.expected_think_time_s)&&d.expected_think_time_s>=0){
+    h+=`<p class="hint">Modellierte Bedenkzeit: ${d.expected_think_time_s.toFixed(1)} s</p>`;
+  }
   if(d.allie_skip_reason)h+=`<p class="error">${esc(d.allie_skip_reason)}</p>`;
   if(d.stockfish){h+='<div class="analysis-title">Stockfish · objektiv</div>';if(!d.stockfish.available)h+=`<p>${esc(d.stockfish.error||'Nicht verfügbar')}</p>`;else for(const m of d.stockfish.lines||[])h+=`<div class="choice"><span><b>${esc(m.san)}</b><br><small>${esc(m.variation||'')}</small></span><b>${esc(m.score)}</b></div>`}
   return h||'<div class="empty">Keine Analysedaten.</div>';
 }
 function arrowPoints(uci,box,orientation){if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci||''))return null;const[x,y,w,h]=box;function pt(s){let file=s.charCodeAt(0)-97,rank=+s[1]-1;const col=orientation==='black'?7-file:file,row=orientation==='black'?rank:7-rank;return[x+(col+.5)*w/8,y+(row+.5)*h/8]}return[pt(uci.slice(0,2)),pt(uci.slice(2,4))]}
-function drawArrows(state){const svg=$('arrows');svg.replaceChildren();if(privateOverlayEnabled()||!recommendationsEnabled(state))return;const det=state?.detection,result=state?.result;if(!det||!result||result.fen!==det.fen||state.history_complete!==true||state.turn_verified!==true)return;const[width,height]=det.frame;svg.setAttribute('viewBox',`0 0 ${width} ${height}`);const groups=[[(result.opponent_moves||[]).slice(0,2),[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[(result.my_moves||[]).slice(0,2),[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[result.premove].filter(Boolean),[ARROW_COLORS.premove]]];for(const[items,colors]of groups)for(const[index,item]of items.entries()){const coords=arrowPoints(item.uci,det.box,det.orientation);if(!coords)continue;const[[sx,sy],[ex,ey]]=coords,dx=ex-sx,dy=ey-sy,len=Math.max(Math.hypot(dx,dy),1),nx=dx/len,ny=dy/len,side=det.box[2],end=[ex-nx*side/19,ey-ny*side/19],start=[sx+nx*side/24,sy+ny*side/24],color=colors[index]||colors[0],arrow=document.createElementNS('http://www.w3.org/2000/svg','line');for(const[k,v]of Object.entries({x1:start[0],y1:start[1],x2:end[0],y2:end[1],stroke:color,'stroke-width':Math.max(5,side/(index?40:30)),'stroke-linecap':'round',opacity:index?.65:.96}))arrow.setAttribute(k,v);svg.appendChild(arrow);const size=side/(index?18:15),angle=Math.atan2(dy,dx),tip=[ex,ey],arrowhead=document.createElementNS('http://www.w3.org/2000/svg','polygon');arrowhead.setAttribute('points',[[tip[0],tip[1]],[tip[0]-size*Math.cos(angle-.52),tip[1]-size*Math.sin(angle-.52)],[tip[0]-size*Math.cos(angle+.52),tip[1]-size*Math.sin(angle+.52)]].map(p=>p.join(',')).join(' '));arrowhead.setAttribute('fill',color);arrowhead.setAttribute('opacity',index?.65:.96);svg.appendChild(arrowhead)}}
-function updateAllieBubble(d,det){const bubble=$('allieBubble'),messages=(d?.plan_messages||[]).slice(0,4);bubble.replaceChildren();bubble.hidden=!stream||!det||!messages.length;if(bubble.hidden)return;const title=document.createElement('div');title.className='bubble-title';title.textContent='Allie · Live';bubble.appendChild(title);const legend=document.createElement('div');legend.className='arrow-legend';legend.innerHTML='<span class="green">Mein Top 1 / Mein Top 2</span><span class="red">Gegner Top 1 / Gegner Top 2</span><span class="blue">Sicherer Pre-Move</span>';bubble.appendChild(legend);for(const message of messages){const row=document.createElement('div');row.className='chat-message';row.textContent=message;bubble.appendChild(row)}const[fw,fh]=det.frame,[x,y,w]=det.box,rightSpace=fw-x-w;bubble.style.top=`${Math.max(2,Math.min(62,(y/fh)*100))}%`;if(rightSpace>=Math.min(250,fw*.2)){const leftPct=Math.min(82,((x+w+12)/fw)*100);bubble.style.left=`${leftPct}%`;bubble.style.right='auto';bubble.style.width=`min(330px,calc(${100-leftPct}% - 12px))`}else{bubble.style.left='auto';bubble.style.right='12px';bubble.style.width='min(330px,calc(100% - 24px))'}}
-function report(s){lastState=s;const enabled=recommendationsEnabled(s);setStatus(s.message+(enabled&&s.analysing?' · Analyse läuft …':''),enabled&&s.analysing?'busy':s.message?.toLowerCase().includes('fehler')?'error':enabled&&s.result?'good':'idle');const det=s.detection;$('position').className='panel '+(det?'':'empty');$('position').innerHTML=det?`<code class="fen">${esc(det.fen)}</code><div class="metric"><span>Erkennungsqualität</span><b>${(det.confidence*100).toFixed(1)} %</b></div><div class="confidence"><span style="width:${Math.max(0,Math.min(100,det.confidence*100))}%"></span></div>`:'Warte auf ein Schachbrett.';$('history').className='panel '+(s.moves_seen?'':'empty');$('history').innerHTML=s.moves_seen||s.turn_verified?`<div class="metric"><span>${s.moves_seen||0} Halbzüge</span><span>${esc(s.history_source)}</span></div><p class="${s.history_complete?'good':s.turn_verified?'warning':'error'}">${s.history_complete?'Vollständige Zugfolge – Allie ist bereit':s.turn_verified?'Zugrecht bekannt, Vorgeschichte unvollständig':'Zugrecht noch unbekannt'}</p>`:'Noch keine Züge erfasst.';const d=enabled&&det&&s.result?.fen===det.fen?s.result:null;$('analysis').className='panel '+(d?'':'empty');$('analysis').innerHTML=!enabled?'Live-Zugpfeile und Empfehlungen sind ausgeschaltet.':d?format(d):s.analysing?'Analyse wird berechnet …':'Noch keine aktuellen Empfehlungen.';drawArrows({...s,result:d});updateAllieBubble(d,det);const lines=enabled?(d?.brief?.slice(0,7)||(!s.turn_verified&&det?['Zugrecht noch unbekannt – keine ungesicherte Zugempfehlung.']:[])):[];$('hud').hidden=!enabled||!$('hudToggle').checked||!lines.length||!stream;$('tips').replaceChildren();for(const line of lines){const item=document.createElement('div');item.className='tip';item.textContent=line;$('tips').appendChild(item)}updateSteps(s)}
-function resetVideo(){clearInterval(timer);timer=null;tickId++;stream?.getTracks().forEach(t=>t.stop());stream=null;busyId=null;$('sourceName').textContent='Keine Quelle freigegeben.';$('video').srcObject=null;$('screen').style.display='none';$('placeholder').hidden=false;setRunning(false);$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('allieBubble').hidden=true;$('hud').hidden=true;updateSteps(null)}
-async function end(){resetVideo();setStatus('Analyse wird beendet …','busy');try{report(await post('/api/stop',{}))}catch(e){setStatus(errorText(e),'error')}}
-async function tick(id){if(id!==tickId||!stream||busyId===id||$('video').readyState<2)return;busyId=id;try{const video=$('video'),scale=Math.min(1,SETTINGS.recognition_max_width/video.videoWidth),w=Math.max(320,Math.round(video.videoWidth*scale)),h=Math.max(200,Math.round(video.videoHeight*scale));canvas.width=w;canvas.height=h;ctx.drawImage(video,0,0,w,h);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.73));if(!blob)throw Error('JPEG-Konvertierung fehlgeschlagen');const result=await(await req('/api/frame',{method:'POST',headers:{'Content-Type':'image/jpeg'},body:blob})).json();if(id===tickId)report(result)}catch(e){if(id===tickId)setStatus('Brett-Erkennung: '+errorText(e),'error')}finally{if(busyId===id)busyId=null}}
-$('start').onclick=async()=>{if(!navigator.mediaDevices?.getDisplayMedia){setStatus('Dieser Browser unterstützt keine Bildschirmfreigabe. Bitte Chrome oder Edge verwenden.','error');return}if(stream||!validSettings())return;setButtonBusy($('start'),true,'Freigabedialog öffnet …');setStatus('Wähle jetzt das Fenster mit dem Schachbrett.','busy');try{try{stream=await navigator.mediaDevices.getDisplayMedia({video:{displaySurface:'window',frameRate:{ideal:12,max:15}},audio:false,selfBrowserSurface:'exclude',surfaceSwitching:'include'})}catch(e){if(e?.name!=='TypeError')throw e;stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false})}const video=$('video');video.srcObject=stream;await video.play();const track=stream.getVideoTracks()[0],surface=track.getSettings?.().displaySurface||'Fenster/Monitor';$('sourceName').textContent=`${track.label||'Quelle'} · ${surface}`;report(await post('/api/start',settings()));$('placeholder').hidden=true;$('screen').style.display='block';fitStage();setRunning(true);const id=++tickId;track.addEventListener('ended',()=>{if(id===tickId)end()});timer=setInterval(()=>tick(id),SETTINGS.recognition_interval_ms);tick(id)}catch(e){resetVideo();setStatus(e?.name==='NotAllowedError'?'Freigabe abgebrochen. Du kannst jederzeit erneut starten.':'Freigabe/Start fehlgeschlagen: '+errorText(e),e?.name==='NotAllowedError'?'idle':'error')}finally{setButtonBusy($('start'),false,'');$('start').disabled=Boolean(stream)}};
+function drawArrows(state){const svg=$('arrows');svg.replaceChildren();if(privateOverlayRequested()||!recommendationsEnabled(state))return;const det=state?.detection,result=state?.result;if(!det||!result||result.fen!==det.fen||state.history_complete!==true||state.turn_verified!==true)return;const[width,height]=det.frame;svg.setAttribute('viewBox',`0 0 ${width} ${height}`);const groups=[[(result.opponent_moves||[]).slice(0,2),[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[(result.my_moves||[]).slice(0,2),[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[result.premove].filter(Boolean),[ARROW_COLORS.premove]]];for(const[items,colors]of groups)for(const[index,item]of items.entries()){const coords=arrowPoints(item.uci,det.box,det.orientation);if(!coords)continue;const[[sx,sy],[ex,ey]]=coords,dx=ex-sx,dy=ey-sy,len=Math.max(Math.hypot(dx,dy),1),nx=dx/len,ny=dy/len,side=det.box[2],end=[ex-nx*side/19,ey-ny*side/19],start=[sx+nx*side/24,sy+ny*side/24],color=colors[index]||colors[0],arrow=document.createElementNS('http://www.w3.org/2000/svg','line');for(const[k,v]of Object.entries({x1:start[0],y1:start[1],x2:end[0],y2:end[1],stroke:color,'stroke-width':Math.max(5,side/(index?40:30)),'stroke-linecap':'round',opacity:index?.65:.96}))arrow.setAttribute(k,v);svg.appendChild(arrow);const size=side/(index?18:15),angle=Math.atan2(dy,dx),tip=[ex,ey],arrowhead=document.createElementNS('http://www.w3.org/2000/svg','polygon');arrowhead.setAttribute('points',[[tip[0],tip[1]],[tip[0]-size*Math.cos(angle-.52),tip[1]-size*Math.sin(angle-.52)],[tip[0]-size*Math.cos(angle+.52),tip[1]-size*Math.sin(angle+.52)]].map(p=>p.join(',')).join(' '));arrowhead.setAttribute('fill',color);arrowhead.setAttribute('opacity',index?.65:.96);svg.appendChild(arrowhead)}}
+function updateAllieBubble(result,detection){
+  const bubble=$('allieBubble'),messages=(result?.plan_messages||[]).slice(0,4);
+  bubble.replaceChildren();bubble.hidden=privateOverlayRequested()||!stream||!detection||!messages.length;
+  if(bubble.hidden)return;
+  const title=document.createElement('div');title.className='bubble-title';
+  title.textContent='Allie - Spielbeschreibung';bubble.appendChild(title);
+  for(const message of messages){
+    const row=document.createElement('div');row.className='chat-message';row.textContent=message;bubble.appendChild(row);
+  }
+}
+function report(s){lastState=s;const enabled=recommendationsEnabled(s);setStatus(s.message+(enabled&&s.analysing?' · Analyse läuft …':''),enabled&&s.analysing?'busy':s.message?.toLowerCase().includes('fehler')?'error':enabled&&s.result?'good':'idle');const det=s.detection;$('position').className='panel '+(det?'':'empty');$('position').innerHTML=det?`<code class="fen">${esc(det.fen)}</code><div class="metric"><span>Erkennungsqualität</span><b>${(det.confidence*100).toFixed(1)} %</b></div><div class="confidence"><span style="width:${Math.max(0,Math.min(100,det.confidence*100))}%"></span></div>`:'Warte auf ein Schachbrett.';$('history').className='panel '+(s.moves_seen?'':'empty');$('history').innerHTML=s.moves_seen||s.turn_verified?`<div class="metric"><span>${s.moves_seen||0} Halbzüge</span><span>${esc(s.history_source)}</span></div><p class="${s.history_complete?'good':s.turn_verified?'warning':'error'}">${s.history_complete?'Vollständige Zugfolge – Allie ist bereit':s.turn_verified?'Zugrecht bekannt, Vorgeschichte unvollständig':'Zugrecht noch unbekannt'}</p>`:'Noch keine Züge erfasst.';const d=enabled&&det&&s.result?.fen===det.fen?s.result:null;$('analysis').className='panel '+(d?'':'empty');$('analysis').innerHTML=!enabled?'Live-Zugpfeile und Empfehlungen sind ausgeschaltet.':d?format(d):s.analysing?'Analyse wird berechnet …':'Noch keine aktuellen Empfehlungen.';drawArrows({...s,result:d});updateAllieBubble(d,det);const lines=enabled?(d?.brief?.slice(0,7)||(!s.turn_verified&&det?['Zugrecht noch unbekannt – keine ungesicherte Zugempfehlung.']:[])):[];$('hud').hidden=!enabled||!$('hudToggle').checked||!lines.length||!stream;$('tips').replaceChildren();for(const line of lines){const item=document.createElement('div');item.className='tip';item.textContent=line;$('tips').appendChild(item)}updateSteps(s);
+  if(privateOverlayRequested()){hideBrowserHints();publishPrivateOverlay(s);}
+}
+function resetVideo(){
+  clearInterval(timer);timer=null;tickId++;
+  captureAbort?.abort();captureAbort=null;overlayPublishQueued=null;
+  stream?.getTracks().forEach(track=>track.stop());stream=null;busyId=null;
+  $('sourceName').textContent='Keine Quelle freigegeben.';$('video').srcObject=null;
+  $('screen').style.display='none';$('placeholder').hidden=false;setRunning(false);
+  $('start').disabled=captureStarting||Boolean(captureStopPromise);
+  $('arrows').replaceChildren();$('allieBubble').replaceChildren();$('allieBubble').hidden=true;
+  $('hud').hidden=true;updateSteps(null);
+}
+function end(){
+  if(captureStopPromise)return captureStopPromise;
+  const pendingStart=captureStartRequest;
+  resetVideo();setStatus('Analyse wird beendet ...','busy');
+  $('start').disabled=true;$('stop').disabled=true;
+  // A stop must reach the backend AFTER an already submitted start settles.
+  captureStopPromise=(async()=>{
+    try{
+      await pendingStart?.catch(()=>{});
+      await clearPrivateOverlay('stopped').catch(()=>{});
+      const state=await post('/api/stop',{});lastState=null;report(state);
+    }catch(error){setStatus('Stoppen: '+errorText(error),'error');}
+    finally{captureStopPromise=null;$('start').disabled=captureStarting;}
+  })();
+  return captureStopPromise;
+}
+function captureSize(width,height,maxSize=1280){
+  if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)return null;
+  const limit=Number.isFinite(maxSize)?Math.max(1,maxSize):1280;
+  const scale=Math.min(1,limit/Math.max(width,height));
+  return {width:Math.max(1,Math.round(width*scale)),height:Math.max(1,Math.round(height*scale))};
+}
+async function tick(id){
+  if(id!==tickId||!stream||busyId===id||$('video').readyState<2)return;
+  const size=captureSize($('video').videoWidth,$('video').videoHeight,SETTINGS.recognition_max_width);
+  if(!size)return;
+  busyId=id;
+  try{
+    canvas.width=size.width;canvas.height=size.height;
+    ctx.drawImage($('video'),0,0,size.width,size.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.73));
+    if(id!==tickId||!stream)return;
+    if(!blob)throw Error('JPEG-Konvertierung fehlgeschlagen');
+    const result=await(await req('/api/frame',{method:'POST',headers:{'Content-Type':'image/jpeg'},
+      body:blob,signal:captureAbort?.signal})).json();
+    if(id===tickId)report(result);
+  }catch(error){if(id===tickId&&error.name!=='AbortError')setStatus('Brett-Erkennung: '+errorText(error),'error');}
+  finally{if(busyId===id)busyId=null;}
+}
+function captureError(error){
+  const messages={NotAllowedError:'Bildschirmfreigabe wurde abgelehnt oder abgebrochen.',
+    InvalidStateError:'Bitte die Quelle erneut per Klick waehlen; der Tab muss aktiv sein.',
+    NotFoundError:'Keine Aufnahmequelle verfuegbar.',
+    NotReadableError:'Windows oder der Browser kann diese Quelle nicht aufnehmen. Anderes Fenster oder einen Tab waehlen.',
+    TypeError:'Die Aufnahmeoptionen werden von diesem Browser nicht unterstuetzt.',
+    AbortError:'Die Bildschirmfreigabe wurde beendet.'};
+  return messages[error?.name]||'Freigabe/Start fehlgeschlagen: '+errorText(error);
+}
+async function startCapture(){
+  if(captureStarting||captureStopPromise||stream||!validSettings())return;
+  if(!navigator.mediaDevices?.getDisplayMedia){setStatus('Bildschirmfreigabe benoetigt einen unterstuetzten Browser auf localhost oder HTTPS.','error');return;}
+  captureStarting=true;const id=++tickId;captureAbort=new AbortController();
+  setButtonBusy($('start'),true,'Freigabedialog ...');$('stop').disabled=false;
+  setStatus('Quelle im Freigabedialog waehlen.','busy');
+  try{
+    const supported=navigator.mediaDevices.getSupportedConstraints?.()||{};
+    const videoOptions={frameRate:{ideal:12,max:15}};
+    if(supported.displaySurface)videoOptions.displaySurface=$('captureSource').value;
+    // Invoke directly in the click handler: no await before the browser picker.
+    const candidate=await navigator.mediaDevices.getDisplayMedia({video:videoOptions,audio:false});
+    if(id!==tickId){candidate.getTracks().forEach(track=>track.stop());return;}
+    stream=candidate;
+    const track=stream.getVideoTracks()[0];
+    if(!track||track.readyState==='ended')throw new DOMException('Aufnahme beendet','AbortError');
+    track.addEventListener('ended',()=>{if(id===tickId)end();},{once:true});
+    const video=$('video');video.srcObject=stream;await video.play();
+    if(id!==tickId||track.readyState==='ended')return;
+    captureStartRequest=post('/api/start',settings());
+    const state=await captureStartRequest;captureStartRequest=null;
+    if(id!==tickId||track.readyState==='ended')return;
+    const surface=track.getSettings?.().displaySurface||$('captureSource').value;
+    $('sourceName').textContent=`${track.label||'Quelle'} - ${surface}`;
+    $('placeholder').hidden=true;$('screen').style.display='block';fitStage();setRunning(true);
+    report(state);persistSettings();
+    timer=setInterval(()=>tick(id),Math.max(400,Number(SETTINGS.recognition_interval_ms)||750));tick(id);
+  }catch(error){
+    if(id===tickId){
+      resetVideo();clearPrivateOverlay('capture_failed').catch(()=>{});
+      setStatus(captureError(error),error.name==='NotAllowedError'?'idle':'error');
+    }
+  }finally{
+    captureStartRequest=null;captureStarting=false;
+    setButtonBusy($('start'),false,'');$('start').disabled=Boolean(stream)||Boolean(captureStopPromise);
+    $('stop').disabled=!stream;
+  }
+}
+$('start').onclick=startCapture;
 $('stop').onclick=end;
-for(const id of ['white','black','tc','playerSide','openingWhite','openingBlack','ocr'])$(id).addEventListener('change',()=>{$('settingsDirty').classList.toggle('show',Boolean(stream));persistSettings()});
+for(const id of ['white','black','tc','playerSide','openingWhite','openingBlack','ocr','captureSource','playStyle'])$(id).addEventListener('change',()=>{$('settingsDirty').classList.toggle('show',Boolean(stream));persistSettings()});
 $('hudToggle').onchange=()=>lastState&&report(lastState);
 $('recommendationsToggle').onchange=async()=>{const enabled=$('recommendationsToggle').checked;updateRecommendationLabel();try{localStorage.setItem('allie-live-recommendations',enabled?'on':'off')}catch{}if(lastState)report({...lastState,recommendations_enabled:enabled,result:enabled?lastState.result:null,analysing:false});if(!stream)return;$('recommendationsToggle').disabled=true;try{report(await post('/api/recommendations',{enabled}))}catch(e){$('recommendationsToggle').checked=!enabled;updateRecommendationLabel();try{localStorage.setItem('allie-live-recommendations',!enabled?'on':'off')}catch{}if(lastState)report(lastState);setStatus('Schalter konnte nicht geändert werden: '+errorText(e),'error')}finally{$('recommendationsToggle').disabled=false}};
 $('historyGo').onclick=async()=>{const pgn=$('historyPgn').value.trim();if(!pgn){setStatus('Bitte zuerst eine PGN-Zugfolge einfügen.','error');return}setButtonBusy($('historyGo'),true,'Prüfe …');try{const response=await post('/api/history',{pgn});setStatus(response.message,response.accepted?'good':'error')}catch(e){setStatus(errorText(e),'error')}finally{setButtonBusy($('historyGo'),false,'')}};
-$('manualGo').onclick=async()=>{const text=$('manual').value.trim();if(!text){$('manual').focus();return}if(!validSettings())return;setButtonBusy($('manualGo'),true,'Analysiere …');$('manualResult').className='panel manual-result';$('manualResult').textContent='Analyse läuft. Der erste Allie-Aufruf kann große Modellgewichte laden.';const data={...settings(),analysis_source:'allie',review_finished:true,preview:true};if(text.includes('/')&&/\s[wb]\s/.test(text))data.fen=text;else data.pgn=text;try{let out=await(await req('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json();if(!data.fen&&(!Array.isArray(out?.moves)||!out.moves.length||out?.allie_skip_reason)){out=await(await req('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,analysis_source:'stockfish',preview:false})})).json()}$('manualResult').innerHTML=format(out)}catch(e){$('manualResult').innerHTML=`<p class="error">Fehler: ${esc(errorText(e))}</p>`}finally{setButtonBusy($('manualGo'),false,'')}};
-async function checkHealth(){try{const h=await(await req('/health',{timeout:6000})).json();const mismatch=Boolean(SETTINGS.instance_id&&h.instance_id&&h.instance_id!==SETTINGS.instance_id),ready=h.ready!==false&&!mismatch;$('engineHealth').textContent=!ready?'Dienst nicht bereit':h.stockfish_available?'Stockfish bereit':'Stockfish fehlt';$('engineHealth').className='health '+(ready&&h.stockfish_available?'good':'warn');$('modelHealth').textContent=!ready?'Instanz wird aktualisiert':h.model_loaded?'Allie geladen':'Allie bei Bedarf';$('modelHealth').className='health '+(ready&&h.model_loaded?'good':'');$('modelHealth').hidden=false;updatePrivateOverlayLabel(h.overlay||{});if(!ready&&stream)setStatus(mismatch?'Neue Serverinstanz erkannt – bitte Analyse neu starten.':'Dienst wird bereitgestellt …','error')}catch{$('engineHealth').textContent='System nicht erreichbar';$('engineHealth').className='health warn';$('modelHealth').hidden=false;$('modelHealth').textContent='Nicht verfügbar';updatePrivateOverlayLabel({state:'nicht erreichbar',available:false})}}
-$('privateOverlayToggle').onchange=async()=>{try{localStorage.setItem('allie-private-overlay',$('privateOverlayToggle').checked?'on':'off')}catch{};const status=await syncPrivateOverlay();try{localStorage.setItem('allie-private-overlay',privateOverlayEnabled()?'on':'off')}catch{};if(!privateOverlayEnabled()){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('hud').hidden=true}if(lastState)report(lastState);if(status?.available)publishPrivateOverlay(lastState)};
-const reportWithPrivateGuard=report;report=(state)=>{const out=reportWithPrivateGuard(state);if(privateOverlayEnabled()){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('allieBubble').hidden=true;$('hud').hidden=true;publishPrivateOverlay(state)}return out};
+$('manualGo').onclick=async()=>{if(privateOverlayRequested()){setStatus('Manuelle Browseranalyse erst nach bewusstem Ausschalten des privaten Modus.','idle');return;}const text=$('manual').value.trim();if(!text){$('manual').focus();return}if(!validSettings())return;setButtonBusy($('manualGo'),true,'Analysiere …');$('manualResult').className='panel manual-result';$('manualResult').textContent='Analyse läuft. Der erste Allie-Aufruf kann große Modellgewichte laden.';const data={...settings(),analysis_source:'allie',review_finished:true,preview:true};if(text.includes('/')&&/\s[wb]\s/.test(text)){data.fen=text;data.analysis_source='stockfish';data.preview=false;}else data.pgn=text;try{let out=await(await req('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json();if(!data.fen&&(!Array.isArray(out?.moves)||!out.moves.length||out?.allie_skip_reason)){out=await(await req('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,analysis_source:'stockfish',preview:false})})).json()}if(!privateOverlayRequested())$('manualResult').innerHTML=format(out)}catch(e){$('manualResult').innerHTML=`<p class="error">Fehler: ${esc(errorText(e))}</p>`}finally{setButtonBusy($('manualGo'),false,'')}};
+async function checkHealth(){try{const h=await(await req('/health',{timeout:6000})).json();const mismatch=Boolean(SETTINGS.instance_id&&h.instance_id&&h.instance_id!==SETTINGS.instance_id),ready=h.ready!==false&&!mismatch;$('engineHealth').textContent=!ready?'Dienst nicht bereit':h.stockfish_available?'Stockfish bereit':'Stockfish fehlt';$('engineHealth').className='health '+(ready&&h.stockfish_available?'good':'warn');$('modelHealth').textContent=!ready?'Instanz wird aktualisiert':h.model_loaded?'Allie geladen':'Allie bei Bedarf';$('modelHealth').className='health '+(ready&&h.model_loaded?'good':'');$('modelHealth').hidden=false;if(!privateOverlayPending&&h.overlay)updatePrivateOverlayLabel(h.overlay);if(!ready&&stream)setStatus(mismatch?'Neue Serverinstanz erkannt – bitte Analyse neu starten.':'Dienst wird bereitgestellt …','error')}catch{$('engineHealth').textContent='System nicht erreichbar';$('engineHealth').className='health warn';$('modelHealth').hidden=false;$('modelHealth').textContent='Nicht verfügbar';updatePrivateOverlayLabel({state:'nicht erreichbar',available:false})}}
+$('privateOverlayToggle').onchange=async()=>{
+  try{localStorage.setItem('allie-private-overlay',privateOverlayRequested()?'on':'off');}catch{}
+  if(privateOverlayRequested())hideBrowserHints();
+  await syncPrivateOverlay(true);if(lastState)report(lastState);
+};
+$('retryPrivateOverlay').onclick=async()=>{await syncPrivateOverlay();if(lastState)report(lastState);};
+
 document.addEventListener('visibilitychange',()=>{if(document.hidden){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('hud').hidden=true;clearPrivateOverlay('hidden').catch(()=>{})}else{syncPrivateOverlay();if(lastState)report(lastState)}},{passive:true});
-window.addEventListener('blur',()=>{clearPrivateOverlay('focus_lost').catch(()=>{})},{passive:true});
+window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay('focus_lost').catch(()=>{})},{passive:true});
+window.addEventListener('focus',()=>{viewerFocused=true;if(lastState)publishPrivateOverlay(lastState);},{passive:true});
 window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);updateSteps(null);
 </script>
 </body>
