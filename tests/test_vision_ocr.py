@@ -23,7 +23,9 @@ class _OCR:
         self.expected_side = expected_side
 
     def __call__(self, image):
-        left_of_board = image.bounds[2] <= 960
+        # The board in the test occupies the right or left half of a
+        # 1920px frame; identify the crop by its far edge.
+        left_of_board = image.bounds[2] <= 1500
         match = left_of_board if self.expected_side == 'left' else not left_of_board
         text = '1 e4 e5 2 Nf3 Nc6' if match else 'stream chat'
         return types.SimpleNamespace(
