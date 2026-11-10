@@ -30,6 +30,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from http_boundary import LocalBoundaryMiddleware
 from live_session import MAX_JPEG, LiveSession
 from native_overlay import PrivateOverlayController
+from overlay_lease import OverlayLeaseConflict, OverlayLeaseManager
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from security import (
     API_VERSION,
@@ -38,6 +39,10 @@ from security import (
     SCHEMA_VERSION,
     RequestRateLimiter,
     capability_payload,
+    get_pairing_code,
+    pairing_attempt_allowed,
+    regenerate_pairing_code,
+    verify_pairing_code,
 )
 from service_status import readiness_status
 from starlette.concurrency import run_in_threadpool
@@ -47,6 +52,7 @@ MAX_JSON = 64 * 1024
 SESSION = LiveSession()
 BROWSER_TRACKERS = BrowserTrackerPool()
 PRIVATE_OVERLAY = PrivateOverlayController()
+OVERLAY_LEASES = OverlayLeaseManager()
 REQUEST_LIMITER = RequestRateLimiter()
 ANALYZE_GATE = threading.Semaphore(1)
 FRAME_GATE = threading.Semaphore(1)
@@ -125,6 +131,7 @@ class AnalysisRequest(StartRequest):
     recommendations_enabled: bool = True
     ocr_history: bool = False
     show_moves: bool = True
+    clock_history: list[float | None] | None = Field(default=None, max_length=1014)
 
 
 class HistoryRequest(InputModel):
@@ -149,11 +156,23 @@ class BrowserSessionRequest(InputModel):
 
 
 class OverlayModeRequest(InputModel):
+    session_id: str = Field(min_length=1, max_length=180)
+    owner_token: str = Field(min_length=20, max_length=200)
     mode: Literal['private', 'normal']
+
+
+class OverlayClaimRequest(InputModel):
+    session_id: str = Field(min_length=1, max_length=180)
+
+
+class OverlayReleaseRequest(InputModel):
+    session_id: str = Field(min_length=1, max_length=180)
+    owner_token: str = Field(min_length=20, max_length=200)
 
 
 class OverlayClearRequest(InputModel):
     session_id: str | None = Field(None, min_length=1, max_length=180)
+    owner_token: str | None = Field(None, min_length=20, max_length=200)
     generation: int | None = Field(None, ge=0)
     render_revision: int | None = Field(None, ge=0)
     reason: str = Field('cleared', max_length=120)
@@ -295,7 +314,33 @@ def readyz(source: Literal['allie', 'stockfish', 'both'] = 'both'):
 def capability(request: Request):
     if not request.headers.get('origin') or request.headers.get('x-allie-overlay') != '1':
         raise HTTPException(403, 'Capability-Handshake benötigt eine erlaubte Overlay-Herkunft')
+    origin = request.headers.get('origin', '')
+    local_origin = origin in {
+        f'http://127.0.0.1:{PORT}', f'http://localhost:{PORT}',
+        'http://127.0.0.1', 'http://localhost',
+    }
+    if not local_origin:
+        if not pairing_attempt_allowed(origin):
+            raise HTTPException(429, 'Zu viele Pairing-Versuche')
+        if not verify_pairing_code(request.headers.get('x-allie-pairing', '')):
+            raise HTTPException(401, 'Browser-Pairing erforderlich')
     return capability_payload()
+
+
+@app.get('/api/pairing')
+def pairing_status(request: Request):
+    origin = request.headers.get('origin', '')
+    if origin.startswith('http://127.0.0.1') or origin.startswith('http://localhost'):
+        return {'pairing_code': get_pairing_code()}
+    raise HTTPException(403, 'Nur der lokale Viewer darf den Pairing-Code anzeigen')
+
+
+@app.post('/api/pairing/regenerate')
+def pairing_regenerate(request: Request):
+    origin = request.headers.get('origin', '')
+    if origin.startswith('http://127.0.0.1') or origin.startswith('http://localhost'):
+        return {'pairing_code': regenerate_pairing_code()}
+    raise HTTPException(403, 'Nur der lokale Viewer darf den Pairing-Code ändern')
 
 
 @app.get('/api/state')
@@ -405,11 +450,36 @@ def overlay_status():
 
 @app.post('/api/overlay/mode')
 def overlay_mode(request: OverlayModeRequest):
+    try:
+        OVERLAY_LEASES.touch(request.session_id, request.owner_token)
+    except OverlayLeaseConflict as exc:
+        raise HTTPException(409, 'Privates Overlay wird bereits von einer anderen Sitzung verwendet') from exc
     return run(lambda: PRIVATE_OVERLAY.set_mode(request.mode))
+
+
+@app.post('/api/overlay/claim')
+def overlay_claim(request: OverlayClaimRequest):
+    try:
+        lease = OVERLAY_LEASES.claim(request.session_id)
+    except OverlayLeaseConflict as exc:
+        raise HTTPException(409, 'Privates Overlay wird bereits von einer anderen Sitzung verwendet') from exc
+    return {'session_id': lease.session_id, 'owner_token': lease.owner_token,
+            'expires_at': lease.expires_at}
+
+
+@app.post('/api/overlay/release')
+def overlay_release(request: OverlayReleaseRequest):
+    if not OVERLAY_LEASES.release(request.session_id, request.owner_token):
+        raise HTTPException(409, 'Privates Overlay wird bereits von einer anderen Sitzung verwendet')
+    return {'released': True}
 
 
 @app.post('/api/overlay/update')
 def overlay_update(request: VisualUpdateRequest):
+    try:
+        OVERLAY_LEASES.touch(request.session_id, request.owner_token)
+    except OverlayLeaseConflict as exc:
+        raise HTTPException(409, 'Privates Overlay wird bereits von einer anderen Sitzung verwendet') from exc
     if not REQUEST_LIMITER.allow(f'overlay:{request.session_id}', 30, 1.0):
         raise HTTPException(429, 'Zu viele Overlay-Updates')
     try:
@@ -430,6 +500,11 @@ def overlay_update(request: VisualUpdateRequest):
 @app.post('/api/overlay/clear')
 def overlay_clear(request: OverlayClearRequest | None = None):
     data = request.model_dump() if request is not None else {}
+    if data.get('session_id'):
+        try:
+            OVERLAY_LEASES.touch(data['session_id'], data.get('owner_token', ''))
+        except OverlayLeaseConflict as exc:
+            raise HTTPException(409, 'Privates Overlay wird bereits von einer anderen Sitzung verwendet') from exc
     return run(lambda: PRIVATE_OVERLAY.clear(
         data.get('reason', 'cleared'),
         session_id=data.get('session_id'),
@@ -450,6 +525,7 @@ def main():
         uvicorn.run(app, host=HOST, port=PORT, access_log=False, server_header=False)
     finally:
         SESSION.stop()
+        OVERLAY_LEASES.force_release()
         PRIVATE_OVERLAY.close()
 
 

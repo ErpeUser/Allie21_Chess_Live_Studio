@@ -92,7 +92,7 @@
  el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
  el('retryPrivate').onclick=()=>syncPrivateMode(true);
  let sessionHash=Date.now()>>>0;
- let boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
+  let boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2)),overlayOwnerToken='';
  const selectors=['wc-simple-move-list [data-node]','wc-vertical-move-list [data-node]','wc-horizontal-move-list [data-node]','wc-move-list [data-node]','wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
  const sanPattern=/^(?:O-O(?:-O)?|0-0(?:-0)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][+#]?)$/;
  // Lichess changes its short custom tag names regularly. Locate the current
@@ -303,7 +303,7 @@
  }
  function visualPayload(mode='stale',data={}){
   const board=boardElement();
-  return{schema_version:1,session_id:boardSessionId,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:mode==='normal'&&!cfg.privateMode&&cfg.enabled};
+   return{schema_version:1,session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:mode==='normal'&&!cfg.privateMode&&cfg.enabled};
  }
  function sendVisualUpdate(mode='stale',data={}){
   if(!cfg.privateMode||!cfg.enabled||document.hidden||document.hasFocus?.()===false)return;
@@ -319,16 +319,18 @@
   if(privateUnavailable&&state?.reason)el('privateStatus').textContent+=' '+String(state.reason).slice(0,160);
   if(cfg.privateMode){el('results').replaceChildren();clearOverlay();}
  }
- function sendOverlayMode(mode){
-  return postJson('/api/overlay/mode',{mode},6000).promise.then(state=>{
-   if((mode==='private')===cfg.privateMode)applyPrivateStatus(state);
-   return state;
+  function sendOverlayMode(mode){
+   const claim=mode==='private'?postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise.then(lease=>{overlayOwnerToken=lease.owner_token}):Promise.resolve();
+   return claim.then(()=>postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise).then(state=>{
+    if((mode==='private')===cfg.privateMode)applyPrivateStatus(state);
+    if(mode!=='private'&&overlayOwnerToken){postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});overlayOwnerToken='';}
+    return state;
   }).catch(error=>{if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null;});
  }
  function clearRemoteOverlay(reason='stale'){
   if(!cfg.privateMode)return;
   visualRequest?.abort?.();visualRequest=null;
-  postJson('/api/overlay/clear',{session_id:boardSessionId,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
+   postJson('/api/overlay/clear',{session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
  }
  function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display=cfg.privateMode?'':'none';if(cfg.privateMode)el('results').replaceChildren()}
  function center(s,rect,ori){let file=s.charCodeAt(0)-97,rank=Number(s[1])-1;if(ori==='black'){file=7-file}else{rank=7-rank}return [rect.left+(file+.5)*rect.width/8,rect.top+(rank+.5)*rect.height/8]}

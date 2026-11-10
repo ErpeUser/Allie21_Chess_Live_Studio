@@ -51,7 +51,23 @@ foreach ($file in @('config.json', 'pyproject.toml', 'uv.lock', 'README_DE.md',
     Copy-Item -LiteralPath (Join-Path $root $file) -Destination $app -Force
 }
 
-$venvConfig = Get-Content -LiteralPath (Join-Path $root '.allie-venv\pyvenv.cfg')
+$releaseVenv = Join-Path $root '.build\release-venv'
+$env:UV_PROJECT_ENVIRONMENT = $releaseVenv
+& uv sync --frozen --no-dev --extra vision
+if ($LASTEXITCODE -ne 0) {
+    # Offline developer machines may already have the exact locked runtime in
+    # .allie-venv. Seed the isolated release venv from that environment while
+    # still excluding quality-only packages below.
+    $fallback = Join-Path $root '.allie-venv'
+    if (-not (Test-Path -LiteralPath (Join-Path $fallback 'Lib\site-packages\chess_tcn'))) {
+        throw "Release-Venv konnte nicht synchronisiert werden (Code $LASTEXITCODE)."
+    }
+    New-Item -ItemType Directory -Force -Path $releaseVenv | Out-Null
+    Copy-Item -Path (Join-Path $fallback '*') -Destination $releaseVenv -Recurse -Force
+    Write-Warning 'Offline-Fallback: release-venv aus .allie-venv gespiegelt.'
+}
+
+$venvConfig = Get-Content -LiteralPath (Join-Path $releaseVenv 'pyvenv.cfg')
 $homeLine = $venvConfig | Where-Object { $_ -match '^home\s*=\s*(.+)$' } | Select-Object -First 1
 if (-not $homeLine -or $homeLine -notmatch '^home\s*=\s*(.+)$') {
     throw 'Python-Basis aus .allie-venv\pyvenv.cfg nicht lesbar.'
@@ -69,8 +85,27 @@ foreach ($item in @('DLLs', 'Lib', 'python.exe', 'pythonw.exe', 'python3.dll', '
 }
 $sitePackages = Join-Path $runtime 'Lib\site-packages'
 New-Item -ItemType Directory -Force -Path $sitePackages | Out-Null
-$venvSitePackages = Join-Path $root '.allie-venv\Lib\site-packages'
+$venvSitePackages = Join-Path $releaseVenv 'Lib\site-packages'
 Get-ChildItem -LiteralPath $venvSitePackages -Force | Copy-Item -Destination $sitePackages -Recurse -Force
+
+$forbidden = @('pytest', 'ruff', 'mypy', 'playwright')
+foreach ($name in $forbidden) {
+    $found = Get-ChildItem -LiteralPath $sitePackages -Force | Where-Object { $_.Name -match "^(?:$name)(?:-|_|\\.)" }
+    if ($found) { throw "Verbotenes Quality-Paket im Release-Runtime-Bundle: $name" }
+}
+
+$runtimePython = Join-Path $runtime 'python.exe'
+$inventory = Join-Path $app 'runtime-packages.json'
+& $runtimePython -c "import importlib.metadata as m, json; p=[{'name':d.metadata['Name'],'version':d.version} for d in m.distributions() if d.metadata.get('Name')]; json.dump(sorted(p,key=lambda x:x['name'].lower()), open(r'$inventory','w',encoding='utf-8'), ensure_ascii=False, indent=2)"
+if ($LASTEXITCODE -ne 0) { throw "Runtime-Inventar konnte nicht erzeugt werden (Code $LASTEXITCODE)." }
+
+$manifest = Join-Path $bundle 'SHA256SUMS.txt'
+$lines = Get-ChildItem -LiteralPath $bundle -Recurse -File | Where-Object { $_.FullName -ne $manifest } |
+    Sort-Object FullName | ForEach-Object {
+        $relative = $_.FullName.Substring($bundle.Length + 1).Replace('\', '/')
+        "$( (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() )  $relative"
+    }
+$lines | Set-Content -LiteralPath $manifest -Encoding utf8
 
 Write-Host "Fertig: $(Join-Path $bundle 'Allie21 Chess Live Studio.exe')"
 Write-Host "Portable app: $app"

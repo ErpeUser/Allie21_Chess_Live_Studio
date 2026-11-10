@@ -23,6 +23,7 @@ PROTECTED_PATHS = frozenset({
     '/analyze', '/api/start', '/api/stop', '/api/frame', '/api/history',
     '/api/recommendations', '/api/browser-position', '/api/browser-position/reset',
     '/api/overlay/mode', '/api/overlay/update', '/api/overlay/clear',
+    '/api/overlay/claim', '/api/overlay/release',
 })
 BODY_REQUIRED = PROTECTED_PATHS - {'/api/stop', '/api/overlay/clear'}
 SECURITY_HEADERS = {
@@ -31,8 +32,8 @@ SECURITY_HEADERS = {
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
     'Content-Security-Policy': (
-        "default-src 'self' 'unsafe-inline' blob: data:; connect-src 'self'; "
-        "media-src blob:; object-src 'none'; frame-ancestors 'none'"
+    "default-src 'self' 'unsafe-inline' blob: data:; connect-src 'self'; "
+    "media-src blob:; object-src 'none'; frame-ancestors 'none'"
     ),
 }
 
@@ -86,7 +87,7 @@ class LocalBoundaryMiddleware:
             self._guarded,
             allow_origins=sorted(WEB_ORIGINS | EXTENSION_ORIGINS),
             allow_methods=['GET', 'POST'],
-            allow_headers=['Content-Type', 'Authorization', 'X-Allie-Overlay', 'X-Allie-Instance'],
+            allow_headers=['Content-Type', 'Authorization', 'X-Allie-Overlay', 'X-Allie-Instance', 'X-Allie-Pairing'],
             expose_headers=['Retry-After'],
             max_age=3600,
         )

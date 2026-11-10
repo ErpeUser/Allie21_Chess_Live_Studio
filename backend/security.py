@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import math
+import json
+import os
+from pathlib import Path
 import secrets
 import threading
 import time
@@ -14,6 +17,73 @@ CAPABILITY_TOKEN = secrets.token_urlsafe(32)
 INSTANCE_ID = secrets.token_hex(16)
 API_VERSION = 2
 SCHEMA_VERSION = 1
+_PAIRING_LOCK = threading.RLock()
+_PAIRING_CODE: str | None = None
+_PAIRING_FAILURES: dict[str, deque[float]] = {}
+
+
+def pairing_store_path() -> Path:
+    """Return the per-user pairing store, never a repository path."""
+    local_app_data = os.environ.get('LOCALAPPDATA')
+    base = Path(local_app_data) / 'Allie21' if local_app_data else Path.home() / '.allie21'
+    return base / 'pairing.json'
+
+
+def _write_pairing(code: str) -> None:
+    path = pairing_store_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix('.tmp')
+    temporary.write_text(json.dumps({'pairing_code': code}), encoding='utf-8')
+    temporary.replace(path)
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+
+
+def get_pairing_code() -> str:
+    global _PAIRING_CODE
+    with _PAIRING_LOCK:
+        if _PAIRING_CODE is not None:
+            return _PAIRING_CODE
+        path = pairing_store_path()
+        try:
+            raw = json.loads(path.read_text(encoding='utf-8'))
+            code = str(raw.get('pairing_code', ''))
+        except (OSError, ValueError, TypeError):
+            code = ''
+        if len(code) != 8 or not code.isdecimal():
+            code = f'{secrets.randbelow(100_000_000):08d}'
+            _write_pairing(code)
+        _PAIRING_CODE = code
+        return code
+
+
+def regenerate_pairing_code() -> str:
+    global _PAIRING_CODE
+    with _PAIRING_LOCK:
+        _PAIRING_CODE = f'{secrets.randbelow(100_000_000):08d}'
+        _write_pairing(_PAIRING_CODE)
+        _PAIRING_FAILURES.clear()
+        return _PAIRING_CODE
+
+
+def pairing_attempt_allowed(origin: str, now: float | None = None) -> bool:
+    current = time.monotonic() if now is None else now
+    with _PAIRING_LOCK:
+        events = _PAIRING_FAILURES.setdefault(origin or 'unknown', deque())
+        while events and events[0] <= current - 60:
+            events.popleft()
+        if len(events) >= 5:
+            return False
+        events.append(current)
+        return True
+
+
+def verify_pairing_code(value: str) -> bool:
+    if not isinstance(value, str) or len(value) != 8 or not value.isdecimal():
+        return False
+    return secrets.compare_digest(value, get_pairing_code())
 
 
 def require_capability(request: Request) -> None:

@@ -85,7 +85,7 @@ class HTTPBoundaryTests(unittest.TestCase):
          app.find_stockfish) = cls.originals
 
     def call(self, method, path, origin='', host=None, payload=None, overlay=False,
-             preflight=False, auth=True):
+             preflight=False, auth=True, pairing=False):
         client = HTTPConnection('127.0.0.1', self.port, timeout=5)
         headers = {}
         if origin:
@@ -96,6 +96,8 @@ class HTTPBoundaryTests(unittest.TestCase):
             headers['Content-Type'] = 'application/json'
         if overlay:
             headers['X-Allie-Overlay'] = '1'
+        if pairing:
+            headers['X-Allie-Pairing'] = app.get_pairing_code()
         if auth and method.upper() == 'POST':
             headers['Authorization'] = f'Bearer {app.CAPABILITY_TOKEN}'
             headers['X-Allie-Instance'] = app.INSTANCE_ID
@@ -146,7 +148,8 @@ class HTTPBoundaryTests(unittest.TestCase):
 
     def test_capability_handshake_returns_instance_metadata(self):
         status, data = self.call('GET', '/api/capability',
-                                 origin='https://www.chess.com', overlay=True)
+                                 origin='https://www.chess.com', overlay=True,
+                                 pairing=True)
         self.assertEqual(status, 200, data)
         capability = json.loads(data)
         self.assertEqual(capability['token'], app.CAPABILITY_TOKEN)
@@ -275,7 +278,8 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, data = self.call(
             'POST', '/api/overlay/clear', origin='https://www.chess.com', overlay=True,
             payload={'session_id': 'web-clear-boundary', 'generation': 3,
-                     'render_revision': 7, 'reason': 'navigation'},
+                     'render_revision': 7, 'reason': 'navigation',
+                     'owner_token': app.OVERLAY_LEASES.claim('web-clear-boundary').owner_token},
         )
         self.assertEqual(status, 200, data)
         self.assertEqual(json.loads(data)['reason'], 'navigation')

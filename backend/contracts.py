@@ -73,6 +73,7 @@ class Arrow(ContractModel):
 class VisualUpdateRequest(ContractModel):
     schema_version: int = Field(1, ge=1, le=1)
     session_id: str = Field(min_length=1, max_length=180)
+    owner_token: str = Field(min_length=20, max_length=200)
     generation: int = Field(0, ge=0)
     render_revision: int = Field(0, ge=0)
     analysis_key: str = Field('', max_length=256)

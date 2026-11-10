@@ -185,6 +185,24 @@ def parse_history(raw: str) -> tuple[list[str], chess.Board, list[float | None]]
     return moves, board, [None] * len(moves)
 
 
+def validate_clock_history(value: object, move_count: int) -> list[float | None]:
+    """Validate trusted remaining-clock samples without inventing timings."""
+    if not isinstance(value, list) or len(value) != move_count:
+        raise ValueError('clock_history muss exakt so lang wie die Zugfolge sein')
+    result: list[float | None] = []
+    for item in value:
+        if item is None:
+            result.append(None)
+            continue
+        if isinstance(item, bool) or not isinstance(item, (int, float)) or not math.isfinite(float(item)):
+            raise ValueError('clock_history enthält keine gültige Uhrzeit')
+        seconds = float(item)
+        if seconds < 0 or seconds > 604800:
+            raise ValueError('clock_history enthält eine unrealistische Uhrzeit')
+        result.append(seconds)
+    return result
+
+
 def describe_move(board: chess.Board, uci: str, probability: float) -> dict[str, Any]:
     try:
         move = chess.Move.from_uci(uci)
@@ -389,6 +407,9 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
     if fen.strip() and raw.strip():
         raise ValueError('Bitte entweder PGN oder FEN angeben, nicht beide gleichzeitig.')
     moves, board, clocks = parse_history(raw)
+    supplied_clocks = payload.get('clock_history')
+    if supplied_clocks is not None:
+        clocks = validate_clock_history(supplied_clocks, len(moves))
     fen_only = bool(fen.strip() and not raw.strip())
     if fen_only:
         try:

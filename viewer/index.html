@@ -144,7 +144,7 @@ $('openingWhite').value=FORM_SETTINGS.opening_white||'grob';$('openingBlack').va
 try{$('recommendationsToggle').checked=localStorage.getItem('allie-live-recommendations')!=='off'}catch{}
 try{$('privateOverlayToggle').checked=localStorage.getItem('allie-private-overlay')==='on'}catch{}
  let stream=null,timer=null,busyId=null,lastState=null,tickId=0,geometryRefreshTimer=0,geometryRevision=0,privateOverlayAvailable=false;
-let privateOverlayStatus=null,privateOverlayPending=false,overlaySyncPromise=null;
+ let privateOverlayStatus=null,privateOverlayPending=false,overlaySyncPromise=null,overlayOwnerToken='';
 let overlayPublishBusy=false,overlayPublishQueued=null,viewerFocused=true;
 let captureStarting=false,captureStopPromise=null,captureStartRequest=null,captureAbort=null;
  const viewerSessionId='viewer-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
@@ -195,23 +195,28 @@ function updatePrivateOverlayLabel(status){
   $('privateOverlayStatus').className='hint '+(enabled?'good':requested?'warning':'');
   if(requested)hideBrowserHints();
 }
-function syncPrivateOverlay(explicit=false){
+ function syncPrivateOverlay(explicit=false){
   if(!privateOverlayRequested()&&!explicit){updatePrivateOverlayLabel();return Promise.resolve(null);}
   if(overlaySyncPromise)return overlaySyncPromise;
   const requested=privateOverlayRequested();
   privateOverlayPending=true;updatePrivateOverlayLabel();
-  overlaySyncPromise=(async()=>{
-    try{
-      const status=await post('/api/overlay/mode',{mode:requested?'private':'normal'});
-      privateOverlayStatus=status;
+   overlaySyncPromise=(async()=>{
+     try{
+       if(requested){
+         const lease=await post('/api/overlay/claim',{session_id:viewerSessionId});
+         overlayOwnerToken=lease.owner_token;
+       }
+       const status=await post('/api/overlay/mode',{session_id:viewerSessionId,owner_token:overlayOwnerToken,mode:requested?'private':'normal'});
+       privateOverlayStatus=status;
       privateOverlayAvailable=status.available===true && status.capture_excluded===true;
       return status;
     }catch(error){
       privateOverlayAvailable=false;
       privateOverlayStatus={mode:requested?'private':'normal',state:'error',reason:errorText(error),available:false,capture_excluded:false};
       return null;
-    }finally{
-      privateOverlayPending=false;overlaySyncPromise=null;updatePrivateOverlayLabel();
+     }finally{
+       if(!requested && overlayOwnerToken){await post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});overlayOwnerToken='';}
+       privateOverlayPending=false;overlaySyncPromise=null;updatePrivateOverlayLabel();
       if(privateOverlayRequested()!==requested)syncPrivateOverlay();
     }
   })();
@@ -238,7 +243,7 @@ function overlayGeometry(det){
       width:Math.round(width*dpr),height:Math.round(height*dpr)},revision:geometryRevision};
 }
 let overlayRevision=0;
-function clearPrivateOverlay(reason='cleared'){if(!privateOverlayRequested())return Promise.resolve(null);return post('/api/overlay/clear',{session_id:viewerSessionId,generation:lastState?.generation||0,render_revision:++overlayRevision,reason})}
+ function clearPrivateOverlay(reason='cleared'){if(!privateOverlayRequested()||!overlayOwnerToken)return Promise.resolve(null);return post('/api/overlay/clear',{session_id:viewerSessionId,owner_token:overlayOwnerToken,generation:lastState?.generation||0,render_revision:++overlayRevision,reason})}
 async function publishPrivateOverlay(state){
   if(!privateOverlayEnabled())return;
   if(!stream||document.hidden||!viewerFocused||!recommendationsEnabled(state)){
@@ -263,7 +268,7 @@ async function publishPrivateOverlay(state){
         arrows.push({uci:item.uci,color:colors[index]||colors[0]});
       }
       const status=await post('/api/overlay/update',{
-        schema_version:1,session_id:viewerSessionId,generation:current.generation||0,
+         schema_version:1,session_id:viewerSessionId,owner_token:overlayOwnerToken,generation:current.generation||0,
         render_revision:++overlayRevision,analysis_key:result.analysis_key||result.fen,
         fen:result.fen,mode:'private',source:'video',geometry,arrows,
         messages:(result.plan_messages||[]).slice(0,2),visible:true});
