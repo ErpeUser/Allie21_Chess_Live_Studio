@@ -246,7 +246,7 @@ let overlayRevision=0;
  function clearPrivateOverlay(reason='cleared'){if(!privateOverlayRequested()||!overlayOwnerToken)return Promise.resolve(null);return post('/api/overlay/clear',{session_id:viewerSessionId,owner_token:overlayOwnerToken,generation:lastState?.generation||0,render_revision:++overlayRevision,reason})}
 async function publishPrivateOverlay(state){
   if(!privateOverlayEnabled())return;
-  if(!stream||document.hidden||!viewerFocused||!recommendationsEnabled(state)){
+  if(!stream||document.hidden||!recommendationsEnabled(state)){
     await clearPrivateOverlay('hidden').catch(()=>{});return;
   }
   overlayPublishQueued=state;
@@ -453,7 +453,7 @@ $('privateOverlayToggle').onchange=async()=>{
 $('retryPrivateOverlay').onclick=async()=>{await syncPrivateOverlay();if(lastState)report(lastState);};
 
 document.addEventListener('visibilitychange',()=>{if(document.hidden){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('hud').hidden=true;clearPrivateOverlay('hidden').catch(()=>{})}else{syncPrivateOverlay();if(lastState)report(lastState)}},{passive:true});
-window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay('focus_lost').catch(()=>{})},{passive:true});
+window.addEventListener('blur',()=>{viewerFocused=false;if(document.hidden){overlayPublishQueued=null;clearPrivateOverlay('hidden').catch(()=>{})}},{passive:true});
 window.addEventListener('focus',()=>{viewerFocused=true;if(lastState)publishPrivateOverlay(lastState);},{passive:true});
 window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);updateSteps(null);
 </script>

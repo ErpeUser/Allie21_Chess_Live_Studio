@@ -25,6 +25,19 @@ function serviceUrl(port, path) {
   return `http://127.0.0.1:${port}${path}`;
 }
 
+async function pairingCode() {
+  const port = await configuredPort();
+  const response = await fetch(serviceUrl(port, '/api/pairing'), {
+    cache: 'no-store', headers: {'X-Allie-Overlay': '1'},
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json();
+  if (!/^\d{8}$/.test(String(data?.pairing_code || ''))) {
+    throw new Error('Pairing-Code fehlt');
+  }
+  return String(data.pairing_code);
+}
+
 async function refreshBadge() {
   const revision = ++healthRevision;
   healthController?.abort();
@@ -59,9 +72,17 @@ async function refreshBadge() {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type !== 'allie21:get-port' || sender.id !== chrome.runtime.id) return false;
-  configuredPort().then(port => sendResponse({port}));
-  return true;
+  if (sender.id !== chrome.runtime.id) return false;
+  if (message?.type === 'allie21:get-port') {
+    configuredPort().then(port => sendResponse({port}));
+    return true;
+  }
+  if (message?.type === 'allie21:get-pairing') {
+    pairingCode().then(pairing_code => sendResponse({pairing_code}))
+      .catch(error => sendResponse({error: error.message || 'Pairing-Code nicht verfügbar'}));
+    return true;
+  }
+  return false;
 });
 chrome.runtime.onInstalled.addListener(refreshBadge);
 chrome.runtime.onStartup.addListener(refreshBadge);

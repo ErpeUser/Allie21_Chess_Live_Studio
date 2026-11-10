@@ -15,6 +15,11 @@ for (const needle of [
   "window.addEventListener('blur'",
   'if(cfg.privateMode)clearOverlay();',
   "sendVisualUpdate(cfg.privateMode?'private':'normal',pendingInsights(history));",
+  "(!cfg.privateMode&&document.hasFocus?.()===false)",
+  "if(document.hidden||!cfg.privateMode)clearRemoteOverlay",
+  "if(cfg.privateMode&&!overlayOwnerToken)",
+  "if(mode!=='private'&&!overlayOwnerToken)return Promise.resolve(null)",
+  "if(!cfg.privateMode||!overlayOwnerToken)return",
 ]) {
   if (!source.includes(needle)) throw new Error(`private overlay plumbing missing: ${needle}`);
 }

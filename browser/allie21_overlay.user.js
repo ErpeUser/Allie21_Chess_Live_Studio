@@ -100,9 +100,17 @@
  function structuralMoveRoot(){
   const rewind=document.querySelector('button[data-ply="0"]');
   const candidate=rewind?.parentElement?.nextElementSibling;
-  if(!candidate||candidate.children.length<2)return null;
-  const texts=Array.from(candidate.children).slice(0,12).map(n=>(n.textContent||'').trim());
-  return texts.some(t=>t==='1')&&texts.some(t=>sanPattern.test(t.replace(/[!?]+/g,'')))?candidate:null;
+  const roots=[];
+  if(candidate?.children?.length>=2)roots.push(candidate);
+  for(const selector of ['.analyse__moves','.vertical-move-list','.move-list','[data-cy="move-list"]','[class*="move-list"]']){
+   for(const root of Array.from(document.querySelectorAll(selector)))if(root.children?.length>=2&&!roots.includes(root))roots.push(root);
+  }
+  let best=null,bestCount=0;
+  for(const root of roots){
+   const moves=typeof movesFromRoot==='function'?movesFromRoot(root):movesFromNodes(root.children);
+   if(moves.length>bestCount){best=root;bestCount=moves.length}
+  }
+  return bestCount>=2?best:null;
  }
  const figurines={'♔':'K','♕':'Q','♖':'R','♗':'B','♘':'N','♚':'K','♛':'Q','♜':'R','♝':'B','♞':'N'};
  function nodeMoveText(node){
@@ -121,7 +129,7 @@
   walk(node);return out;
  }
  function cleanMove(text,node){
-  let value=String(text||'').trim().replace(/^\d+\.(?:\.\.)?/,'').replace(/[!?]+/g,'').replace(/\s+/g,'');
+  let value=String(text||'').trim().replace(/^\d+(?:\.{1,3})?\s*/,'').replace(/[!?]+/g,'').replace(/\s+/g,'');
   value=value.replace(/^[♔♕♖♗♘♚♛♜♝♞]/,piece=>figurines[piece]);
   if(/^[a-h][1-8](?:x[a-h][1-8])?(?:=[QRBN])?[+#]?$/.test(value)&&node){
    const owner=node.closest?.('button,[data-ply],[data-node],[data-san],move,l4,.main-line-ply,.move,.node')||node;
@@ -171,7 +179,7 @@
   // Exact, indexed move-list selectors are added first. Keep that priority:
   // broad descendants can duplicate moves and must never crowd the valid SAN
   // mainline out of the bounded request.
-  const candidates=Array.from(new Set(found.map(historyText))).slice(0,16);
+  const candidates=Array.from(new Set(found.map(historyText))).sort((a,b)=>b.split(/\s+/).length-a.split(/\s+/).length).slice(0,16);
   return candidates.length?candidates:isStandardStartPosition()?['*']:[];
  }
  function readHistory(){return readHistoryCandidates()[0]||''}
@@ -305,8 +313,10 @@
   const board=boardElement();
    return{schema_version:1,session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:mode==='normal'&&!cfg.privateMode&&cfg.enabled};
  }
+ let pendingVisualUpdate=null;
  function sendVisualUpdate(mode='stale',data={}){
-  if(!cfg.privateMode||!cfg.enabled||document.hidden||document.hasFocus?.()===false)return;
+  if(!cfg.privateMode||!cfg.enabled||document.hidden||(!cfg.privateMode&&document.hasFocus?.()===false))return;
+  if(cfg.privateMode&&!overlayOwnerToken){pendingVisualUpdate={mode,data};return;}
   const payload=visualPayload(mode,data);
   visualRequest?.abort?.();
   const request=postJson('/api/overlay/update',payload,4000);
@@ -320,15 +330,17 @@
   if(cfg.privateMode){el('results').replaceChildren();clearOverlay();}
  }
   function sendOverlayMode(mode){
+   if(mode!=='private'&&!overlayOwnerToken)return Promise.resolve(null);
    const claim=mode==='private'?postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise.then(lease=>{overlayOwnerToken=lease.owner_token}):Promise.resolve();
    return claim.then(()=>postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise).then(state=>{
     if((mode==='private')===cfg.privateMode)applyPrivateStatus(state);
+    if(mode==='private'&&cfg.privateMode&&overlayOwnerToken&&pendingVisualUpdate){const queued=pendingVisualUpdate;pendingVisualUpdate=null;sendVisualUpdate(queued.mode,queued.data)}
     if(mode!=='private'&&overlayOwnerToken){postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});overlayOwnerToken='';}
     return state;
   }).catch(error=>{if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null;});
  }
  function clearRemoteOverlay(reason='stale'){
-  if(!cfg.privateMode)return;
+  if(!cfg.privateMode||!overlayOwnerToken)return;
   visualRequest?.abort?.();visualRequest=null;
    postJson('/api/overlay/clear',{session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
  }
@@ -358,7 +370,7 @@
    const structural=structuralMoveRoot();
    if(structural){
      const moves=Array.from(structural.children).filter(n=>sanPattern.test(cleanMove(n.textContent)));
-     const active=moves.filter(n=>String(n.className||'').trim());
+     const active=moves.filter(n=>n.matches?.('.active,.current,.selected,[aria-current="true"]'));
      if(active.length&&active.at(-1)!==moves.at(-1))return false;
    }
    return true;
@@ -432,9 +444,9 @@
   el('results').innerHTML=html;
   if(messages.length&&!panelDismissed){el('panel').classList.add('open');el('bubble').style.display='none';placePanel()}
  }
- let capabilityToken='',capabilityInstance='',capabilityPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null,serviceEpoch=0;
+ let capabilityToken='',capabilityInstance='',capabilityPromise=null,pairingCode='',pairingPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null,serviceEpoch=0;
  function serviceUrl(path){return `http://127.0.0.1:${servicePort}${path}`}
- function resetCapability(){serviceEpoch++;capabilityToken='';capabilityInstance='';capabilityPromise=null;}
+ function resetCapability(){serviceEpoch++;capabilityToken='';capabilityInstance='';capabilityPromise=null;pairingCode='';pairingPromise=null;}
  function setServicePort(value){const port=normalizePort(value);if(port!==servicePort){servicePort=port;resetCapability()}return port;}
  function ensureServicePort(){
   if(servicePortPromise)return servicePortPromise;
@@ -455,12 +467,22 @@
   pending.finally(()=>{if(servicePortPromise===pending)servicePortPromise=null});
   return pending;
  }
+ function ensurePairingCode(){
+  if(pairingCode)return Promise.resolve(pairingCode);
+  if(pairingPromise)return pairingPromise;
+  pairingPromise=new Promise(resolve=>{
+   if(typeof chrome==='undefined'||!chrome.runtime?.sendMessage){resolve('');return}
+   let settled=false,timer=setTimeout(()=>{if(!settled){settled=true;resolve('')}},5000);
+   try{chrome.runtime.sendMessage({type:'allie21:get-pairing'},response=>{if(settled)return;settled=true;clearTimeout(timer);const value=String(response?.pairing_code||'');if(/^\d{8}$/.test(value))pairingCode=value;resolve(pairingCode)})}catch{clearTimeout(timer);resolve('')}
+  }).finally(()=>{pairingPromise=null});
+  return pairingPromise;
+ }
  function ensureCapability(){
   return ensureServicePort().then(()=>{
    if(capabilityToken)return capabilityToken;
    if(capabilityPromise)return capabilityPromise;
    const epoch=serviceEpoch,controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
-   const pending=fetch(serviceUrl('/api/capability'),{headers:{'X-Allie-Overlay':'1'},cache:'no-store',signal:controller.signal})
+   const pending=ensurePairingCode().then(pairing=>fetch(serviceUrl('/api/capability'),{headers:{'X-Allie-Overlay':'1',...(pairing?{'X-Allie-Pairing':pairing}:{})},cache:'no-store',signal:controller.signal}))
     .then(async response=>{const data=await response.json();if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');if(!response.ok||!data.token||!data.instance_id)throw Error(data.error||'Capability fehlt');capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken})
     .finally(()=>{clearTimeout(timer);if(capabilityPromise===pending)capabilityPromise=null});
    capabilityPromise=pending;
@@ -644,7 +666,7 @@
  window.visualViewport?.addEventListener('resize',requestRepaint,{passive:true});
  window.visualViewport?.addEventListener('scroll',requestRepaint,{passive:true});
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
- function hideForInactive(){clearOverlay();clearRemoteOverlay(document.hidden?'stale':'focus_lost')}
+ function hideForInactive(){clearOverlay();if(document.hidden||!cfg.privateMode)clearRemoteOverlay(document.hidden?'stale':'focus_lost')}
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else scheduleTick(true)},{passive:true});
  window.addEventListener('blur',hideForInactive,{passive:true});
  window.addEventListener('focus',()=>scheduleTick(true),{passive:true});

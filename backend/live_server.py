@@ -27,7 +27,7 @@ from contracts import VisualUpdateRequest
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, Response
-from http_boundary import LocalBoundaryMiddleware
+from http_boundary import EXTENSION_ORIGINS, LocalBoundaryMiddleware
 from live_session import MAX_JPEG, LiveSession
 from native_overlay import PrivateOverlayController
 from overlay_lease import OverlayLeaseConflict, OverlayLeaseManager
@@ -331,6 +331,8 @@ def capability(request: Request):
 def pairing_status(request: Request):
     origin = request.headers.get('origin', '')
     if origin.startswith('http://127.0.0.1') or origin.startswith('http://localhost'):
+        return {'pairing_code': get_pairing_code()}
+    if origin in EXTENSION_ORIGINS and request.headers.get('x-allie-overlay') == '1':
         return {'pairing_code': get_pairing_code()}
     raise HTTPException(403, 'Nur der lokale Viewer darf den Pairing-Code anzeigen')
 
