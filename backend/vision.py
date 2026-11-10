@@ -8,7 +8,21 @@ import time
 
 def sanitize_ocr_history(text: str) -> str:
     """Conservatively keep numbered moves, not stream chat. Legal PGN is checked later."""
-    text = text.replace('×', 'x').replace('–', '-').replace('—', '-')
+    text = (text.replace('×', 'x').replace('–', '-').replace('—', '-')
+                 .translate(str.maketrans({
+                     '♔': 'K', '♕': 'Q', '♖': 'R', '♗': 'B', '♘': 'N',
+                     '♚': 'K', '♛': 'Q', '♜': 'R', '♝': 'B', '♞': 'N',
+                 })))
+    # Lichess often renders move numbers in a separate column without a
+    # trailing period (for example: 1 e4 e5 2 Nf3). Normalize only numbers
+    # directly followed by a SAN token; clocks and board coordinates remain untouched.
+    san_token = (r'(?:O-O-O[+#]?|O-O[+#]?|0-0-0[+#]?|0-0[+#]?|'
+                 r'[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?)')
+    text = re.sub(
+        rf'(?<![A-Za-z0-9.])(\d{1,4})(?=\s+{san_token}(?:\s|$))',
+        r'\1.',
+        text,
+    )
     text = re.sub(r'(?<!\w)[Il]\.(?=\s*[a-hKQRBN])', '1.', text)
     match = re.search(r'(?<!\d)1\s*\.', text)
     if match is None:
