@@ -330,6 +330,7 @@
   if(cfg.privateMode){el('results').replaceChildren();clearOverlay();}
  }
   function sendOverlayMode(mode){
+   if(mode!=='private'&&!overlayOwnerToken)return Promise.resolve(null);
    const claim=mode==='private'?postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise.then(lease=>{overlayOwnerToken=lease.owner_token}):Promise.resolve();
    return claim.then(()=>postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise).then(state=>{
     if((mode==='private')===cfg.privateMode)applyPrivateStatus(state);
@@ -339,7 +340,7 @@
   }).catch(error=>{if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null;});
  }
  function clearRemoteOverlay(reason='stale'){
-  if(!cfg.privateMode)return;
+  if(!cfg.privateMode||!overlayOwnerToken)return;
   visualRequest?.abort?.();visualRequest=null;
    postJson('/api/overlay/clear',{session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
  }
