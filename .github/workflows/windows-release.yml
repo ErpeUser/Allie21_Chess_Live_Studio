@@ -1,0 +1,51 @@
+name: Windows portable build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: allie-windows-release
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182
+        with:
+          version: '0.13.7'
+      - name: Versions and maintenance tests
+        shell: pwsh
+        run: |
+          python tools/check_versions.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s tests -p 'test_maintenance.py' -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test tests/test_extension_updates.js tests/test_worker_wakeup.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build locked portable bundle
+        shell: pwsh
+        run: ./tools/build_exe.ps1
+      - name: Verify hashes and local server startup
+        shell: pwsh
+        run: python tools/release_smoke.py --bundle 'release/Allie21 Chess Live Studio'
+      - name: Archive full onedir bundle
+        shell: pwsh
+        run: |
+          Compress-Archive -LiteralPath 'release/Allie21 Chess Live Studio' -DestinationPath 'release/Allie21-Windows.zip'
+          (Get-FileHash 'release/Allie21-Windows.zip' -Algorithm SHA256).Hash | Set-Content 'release/Allie21-Windows.zip.sha256'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Allie21-Windows-${{ github.run_number }}
+          path: |
+            release/Allie21-Windows.zip
+            release/Allie21-Windows.zip.sha256
+          if-no-files-found: error
+          retention-days: 7

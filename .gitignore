@@ -18,3 +18,5 @@ pytest-cache-files-*/
 # is ~1.1 GB and must be uploaded as a GitHub Release asset, not Git history.
 release/
 release/*.zip
+browser/allie-build.json
+.uv-tools/

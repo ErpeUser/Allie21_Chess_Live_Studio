@@ -1,9 +1,11 @@
 'use strict';
 importScripts('connection.js');
+importScripts('updates.js');
 
 const DEFAULT_PORT = AllieConnection.DEFAULT_PORT;
 let healthRevision = 0;
 let healthController = null;
+let pairingRequest = null;
 
 function configuredPort() {
   return new Promise(resolve => {
@@ -26,16 +28,28 @@ function serviceUrl(port, path) {
 }
 
 async function pairingCode() {
-  const port = await configuredPort();
-  const response = await fetch(serviceUrl(port, '/api/pairing'), {
-    cache: 'no-store', headers: {'X-Allie-Overlay': '1'},
-  });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const data = await response.json();
-  if (!/^\d{8}$/.test(String(data?.pairing_code || ''))) {
-    throw new Error('Pairing-Code fehlt');
-  }
-  return String(data.pairing_code);
+  if (pairingRequest) return pairingRequest;
+  const request = (async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4500);
+    try {
+      const port = await configuredPort();
+      const response = await fetch(serviceUrl(port, '/api/pairing'), {
+        cache: 'no-store', signal: controller.signal, headers: {'X-Allie-Overlay': '1'},
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!/^\d{8}$/.test(String(data?.pairing_code || ''))) {
+        throw new Error('Pairing-Code fehlt');
+      }
+      return String(data.pairing_code);
+    } finally {
+      clearTimeout(timer);
+    }
+  })();
+  pairingRequest = request;
+  try { return await request; }
+  finally { if (pairingRequest === request) pairingRequest = null; }
 }
 
 async function refreshBadge() {
@@ -71,18 +85,31 @@ async function refreshBadge() {
   }
 }
 
+// Register synchronously on EVERY worker start. Idle termination is normal.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return false;
+  if (message?.type === 'allie21:ping') {
+    configuredPort().then(port => sendResponse({ok: true, port,
+      version: chrome.runtime.getManifest().version, worker: 'awake'}));
+    return true;
+  }
+  if (message?.type === 'allie21:check-update') {
+    AllieUpdates.check().then(sendResponse);
+    return true;
+  }
   if (message?.type === 'allie21:get-port') {
     configuredPort().then(port => sendResponse({port}));
     return true;
   }
   if (message?.type === 'allie21:get-pairing') {
     pairingCode().then(pairing_code => sendResponse({pairing_code}))
-      .catch(error => sendResponse({error: error.message || 'Pairing-Code nicht verfügbar'}));
+      .catch(error => sendResponse({error: error.message || 'Pairing-Code nicht verfuegbar'}));
     return true;
   }
   return false;
+});
+chrome.action.onClicked.addListener(() => {
+  chrome.runtime.openOptionsPage().catch(() => {});
 });
 chrome.runtime.onInstalled.addListener(refreshBadge);
 chrome.runtime.onStartup.addListener(refreshBadge);
@@ -90,7 +117,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.port) refreshBadge();
 });
 
-// Reuse the persisted MV3 alarm instead of resetting its schedule on wakeup.
 function ensureHealthAlarm() {
   chrome.alarms.get('allie-health', alarm => {
     if (!alarm) chrome.alarms.create('allie-health', {periodInMinutes:0.5});
@@ -99,7 +125,11 @@ function ensureHealthAlarm() {
 chrome.runtime.onInstalled.addListener(ensureHealthAlarm);
 chrome.runtime.onStartup.addListener(ensureHealthAlarm);
 chrome.alarms.onAlarm.addListener(alarm => {
-  if (alarm.name === 'allie-health') refreshBadge();
+  if (alarm.name === 'allie-health') {
+    refreshBadge();
+    AllieUpdates.check();
+  }
 });
 ensureHealthAlarm();
 refreshBadge();
+AllieUpdates.check();
