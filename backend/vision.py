@@ -19,7 +19,7 @@ def sanitize_ocr_history(text: str) -> str:
     san_token = (r'(?:O-O-O[+#]?|O-O[+#]?|0-0-0[+#]?|0-0[+#]?|'
                  r'[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?)')
     text = re.sub(
-        rf'(?<![A-Za-z0-9.])(\d{1,4})(?=\s+{san_token}(?:\s|$))',
+        rf'(?<![A-Za-z0-9.])(\d{{1,4}})(?=\s+{san_token}(?:\s|$))',
         r'\1.',
         text,
     )
