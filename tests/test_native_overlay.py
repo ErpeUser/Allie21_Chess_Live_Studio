@@ -172,6 +172,34 @@ class NativeOverlayTests(unittest.TestCase):
         self.assertEqual(private.update(dict(second, render_revision=0))['reason'], 'stale_update_ignored')
         private.close()
 
+    def test_retired_session_tombstones_survive_more_than_sixty_four_switches(self):
+        private = PrivateOverlayController()
+        fake = FakeWin32()
+        private._native = NativeOverlayController(api=fake)
+        geometry = {'board': {'left': 10, 'top': 20, 'width': 320, 'height': 320}, 'orientation': 'white'}
+        first = {'session_id': 's0', 'generation': 1, 'render_revision': 1,
+                 'mode': 'private', 'geometry': geometry, 'arrows': []}
+        self.assertEqual(private.update(first)['state'], 'active')
+        for index in range(1, 70):
+            current = dict(first, session_id=f's{index}', generation=0, render_revision=index)
+            self.assertEqual(private.update(current)['state'], 'active')
+        replay = dict(first, generation=999, render_revision=999)
+        self.assertEqual(private.update(replay)['reason'], 'retired_session_ignored')
+        private.close()
+
+    def test_mode_switch_keeps_old_render_cursor(self):
+        private = PrivateOverlayController()
+        fake = FakeWin32()
+        private._native = NativeOverlayController(api=fake)
+        geometry = {'board': {'left': 10, 'top': 20, 'width': 320, 'height': 320}, 'orientation': 'white'}
+        frame = {'session_id': 'same', 'generation': 4, 'render_revision': 7,
+                 'mode': 'private', 'geometry': geometry, 'arrows': []}
+        self.assertEqual(private.update(frame)['state'], 'active')
+        private.set_mode('normal')
+        private.set_mode('private')
+        self.assertEqual(private.update(frame)['reason'], 'stale_update_ignored')
+        private.close()
+
 
 if __name__ == "__main__":
     unittest.main()

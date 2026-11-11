@@ -6,7 +6,8 @@ const vm = require('node:vm');
 const {test} = require('node:test');
 const html = fs.readFileSync(path.join(__dirname, '..', 'viewer', 'index.html'), 'utf8');
 assert.match(html, /if\(!stream\|\|document\.hidden\|\|!recommendationsEnabled\(state\)\)/);
-assert.doesNotMatch(html, /viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay\('focus_lost'\)/);
+assert.match(html, /viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay\(document.hidden\?'hidden':'focus_lost'\)/);
+assert.match(html, /if\(privateOverlayRequested\(\)!==requested\)syncPrivateOverlay\(true\)/);
 
 function loadViewer({privateRequested = false, response} = {}) {
   const elements = new Map();
@@ -63,6 +64,7 @@ function loadViewer({privateRequested = false, response} = {}) {
       const data = response ? await response(url, options) : url === '/health'
         ? {ready: true, model_loaded: true, stockfish_available: true, instance_id: 'instance'}
         : {mode: 'normal', available: false, capture_excluded: false, state: 'normal'};
+      if (data && typeof data === 'object' && typeof data.json === 'function' && 'status' in data) return data;
       return {ok: true, status: 200, json: async () => data};
     },
   };
@@ -100,6 +102,14 @@ test('private failure preserves request and suppresses browser fallback', async 
   assert.equal(viewer.elements.get('arrows').children.length, 0);
 });
 
+test('private mode also removes board facts and history from the viewer HUD', async () => {
+  const viewer = loadViewer({privateRequested: true});
+  await settle();
+  viewer.run("report({message:'ok',detection:{fen:'8/8/8/8/8/8/8/4K2k',confidence:1},moves_seen:12,history_source:'ocr',history_complete:true,turn_verified:true,recommendations_enabled:true,result:null})");
+  assert.match(viewer.elements.get('position').textContent, /Privater Modus/);
+  assert.match(viewer.elements.get('history').textContent, /Privater Modus/);
+});
+
 test('capture resize preserves source aspect ratio including portrait and ultrawide sources', async () => {
   const viewer = loadViewer();
   await settle();
@@ -135,8 +145,35 @@ test('playing style is an explicit validated setting, not silent extra randomnes
   assert.equal(viewer.run('settings().play_style'), 'normal');
 });
 
+test('viewer rejects empty and out-of-range numeric/time settings before capture starts', async () => {
+  const viewer = loadViewer();
+  await settle();
+  viewer.elements.get('white').value = '';
+  assert.equal(viewer.run('validSettings()'), false);
+  viewer.elements.get('white').value = '500';
+  viewer.elements.get('black').value = '3000';
+  viewer.elements.get('tc').value = '999999+0';
+  assert.equal(viewer.run('validSettings()'), false);
+});
+
 test('an idle normal viewer does not switch off another client native overlay', async () => {
   const viewer=loadViewer(); await settle();
   assert.equal(viewer.requests.some(x=>x.url==='/api/overlay/mode'),false);
+});
+
+test('viewer refreshes capability after a server restart without a manual reload', async () => {
+  let rejected = true;
+  const viewer = loadViewer({response: async url => {
+    if (url === '/api/capability') return {ok:true,status:200,json:async()=>({token:'fresh-token',instance_id:'fresh-instance'})};
+    if (url === '/api/test' && rejected) { rejected=false; return {ok:false,status:401,json:async()=>({error:'Token abgelaufen'})}; }
+    return {ok:true,status:200,json:async()=>({ok:true})};
+  }});
+  await settle();
+  await viewer.run("req('/api/test', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})");
+  assert.equal(viewer.context.__ALLIE_CONFIG__.capability_token, 'fresh-token');
+  assert.equal(viewer.context.__ALLIE_CONFIG__.instance_id, 'fresh-instance');
+  const attempts = viewer.requests.filter(x=>x.url==='/api/test');
+  assert.equal(attempts.length, 2);
+  assert.equal(attempts[1].options.headers.Authorization, 'Bearer fresh-token');
 });
 

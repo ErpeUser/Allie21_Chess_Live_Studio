@@ -273,6 +273,15 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5'], 'black', 'stafford'), 'b8c6')
         self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'f3g5'], 'black', 'traxler'), 'f8c5')
 
+    def test_troll_repertoire_matches_exact_wiener_branch_fixtures(self):
+        halloween = ['e2e4', 'e7e5', 'b1c3', 'g8f6', 'g1f3', 'b8c6', 'f3e5']
+        steinitz = ['e2e4', 'e7e5', 'b1c3', 'b8c6', 'f2f4', 'e5f4', 'd2d4', 'd8h4', 'e1e2']
+        frankenstein = ['e2e4', 'e7e5', 'b1c3', 'g8f6', 'f1c4', 'f6e4', 'd1h5']
+        for line, side, name in ((halloween, 'white', 'halloween'), (steinitz, 'white', 'steinitz'), (frankenstein, 'white', 'frankenstein')):
+            for index in range(len(line)):
+                self.assertEqual(repertoire_move_for(line[:index], side, name), line[index])
+        self.assertIsNone(repertoire_move_for(halloween[:2] + ['d2d4'], 'white', 'halloween'))
+
     def test_repertoire_move_is_only_returned_for_matching_legal_history(self):
         self.assertEqual(repertoire_move_for([], 'white'), 'g2g4')
         self.assertIsNone(repertoire_move_for(['e2e4'], 'black'))

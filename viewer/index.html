@@ -100,8 +100,8 @@ details{border-top:1px solid #644832;margin-top:13px;padding-top:3px}summary{cur
           <select class="control stream-setting" id="playStyle"><option value="normal">Allie - normales Profil</option><option value="aggressive">Aggressiv - heuristische Umordnung</option></select>
           <p class="hint">Elo, Zeitkontrolle und echte Partiegeschichte steuern Allie. Keine zufaelligen Scheinwahrscheinlichkeiten.</p>
         </div>
-        <div class="field-grid"><div class="field"><label for="white">Weiß-Elo</label><input class="control stream-setting" id="white" type="number" min="600" max="2800" step="50"></div><div class="field"><label for="black">Schwarz-Elo</label><input class="control stream-setting" id="black" type="number" min="600" max="2800" step="50"></div></div>
-        <div class="field-grid"><div class="field"><label for="tc">Zeitkontrolle</label><input class="control stream-setting" id="tc" placeholder="300+0" pattern="[0-9]{1,5}\+[0-9]{1,4}" aria-describedby="tcHint"><p class="hint" id="tcHint">Sekunden + Inkrement, z. B. 300+0</p></div><div class="field"><label for="playerSide">Deine Farbe</label><select class="control stream-setting" id="playerSide"><option value="white">Weiß</option><option value="black">Schwarz</option></select><p class="hint">Unabhängig von der Brettorientierung</p></div></div>
+        <div class="field-grid"><div class="field"><label for="white">Weiß-Elo</label><input class="control stream-setting" id="white" type="number" min="600" max="2800" step="50" required></div><div class="field"><label for="black">Schwarz-Elo</label><input class="control stream-setting" id="black" type="number" min="600" max="2800" step="50" required></div></div>
+        <div class="field-grid"><div class="field"><label for="tc">Zeitkontrolle</label><input class="control stream-setting" id="tc" placeholder="300+0" pattern="[0-9]{1,5}\+[0-9]{1,4}" aria-describedby="tcHint" required><p class="hint" id="tcHint">Sekunden + Inkrement, z. B. 300+0 (1–86400 + 0–3600)</p></div><div class="field"><label for="playerSide">Deine Farbe</label><select class="control stream-setting" id="playerSide"><option value="white">Weiß</option><option value="black">Schwarz</option></select><p class="hint">Unabhängig von der Brettorientierung</p></div></div>
         <div class="field-grid"><div class="field"><label for="openingWhite">Weißes Opening</label><select class="control stream-setting" id="openingWhite"><option value="grob">Grob Gambit · Ragebait</option><option value="bongcloud">Bongcloud</option><option value="halloween">Halloween-Gambit</option><option value="vienna">Wiener Gambit</option><option value="steinitz">Steinitz-Gambit</option><option value="frankenstein">Frankenstein-Dracula</option><option value="danish">Dänisches Gambit</option></select></div><div class="field"><label for="openingBlack">Schwarzes Opening</label><select class="control stream-setting" id="openingBlack"><option value="englund">Englund Gambit · Ragebait</option><option value="stafford">Stafford-Gambit</option><option value="traxler">Traxler-Gegenangriff</option><option value="budapest">Budapester Gambit</option><option value="alekhine">Aljechin-Verteidigung</option></select></div></div>
         <label class="check"><input type="checkbox" class="stream-setting" id="ocr"><span>Sichtbare Zugfolge per OCR lesen <span class="hint">(optional, benötigt mehr Leistung)</span></span></label>
         <label class="check"><input type="checkbox" id="hudToggle" checked><span>Hinweise neben dem Streambild anzeigen</span></label>
@@ -133,6 +133,9 @@ const USER_SETTINGS_KEY='allie21.viewer.settings.v1';
 let STORED_USER_SETTINGS={};
 try{const parsed=JSON.parse(localStorage.getItem(USER_SETTINGS_KEY)||'{}');if(parsed&&typeof parsed==='object')STORED_USER_SETTINGS=parsed}catch{}
 const FORM_SETTINGS={...SETTINGS,...STORED_USER_SETTINGS};
+const normalizeElo=value=>{const number=Number(value);return Number.isFinite(number)&&number>=600&&number<=2800?Math.round(number):1950};
+const normalizeTimeControl=value=>{const match=String(value??'').trim().match(/^(\d{1,5})\+(\d{1,4})$/);if(!match)return'300+0';const base=Number(match[1]),increment=Number(match[2]);return base>=1&&base<=86400&&increment>=0&&increment<=3600?`${base}+${increment}`:'300+0'};
+FORM_SETTINGS.white_elo=normalizeElo(FORM_SETTINGS.white_elo);FORM_SETTINGS.black_elo=normalizeElo(FORM_SETTINGS.black_elo);FORM_SETTINGS.time_control=normalizeTimeControl(FORM_SETTINGS.time_control);
 if(!['white','black'].includes(FORM_SETTINGS.player_side))FORM_SETTINGS.player_side=SETTINGS.player_side||'white';
 if(!['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'].includes(FORM_SETTINGS.opening_white))FORM_SETTINGS.opening_white='grob';
 if(!['englund','stafford','traxler','budapest','alekhine'].includes(FORM_SETTINGS.opening_black))FORM_SETTINGS.opening_black='englund';
@@ -172,6 +175,8 @@ function hideBrowserHints(){
   $('allieBubble').replaceChildren();$('allieBubble').hidden=true;
   $('hud').hidden=true;
   $('analysis').textContent='Privater Modus: Hinweise werden nicht im Browser angezeigt.';
+  $('position').textContent='Privater Modus: Stellung verborgen.';
+  $('history').textContent='Privater Modus: Zugverlauf verborgen.';
   $('manualResult').replaceChildren();
 }
 function updatePrivateOverlayLabel(status){
@@ -196,7 +201,7 @@ function updatePrivateOverlayLabel(status){
   if(requested)hideBrowserHints();
 }
  function syncPrivateOverlay(explicit=false){
-  if(!privateOverlayRequested()&&!explicit){updatePrivateOverlayLabel();return Promise.resolve(null);}
+  if(!privateOverlayRequested()&&!explicit&&!overlayOwnerToken){updatePrivateOverlayLabel();return Promise.resolve(null);}
   if(overlaySyncPromise)return overlaySyncPromise;
   const requested=privateOverlayRequested();
   privateOverlayPending=true;updatePrivateOverlayLabel();
@@ -217,7 +222,7 @@ function updatePrivateOverlayLabel(status){
      }finally{
        if(!requested && overlayOwnerToken){await post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});overlayOwnerToken='';}
        privateOverlayPending=false;overlaySyncPromise=null;updatePrivateOverlayLabel();
-      if(privateOverlayRequested()!==requested)syncPrivateOverlay();
+      if(privateOverlayRequested()!==requested)syncPrivateOverlay(true);
     }
   })();
   return overlaySyncPromise;
@@ -280,29 +285,52 @@ async function publishPrivateOverlay(state){
 }
 function updateRecommendationLabel(){const enabled=$('recommendationsToggle').checked;$('recommendationState').textContent=enabled?'Ein':'Aus';$('recommendationSwitch').classList.toggle('off',!enabled);if(!stream){$('analysis').className='panel empty';$('analysis').textContent=enabled?'Die Ergebnisse erscheinen nach einer bestätigten Stellung.':'Live-Zugpfeile und Empfehlungen sind ausgeschaltet.';updateSteps(lastState)}}
 function updateSteps(state){const running=Boolean(stream),det=Boolean(state?.detection),enabled=recommendationsEnabled(state),ready=Boolean(enabled&&det&&state?.result?.fen===state.detection.fen);$('stepSource').className='step '+(running?'done':'');$('stepBoard').className='step '+(det?'done':running?'active':'');$('stepAnalysis').textContent=enabled?'3 · Analyse':'3 · Empfehlungen aus';$('stepAnalysis').className='step '+(ready?'done':enabled&&state?.analysing?'active':'');}
+let capabilityRefresh=null;
+async function refreshCapability(){
+  if(capabilityRefresh)return capabilityRefresh;
+  capabilityRefresh=(async()=>{
+    const response=await fetch('/api/capability',{cache:'no-store',headers:{'X-Allie-Overlay':'1'}});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const data=await response.json();
+    if(!data?.token||!data?.instance_id)throw new Error('Ungültige Capability-Antwort');
+    SETTINGS.capability_token=data.token;SETTINGS.instance_id=data.instance_id;
+    return data;
+  })().finally(()=>{capabilityRefresh=null});
+  return capabilityRefresh;
+}
 async function req(url,options={}){
   const {signal:externalSignal,timeout=15000,...fetchOptions}=options;
-  const headers={...(fetchOptions.headers||{})};
-  if(SETTINGS.capability_token){headers.Authorization=`Bearer ${SETTINGS.capability_token}`;headers['X-Allie-Instance']=SETTINGS.instance_id||'';}
-  const controller=new AbortController();
-  const onAbort=()=>controller.abort(externalSignal?.reason);
-  if(externalSignal?.aborted)onAbort();else externalSignal?.addEventListener('abort',onAbort,{once:true});
-  const timer=setTimeout(()=>controller.abort(),Math.max(1,Number(timeout)||15000));
-  try{
-    const response=await fetch(url,{...fetchOptions,cache:'no-store',headers,signal:controller.signal});
-    if(!response.ok){
+  let retried=false;
+  while(true){
+    const headers={...(fetchOptions.headers||{})};
+    if(SETTINGS.capability_token){headers.Authorization=`Bearer ${SETTINGS.capability_token}`;headers['X-Allie-Instance']=SETTINGS.instance_id||'';}
+    const controller=new AbortController();
+    const onAbort=()=>controller.abort(externalSignal?.reason);
+    if(externalSignal?.aborted)onAbort();else externalSignal?.addEventListener('abort',onAbort,{once:true});
+    const timer=setTimeout(()=>controller.abort(),Math.max(1,Number(timeout)||15000));
+    try{
+      const response=await fetch(url,{...fetchOptions,cache:'no-store',headers,signal:controller.signal});
+      if(response.ok)return response;
+      if(!retried&&(response.status===401||response.status===403)&&url!=='/api/capability'){
+        retried=true;await refreshCapability();continue;
+      }
       let data={};try{data=await response.json();}catch{}
       const error=new Error(data.error||`HTTP ${response.status}`);error.status=response.status;throw error;
-    }
-    return response;
-  }finally{clearTimeout(timer);externalSignal?.removeEventListener('abort',onAbort);}
+    }finally{clearTimeout(timer);externalSignal?.removeEventListener('abort',onAbort);}
+  }
 }
 async function post(path,data){return(await req(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json()}
 const OPENING_VALUES=Object.freeze({white:['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'],black:['englund','stafford','traxler','budapest','alekhine']});
 function selectedOpeningSettings(){const white=$('openingWhite').value,black=$('openingBlack').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
 function settings(){return{white_elo:Number($('white').value),black_elo:Number($('black').value),player_side:$('playerSide').value,play_style:$('playStyle').value==='aggressive'?'aggressive':'normal',time_control:$('tc').value.trim(),ocr_history:$('ocr').checked,recommendations_enabled:$('recommendationsToggle').checked,...selectedOpeningSettings()}}
 function persistSettings(){try{localStorage.setItem(USER_SETTINGS_KEY,JSON.stringify({...settings(),capture_source:$('captureSource').value}))}catch{}}
-function validSettings(){for(const el of [$('white'),$('black'),$('tc')]){if(!el.checkValidity()){el.reportValidity();return false}}return true;}
+function validSettings(){
+  const white=Number($('white').value),black=Number($('black').value),time=String($('tc').value||'').trim();
+  const validElo=number=>Number.isInteger(number)&&number>=600&&number<=2800;
+  const match=time.match(/^(\d{1,5})\+(\d{1,4})$/);const validTime=Boolean(match)&&Number(match[1])>=1&&Number(match[1])<=86400&&Number(match[2])>=0&&Number(match[2])<=3600;
+  if(!validElo(white)||!validElo(black)||!validTime){for(const el of [$('white'),$('black'),$('tc')])el.reportValidity?.();return false}
+  return true;
+}
 const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function format(d){
   if(!d)return'<div class="empty">Noch keine Engine-Ergebnisse.</div>';let h='';
@@ -453,7 +481,7 @@ $('privateOverlayToggle').onchange=async()=>{
 $('retryPrivateOverlay').onclick=async()=>{await syncPrivateOverlay();if(lastState)report(lastState);};
 
 document.addEventListener('visibilitychange',()=>{if(document.hidden){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('hud').hidden=true;clearPrivateOverlay('hidden').catch(()=>{})}else{syncPrivateOverlay();if(lastState)report(lastState)}},{passive:true});
-window.addEventListener('blur',()=>{viewerFocused=false;if(document.hidden){overlayPublishQueued=null;clearPrivateOverlay('hidden').catch(()=>{})}},{passive:true});
+window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay(document.hidden?'hidden':'focus_lost').catch(()=>{})},{passive:true});
 window.addEventListener('focus',()=>{viewerFocused=true;if(lastState)publishPrivateOverlay(lastState);},{passive:true});
 window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);updateSteps(null);
 </script>

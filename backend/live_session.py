@@ -65,6 +65,15 @@ class LiveSession:
         player_side = str(settings.get('player_side', CONFIG['player_side']))
         if player_side not in ('white', 'black'):
             raise ValueError('Spielerfarbe muss white oder black sein')
+        play_style = str(settings.get('play_style', 'normal'))
+        if play_style not in ('normal', 'aggressive'):
+            raise ValueError('Spielstil muss normal oder aggressive sein')
+        opening_white = str(settings.get('opening_white', 'grob'))
+        if opening_white not in ('grob', 'vienna', 'danish', 'bongcloud', 'halloween', 'steinitz', 'frankenstein'):
+            raise ValueError('Ungültiges weißes Opening')
+        opening_black = str(settings.get('opening_black', 'englund'))
+        if opening_black not in ('englund', 'budapest', 'alekhine', 'stafford', 'traxler'):
+            raise ValueError('Ungültiges schwarzes Opening')
         with self.lock:
             self.generation += 1
             self.session_id += 1
@@ -79,9 +88,9 @@ class LiveSession:
             self.settings = {'white_elo': white, 'black_elo': black,
                              'player_side': player_side, 'time_control': tc,
                              'preview': CONFIG['preview_opponent_replies'],
-                             'play_style': str(settings.get('play_style', 'normal')),
-                             'opening_white': str(settings.get('opening_white', 'grob')),
-                             'opening_black': str(settings.get('opening_black', 'englund')),
+                             'play_style': play_style,
+                             'opening_white': opening_white,
+                             'opening_black': opening_black,
                              'ocr_history': bool(settings.get('ocr_history', CONFIG['ocr_history'])),
                              'recommendations_enabled': bool(settings.get('recommendations_enabled', True))}
             self._reset_state(True)

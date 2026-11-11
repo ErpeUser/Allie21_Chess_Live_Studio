@@ -24,11 +24,13 @@ class OverlayLeaseConflict(RuntimeError):
 
 class OverlayLeaseManager:
     def __init__(self, clock: Callable[[], float] = time.monotonic,
-                 lease_seconds: float = LEASE_SECONDS) -> None:
+                 lease_seconds: float = LEASE_SECONDS,
+                 on_expire: Callable[[OverlayLease], None] | None = None) -> None:
         if lease_seconds <= 0:
             raise ValueError("lease_seconds must be positive")
         self._clock = clock
         self._lease_seconds = float(lease_seconds)
+        self._on_expire = on_expire
         self._lock = threading.RLock()
         self._lease: OverlayLease | None = None
 
@@ -36,6 +38,12 @@ class OverlayLeaseManager:
         lease = self._lease
         if lease is not None and lease.expires_at <= now:
             self._lease = None
+            callback = self._on_expire
+            if callback is not None:
+                try:
+                    callback(lease)
+                except Exception:  # noqa: BLE001 - cleanup must not break auth
+                    pass
             lease = None
         return lease
 

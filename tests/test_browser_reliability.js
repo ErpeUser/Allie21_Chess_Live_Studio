@@ -59,7 +59,7 @@ function loadBrowser({stored = {}, privateStored = {privateMode: false}, respons
   window.getComputedStyle = context.getComputedStyle;
   const marker = '\n installNavigationLifecycle();';
   assert.ok(source.includes(marker));
-  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,placePanel,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,el,wrapper,readBoardSnapshot,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
+  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,placePanel,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,el,wrapper,tick,readBoardSnapshot,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
   vm.createContext(context);
   vm.runInContext(code, context, {filename: 'allie21_overlay.user.js'});
   return {hooks: context.hooks, context, values, elements, requests, timers, Element};
@@ -106,6 +106,26 @@ test('first run defaults to private mode until explicitly disabled', () => {
   const app = loadBrowser({stored:{},privateStored:{}});
   assert.equal(app.hooks.cfg.privateMode,true);
   assert.equal(app.elements.get('privateMode').checked,true);
+});
+
+test('private mode keeps the browser HUD hidden from captures', async () => {
+  const app = loadBrowser({stored:{privateMode:true},privateStored:{privateMode:true}});
+  await app.hooks.tick();
+  assert.equal(app.hooks.wrapper.style.display, 'none');
+});
+
+test('corrupt persisted analysis settings are replaced with safe defaults', () => {
+  const app = loadBrowser({stored:{
+    elo: 'not-a-number', tc: '999999+99999', orientation: 'diagonal',
+    playerSide: 'green', playStyle: 'surreal', whiteOpening: 'unknown', blackOpening: 'unknown',
+  }});
+  assert.equal(app.hooks.cfg.elo, 1950);
+  assert.equal(app.hooks.cfg.tc, '300+0');
+  assert.equal(app.hooks.cfg.orientation, 'auto');
+  assert.equal(app.hooks.cfg.playerSide, 'auto');
+  assert.equal(app.hooks.cfg.playStyle, 'normal');
+  assert.equal(app.hooks.cfg.whiteOpening, 'grob');
+  assert.equal(app.hooks.cfg.blackOpening, 'englund');
 });
 
 test('current Lichess game URLs mount the overlay before board detection', () => {
