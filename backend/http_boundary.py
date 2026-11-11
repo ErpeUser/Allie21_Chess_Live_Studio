@@ -22,6 +22,7 @@ EXTENSION_ORIGINS = frozenset({'chrome-extension://omboihgfgofgmidefcpkihgglhkii
 PROTECTED_PATHS = frozenset({
     '/analyze', '/api/start', '/api/stop', '/api/frame', '/api/history',
     '/api/recommendations', '/api/browser-position', '/api/browser-position/reset',
+    '/api/state',
     '/api/overlay/mode', '/api/overlay/update', '/api/overlay/clear',
     '/api/overlay/claim', '/api/overlay/release',
 })
@@ -120,6 +121,13 @@ class LocalBoundaryMiddleware:
             headers.get('origin', ''), headers, scope.get('scheme', 'http')
         ):
             await self._error(403, 'Local host or origin invalid', scope, receive, send)
+            return
+        # The viewer HTML embeds a short-lived capability token. Never expose
+        # that bootstrap page to a chess-site origin, even when the overlay
+        # opt-in header is present for API calls.
+        if (scope['method'] == 'GET' and scope['path'] in {'/', '/viewer'}
+                and headers.get('origin') in WEB_ORIGINS | EXTENSION_ORIGINS):
+            await self._error(403, 'Viewer bootstrap is local-only', scope, receive, send)
             return
         if scope['method'] != 'OPTIONS' and scope['path'] in PROTECTED_PATHS:
             try:
