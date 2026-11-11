@@ -36,7 +36,8 @@ button:disabled{opacity:.6}small{display:block;color:#555}input:focus-visible,bu
 <h2>Overlay-Modus</h2>
 <label><input id="privateMode" type="radio" name="overlayMode" value="private"> Privatmodus (Windows-Capture-Ausschluss)</label>
 <label><input id="shareMode" type="radio" name="overlayMode" value="share"> HUD in Bildschirmübertragung anzeigen</label>
-<small>Die Einstellung wird mit dem Allie-Viewer und allen offenen Tabs synchronisiert. Privatmodus bleibt Standard und zeigt bei fehlendem Schutz keinen Browser-HUD.</small>
+<label><input id="normalMode" type="radio" name="overlayMode" value="normal"> Browser-HUD nur im Schach-Tab</label>
+<small>Die Einstellung wird mit dem Allie-Viewer und allen offenen Tabs synchronisiert. Privat schützt den nativen HUD, Share zeigt ihn in Aufnahmen, Browser-HUD bleibt im Schach-Tab.</small>
 <p id="overlayStatus" role="status" aria-live="polite"></p>
 </body>
 </html>
