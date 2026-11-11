@@ -45,8 +45,12 @@ WM_ERASEBKGND = 0x0014
 WM_NCHITTEST = 0x0084
 WM_APP = 0x8000
 WM_APP_RENDER = WM_APP + 21
-WM_TIMER = 0x0113
-TOPMOST_TIMER_ID = 0xA21
+# Win32 event raised whenever the foreground window changes.  Installing an
+# out-of-context hook on the overlay's GUI thread lets us refresh z-order at
+# the exact moment Edge (or another application) becomes active, without a
+# polling timer that races the compositor.
+EVENT_SYSTEM_FOREGROUND = 0x0003
+WINEVENT_OUTOFCONTEXT = 0x0000
 HTTRANSPARENT = -1
 COLOR_KEY = 0x00FF00FF  # magenta, transparent through the color-keyed layer
 TRANSPARENT = 1
@@ -290,10 +294,12 @@ class _Win32:
         bind(u, "ShowWindow", wintypes.BOOL, wintypes.HWND, ctypes.c_int)
         bind(u, "SetWindowPos", wintypes.BOOL, wintypes.HWND, wintypes.HWND,
              ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.UINT)
-        pointer_uint = getattr(wintypes, "UINT_PTR", ctypes.c_size_t)
-        bind(u, "SetTimer", pointer_uint, wintypes.HWND, pointer_uint,
-             wintypes.UINT, ctypes.c_void_p)
-        bind(u, "KillTimer", wintypes.BOOL, wintypes.HWND, pointer_uint)
+        hook_handle = getattr(wintypes, "HANDLE", ctypes.c_void_p)
+        callback_ptr = ctypes.c_void_p
+        bind(u, "SetWinEventHook", hook_handle, wintypes.DWORD, wintypes.DWORD,
+             wintypes.HMODULE, callback_ptr, wintypes.DWORD, wintypes.DWORD,
+             wintypes.DWORD)
+        bind(u, "UnhookWinEvent", wintypes.BOOL, hook_handle)
         bind(u, "PostMessageW", wintypes.BOOL,
              wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
         bind(u, "IsWindow", wintypes.BOOL, wintypes.HWND)
@@ -417,12 +423,35 @@ class _Win32:
         if not self.user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags):
             raise ctypes.WinError(ctypes.get_last_error())
 
-    def arm_topmost(self, hwnd: int, interval_ms: int = 250) -> None:
-        if not self.user32.SetTimer(hwnd, TOPMOST_TIMER_ID, interval_ms, None):
+    def install_foreground_hook(self, controller: NativeOverlayController) -> int:
+        callback_type = getattr(ctypes, "WINFUNCTYPE", ctypes.CFUNCTYPE)
+        callback_type = callback_type(
+            None,
+            wintypes.HANDLE,
+            wintypes.DWORD,
+            wintypes.HWND,
+            wintypes.LONG,
+            wintypes.LONG,
+            wintypes.DWORD,
+            wintypes.DWORD,
+        )
+        controller._winevent_proc = callback_type(controller._foreground_event)
+        hook = self.user32.SetWinEventHook(
+            EVENT_SYSTEM_FOREGROUND,
+            EVENT_SYSTEM_FOREGROUND,
+            None,
+            ctypes.cast(controller._winevent_proc, ctypes.c_void_p),
+            0,
+            0,
+            WINEVENT_OUTOFCONTEXT,
+        )
+        if not hook:
             raise ctypes.WinError(ctypes.get_last_error())
+        return int(hook)
 
-    def disarm_topmost(self, hwnd: int) -> None:
-        self.user32.KillTimer(hwnd, TOPMOST_TIMER_ID)
+    def uninstall_foreground_hook(self, hook: int) -> None:
+        if hook and not self.user32.UnhookWinEvent(hook):
+            raise ctypes.WinError(ctypes.get_last_error())
 
     def move_window(self, hwnd: int, x: int, y: int, width: int, height: int) -> None:
         success = self.user32.SetWindowPos(
@@ -796,6 +825,7 @@ class NativeOverlayController:
     # binding object is intentionally small so tests can provide a fake API.
     def _window_thread(self) -> None:
         hwnd = None
+        foreground_hook = None
         api = None
         try:
             api = self._bindings()
@@ -813,11 +843,12 @@ class NativeOverlayController:
                     destroy(hwnd)
                 hwnd = None
                 return
-            arm_timer = getattr(api, "arm_topmost", None)
-            if arm_timer is not None:
-                arm_timer(hwnd)
             with self._lock:
                 self._hwnd = hwnd
+            install_hook = getattr(api, "install_foreground_hook", None)
+            if install_hook is not None:
+                foreground_hook = install_hook(self)
+            with self._lock:
                 self._capture_excluded = requested
                 self._start_result = True
             api.show_window(hwnd, SW_HIDE)
@@ -839,13 +870,14 @@ class NativeOverlayController:
                 self._failure_reason = f"{type(exc).__name__}: {exc}"[:240]
                 self._fail_locked()
         finally:
-            if hwnd is not None:
-                disarm_timer = getattr(api, "disarm_topmost", None)
-                if disarm_timer is not None:
+            if foreground_hook is not None:
+                uninstall_hook = getattr(api, "uninstall_foreground_hook", None)
+                if uninstall_hook is not None:
                     try:
-                        disarm_timer(hwnd)
-                    except Exception as exc:  # noqa: BLE001 - window is already being torn down
-                        LOGGER.debug("Native overlay timer cleanup failed: %s", type(exc).__name__)
+                        uninstall_hook(foreground_hook)
+                    except Exception as exc:  # noqa: BLE001 - best effort during teardown
+                        LOGGER.debug("Native overlay event-hook cleanup failed: %s", type(exc).__name__)
+            if hwnd is not None:
                 destroy = getattr(api, "destroy_window", None)
                 if destroy is not None:
                     try:
@@ -885,13 +917,6 @@ class NativeOverlayController:
             self._bindings().show_window(hwnd, SW_HIDE)
             self._bindings().destroy_window(hwnd)
             return 0
-        if message == WM_TIMER and int(wparam) == TOPMOST_TIMER_ID:
-            try:
-                self._bindings().keep_topmost(hwnd)
-            except Exception as exc:  # noqa: BLE001 - fail closed on z-order errors
-                LOGGER.warning("Native overlay topmost refresh failed: %s", type(exc).__name__)
-                self._fail_closed()
-            return 0
         if message == WM_DESTROY:
             self._bindings().post_quit(0)
             return 0
@@ -899,6 +924,21 @@ class NativeOverlayController:
             self._bindings().invalidate(hwnd)
             return 0
         return self._bindings().def_window_proc(hwnd, message, wparam, lparam)
+
+    def _foreground_event(self, _hook, event, _hwnd, _object_id, _child_id, _thread_id, _event_time):
+        """Refresh z-order exactly when another window becomes foreground."""
+        if int(event) != EVENT_SYSTEM_FOREGROUND:
+            return
+        with self._lock:
+            hwnd = self._hwnd
+            active = self._visible and not self._stop.is_set()
+        if not hwnd or not active:
+            return
+        try:
+            self._bindings().keep_topmost(hwnd)
+        except Exception as exc:  # noqa: BLE001 - fail closed on z-order errors
+            LOGGER.warning("Native overlay foreground refresh failed: %s", type(exc).__name__)
+            self._fail_closed()
 
     def _paint(self, hwnd):  # pragma: no cover - Win32 GDI callback
         api = self._bindings()
