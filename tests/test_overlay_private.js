@@ -17,7 +17,7 @@ for (const needle of [
   "sendVisualUpdate(cfg.privateMode?'private':'share',pendingInsights(history));",
   'Privates Overlay aktiv:',
   'Capture-Ausschluss bestätigt; Methode prüfen',
-  "pageInactive=true;visualRefreshPending=true;clearOverlay();clearRemoteOverlay('inactive');",
+  'pageInactive=true;visualRefreshPending=true;clearOverlay();',
   "if(cfg.privateMode&&!overlayOwnerToken)",
   "if(mode==='private')",
   "let privateModeQueue=Promise.resolve()",
@@ -36,8 +36,8 @@ if (source.includes("sendVisualUpdate('normal',data)")) {
 if (!source.includes('sendVisualUpdate(overlayMode(),data)')) {
   throw new Error('paint must publish the active overlay mode');
 }
-if (!source.includes("clearRemoteOverlay('inactive')")) {
-  throw new Error('inactive tabs must clear the native snapshot');
+if (!source.includes("if(document.hidden)clearRemoteOverlay('inactive')")) {
+  throw new Error('hidden tabs must clear the native snapshot');
 }
 
 const start = source.indexOf('function visualGeometry');

@@ -304,9 +304,13 @@ let overlayRevision=0;
  function clearPrivateOverlay(reason='cleared'){if(!overlayRequested()||!overlayOwnerToken)return Promise.resolve(null);return post('/api/overlay/clear',{session_id:viewerSessionId,owner_token:overlayOwnerToken,generation:lastState?.generation||0,render_revision:++overlayRevision,reason})}
 async function publishPrivateOverlay(state){
   if(!overlayEnabled())return;
-  if(!viewerFocused||document.hidden){
+  if(document.hidden){
     overlayPublishQueued=null;
     await clearPrivateOverlay('inactive').catch(()=>{});
+    return;
+  }
+  if(!viewerFocused){
+    overlayPublishQueued=state;
     return;
   }
   if(!stream||!recommendationsEnabled(state)){
@@ -546,7 +550,7 @@ $('retryPrivateOverlay').onclick=async()=>{await syncPrivateOverlay();if(lastSta
 
  async function restoreOverlayAfterVisibility(){if(document.hidden||!viewerFocused)return;try{await syncPrivateOverlay();if(lastState)report(lastState)}catch{}}
  document.addEventListener('visibilitychange',()=>{if(document.hidden){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('hud').hidden=true;overlayPublishQueued=null;clearPrivateOverlay('inactive').catch(()=>{})}else if(viewerFocused){restoreOverlayAfterVisibility()}},{passive:true});
- window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay('inactive').catch(()=>{})},{passive:true});
+ window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;if(document.hidden)clearPrivateOverlay('inactive').catch(()=>{})},{passive:true});
  window.addEventListener('focus',()=>{viewerFocused=true;restoreOverlayAfterVisibility()},{passive:true});
 window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{});if(overlayOwnerToken)post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);setInterval(()=>{if(overlayRequested()&&overlayOwnerToken)post('/api/overlay/renew',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{overlayOwnerToken='';syncPrivateOverlay(true)});syncOverlaySettings(false).then(remote=>{if(remote&&['private','share','normal'].includes(remote.mode)&&remote.mode!==overlayMode){overlayMode=remote.mode;updatePrivateOverlayLabel();syncPrivateOverlay(true);if(lastState)report(lastState)}})},10000);updateSteps(null);
 </script>

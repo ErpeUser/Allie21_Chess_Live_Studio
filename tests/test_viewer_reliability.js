@@ -8,8 +8,8 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'viewer', 'index.html'),
 assert.match(html, /if\(!stream\|\|!recommendationsEnabled\(state\)\)/);
 assert.match(html, /async function restoreOverlayAfterVisibility\(\)/);
 assert.match(html, /clearPrivateOverlay\('inactive'\)/);
-assert.match(html, /viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay\('inactive'\)/);
-assert.match(html, /if\(!viewerFocused\|\|document\.hidden\)/);
+assert.match(html, /viewerFocused=false;overlayPublishQueued=null;if\(document\.hidden\)clearPrivateOverlay\('inactive'\)/);
+assert.match(html, /if\(document\.hidden\)/);
 assert.match(html, /Capture-Ausschluss bestätigt; Overlay wartet auf aktive Analyse/);
 assert.match(html, /if\(privateOverlayRequested\(\)!==requested\)syncPrivateOverlay\(true\)/);
 

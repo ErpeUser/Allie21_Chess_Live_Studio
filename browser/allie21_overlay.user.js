@@ -772,9 +772,12 @@
  window.visualViewport?.addEventListener('scroll',requestRepaint,{passive:true});
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
  function hideForInactive(){
-  // A tab/program switch invalidates the board context. Clear both renderers
-  // immediately so stale arrows cannot remain over another application.
-  pageInactive=true;visualRefreshPending=true;clearOverlay();clearRemoteOverlay('inactive');
+  // A hidden tab invalidates the board context.  A plain window blur (for
+  // example switching to Discord while sharing Edge) must not clear the
+  // capture-safe native snapshot: that window is specifically meant to stay
+  // visible above the browser while the page-owned DOM is hidden.
+  pageInactive=true;visualRefreshPending=true;clearOverlay();
+  if(document.hidden)clearRemoteOverlay('inactive');
  }
  async function restoreOverlayAfterVisibility(){
   if(document.hidden)return;
@@ -785,7 +788,7 @@
   if(currentResult){show(currentResult);paint(currentResult)}else scheduleTick(true);
  }
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else if(document.hasFocus?.()!==false)restoreOverlayAfterVisibility()},{passive:true});
- window.addEventListener('blur',hideForInactive,{passive:true});
+ window.addEventListener('blur',()=>{if(document.hidden)hideForInactive();else{visualRefreshPending=true;clearOverlay()}},{passive:true});
  window.addEventListener('focus',()=>restoreOverlayAfterVisibility(),{passive:true});
  function resetBoardSession(reason='navigation'){
   clearRemoteOverlay(reason);
