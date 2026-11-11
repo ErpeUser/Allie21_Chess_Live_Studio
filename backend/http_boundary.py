@@ -25,6 +25,7 @@ PROTECTED_PATHS = frozenset({
     '/api/state',
     '/api/overlay/mode', '/api/overlay/update', '/api/overlay/clear',
     '/api/overlay/claim', '/api/overlay/release',
+    '/api/overlay/renew',
 })
 BODY_REQUIRED = PROTECTED_PATHS - {'/api/stop', '/api/overlay/clear'}
 SECURITY_HEADERS = {
@@ -87,7 +88,7 @@ class LocalBoundaryMiddleware:
         self.cors = CORSMiddleware(
             self._guarded,
             allow_origins=sorted(WEB_ORIGINS | EXTENSION_ORIGINS),
-            allow_methods=['GET', 'POST'],
+            allow_methods=['GET', 'POST', 'PUT'],
             allow_headers=['Content-Type', 'Authorization', 'X-Allie-Overlay', 'X-Allie-Instance', 'X-Allie-Pairing'],
             expose_headers=['Retry-After'],
             max_age=3600,
@@ -135,7 +136,7 @@ class LocalBoundaryMiddleware:
             except HTTPException as exc:
                 await self._error(exc.status_code, str(exc.detail), scope, receive, send)
                 return
-        if scope['method'] != 'POST':
+        if scope['method'] not in {'POST', 'PUT'}:
             await self.app(scope, receive, send)
             return
         maximum = self.max_frame if scope['path'] == '/api/frame' else self.max_json

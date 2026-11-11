@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Allie 2.1 Live Overlay",
-  "version": "11.2.18.0",
-  "version_name": "11.2.18",
+  "version": "11.2.19.0",
+  "version_name": "11.2.19",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt7jV+esSpySHjzLTEzXStFTbgv3HXPDB74nrcDWR8UNlqqOas7UdZYb/1qARGej4pzvjzbFecXjXZInmQWGWv83TvGolMPoD5Ass7cmMhQQzy2i4lT55yR7au0cpAAZiQgBpCciMH6UkQLKKMgIsaQL//0XRRiUREY4g6bv7yxG3wCGrXt9LAAwSYlviHdnyNmTJH85+SbyL7vLH2ed8qcichgRF9DYt1kT+PfoRATByXNTOJmKQCSlaaoEuQh3iAOtkgSJ8ve0gdwyB+KKJCd5a+cVB8vQ3HwQ4/ntIWWmzbqMJfd6g1J+/skM23LdGk76RNNrZQn8XgWZ2Fq9KAwIDAQAB",
   "description": "Lokale Allie-Zughinweise mit Worker-Diagnose und lokalen Entwicklungsupdates.",
   "host_permissions": ["http://127.0.0.1/*"],

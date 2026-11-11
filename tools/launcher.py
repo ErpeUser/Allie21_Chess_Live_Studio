@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import os
 import socket
 import subprocess
@@ -9,6 +10,9 @@ import sys
 import webbrowser
 from pathlib import Path
 from threading import Thread
+from time import sleep
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 
 def resolve_backend_path(
@@ -53,6 +57,7 @@ REQUIRED = (
 PORTABLE_REQUIRED = (
     "app/backend/live_server.py",
     "app/viewer/index.html",
+    "app/release-version.json",
     "runtime/python.exe",
 )
 
@@ -114,6 +119,42 @@ def port_available(port: int) -> bool:
         probe.close()
 
 
+def health_snapshot(port: int, *, timeout: float = 0.6) -> dict[str, object] | None:
+    """Read the loopback health endpoint without importing the backend.
+
+    The launcher uses this probe to distinguish an already running Allie
+    service from an unrelated process that happens to own the configured port.
+    A failed or malformed probe is treated as unknown and never as permission
+    to terminate the process.
+    """
+    try:
+        request = Request(
+            f"http://127.0.0.1:{port}/health",
+            headers={"Accept": "application/json", "X-Allie-Launcher": "1"},
+        )
+        with urlopen(request, timeout=timeout) as response:
+            if response.status != 200:
+                return None
+            raw = response.read(64 * 1024)
+        payload = json.loads(raw.decode("utf-8"))
+    except (OSError, URLError, TimeoutError, ValueError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def is_allie_service(payload: object) -> bool:
+    """Return true only for the signed shape emitted by this Allie server."""
+    if not isinstance(payload, dict):
+        return False
+    return (payload.get("alive") is True
+            and isinstance(payload.get("api_version"), int)
+            and payload.get("api_version") == 2
+            and payload.get("schema_version") == 1
+            and isinstance(payload.get("instance_id"), str)
+            and len(payload["instance_id"]) >= 16
+            and isinstance(payload.get("overlay"), dict))
+
+
 def error(message: str) -> None:
     ctypes.windll.user32.MessageBoxW(None, message, TITLE, 0x10)
 
@@ -140,13 +181,32 @@ class TrayApp:
         self.command_runner = command_runner or subprocess.run
         self.browser_open = browser_open or webbrowser.open
         self.process = None
+        self.owns_process = False
+        self.reused_existing = False
 
     def start(self):
+        if self.process is not None and self.process.poll() is None:
+            return self.process
         if not port_available(self.port):
+            # Reuse a healthy Allie instance on 8765 (for example after a
+            # tray restart).  An unrelated listener remains a hard failure.
+            for _ in range(5):
+                if is_allie_service(health_snapshot(self.port)):
+                    self.reused_existing = True
+                    self.owns_process = False
+                    self.process = None
+                    return None
+                # A just-started Allie process may bind before Uvicorn has
+                # published /health. Give that own instance a short grace
+                # period; an unrelated listener still fails closed.
+                sleep(0.2)
             raise RuntimeError(
-                f"Port 127.0.0.1:{self.port} ist bereits belegt; "
-                "Allie startet aus Sicherheitsgründen nicht."
+                f"Port 127.0.0.1:{self.port} ist bereits von einem fremden "
+                "Prozess belegt; dieser Prozess wird nicht beendet."
             )
+        self.reused_existing = False
+        self.owns_process = True
+        hidden = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         if is_portable_bundle(self.root):
             app_root = self.root / "app"
             runtime_python = self.root / "runtime" / "python.exe"
@@ -154,20 +214,22 @@ class TrayApp:
             environment["ALLIE_PROJECT_ROOT"] = str(app_root)
             environment["PYTHONPATH"] = str(app_root / "backend")
             environment["ALLIE_PORT"] = str(self.port)
+            environment["ALLIE_NO_BROWSER"] = "1"
             self.process = self.process_factory(
                 [str(runtime_python), str(app_root / "backend" / "live_server.py")],
                 cwd=app_root,
                 env=environment,
-                creationflags=subprocess.CREATE_NEW_CONSOLE,
+                creationflags=hidden,
             )
             return self.process
         environment = os.environ.copy()
         environment["ALLIE_PORT"] = str(self.port)
+        environment["ALLIE_NO_BROWSER"] = "1"
         self.process = self.process_factory(
             ["cmd.exe", "/d", "/c", str(self.root / "START_HIER.bat")],
             cwd=self.root,
             env=environment,
-            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            creationflags=hidden,
         )
         return self.process
 
@@ -177,6 +239,8 @@ class TrayApp:
     def stop_server(self) -> None:
         process = self.process
         if process is None or process.poll() is not None:
+            return
+        if self.reused_existing and not self.owns_process:
             return
         result = self.command_runner(
             ["taskkill", "/PID", str(process.pid), "/T", "/F"],
@@ -192,9 +256,9 @@ class TrayApp:
         icon.stop()
 
     def watch(self, icon) -> None:
-        if self.process is not None:
+        if self.process is not None and self.owns_process:
             self.process.wait()
-        icon.stop()
+            icon.stop()
 
     def run(self) -> int:
         import pystray
@@ -215,7 +279,7 @@ class TrayApp:
             icon.run(setup=setup)
         finally:
             self.stop_server()
-        return self.process.returncode or 0
+        return (self.process.returncode if self.process is not None and self.process.returncode is not None else 0)
 
 
 def main() -> int:

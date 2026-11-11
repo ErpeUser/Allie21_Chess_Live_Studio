@@ -1,10 +1,10 @@
 # Reproduzierbare Versionen und Prüfstand
 
-## Update 11.2.17 / Edge-Erweiterung 11.2.18
+## Update 11.2.19 / Edge-Erweiterung 11.2.19
 
-Der aktuelle `main`-Stand trennt die WebExtension-Version bewusst von der
-Anwendungs-/Userscript-Version. `pyproject.toml` und Userscript bleiben bei
-11.2.17; `browser/manifest.json` ist 11.2.18.0 mit `version_name` 11.2.18.
+Der aktuelle `main`-Stand verwendet für Anwendung, Userscript und WebExtension
+den geprüften Stand 11.2.19; `browser/manifest.json` ist 11.2.19.0 mit
+`version_name` 11.2.19.
 Die feste Erweiterungs-ID bleibt unverändert.
 
 Der nachfolgende Wartungsstand basiert auf Commit `13131c8` vom 10. November
@@ -19,6 +19,10 @@ Der nachfolgende Wartungsstand basiert auf Commit `13131c8` vom 10. November
 Stand der Prüfung: 9. November 2026. Abhängigkeiten sind in `pyproject.toml` direkt und im Remote-Branch zusätzlich in `uv.lock` festgelegt.
 
 ## Aktueller Prüfstand
+
+- Overlay-Modi: Privatmodus mit verifizierter Windows-Capture-Exclusion und Share-Modus mit bewusst deaktivierter Exclusion; ein Browser-HUD wird im Privatmodus nie als Rückfall verwendet.
+- Website, Userscript und Edge-Optionsseite verwenden den versionierten lokalen Overlay-Status; Viewer und Extension lösen veraltete Schreibvorgänge über Version/Zeitstempel auf.
+- Die EXE startet Backend, Runtime, Modell und Stockfish über das Tray ohne sichtbares CMD-Fenster, verwendet eine gesunde eigene Instanz auf Port 8765 wieder und beendet keine fremden Listener.
 
 - JavaScript: 10/10 Node-Fixtures bestanden; Userscript und Service-Worker bestehen `node --check`.
 - Native-/Regression-Regressionen: 14 Tests ausgeführt, 12 bestanden, 2 wegen fehlendem globalem `python-chess` übersprungen. Die vollständige locked-Umgebung führt die chess-abhängigen Tests aus.

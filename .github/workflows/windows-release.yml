@@ -35,7 +35,7 @@ jobs:
         run: ./tools/build_exe.ps1
       - name: Verify hashes and local server startup
         shell: pwsh
-        run: python tools/release_smoke.py --bundle 'release/Allie21 Chess Live Studio'
+        run: python tools/release_smoke.py --bundle 'release/Allie21 Chess Live Studio' --with-model
       - name: Archive full onedir bundle
         shell: pwsh
         run: |

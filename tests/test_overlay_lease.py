@@ -49,6 +49,18 @@ class OverlayLeaseTests(unittest.TestCase):
         self.assertFalse(manager.authorize('session-a', lease.owner_token))
         self.assertEqual(expired, [lease])
 
+    def test_renewal_keeps_unchanged_position_alive_for_two_minutes(self):
+        now = [0.0]
+        manager = OverlayLeaseManager(lambda: now[0], lease_seconds=30)
+        lease = manager.claim('unchanged-position')
+        for second in range(10, 121, 10):
+            now[0] = float(second)
+            lease = manager.renew('unchanged-position', lease.owner_token)
+            self.assertTrue(manager.authorize('unchanged-position', lease.owner_token))
+            self.assertGreater(lease.expires_at, now[0])
+        now[0] = 120.5
+        self.assertTrue(manager.authorize('unchanged-position', lease.owner_token))
+
 
 if __name__ == '__main__':
     unittest.main()

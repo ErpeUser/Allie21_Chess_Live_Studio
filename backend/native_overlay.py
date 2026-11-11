@@ -50,6 +50,8 @@ COLOR_KEY = 0x00FF00FF  # magenta, transparent through the color-keyed layer
 TRANSPARENT = 1
 PS_SOLID = 0
 WDA_EXCLUDEFROMCAPTURE = 0x00000011
+# Explicitly remove display affinity for the share-visible mode.
+WDA_NONE = 0x00000000
 LOGGER = logging.getLogger(__name__)
 
 
@@ -526,12 +528,19 @@ class NativeOverlayController:
         self._started = False
         self._visible = False
         self._capture_excluded = False
+        self._requested_capture_exclusion = True
         self._failed_closed = False
         self._start_result = False
         self._failure_reason = ""
 
     @property
     def available(self) -> bool:
+        with self._lock:
+            return self._hwnd is not None and not self._failed_closed
+
+    @property
+    def capture_excluded(self) -> bool:
+        """Whether the HWND currently verifies WDA_EXCLUDEFROMCAPTURE."""
         with self._lock:
             return self._capture_excluded and self._hwnd is not None and not self._failed_closed
 
@@ -555,12 +564,20 @@ class NativeOverlayController:
             self._api = _Win32()
         return self._api
 
-    def start(self, timeout: float = 3.0) -> bool:
-        """Start the window thread; return false unless capture exclusion verifies."""
+    def start(self, timeout: float = 3.0, *, capture_exclusion: bool = True) -> bool:
+        """Start and verify the requested capture policy before showing.
+
+        Private mode requires ``WDA_EXCLUDEFROMCAPTURE``. Share mode requests
+        and verifies ``WDA_NONE`` so a whole-screen capture contains the HUD.
+        """
 
         with self._lock:
             if self._started:
-                return self._start_result and self.available and not self._stop.is_set()
+                if self._start_result and self.available and not self._stop.is_set():
+                    if bool(capture_exclusion) != self.capture_excluded:
+                        return self.set_capture_exclusion(bool(capture_exclusion))
+                    return True
+                return False
             if self._api is None and os.name != "nt":
                 self._failure_reason = "native_overlay_requires_windows"
                 self._fail_locked()
@@ -568,6 +585,7 @@ class NativeOverlayController:
             self._started = True
             self._failed_closed = False
             self._start_result = False
+            self._requested_capture_exclusion = bool(capture_exclusion)
             self._failure_reason = ""
             self._stop.clear()
             self._ready.clear()
@@ -708,6 +726,44 @@ class NativeOverlayController:
         affinity = api.get_window_display_affinity(hwnd)
         return affinity == WDA_EXCLUDEFROMCAPTURE
 
+    def _verify_capture_visibility(self, hwnd: int) -> bool:
+        """Disable display affinity and verify WDA_NONE for share mode."""
+        api = self._bindings()
+        if not bool(api.set_window_display_affinity(hwnd, WDA_NONE)):
+            return False
+        return api.get_window_display_affinity(hwnd) == WDA_NONE
+
+    def set_capture_exclusion(self, enabled: bool) -> bool:
+        """Switch the current HWND between private and share-visible capture.
+
+        Any failed transition hides and invalidates the window. This prevents a
+        stale status from claiming that a policy was applied when Windows
+        rejected the affinity call.
+        """
+        with self._lock:
+            hwnd = self._hwnd
+            if hwnd is None or self._failed_closed:
+                return False
+        api = self._bindings()
+        affinity = WDA_EXCLUDEFROMCAPTURE if enabled else WDA_NONE
+        try:
+            if not bool(api.set_window_display_affinity(hwnd, affinity)):
+                raise OSError("SetWindowDisplayAffinity failed")
+            if api.get_window_display_affinity(hwnd) != affinity:
+                raise OSError("GetWindowDisplayAffinity verification failed")
+        except Exception as exc:  # noqa: BLE001 - fail closed on policy transition
+            with self._lock:
+                self._failure_reason = f"capture_policy_transition_failed: {exc}"[:240]
+                self._fail_locked()
+            try:
+                api.show_window(hwnd, SW_HIDE)
+            except Exception:
+                pass
+            return False
+        with self._lock:
+            self._capture_excluded = bool(enabled)
+        return True
+
     # The following methods are used only on the dedicated GUI thread.  The
     # binding object is intentionally small so tests can provide a fake API.
     def _window_thread(self) -> None:
@@ -716,8 +772,13 @@ class NativeOverlayController:
         try:
             api = self._bindings()
             hwnd = api.create_window(self)
-            if not hwnd or not self._verify_capture_exclusion(hwnd):
-                raise OSError("WDA_EXCLUDEFROMCAPTURE could not be verified")
+            if not hwnd:
+                raise OSError("native overlay window could not be created")
+            requested = bool(getattr(self, "_requested_capture_exclusion", True))
+            verifier = self._verify_capture_exclusion if requested else self._verify_capture_visibility
+            if not verifier(hwnd):
+                policy = "WDA_EXCLUDEFROMCAPTURE" if requested else "WDA_NONE"
+                raise OSError(f"{policy} could not be verified")
             if self._stop.is_set():
                 destroy = getattr(api, "destroy_window", None)
                 if destroy is not None:
@@ -726,7 +787,7 @@ class NativeOverlayController:
                 return
             with self._lock:
                 self._hwnd = hwnd
-                self._capture_excluded = True
+                self._capture_excluded = requested
                 self._start_result = True
             api.show_window(hwnd, SW_HIDE)
             self._ready.set()
@@ -869,18 +930,39 @@ class PrivateOverlayController:
     def status(self) -> dict[str, object]:
         with self._lock:
             available, visible = self._native.available, self._native.visible
+            capture_excluded = self._native.capture_excluded
             state, reason = ("active" if visible else self._state), self._reason
-            if self._mode == "private" and not available and state in {"active", "ready"}:
+            if self._mode == "private" and (not available or not capture_excluded) and state in {"active", "ready"}:
                 state = "unavailable"
                 reason = self._native._failure_reason or "native_window_stopped"
             snapshot = self._native.snapshot if visible else OverlaySnapshot()
+            if self._mode == "private":
+                status_text = (
+                    "Privatmodus aktiv und Capture-Exclusion bestätigt"
+                    if available and capture_excluded
+                    else "Privatmodus nicht verifiziert"
+                )
+            elif self._mode == "share":
+                status_text = (
+                    "Share-Modus aktiv und in Aufnahmen sichtbar"
+                    if available and not capture_excluded
+                    else "Share-Modus nicht bereit"
+                )
+            elif self._mode == "normal":
+                status_text = "Overlay normal aktiv"
+            else:
+                status_text = "Overlay nicht gekoppelt"
             return {
                 "mode": self._mode,
                 "state": state,
                 "reason": reason,
+                "status_text": status_text,
                 "available": available,
                 "visible": visible,
-                "capture_excluded": available,
+                "capture_excluded": capture_excluded,
+                "capture_visible": bool(available and not capture_excluded),
+                "private_verified": bool(available and capture_excluded and self._mode == "private"),
+                "share_visible": bool(available and not capture_excluded and self._mode == "share"),
                 # Keep diagnostics deliberately aggregate: the local status
                 # endpoint may confirm that a protected frame was published
                 # without exposing move data or board contents.
@@ -906,8 +988,8 @@ class PrivateOverlayController:
         self._retired_order.append(session_id)
 
     def set_mode(self, mode: str) -> dict[str, object]:
-        if mode not in {"private", "normal"}:
-            raise ValueError("overlay mode must be private or normal")
+        if mode not in {"private", "share", "normal"}:
+            raise ValueError("overlay mode must be private, share or normal")
         with self._render_lock:
             with self._lock:
                 self._mode = mode
@@ -916,13 +998,17 @@ class PrivateOverlayController:
                 with self._lock:
                     self._state, self._reason = "normal", "explicit_normal_mode"
                 return self.status()
-            if not self._native.start():
+            wanted_exclusion = mode == "private"
+            if not self._native.start(capture_exclusion=wanted_exclusion):
                 with self._lock:
                     detail = getattr(self._native, "_failure_reason", "")
                     self._state, self._reason = ("unsupported" if os.name != "nt" else "exclusion_error", detail or "capture_exclusion_not_verified")
                 return self.status()
             with self._lock:
-                self._state, self._reason = "ready", "capture_exclusion_verified"
+                self._state, self._reason = (
+                    "ready",
+                    "capture_exclusion_verified" if wanted_exclusion else "share_mode_capture_enabled",
+                )
             return self.status()
 
     def update(self, payload: Mapping[str, object]) -> dict[str, object]:
@@ -972,13 +1058,14 @@ class PrivateOverlayController:
                         != (generation, render_revision)):
                     self._state, self._reason = "stale", "stale_update_ignored"
                     return self.status()
-            if self._mode != "private" or payload.get("mode") not in {"private", "stale", "stopped", "exclusion_error"}:
+            if self._mode not in {"private", "share"} or payload.get("mode") != self._mode:
                 self._native.hide()
                 return self.status()
-            if not self._native.available and not self.set_mode("private").get("available"):
+            if (not self._native.available
+                    and not self.set_mode(self._mode).get("available")):
                 return self.status()
             mode = str(payload.get("mode", "private"))
-            if mode != "private":
+            if mode != self._mode:
                 self._native.hide()
                 return self.status()
             geometry = payload.get("geometry") or {}
@@ -1053,7 +1140,10 @@ class PrivateOverlayController:
                     message = ""
             if self._native.update(arrows, message=message, bounds=bounds, message_rect=message_rect):
                 with self._lock:
-                    self._state, self._reason = "active", "capture_exclusion_verified"
+                    self._state, self._reason = (
+                        "active",
+                        "capture_exclusion_verified" if self._mode == "private" else "share_mode_capture_enabled",
+                    )
             return self.status()
 
     def clear(
@@ -1106,6 +1196,7 @@ NativeOverlay = NativeOverlayController
 
 __all__ = [
     "WDA_EXCLUDEFROMCAPTURE",
+    "WDA_NONE",
     "NativeOverlay",
     "NativeOverlayController",
     "OverlayArrow",

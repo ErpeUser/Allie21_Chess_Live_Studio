@@ -34,6 +34,10 @@ class OverlayLeaseManager:
         self._lock = threading.RLock()
         self._lease: OverlayLease | None = None
 
+    @property
+    def lease_seconds(self) -> float:
+        return self._lease_seconds
+
     def _live_locked(self, now: float) -> OverlayLease | None:
         lease = self._lease
         if lease is not None and lease.expires_at <= now:
@@ -76,6 +80,21 @@ class OverlayLeaseManager:
             lease = OverlayLease(session_id, owner_token, self._clock() + self._lease_seconds)
             self._lease = lease
             return lease
+
+    def renew(self, session_id: str, owner_token: str) -> OverlayLease:
+        """Explicitly renew a live lease without changing its owner token."""
+        return self.touch(session_id, owner_token)
+
+    def status(self) -> dict[str, object]:
+        """Return bounded diagnostics for UI pairing/lease status."""
+        with self._lock:
+            lease = self._live_locked(self._clock())
+            return {
+                'active': lease is not None,
+                'session_id': lease.session_id if lease else None,
+                'expires_at': lease.expires_at if lease else None,
+                'lease_seconds': self._lease_seconds,
+            }
 
     def release(self, session_id: str, owner_token: str) -> bool:
         with self._lock:

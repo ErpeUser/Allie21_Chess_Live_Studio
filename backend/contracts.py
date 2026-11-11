@@ -78,7 +78,7 @@ class VisualUpdateRequest(ContractModel):
     render_revision: int = Field(0, ge=0)
     analysis_key: str = Field('', max_length=256)
     fen: str = Field('', max_length=200)
-    mode: Literal['private', 'normal', 'unsupported', 'exclusion_error', 'stale', 'stopped']
+    mode: Literal['private', 'share', 'normal', 'unsupported', 'exclusion_error', 'stale', 'stopped']
     source: Literal['chesscom_dom', 'lichess_dom', 'video', 'manual', 'unknown'] = 'unknown'
     geometry: Geometry | None = None
     arrows: list[Arrow] = Field(default_factory=list, max_length=8)

@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 from native_overlay import (
     HTTRANSPARENT,
     WDA_EXCLUDEFROMCAPTURE,
+    WDA_NONE,
     NativeOverlayController,
     OverlayArrow,
     PrivateOverlayController,
@@ -78,6 +79,27 @@ class NativeOverlayTests(unittest.TestCase):
 
         fake_bad = FakeWin32(affinity=0)
         self.assertFalse(NativeOverlayController(api=fake_bad)._verify_capture_exclusion(42))
+
+    def test_share_policy_disables_capture_exclusion_and_verifies_none(self):
+        fake = FakeWin32(affinity=WDA_NONE)
+        controller = NativeOverlayController(api=fake)
+        self.assertTrue(controller.start(capture_exclusion=False))
+        self.assertTrue(controller.available)
+        self.assertFalse(controller.capture_excluded)
+        self.assertIn(("set_affinity", 42, WDA_NONE), fake.calls)
+        controller.stop()
+
+    def test_private_router_reports_distinct_share_status(self):
+        fake = FakeWin32(affinity=WDA_NONE)
+        router = PrivateOverlayController()
+        router._native = NativeOverlayController(api=fake)
+        status = router.set_mode("share")
+        self.assertEqual(status["mode"], "share")
+        self.assertTrue(status["available"])
+        self.assertTrue(status["share_visible"])
+        self.assertEqual(status["reason"], "share_mode_capture_enabled")
+        self.assertIn("Share-Modus", status["status_text"])
+        router.close()
 
     def test_mocked_controller_is_thread_safe_and_renders_only_after_verification(self):
         fake = FakeWin32()

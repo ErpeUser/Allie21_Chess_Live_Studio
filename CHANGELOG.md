@@ -1,3 +1,9 @@
+## v11.2.19
+
+- Explizite Overlay-Modi: verifiziert geschütztes Windows-HWND im Privatmodus und aufnahmefähiger Share-Modus mit identischem HUD.
+- Website, Userscript und MV3-Extension synchronisieren den Modus über einen versionierten lokalen Backend-Status; Neustarts stellen den zuletzt bestätigten Modus wieder her.
+- EXE-Tray-Start, Port-Wiederverwendung, Lease-Erneuerung und Release-Smoke-Nachweis wurden für den Windows-Auslieferungspfad ergänzt.
+
 ## v11.2.17
 
 - GUI opening selections are normalized once, persisted, sent with the analysis request, and echoed back as the applied repertoire selection.

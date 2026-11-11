@@ -60,8 +60,8 @@ Die Browser-Erweiterung öffnet über ihre Optionen die Einstellung „Lokaler P
 
 Der technische Checkpoint steht in `VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
 
-Die Anwendung/Userscript-Version ist 11.2.17. Die separat versionierte Edge-
-Erweiterung ist 11.2.18.0/11.2.18; `tools/check_versions.py` prüft diese beiden
+Die Anwendung/Userscript-Version ist 11.2.19. Die separat versionierte Edge-
+Erweiterung ist 11.2.19.0/11.2.19; `tools/check_versions.py` prüft diese beiden
 Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt.
 
 Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `release/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.

@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $exe = Join-Path $Bundle 'Allie21 Chess Live Studio.exe'
 if (-not (Test-Path -LiteralPath $exe)) { throw 'Verified executable is missing.' }
 if (-not (Test-Path -LiteralPath (Join-Path $Bundle 'runtime\python.exe'))) { throw 'Portable runtime is missing.' }
+if (-not (Test-Path -LiteralPath (Join-Path $Bundle 'app\release-version.json'))) { throw 'Release version proof is missing.' }
 $desktop = [Environment]::GetFolderPath('Desktop')
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut((Join-Path $desktop 'Allie21 Chess Live Studio.lnk'))

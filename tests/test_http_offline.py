@@ -340,7 +340,7 @@ class HTTPBoundaryTests(unittest.TestCase):
         self.assertIn(extension_version.encode(), page)
         status, script = self.call('GET', '/install/allie21_overlay.user.js')
         self.assertEqual(status, 200)
-        self.assertIn(b'@version      11.2.17', script)
+        self.assertIn(b'@version      11.2.19', script)
 
 
 if __name__ == '__main__':

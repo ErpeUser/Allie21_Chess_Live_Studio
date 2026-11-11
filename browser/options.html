@@ -33,5 +33,10 @@ button:disabled{opacity:.6}small{display:block;color:#555}input:focus-visible,bu
 <button id="test" type="button">Server-Verbindung testen</button>
 <a id="viewer" href="http://127.0.0.1:8765/viewer" target="_blank" rel="noopener noreferrer">Viewer oeffnen</a>
 <p id="status" role="status" aria-live="polite"></p>
+<h2>Overlay-Modus</h2>
+<label><input id="privateMode" type="radio" name="overlayMode" value="private"> Privatmodus (Windows-Capture-Ausschluss)</label>
+<label><input id="shareMode" type="radio" name="overlayMode" value="share"> HUD in Bildschirmübertragung anzeigen</label>
+<small>Die Einstellung wird mit dem Allie-Viewer und allen offenen Tabs synchronisiert. Privatmodus bleibt Standard und zeigt bei fehlendem Schutz keinen Browser-HUD.</small>
+<p id="overlayStatus" role="status" aria-live="polite"></p>
 </body>
 </html>

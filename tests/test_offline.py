@@ -158,6 +158,27 @@ class StandaloneTests(unittest.TestCase):
         with patch.dict(os.environ, {'ALLIE_PORT': '80'}), self.assertRaises(RuntimeError):
             allie_launcher.configured_port()
 
+    def test_launcher_reuses_healthy_allie_port_without_owning_process(self):
+        health = {'alive': True, 'api_version': 2, 'schema_version': 1,
+                  'instance_id': 'a' * 32, 'overlay': {}}
+        with patch.object(allie_launcher, 'port_available', return_value=False), \
+             patch.object(allie_launcher, 'health_snapshot', return_value=health):
+            app = allie_launcher.TrayApp(ROOT, process_factory=lambda *_a, **_k: self.fail('must reuse'))
+            self.assertIsNone(app.start())
+            self.assertTrue(app.reused_existing)
+            self.assertFalse(app.owns_process)
+            app.stop_server()
+
+    def test_launcher_refuses_foreign_listener_without_killing_it(self):
+        calls = []
+        with patch.object(allie_launcher, 'port_available', return_value=False), \
+             patch.object(allie_launcher, 'health_snapshot', return_value={'alive': True}):
+            app = allie_launcher.TrayApp(ROOT, command_runner=lambda *a, **k: calls.append(a))
+            with self.assertRaises(RuntimeError):
+                app.start()
+            app.stop_server()
+        self.assertEqual(calls, [])
+
     def test_tray_image_is_visible_and_square(self):
         image = allie_launcher.create_tray_image()
         self.assertEqual(image.size, (64, 64))
@@ -201,6 +222,14 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn("--onedir", script)
         self.assertNotIn("--onefile", script)
         self.assertIn("__pycache__", script)
+        self.assertIn("release-version.json", script)
+        self.assertIn("source_revision", script)
+        smoke = (ROOT / "tools/release_smoke.py").read_text(encoding="utf-8")
+        self.assertIn("model_loaded", smoke)
+        self.assertIn("stockfish_available", smoke)
+        self.assertIn("/readyz?source=both", smoke)
+        shortcut = (ROOT / "tools/desktop_shortcut.ps1").read_text(encoding="utf-8")
+        self.assertIn("release-version.json", shortcut)
 
     def test_quality_tooling_is_declared_on_demand(self):
         project = (ROOT / 'pyproject.toml').read_text(encoding='utf-8')
@@ -212,7 +241,7 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.2.17', overlay)
+        self.assertIn('@version      11.2.19', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
         self.assertEqual(manifest['version_name'], manifest['version'].rsplit('.', 1)[0])
         self.assertIn('@match        https://www.chess.com/play/*', overlay)

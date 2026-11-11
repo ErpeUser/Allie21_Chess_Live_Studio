@@ -10,6 +10,7 @@ import time
 import uuid
 import webbrowser
 from collections.abc import Mapping
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 from urllib.error import URLError
@@ -27,7 +28,7 @@ from contracts import VisualUpdateRequest
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, Response
-from http_boundary import EXTENSION_ORIGINS, LocalBoundaryMiddleware
+from http_boundary import EXTENSION_ORIGINS, WEB_ORIGINS, LocalBoundaryMiddleware
 from live_session import MAX_JPEG, LiveSession
 from native_overlay import PrivateOverlayController
 from overlay_lease import OverlayLeaseConflict, OverlayLeaseManager
@@ -60,8 +61,70 @@ MODEL_STATE_LOCK = threading.RLock()
 MODEL_STATE = 'not_started'
 _CHESSCOM_HISTORY_CACHE: dict[str, tuple[float, str]] = {}
 _CHESSCOM_HISTORY_LOCK = threading.RLock()
+_OVERLAY_SETTINGS_LOCK = threading.RLock()
+_OVERLAY_SETTINGS_PATH = Path(
+    os.environ.get('ALLIE_OVERLAY_SETTINGS_PATH', '')
+    or (Path(os.environ['LOCALAPPDATA']) / 'Allie21' / 'overlay-settings.json'
+        if os.environ.get('LOCALAPPDATA') else Path.home() / '.allie21' / 'overlay-settings.json')
+)
+
+
+def _load_overlay_settings() -> dict[str, object]:
+    """Load desired and last natively confirmed modes from local state."""
+    try:
+        value = json.loads(_OVERLAY_SETTINGS_PATH.read_text(encoding='utf-8'))
+        if (isinstance(value, dict) and value.get('mode') in {'private', 'share'}
+                and isinstance(value.get('version'), int) and value['version'] >= 1):
+            confirmed = value.get('confirmed_mode', value['mode'])
+            if confirmed not in {'private', 'share'}:
+                confirmed = 'private'
+            return {
+                'mode': value['mode'],
+                'confirmed_mode': confirmed,
+                'version': int(value['version']),
+                'updated_at': float(value.get('updated_at', time.time())),
+            }
+    except (OSError, ValueError, TypeError, OverflowError):
+        pass
+    return {'mode': 'private', 'confirmed_mode': 'private', 'version': 1, 'updated_at': time.time()}
+
+
+OVERLAY_SETTINGS = _load_overlay_settings()
 app = FastAPI(title="Allie21 Live Studio", docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(LocalBoundaryMiddleware, max_json=MAX_JSON, max_frame=MAX_JPEG)
+
+
+def _persist_overlay_settings(value: Mapping[str, object]) -> None:
+    try:
+        _OVERLAY_SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        temporary = _OVERLAY_SETTINGS_PATH.with_suffix('.tmp')
+        temporary.write_text(json.dumps(dict(value), ensure_ascii=False), encoding='utf-8')
+        temporary.replace(_OVERLAY_SETTINGS_PATH)
+    except OSError:
+        # Persistence is best-effort; the in-process version remains authoritative.
+        pass
+
+
+def restore_overlay_mode() -> dict[str, object]:
+    """Reapply the last natively confirmed mode after a process restart."""
+    mode = str(OVERLAY_SETTINGS.get('confirmed_mode', 'private'))
+    try:
+        return PRIVATE_OVERLAY.set_mode(mode)
+    except Exception as exc:  # noqa: BLE001 - caller exposes a safe diagnostic
+        return {
+            'mode': mode,
+            'state': 'error',
+            'reason': f'overlay_restore_failed: {type(exc).__name__}',
+            'available': False,
+            'visible': False,
+            'capture_excluded': False,
+            'status_text': 'Overlay nicht gekoppelt',
+        }
+
+
+@app.on_event('startup')
+async def _restore_overlay_on_startup() -> None:
+    restore_overlay_mode()
 
 
 def _preload_model() -> None:
@@ -158,7 +221,37 @@ class BrowserSessionRequest(InputModel):
 class OverlayModeRequest(InputModel):
     session_id: str = Field(min_length=1, max_length=180)
     owner_token: str = Field(min_length=20, max_length=200)
-    mode: Literal['private', 'normal']
+    mode: Literal['private', 'share', 'normal']
+
+
+class OverlaySettingsRequest(InputModel):
+    """Versioned shared overlay setting used by viewer and MV3 clients."""
+
+    mode: Literal['private', 'share']
+    version: int | None = Field(None, ge=0)
+    updated_at: float | str | None = None
+    source: str = Field('unknown', max_length=32)
+
+    @field_validator('updated_at', mode='before')
+    @classmethod
+    def normalize_timestamp(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            raise ValueError('updated_at muss ein Zeitstempel sein')
+        if isinstance(value, (int, float)):
+            if value < 0 or not float(value) == float(value):
+                raise ValueError('updated_at muss ein Zeitstempel sein')
+            return float(value)
+        if isinstance(value, str):
+            try:
+                parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+                return parsed.timestamp()
+            except ValueError as exc:
+                raise ValueError('updated_at muss ein ISO-Zeitstempel sein') from exc
+        raise ValueError('updated_at muss ein Zeitstempel sein')
 
 
 class OverlayClaimRequest(InputModel):
@@ -449,7 +542,87 @@ def reset_browser_position(request: BrowserSessionRequest):
 
 @app.get('/api/overlay/status')
 def overlay_status():
-    return PRIVATE_OVERLAY.status()
+    payload = PRIVATE_OVERLAY.status()
+    payload['lease'] = OVERLAY_LEASES.status()
+    return payload
+
+
+def _overlay_settings_payload(*, accepted: bool = True, conflict: bool = False) -> dict[str, object]:
+    with _OVERLAY_SETTINGS_LOCK:
+        value = dict(OVERLAY_SETTINGS)
+    value['status'] = PRIVATE_OVERLAY.status()
+    value['accepted'] = accepted
+    value['conflict'] = conflict
+    return value
+
+
+def _overlay_mode_confirmed(status: Mapping[str, object], mode: str) -> bool:
+    """Persist only a native mode whose capture policy was verified."""
+    if mode == 'private':
+        return status.get('private_verified') is True
+    if mode == 'share':
+        return status.get('share_visible') is True
+    return True
+
+
+def _require_overlay_settings_access(request: Request) -> None:
+    """Authorize the non-secret mode store for localhost and MV3 clients.
+
+    The extension worker intentionally reads this endpoint before it has a
+    capability token; its pairing header and explicit extension marker are the
+    bridge. Chess-site origins still need a valid pairing code.
+    """
+    origin = request.headers.get('origin', '')
+    extension_worker = not origin and request.headers.get('x-allie-extension') == '1'
+    local_origin = origin.startswith('http://127.0.0.1') or origin.startswith('http://localhost')
+    extension_origin = origin in EXTENSION_ORIGINS and request.headers.get('x-allie-overlay') == '1'
+    web_origin = origin in WEB_ORIGINS and request.headers.get('x-allie-overlay') == '1'
+    if local_origin or extension_worker:
+        return
+    if ((extension_origin or web_origin)
+            and verify_pairing_code(request.headers.get('x-allie-pairing', ''))):
+        return
+    raise HTTPException(403, 'Overlay-Einstellung benötigt eine erlaubte lokale Sitzung')
+
+
+@app.get('/api/overlay/settings')
+def overlay_settings(request: Request):
+    """Return the versioned mode shared by the local viewer and extension."""
+    _require_overlay_settings_access(request)
+    return _overlay_settings_payload()
+
+
+@app.api_route('/api/overlay/settings', methods=['POST', 'PUT'])
+def overlay_settings_update(payload: OverlaySettingsRequest, request: Request):
+    # Last-write-wins is unsafe when a sleeping MV3 worker wakes with stale
+    # state. A supplied version must be at least the current monotonic value;
+    # stale writes are reported without changing the mode.
+    with _OVERLAY_SETTINGS_LOCK:
+        current_version = int(OVERLAY_SETTINGS.get('version', 1))
+        current_mode = str(OVERLAY_SETTINGS.get('mode', 'private'))
+        requested_timestamp = float(payload.updated_at or 0)
+        current_timestamp = float(OVERLAY_SETTINGS.get('updated_at', 0))
+        if (payload.version is not None
+                and (payload.version < current_version
+                     or (payload.version == current_version and payload.mode != current_mode
+                         and requested_timestamp <= current_timestamp))):
+            return _overlay_settings_payload(accepted=False, conflict=True)
+        if payload.version == current_version and payload.mode == current_mode:
+            return _overlay_settings_payload()
+        next_version = max(current_version + 1, int(payload.version or 0))
+        next_updated = max(
+            time.time(), requested_timestamp,
+            float(OVERLAY_SETTINGS.get('updated_at', 0)) + 1e-6,
+        )
+        OVERLAY_SETTINGS.update({
+            'mode': payload.mode,
+            'version': next_version,
+            'updated_at': next_updated,
+        })
+        _persist_overlay_settings(OVERLAY_SETTINGS)
+    result = _overlay_settings_payload()
+    result['source'] = payload.source
+    return result
 
 
 @app.post('/api/overlay/mode')
@@ -458,7 +631,28 @@ def overlay_mode(request: OverlayModeRequest):
         OVERLAY_LEASES.touch(request.session_id, request.owner_token)
     except OverlayLeaseConflict as exc:
         raise HTTPException(409, 'Privates Overlay wird bereits von einer anderen Sitzung verwendet') from exc
-    return run(lambda: PRIVATE_OVERLAY.set_mode(request.mode))
+    result = run(lambda: PRIVATE_OVERLAY.set_mode(request.mode))
+    confirmed = request.mode not in {'private', 'share'} or _overlay_mode_confirmed(result, request.mode)
+    if request.mode in {'private', 'share'} and not confirmed:
+        # A failed native transition must not leave a lease that looks like a
+        # successful claim to every other client.
+        OVERLAY_LEASES.release(request.session_id, request.owner_token)
+        result = dict(result)
+        result['lease_active'] = False
+    if request.mode in {'private', 'share'} and confirmed:
+        with _OVERLAY_SETTINGS_LOCK:
+            current_version = int(OVERLAY_SETTINGS.get('version', 1))
+            current_mode = str(OVERLAY_SETTINGS.get('mode', 'private'))
+            current_confirmed = str(OVERLAY_SETTINGS.get('confirmed_mode', 'private'))
+            if current_mode != request.mode or current_confirmed != request.mode:
+                OVERLAY_SETTINGS.update({
+                    'mode': request.mode,
+                    'confirmed_mode': request.mode,
+                    'version': current_version + 1,
+                    'updated_at': max(time.time(), float(OVERLAY_SETTINGS.get('updated_at', 0)) + 1e-6),
+                })
+                _persist_overlay_settings(OVERLAY_SETTINGS)
+    return result
 
 
 @app.post('/api/overlay/claim')
@@ -476,6 +670,19 @@ def overlay_release(request: OverlayReleaseRequest):
     if not OVERLAY_LEASES.release(request.session_id, request.owner_token):
         raise HTTPException(409, 'Privates Overlay wird bereits von einer anderen Sitzung verwendet')
     return {'released': True}
+
+
+@app.post('/api/overlay/renew')
+def overlay_renew(request: OverlayReleaseRequest):
+    try:
+        lease = OVERLAY_LEASES.renew(request.session_id, request.owner_token)
+    except OverlayLeaseConflict as exc:
+        raise HTTPException(409, 'Privates Overlay ist nicht mehr gekoppelt') from exc
+    return {
+        'session_id': lease.session_id,
+        'owner_token': lease.owner_token,
+        'expires_at': lease.expires_at,
+    }
 
 
 @app.post('/api/overlay/update')
@@ -521,6 +728,12 @@ def main():
     print('Allie 2.1 Live Studio v11 (nur lokal)')
     print('Viewer:', f'http://{HOST}:{PORT}/viewer')
     print('Modellrevision:', MODEL_REVISION)
+    # Restore only the last confirmed explicit mode. A failed native start is
+    # reported through status and never falls back to a browser HUD in private
+    # mode.
+    restored = restore_overlay_mode()
+    if restored.get('state') == 'error':
+        print('Overlay-Modus konnte nicht wiederhergestellt werden:', restored.get('reason'), flush=True)
     if os.environ.get('ALLIE_NO_PRELOAD') != '1':
         start_model_preload()
     if os.environ.get('ALLIE_NO_BROWSER') != '1':

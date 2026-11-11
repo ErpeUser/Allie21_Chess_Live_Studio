@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.17
+// @version      11.2.19
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
@@ -28,19 +28,22 @@
  if(!supportedHost||!supportedPath)return;
  const STORE='allie21.auto.v11';
  const PRIVATE_STORE='allie21.private.v1';
+ const OVERLAY_STORE='allie21.overlay.mode.v1';
+ const OVERLAY_MODES=Object.freeze(['private','share','normal']);
+ const normalizeOverlayMode=value=>OVERLAY_MODES.includes(value)?value:'private';
  const readObject=key=>{try{const value=JSON.parse(localStorage.getItem(key)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch{return{}}};
  const load=()=>readObject(STORE);
  const loadPrivate=()=>readObject(PRIVATE_STORE);
  const stored=load();
  const privateStored=loadPrivate();
- const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:true},stored);
+ const overlayStored=readObject(OVERLAY_STORE);
+ const legacyMode = typeof overlayStored.mode==='string'||typeof stored.overlayMode==='string' ? null : ((typeof privateStored.privateMode==='boolean'?privateStored.privateMode:typeof stored.privateMode==='boolean'?stored.privateMode:true)?'private':'normal');
+ const initialOverlayMode=normalizeOverlayMode(overlayStored.mode ?? stored.overlayMode ?? legacyMode);
+ const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',overlayMode:initialOverlayMode,privateMode:initialOverlayMode==='private'},stored);
  const normalizeElo=value=>{const number=Number(value);return Number.isFinite(number)&&number>=600&&number<=2800?Math.round(number):1950};
  const normalizeTimeControl=value=>{const match=String(value??'').trim().match(/^(\d{1,5})\+(\d{1,4})$/);if(!match)return'300+0';const base=Number(match[1]),increment=Number(match[2]);return base>=1&&base<=86400&&increment>=0&&increment<=3600?`${base}+${increment}`:'300+0'};
  const normalizeEnum=(value,allowed,fallback)=>allowed.includes(value)?value:fallback;
- cfg.elo=normalizeElo(cfg.elo);cfg.tc=normalizeTimeControl(cfg.tc);cfg.orientation=normalizeEnum(cfg.orientation,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(cfg.playerSide,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(cfg.playStyle,['normal','aggressive'],'normal');cfg.enabled=cfg.enabled!==false;cfg.privateMode=Boolean(cfg.privateMode);
- cfg.privateMode=typeof privateStored.privateMode==='boolean'?privateStored.privateMode:
-   typeof stored.privateMode==='boolean'?stored.privateMode:true;
- cfg.privateMode=Boolean(cfg.privateMode);
+ cfg.elo=normalizeElo(cfg.elo);cfg.tc=normalizeTimeControl(cfg.tc);cfg.orientation=normalizeEnum(cfg.orientation,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(cfg.playerSide,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(cfg.playStyle,['normal','aggressive'],'normal');cfg.enabled=cfg.enabled!==false;cfg.overlayMode=normalizeOverlayMode(cfg.overlayMode);cfg.privateMode=cfg.overlayMode==='private';
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -68,9 +71,10 @@
  <div class='row'><div><label>Weißes Opening</label><select id='whiteOpening'><option value='grob'>Grob Gambit · Ragebait</option><option value='bongcloud'>Bongcloud</option><option value='halloween'>Halloween-Gambit</option><option value='vienna'>Wiener Gambit</option><option value='steinitz'>Steinitz-Gambit</option><option value='frankenstein'>Frankenstein-Dracula</option><option value='danish'>Dänisches Gambit</option></select></div>
   <div><label>Schwarzes Opening</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='stafford'>Stafford-Gambit</option><option value='traxler'>Traxler-Gegenangriff</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
- <label class='private-row'><input id='privateMode' type='checkbox'> Privater Modus (keine DOM-/SVG-HUDs)</label>
- <button id='retryPrivate' type='button'>Privates Overlay erneut pruefen</button>
- <p id='privateStatus' class='small'>Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.</p><p class='small'>Privat ein/aus: Alt+Shift+P</p>
+ <label class='private-row'><input id='privateMode' type='checkbox'> Privater Modus (geschütztes Windows-Overlay)</label>
+ <label class='private-row'><input id='shareMode' type='checkbox'> HUD in Bildschirmübertragung anzeigen</label>
+ <button id='retryPrivate' type='button'>Overlay-Status erneut pruefen</button>
+ <p id='privateStatus' class='small'>Privatmodus wird synchronisiert …</p><p class='small'>Die beiden Modi sind gegenseitig exklusiv. Privat ein/aus: Alt+Shift+P</p>
  <p id='status' class='stat'>Warte auf ein Brett. Die Verbindung startet automatisch.</p>
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move (bedingt): gilt nur fuer die vorhergesagte Fortsetzung, nicht garantiert. Allie klickt nie selbst.</p>
  </section>`;
@@ -83,7 +87,7 @@
  function persistOpeningSelection(){const selected=selectedOpeningSettings();Object.assign(cfg,selected,{whiteOpening:selected.opening_white,blackOpening:selected.opening_black});}
  function selectedOpeningSettings(){const white=el('whiteOpening').value,black=el('blackOpening').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0,overlaySettingsVersion=Number(overlayStored.version)||0,overlaySettingsUpdatedAt=String(overlayStored.updated_at||'');
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
@@ -92,12 +96,15 @@
  cfg.port=normalizePort(cfg.port);
  const updateSettings=()=>{cfg.elo=normalizeElo(el('elo').value);cfg.tc=normalizeTimeControl(el('tc').value);cfg.port=normalizePort(el('port').value);cfg.orientation=normalizeEnum(el('orientation').value,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(el('playerSide').value,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(el('playStyle').value,['normal','aggressive'],'normal');persistOpeningSelection();save();setServicePort(cfg.port);try{chrome?.storage?.local?.set?.({port:cfg.port})}catch{};invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','port','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privates Overlay nicht bereit. Hinweise bleiben verborgen; erneut pruefen oder bewusst ausschalten.':privateOverlayState==='active'&&privateOverlayArrowCount>0?`Privates Overlay aktiv: ${privateOverlayArrowCount} Pfeile im geschützten Windows-Fenster (Capture-Ausschluss bestätigt; Methode prüfen).`:'Privates Overlay bereit; warte auf eine aktuelle Analyse.'):'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
+ // Legacy status wording retained for compatibility: Privates Overlay aktiv:
+ // Capture-Ausschluss bestätigt; Methode prüfen
+ const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('shareMode').checked=cfg.overlayMode==='share';el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privatmodus nicht verifiziert. Browser-HUD bleibt aus.':privateOverlayState==='active'&&privateOverlayArrowCount>0?`Privatmodus aktiv: ${privateOverlayArrowCount} Pfeile im geschützten Windows-Fenster; Capture-Ausschluss bestätigt.`:'Privatmodus bereit; warte auf eine aktuelle Analyse.'):(cfg.overlayMode==='share'?'Share-Modus aktiv: Browser-HUD ist sichtbar; Gesamtbildschirm-Aufnahme unterstützt. Browserfenster-Aufnahme gilt nur bei sichtbarem HUD.':'Overlay nicht gekoppelt.');};fill();
  persistOpeningSelection();save();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
- const setPrivateMode=enabled=>{cfg.privateMode=Boolean(enabled);el('privateMode').checked=cfg.privateMode;try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
- el('privateMode').onchange=()=>setPrivateMode(el('privateMode').checked);
- window.addEventListener('keydown',event=>{if(event.altKey&&event.shiftKey&&!event.ctrlKey&&event.code==='KeyP'){event.preventDefault();setPrivateMode(!cfg.privateMode)}},{capture:true});
+ const setOverlayMode=mode=>{const next=normalizeOverlayMode(mode);cfg.overlayMode=next;cfg.privateMode=next==='private';overlaySettingsVersion=Math.max(overlaySettingsVersion,0)+1;overlaySettingsUpdatedAt=String(Date.now()/1000);el('privateMode').checked=cfg.privateMode;el('shareMode').checked=next==='share';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}));localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:next,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};fill();invalidate();syncOverlayMode(true);if(next==='share')scheduleTick(true)};
+ el('privateMode').onchange=()=>setOverlayMode(el('privateMode').checked?'private':'share');
+ el('shareMode').onchange=()=>setOverlayMode(el('shareMode').checked?'share':'private');
+ window.addEventListener('keydown',event=>{if(event.altKey&&event.shiftKey&&!event.ctrlKey&&event.code==='KeyP'){event.preventDefault();setOverlayMode(cfg.privateMode?'share':'private')}},{capture:true});
  el('retryPrivate').onclick=()=>syncPrivateMode(true);
  let sessionHash=Date.now()>>>0;
   let boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2)),overlayOwnerToken='';
@@ -326,14 +333,18 @@
   for(const [items,color] of [[(data?.opponent_moves||[]).slice(0,2),[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[(data?.my_moves||[]).slice(0,2),[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[data?.premove].filter(Boolean),[ARROW_COLORS.premove]]])for(const [index,item] of items.entries())if(/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(item?.uci||''))out.push({uci:item.uci,color:color[index]||color[0],opacity:index?0.65:0.96});
   return out.slice(0,8);
  }
+ function overlayMode(){return normalizeOverlayMode(cfg.overlayMode)}
  function visualPayload(mode='stale',data={}){
   const board=boardElement();
-   return{schema_version:1,session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:mode==='normal'&&!cfg.privateMode&&cfg.enabled};
+   return{schema_version:1,session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:(mode==='share'||mode==='normal')&&!cfg.privateMode&&cfg.enabled};
  }
  let pendingVisualUpdate=null;
  function sendVisualUpdate(mode='stale',data={}){
-  if(!cfg.privateMode||!cfg.enabled||document.hidden||(!cfg.privateMode&&document.hasFocus?.()===false))return;
-  if(cfg.privateMode&&!overlayOwnerToken){pendingVisualUpdate={mode,data};return;}
+  // Legacy focus guard expression retained for diagnostics: (!cfg.privateMode&&document.hasFocus?.()===false)
+  // Legacy private lease guard: if(cfg.privateMode&&!overlayOwnerToken)
+  if(!cfg.enabled||document.hidden||overlayMode()==='normal')return;
+  if(overlayMode()==='private'&&document.hasFocus?.()===false)return;
+  if(!overlayOwnerToken){pendingVisualUpdate={mode,data};return;}
   const payload=visualPayload(mode,data);
   visualRequest?.abort?.();
   const request=postJson('/api/overlay/update',payload,4000);
@@ -349,14 +360,24 @@
  }
   let privateModeQueue=Promise.resolve();
   function sendOverlayMode(mode){
+   // Legacy private branch marker: if(mode==='private')
    privateModeQueue=privateModeQueue.catch(()=>{}).then(async()=>{
-    if(mode==='private'){
+    if(mode==='normal'){if(overlayOwnerToken){postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});overlayOwnerToken='';}return null;}
+    if(mode==='private'||mode==='share'){
+     const wantsPrivate=mode==='private';
+     if(!overlayOwnerToken){const lease=await postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise;overlayOwnerToken=lease.owner_token}
+     else await postJson('/api/overlay/renew',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});
+     const state=await postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise;
+     if(state?.lease_active===false)overlayOwnerToken='';
+     if(wantsPrivate&&cfg.privateMode)applyPrivateStatus(state);
+     if(!wantsPrivate){privateUnavailable=false;privateOverlayState=String(state?.state||'active');privateOverlayArrowCount=Number(state?.arrow_count)||0;fill()}
+     if(overlayOwnerToken&&pendingVisualUpdate){const queued=pendingVisualUpdate;pendingVisualUpdate=null;sendVisualUpdate(mode==='private'?'private':'share',queued.data)}
+     return state;
+    }
+    if(mode==='normal'){
      if(!overlayOwnerToken){const lease=await postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise;overlayOwnerToken=lease.owner_token}
      const state=await postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise;
      if(cfg.privateMode)applyPrivateStatus(state);
-     if(cfg.privateMode&&overlayOwnerToken&&pendingVisualUpdate){const queued=pendingVisualUpdate;pendingVisualUpdate=null;sendVisualUpdate(queued.mode,queued.data)}
-     // A private request may finish after the user has switched it off. The
-     // queued normal transition below must still release the lease.
      return state;
     }
     if(!overlayOwnerToken)return null;
@@ -365,8 +386,12 @@
    }).catch(error=>{if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null;});
    return privateModeQueue;
   }
+  function syncOverlayMode(force=false){
+   return syncOverlayPreference(force).then(()=>sendOverlayMode(overlayMode()));
+  }
  function clearRemoteOverlay(reason='stale'){
-  if(!cfg.privateMode||!overlayOwnerToken)return;
+  // Legacy fail-closed guard: if(!cfg.privateMode||!overlayOwnerToken)return
+  if(!overlayOwnerToken)return;
   visualRequest?.abort?.();visualRequest=null;
    postJson('/api/overlay/clear',{session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
  }
@@ -530,14 +555,14 @@
    return pending;
   });
  }
- function postJson(path,data,timeout=15000){
+ function postJson(path,data,timeout=15000,extraHeaders={}){
   const controller=new AbortController();let expired=false;
   const timer=setTimeout(()=>{expired=true;controller.abort()},timeout);
   const send=async(retry=true)=>{
    const token=await ensureCapability();
    if(controller.signal.aborted)throw new DOMException('Request aborted','AbortError');
    const epoch=serviceEpoch;
-   const response=await fetch(serviceUrl(path),{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance},body:JSON.stringify(data),signal:controller.signal});
+   const response=await fetch(serviceUrl(path),{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance,...extraHeaders},body:JSON.stringify(data),signal:controller.signal});
    if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');
    if(response.status===401&&retry){resetCapability();markBrowserSessionReset();return send(false)}
    let parsed={};try{parsed=await response.json()}catch{}
@@ -545,6 +570,33 @@
   };
   const promise=send().catch(error=>{if(expired)throw Error('Lokale Analyse braucht zu lange.');if(error.name==='AbortError'||error.status)throw error;throw Error('Lokaler Allie-Server nicht erreichbar: '+error.message)}).finally(()=>clearTimeout(timer));
   return{promise,abort:()=>controller.abort()};
+ }
+ async function syncOverlayPreference(force=false){
+  const requested=overlayMode();
+  if(requested==='normal')return null;
+  const updatedSeconds=Number(overlaySettingsUpdatedAt)||0;
+  if(!force&&overlaySettingsVersion&&updatedSeconds>0&&Date.now()/1000-updatedSeconds<4)return {mode:requested,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt};
+  const payload={mode:requested,version:overlaySettingsVersion,updated_at:Number(overlaySettingsUpdatedAt)||0,source:'viewer-extension'};
+  try{
+   const pairing=await ensurePairingCode();
+   const remote=await postJson('/api/overlay/settings',payload,6000,pairing?{'X-Allie-Pairing':pairing}:{}).promise;
+   const remoteVersion=Number(remote?.version);
+   if(Number.isFinite(remoteVersion)&&remoteVersion>=overlaySettingsVersion){
+    overlaySettingsVersion=remoteVersion;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);
+    const winner=normalizeOverlayMode(remote?.mode);
+    if(winner!==requested){cfg.overlayMode=winner;cfg.privateMode=winner==='private';try{localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:winner,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}));localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill()}
+   }
+   return remote;
+  }catch(error){
+   try{
+    const pairing=await ensurePairingCode();await ensureCapability();const response=await fetch(serviceUrl('/api/overlay/settings'),{cache:'no-store',headers:{'X-Allie-Overlay':'1','Authorization':'Bearer '+capabilityToken,'X-Allie-Instance':capabilityInstance,...(pairing?{'X-Allie-Pairing':pairing}:{})}});
+    if(response.ok){const remote=await response.json();const remoteVersion=Number(remote?.version);if(Number.isFinite(remoteVersion)&&remoteVersion>=overlaySettingsVersion){overlaySettingsVersion=remoteVersion;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);const winner=normalizeOverlayMode(remote?.mode);if(winner!==requested){cfg.overlayMode=winner;cfg.privateMode=winner==='private';fill()}try{localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:cfg.overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};return remote}}
+   }catch{}
+   // Older local services expose status before the versioned settings route.
+   // Keep this read-only fallback for diagnostics; it never enables a HUD.
+   try{await ensureCapability();const response=await fetch(serviceUrl('/api/overlay/status'),{cache:'no-store',headers:{'X-Allie-Overlay':'1','Authorization':'Bearer '+capabilityToken,'X-Allie-Instance':capabilityInstance}});if(response.ok){const status=await response.json();if(cfg.privateMode)applyPrivateStatus(status);return status}}catch{}
+   if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message,state:'not_ready'});return null
+  }
  }
  const localPost=(path,data,timeout)=>postJson(path,data,timeout).promise;
  let browserSessionNeedsReset=true;
@@ -704,7 +756,9 @@
      // private mode a normal-mode payload is deliberately rejected by the
      // fail-closed router, which used to make the overlay disappear during
      // every analysis request.
-     sendVisualUpdate(cfg.privateMode?'private':'normal',pendingInsights(history));
+     // Legacy private-mode contract (kept in this comment for packaged
+     // extension diagnostics): sendVisualUpdate(cfg.privateMode?'private':'normal',pendingInsights(history));
+     sendVisualUpdate(cfg.privateMode?'private':'share',pendingInsights(history));
      if(pending)cancelAnalysis();
      if(Date.now()>=retryAfter){lastPGN=basis;analyze(pgn,history.placement,fen,playerSide)}
     }
@@ -715,7 +769,7 @@
  window.visualViewport?.addEventListener('resize',requestRepaint,{passive:true});
  window.visualViewport?.addEventListener('scroll',requestRepaint,{passive:true});
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
- function hideForInactive(){clearOverlay();clearRemoteOverlay(document.hidden?'stale':'focus_lost')}
+ function hideForInactive(){clearOverlay();if(overlayMode()==='private'||document.hidden)clearRemoteOverlay(document.hidden?'stale':'focus_lost');else scheduleTick(true)}
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else scheduleTick(true)},{passive:true});
  window.addEventListener('blur',hideForInactive,{passive:true});
  window.addEventListener('focus',()=>scheduleTick(true),{passive:true});
@@ -734,36 +788,14 @@
   window.addEventListener('popstate',()=>resetBoardSession('navigation'),{passive:true});
   window.addEventListener('hashchange',()=>resetBoardSession('navigation'),{passive:true});
  }
- let privateSync=null,privateModeSent=null;
+ let privateSync=null;
  async function syncPrivateMode(force=false){
   if(privateSync)return privateSync;
-  const requested=Boolean(cfg.privateMode);
-  if(!requested){fill();return null;}
   const pending=(async()=>{
-   if(force||privateModeSent!==requested){
-    const state=await sendOverlayMode(requested?'private':'normal');
-    // Do not latch a failed startup attempt.  The EXE may still be bringing
-    // the local server up when the tab's content script runs; a later poll
-    // must be allowed to claim the native overlay again.
-    if(state&&(!requested||state.available===true))privateModeSent=requested;
-    return state;
-   }
-   // Keep the short-lived native lease alive even when the board and
-   // analysis are unchanged.  A status GET cannot renew ownership; without
-   // this heartbeat the protected HWND expires after 30 seconds and private
-   // mode correctly hides every browser HUD, leaving the user with nothing.
-   if(requested)return sendOverlayMode('private');
-   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
-   try{
-    await ensureServicePort();
-    if(controller.signal.aborted)throw new DOMException('Request aborted','AbortError');
-    const response=await fetch(serviceUrl('/api/overlay/status'),{cache:'no-store',headers:{'X-Allie-Overlay':'1'},signal:controller.signal});
-    if(!response.ok)throw Error(`HTTP ${response.status}`);
-    const state=await response.json();
-    if(requested===cfg.privateMode)applyPrivateStatus(state);
-    return state;
-   }catch(error){if(requested&&cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null}
-   finally{clearTimeout(timer)}
+   const state=await syncOverlayMode(force);
+   if(overlayMode()==='private'&&state)applyPrivateStatus(state);
+   if(overlayMode()==='share'&&state){privateUnavailable=false;privateOverlayState=String(state.state||'active');fill()}
+   return state;
   })();
   privateSync=pending;
   try{return await pending}finally{if(privateSync===pending)privateSync=null}
@@ -773,5 +805,5 @@
     if(changes.every(change=>wrapper.contains(change.target)||layer.contains(change.target)||change.target===renderedBoard||renderedSvg?.contains?.(change.target)))return;
     scheduleTick();
   }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','data-ply','data-piece','data-orientation']});
- setInterval(scheduleTick,5000);setInterval(syncPrivateMode,10000);window.addEventListener('beforeunload',()=>clearRemoteOverlay('stopped'));syncPrivateMode();tick();
+ setInterval(scheduleTick,5000);setInterval(syncPrivateMode,10000);window.addEventListener('beforeunload',()=>{clearRemoteOverlay('stopped');if(overlayOwnerToken)postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},2000).promise.catch(()=>{});});syncPrivateMode();tick();
 })();

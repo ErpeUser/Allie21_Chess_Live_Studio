@@ -41,6 +41,21 @@ try {
     foreach ($file in @('config.json', 'pyproject.toml', 'uv.lock', 'README_DE.md', 'VERSIONEN.md', 'CHANGELOG.md', 'LICENSE.txt', 'QUELLEN_LIZENZEN.md')) {
         Copy-Item -LiteralPath (Join-Path $root $file) -Destination $app -Force
     }
+    # Keep a machine-readable release proof beside the bundled source.  The
+    # app and extension intentionally have independent version streams.
+    $appVersion = ((Get-Content -LiteralPath (Join-Path $root 'backend\config.py') -Raw) |
+        Select-String -Pattern 'APP_VERSION\s*=\s*"([^"]+)"' -AllMatches).Matches[0].Groups[1].Value
+    $extensionManifest = Get-Content -LiteralPath (Join-Path $root 'browser\manifest.json') -Raw | ConvertFrom-Json
+    $sourceRevision = ''
+    try { $sourceRevision = (& git -C $root rev-parse HEAD).Trim() } catch { $sourceRevision = 'unknown' }
+    [ordered]@{
+        app_version = $appVersion
+        userscript_version = $appVersion
+        extension_version = [string]$extensionManifest.version
+        extension_version_name = [string]$extensionManifest.version_name
+        source_revision = $sourceRevision
+        built_at_utc = (Get-Date).ToUniversalTime().ToString('o')
+    } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $app 'release-version.json') -Encoding utf8
     $homeLine = Get-Content -LiteralPath (Join-Path $releaseVenv 'pyvenv.cfg') |
         Where-Object { $_ -match '^home\s*=\s*(.+)$' } | Select-Object -First 1
     if (-not $homeLine -or $homeLine -notmatch '^home\s*=\s*(.+)$') { throw 'Python base directory is missing.' }
