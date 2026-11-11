@@ -18,6 +18,8 @@ assert.match(viewer, /overlayMode='private'/);
 assert.match(viewer, /mode:overlayMode/);
 assert.match(viewer, /\/api\/overlay\/settings/);
 assert.match(viewer, /\/api\/overlay\/renew/);
+assert.match(viewer, /if\(!stream\)\{/);
+assert.match(viewer, /Warte auf eine aktive Bildschirmquelle/);
 assert.match(bg, /allie21:get-overlay-settings/);
 assert.match(bg, /allie21:set-overlay-settings/);
 assert.match(bg, /\/api\/overlay\/settings/);

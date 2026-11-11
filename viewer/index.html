@@ -225,6 +225,17 @@ async function syncOverlaySettings(force=false){
   }
 }
  function syncPrivateOverlay(explicit=false){
+  // An idle viewer must not reserve the single native overlay lease.  The
+  // browser extension needs that lease for live Lichess/Chess.com analysis;
+  // claim it only after a capture stream is actually running.
+  if(!stream){
+   if(overlayOwnerToken){post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});overlayOwnerToken='';}
+   privateOverlayPending=false;
+   privateOverlayAvailable=false;
+   privateOverlayStatus={mode:overlayMode,state:'waiting_for_capture',reason:'Warte auf eine aktive Bildschirmquelle',available:true,capture_excluded:overlayMode==='private'};
+   updatePrivateOverlayLabel();
+   return Promise.resolve(null);
+  }
   if(!overlayRequested()&&!explicit&&!overlayOwnerToken){updatePrivateOverlayLabel();return Promise.resolve(null);}
   if(overlaySyncPromise)return overlaySyncPromise;
   let requested=overlayMode;
@@ -478,6 +489,7 @@ async function startCapture(){
     captureStartRequest=post('/api/start',settings());
     const state=await captureStartRequest;captureStartRequest=null;
     if(id!==tickId||track.readyState==='ended')return;
+    await syncPrivateOverlay(true);
     const surface=track.getSettings?.().displaySurface||$('captureSource').value;
     $('sourceName').textContent=`${track.label||'Quelle'} - ${surface}`;
     $('placeholder').hidden=true;$('screen').style.display='block';fitStage();setRunning(true);
@@ -519,4 +531,3 @@ window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.sto
 </script>
 </body>
 </html>
-
