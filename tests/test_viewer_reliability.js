@@ -7,6 +7,7 @@ const {test} = require('node:test');
 const html = fs.readFileSync(path.join(__dirname, '..', 'viewer', 'index.html'), 'utf8');
 assert.match(html, /if\(!stream\|\|document\.hidden\|\|!recommendationsEnabled\(state\)\)/);
 assert.match(html, /viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay\(document.hidden\?'hidden':'focus_lost'\)/);
+assert.match(html, /if\(privateOverlayRequested\(\)!==requested\)syncPrivateOverlay\(true\)/);
 
 function loadViewer({privateRequested = false, response} = {}) {
   const elements = new Map();
