@@ -66,7 +66,7 @@ class NativeReliabilityTests(unittest.TestCase):
                 self.calls = []
             def __call__(self, hwnd):
                 self.calls.append(hwnd)
-                return int(len(self.calls) > 1)
+                return 1
         api.user32.IsWindowVisible = Visibility()
         api.user32.ShowWindow.result = 1
         api.user32.SetWindowPos.result = 1
@@ -74,6 +74,14 @@ class NativeReliabilityTests(unittest.TestCase):
         self.assertEqual(len(api.user32.SetWindowPos.calls), 1)
         self.assertEqual(api.user32.SetWindowPos.calls[0][0], 42)
         self.assertEqual(api.user32.SetWindowPos.calls[0][-1], overlay.SWP_NOSIZE | overlay.SWP_NOMOVE | overlay.SWP_NOACTIVATE | overlay.SWP_SHOWWINDOW)
+
+    def test_show_window_reasserts_topmost_when_popup_is_already_visible(self):
+        api = overlay._Win32.__new__(overlay._Win32)
+        api.user32 = Library()
+        api.user32.IsWindowVisible.result = 1
+        api.show_window(42, overlay.SW_SHOWNOACTIVATE)
+        self.assertEqual(len(api.user32.SetWindowPos.calls), 1)
+        self.assertEqual(api.user32.SetWindowPos.calls[0][1], overlay.HWND_TOPMOST)
 
     def test_message_structure_contains_reserved_private_field(self):
         self.assertEqual(overlay._MSG._fields_[-1], ("lPrivate", wintypes.DWORD))
