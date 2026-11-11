@@ -899,8 +899,10 @@ class PrivateOverlayController:
             pass
         max_retired = self._retired_order.maxlen or 64
         if len(self._retired_order) >= max_retired:
-            oldest = self._retired_order.popleft()
-            self._retired_sessions.discard(oldest)
+            # The deque is only a diagnostic bound. Keep the set as a durable
+            # tombstone so a delayed session can never reactivate after many
+            # navigation cycles.
+            self._retired_order.popleft()
         self._retired_order.append(session_id)
 
     def set_mode(self, mode: str) -> dict[str, object]:
@@ -909,11 +911,6 @@ class PrivateOverlayController:
         with self._render_lock:
             with self._lock:
                 self._mode = mode
-                if mode == "normal":
-                    self._active_session_id = None
-                    self._last_update_by_session.clear()
-                    self._retired_sessions.clear()
-                    self._retired_order.clear()
             if mode == "normal":
                 self._native.hide()
                 with self._lock:
