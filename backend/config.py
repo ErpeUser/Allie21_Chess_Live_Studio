@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ROOT = Path(__file__).resolve().parents[1]
 PATH = ROOT / "config.json"
-APP_VERSION = "11.2.19"
+APP_VERSION = "11.2.20"
 MODEL_ID = "yimingzhang/allie-2.1"
 MODEL_REVISION = "d2545701ff5af46a51ac947911844f779b355a08"
 TIME_CONTROL_RE = re.compile(r"\d{1,5}\+\d{1,4}")
