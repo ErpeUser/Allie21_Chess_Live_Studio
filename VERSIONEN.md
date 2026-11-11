@@ -1,10 +1,10 @@
 # Reproduzierbare Versionen und Prüfstand
 
-## Update 11.2.19 / Edge-Erweiterung 11.2.19
+## Update 11.2.20 / Edge-Erweiterung 11.2.20
 
 Der aktuelle `main`-Stand verwendet für Anwendung, Userscript und WebExtension
-den geprüften Stand 11.2.19; `browser/manifest.json` ist 11.2.19.0 mit
-`version_name` 11.2.19.
+den geprüften Stand 11.2.20; `browser/manifest.json` ist 11.2.20.0 mit
+`version_name` 11.2.20.
 Die feste Erweiterungs-ID bleibt unverändert.
 
 Der nachfolgende Wartungsstand basiert auf Commit `13131c8` vom 10. November
