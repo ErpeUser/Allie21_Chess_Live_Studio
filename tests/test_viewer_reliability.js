@@ -5,8 +5,9 @@ const path = require('node:path');
 const vm = require('node:vm');
 const {test} = require('node:test');
 const html = fs.readFileSync(path.join(__dirname, '..', 'viewer', 'index.html'), 'utf8');
-assert.match(html, /if\(!stream\|\|document\.hidden\|\|!recommendationsEnabled\(state\)\)/);
-assert.match(html, /viewerFocused=false;overlayPublishQueued=null;if\(document.hidden\)clearPrivateOverlay\('hidden'\)/);
+assert.match(html, /if\(!stream\|\|!recommendationsEnabled\(state\)\)/);
+assert.match(html, /async function restoreOverlayAfterVisibility\(\)/);
+assert.doesNotMatch(html, /if\(document\.hidden\)clearPrivateOverlay\('hidden'\)/);
 assert.match(html, /Capture-Ausschluss bestätigt; Overlay wartet auf aktive Analyse/);
 assert.match(html, /if\(privateOverlayRequested\(\)!==requested\)syncPrivateOverlay\(true\)/);
 
@@ -80,6 +81,7 @@ test('viewer initialises using real HTML IDs and wires capture and overlay contr
   const viewer = loadViewer();
   assert.equal(typeof viewer.elements.get('start').onclick, 'function');
   assert.equal(typeof viewer.elements.get('privateOverlayToggle').onchange, 'function');
+  assert.equal(typeof viewer.elements.get('normalOverlayToggle').onchange, 'function');
   await settle();
 });
 
