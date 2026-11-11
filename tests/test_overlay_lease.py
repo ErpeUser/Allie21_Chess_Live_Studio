@@ -40,6 +40,15 @@ class OverlayLeaseTests(unittest.TestCase):
         manager.force_release()
         self.assertFalse(manager.authorize('session-a', lease.owner_token))
 
+    def test_expiry_notifies_overlay_cleanup(self):
+        now = [0.0]
+        expired = []
+        manager = OverlayLeaseManager(lambda: now[0], lease_seconds=5, on_expire=expired.append)
+        lease = manager.claim('session-a')
+        now[0] = 5.1
+        self.assertFalse(manager.authorize('session-a', lease.owner_token))
+        self.assertEqual(expired, [lease])
+
 
 if __name__ == '__main__':
     unittest.main()
