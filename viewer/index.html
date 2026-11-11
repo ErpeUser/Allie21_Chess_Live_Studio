@@ -201,7 +201,7 @@ function updatePrivateOverlayLabel(status){
   if(requested)hideBrowserHints();
 }
  function syncPrivateOverlay(explicit=false){
-  if(!privateOverlayRequested()&&!explicit){updatePrivateOverlayLabel();return Promise.resolve(null);}
+  if(!privateOverlayRequested()&&!explicit&&!overlayOwnerToken){updatePrivateOverlayLabel();return Promise.resolve(null);}
   if(overlaySyncPromise)return overlaySyncPromise;
   const requested=privateOverlayRequested();
   privateOverlayPending=true;updatePrivateOverlayLabel();
@@ -222,7 +222,7 @@ function updatePrivateOverlayLabel(status){
      }finally{
        if(!requested && overlayOwnerToken){await post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});overlayOwnerToken='';}
        privateOverlayPending=false;overlaySyncPromise=null;updatePrivateOverlayLabel();
-      if(privateOverlayRequested()!==requested)syncPrivateOverlay();
+      if(privateOverlayRequested()!==requested)syncPrivateOverlay(true);
     }
   })();
   return overlaySyncPromise;
