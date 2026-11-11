@@ -100,7 +100,7 @@ class HTTPBoundaryTests(unittest.TestCase):
             headers['X-Allie-Extension'] = '1'
         if pairing:
             headers['X-Allie-Pairing'] = app.get_pairing_code()
-        if auth and method.upper() == 'POST':
+        if auth and (method.upper() == 'POST' or path == '/api/state'):
             headers['Authorization'] = f'Bearer {app.CAPABILITY_TOKEN}'
             headers['X-Allie-Instance'] = app.INSTANCE_ID
         if preflight:
