@@ -6,7 +6,8 @@ const vm = require('node:vm');
 const {test} = require('node:test');
 const html = fs.readFileSync(path.join(__dirname, '..', 'viewer', 'index.html'), 'utf8');
 assert.match(html, /if\(!stream\|\|document\.hidden\|\|!recommendationsEnabled\(state\)\)/);
-assert.match(html, /viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay\(document.hidden\?'hidden':'focus_lost'\)/);
+assert.match(html, /viewerFocused=false;overlayPublishQueued=null;if\(document.hidden\)clearPrivateOverlay\('hidden'\)/);
+assert.match(html, /Capture-Ausschluss bestätigt; Overlay wartet auf aktive Analyse/);
 assert.match(html, /if\(privateOverlayRequested\(\)!==requested\)syncPrivateOverlay\(true\)/);
 
 function loadViewer({privateRequested = false, response} = {}) {
@@ -176,4 +177,3 @@ test('viewer refreshes capability after a server restart without a manual reload
   assert.equal(attempts.length, 2);
   assert.equal(attempts[1].options.headers.Authorization, 'Bearer fresh-token');
 });
-

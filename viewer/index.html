@@ -190,6 +190,7 @@ function updatePrivateOverlayLabel(status){
     privateOverlayAvailable=status.available===true && status.capture_excluded===true;
   }
   const requested=privateOverlayRequested(),share=shareOverlayRequested(),enabled=overlayEnabled();
+  const nativePrivateVerified=privateOverlayStatus?.available===true&&privateOverlayStatus?.capture_excluded===true&&privateOverlayStatus?.mode==='private';
   $('privateOverlayState').textContent=privateOverlayPending?(requested?'Startet ...':'Stoppt ...'):!requested?'Aus':enabled?(privateOverlayStatus?.visible?'Ein':'Bereit'):'Nicht verfuegbar';
   $('shareOverlayState').textContent=privateOverlayPending?(share?'Startet ...':'Stoppt ...'):share?(enabled?'Ein':'Warte auf Dienst'):'Aus';
   $('privateOverlaySwitch').classList.toggle('off',!requested);$('shareOverlaySwitch').classList.toggle('off',!share);
@@ -197,7 +198,7 @@ function updatePrivateOverlayLabel(status){
   $('privateOverlayToggle').checked=requested;$('shareOverlayToggle').checked=share;$('privateOverlayToggle').disabled=privateOverlayPending;$('shareOverlayToggle').disabled=privateOverlayPending;
   $('retryPrivateOverlay').hidden=!overlayRequested() || enabled || privateOverlayPending;
   const detail=privateOverlayStatus?.reason || privateOverlayStatus?.state || 'Status wird geprueft';
-  $('privateOverlayStatus').textContent=requested?(privateOverlayPending?'Windows-Overlay wird geprueft; Browser-HUD bleibt verborgen.':enabled?`Privatmodus aktiv; Capture-Ausschluss ${privateOverlayStatus?.capture_excluded===true?'bestätigt':'nicht verifiziert'}.`:`Privatmodus nicht verifiziert: ${detail}. Browser-HUD bleibt verborgen.`):share?(enabled?'Share-Modus aktiv: HUD ist im Viewer sichtbar; Gesamtbildschirm-Aufnahme unterstützt. Browserfenster-Aufnahme gilt nur bei sichtbarem Browser-HUD.':`Share-Modus nicht gekoppelt: ${detail}.`):'Overlay nicht gekoppelt.';
+  $('privateOverlayStatus').textContent=requested?(privateOverlayPending?'Windows-Overlay wird geprueft; Browser-HUD bleibt verborgen.':enabled?`Privatmodus aktiv; Capture-Ausschluss ${privateOverlayStatus?.capture_excluded===true?'bestätigt':'nicht verifiziert'}.`:nativePrivateVerified?'Capture-Ausschluss bestätigt; Overlay wartet auf aktive Analyse.':`Privatmodus nicht verifiziert: ${detail}. Browser-HUD bleibt verborgen.`):share?(enabled?'Share-Modus aktiv: HUD ist im Viewer sichtbar; Gesamtbildschirm-Aufnahme unterstützt. Browserfenster-Aufnahme gilt nur bei sichtbarem Browser-HUD.':`Share-Modus nicht gekoppelt: ${detail}.`):'Overlay nicht gekoppelt.';
   $('privateOverlayStatus').className='hint '+(enabled?'good':overlayRequested()?'warning':'');
   if(requested)hideBrowserHints();
 }
@@ -525,7 +526,7 @@ $('shareOverlayToggle').onchange=()=>setOverlayMode('share');
 $('retryPrivateOverlay').onclick=async()=>{await syncPrivateOverlay();if(lastState)report(lastState);};
 
 document.addEventListener('visibilitychange',()=>{if(document.hidden){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('hud').hidden=true;clearPrivateOverlay('hidden').catch(()=>{})}else{syncPrivateOverlay();if(lastState)report(lastState)}},{passive:true});
-window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay(document.hidden?'hidden':'focus_lost').catch(()=>{})},{passive:true});
+window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;if(document.hidden)clearPrivateOverlay('hidden').catch(()=>{});else if(lastState)publishPrivateOverlay(lastState)},{passive:true});
 window.addEventListener('focus',()=>{viewerFocused=true;if(lastState)publishPrivateOverlay(lastState);},{passive:true});
 window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{});if(overlayOwnerToken)post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);setInterval(()=>{if(overlayRequested()&&overlayOwnerToken)post('/api/overlay/renew',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{overlayOwnerToken='';syncPrivateOverlay(true)});syncOverlaySettings(false).then(remote=>{if(remote&&['private','share'].includes(remote.mode)&&remote.mode!==overlayMode){overlayMode=remote.mode;updatePrivateOverlayLabel();syncPrivateOverlay(true);if(lastState)report(lastState)}})},10000);updateSteps(null);
 </script>

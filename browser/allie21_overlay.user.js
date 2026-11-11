@@ -343,7 +343,6 @@
   // Legacy focus guard expression retained for diagnostics: (!cfg.privateMode&&document.hasFocus?.()===false)
   // Legacy private lease guard: if(cfg.privateMode&&!overlayOwnerToken)
   if(!cfg.enabled||document.hidden||overlayMode()==='normal')return;
-  if(overlayMode()==='private'&&document.hasFocus?.()===false)return;
   if(!overlayOwnerToken){pendingVisualUpdate={mode,data};return;}
   const payload=visualPayload(mode,data);
   visualRequest?.abort?.();
@@ -769,7 +768,13 @@
  window.visualViewport?.addEventListener('resize',requestRepaint,{passive:true});
  window.visualViewport?.addEventListener('scroll',requestRepaint,{passive:true});
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
- function hideForInactive(){clearOverlay();if(overlayMode()==='private'||document.hidden)clearRemoteOverlay(document.hidden?'stale':'focus_lost');else scheduleTick(true)}
+ function hideForInactive(){
+  // A window blur is normal when the user switches to Discord or another
+  // monitor. Keep the protected native snapshot alive; only a hidden tab is
+  // stale enough to clear it.
+  if(document.hidden){clearOverlay();clearRemoteOverlay('stale');return;}
+  scheduleTick(true);
+ }
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else scheduleTick(true)},{passive:true});
  window.addEventListener('blur',hideForInactive,{passive:true});
  window.addEventListener('focus',()=>scheduleTick(true),{passive:true});
