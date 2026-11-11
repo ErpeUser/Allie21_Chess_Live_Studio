@@ -59,7 +59,7 @@ function loadBrowser({stored = {}, privateStored = {privateMode: false}, respons
   window.getComputedStyle = context.getComputedStyle;
   const marker = '\n installNavigationLifecycle();';
   assert.ok(source.includes(marker));
-  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,placePanel,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,el,wrapper,tick,readBoardSnapshot,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
+  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,el,wrapper,tick,readBoardSnapshot,hideForInactive,restoreOverlayAfterVisibility:typeof restoreOverlayAfterVisibility===\'function\'?restoreOverlayAfterVisibility:null,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
   vm.createContext(context);
   vm.runInContext(code, context, {filename: 'allie21_overlay.user.js'});
   return {hooks: context.hooks, context, values, elements, requests, timers, Element};
