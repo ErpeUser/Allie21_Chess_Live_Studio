@@ -34,8 +34,13 @@
  const stored=load();
  const privateStored=loadPrivate();
  const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',privateMode:true},stored);
+ const normalizeElo=value=>{const number=Number(value);return Number.isFinite(number)&&number>=600&&number<=2800?Math.round(number):1950};
+ const normalizeTimeControl=value=>{const match=String(value??'').trim().match(/^(\d{1,5})\+(\d{1,4})$/);if(!match)return'300+0';const base=Number(match[1]),increment=Number(match[2]);return base>=1&&base<=86400&&increment>=0&&increment<=3600?`${base}+${increment}`:'300+0'};
+ const normalizeEnum=(value,allowed,fallback)=>allowed.includes(value)?value:fallback;
+ cfg.elo=normalizeElo(cfg.elo);cfg.tc=normalizeTimeControl(cfg.tc);cfg.orientation=normalizeEnum(cfg.orientation,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(cfg.playerSide,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(cfg.playStyle,['normal','aggressive'],'normal');cfg.enabled=cfg.enabled!==false;cfg.privateMode=Boolean(cfg.privateMode);
  cfg.privateMode=typeof privateStored.privateMode==='boolean'?privateStored.privateMode:
    typeof stored.privateMode==='boolean'?stored.privateMode:true;
+ cfg.privateMode=Boolean(cfg.privateMode);
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -65,7 +70,7 @@
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <label class='private-row'><input id='privateMode' type='checkbox'> Privater Modus (keine DOM-/SVG-HUDs)</label>
  <button id='retryPrivate' type='button'>Privates Overlay erneut pruefen</button>
- <p id='privateStatus' class='small'>Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.</p>
+ <p id='privateStatus' class='small'>Privater Modus aktiv: Visualisierung bleibt außerhalb der Webseite.</p><p class='small'>Privat ein/aus: Alt+Shift+P</p>
  <p id='status' class='stat'>Warte auf ein Brett. Die Verbindung startet automatisch.</p>
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move (bedingt): gilt nur fuer die vorhergesagte Fortsetzung, nicht garantiert. Allie klickt nie selbst.</p>
  </section>`;
@@ -85,12 +90,14 @@
  const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
  const normalizePort=value=>{const port=Number(value);return Number.isInteger(port)&&port>=1024&&port<=65535?port:8765};
  cfg.port=normalizePort(cfg.port);
- const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.port=normalizePort(el('port').value);cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;persistOpeningSelection();save();setServicePort(cfg.port);try{chrome?.storage?.local?.set?.({port:cfg.port})}catch{};invalidate();scheduleTick(true)};
+ const updateSettings=()=>{cfg.elo=normalizeElo(el('elo').value);cfg.tc=normalizeTimeControl(el('tc').value);cfg.port=normalizePort(el('port').value);cfg.orientation=normalizeEnum(el('orientation').value,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(el('playerSide').value,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(el('playStyle').value,['normal','aggressive'],'normal');persistOpeningSelection();save();setServicePort(cfg.port);try{chrome?.storage?.local?.set?.({port:cfg.port})}catch{};invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','port','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privates Overlay nicht bereit. Hinweise bleiben verborgen; erneut pruefen oder bewusst ausschalten.':privateOverlayState==='active'&&privateOverlayArrowCount>0?`Privates Overlay aktiv: ${privateOverlayArrowCount} Pfeile im geschützten Windows-Fenster (nicht in Browser-Screenshots sichtbar).`:'Privates Overlay bereit; warte auf eine aktuelle Analyse.'):'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
+ const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privates Overlay nicht bereit. Hinweise bleiben verborgen; erneut pruefen oder bewusst ausschalten.':privateOverlayState==='active'&&privateOverlayArrowCount>0?`Privates Overlay aktiv: ${privateOverlayArrowCount} Pfeile im geschützten Windows-Fenster (Capture-Ausschluss bestätigt; Methode prüfen).`:'Privates Overlay bereit; warte auf eine aktuelle Analyse.'):'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
  persistOpeningSelection();save();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
- el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
+ const setPrivateMode=enabled=>{cfg.privateMode=Boolean(enabled);el('privateMode').checked=cfg.privateMode;try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
+ el('privateMode').onchange=()=>setPrivateMode(el('privateMode').checked);
+ window.addEventListener('keydown',event=>{if(event.altKey&&event.shiftKey&&!event.ctrlKey&&event.code==='KeyP'){event.preventDefault();setPrivateMode(!cfg.privateMode)}},{capture:true});
  el('retryPrivate').onclick=()=>syncPrivateMode(true);
  let sessionHash=Date.now()>>>0;
   let boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2)),overlayOwnerToken='';
@@ -340,22 +347,30 @@
   if(privateUnavailable&&state?.reason)el('privateStatus').textContent+=' '+String(state.reason).slice(0,160);
   if(cfg.privateMode){el('results').replaceChildren();clearOverlay();}
  }
+  let privateModeQueue=Promise.resolve();
   function sendOverlayMode(mode){
-   if(mode!=='private'&&!overlayOwnerToken)return Promise.resolve(null);
-   const claim=mode==='private'?postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise.then(lease=>{overlayOwnerToken=lease.owner_token}):Promise.resolve();
-   return claim.then(()=>postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise).then(state=>{
-    if((mode==='private')===cfg.privateMode)applyPrivateStatus(state);
-    if(mode==='private'&&cfg.privateMode&&overlayOwnerToken&&pendingVisualUpdate){const queued=pendingVisualUpdate;pendingVisualUpdate=null;sendVisualUpdate(queued.mode,queued.data)}
-    if(mode!=='private'&&overlayOwnerToken){postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});overlayOwnerToken='';}
-    return state;
-  }).catch(error=>{if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null;});
- }
+   privateModeQueue=privateModeQueue.catch(()=>{}).then(async()=>{
+    if(mode==='private'){
+     if(!overlayOwnerToken){const lease=await postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise;overlayOwnerToken=lease.owner_token}
+     const state=await postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise;
+     if(cfg.privateMode)applyPrivateStatus(state);
+     if(cfg.privateMode&&overlayOwnerToken&&pendingVisualUpdate){const queued=pendingVisualUpdate;pendingVisualUpdate=null;sendVisualUpdate(queued.mode,queued.data)}
+     // A private request may finish after the user has switched it off. The
+     // queued normal transition below must still release the lease.
+     return state;
+    }
+    if(!overlayOwnerToken)return null;
+    try{return await postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise}
+    finally{postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});overlayOwnerToken='';}
+   }).catch(error=>{if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null;});
+   return privateModeQueue;
+  }
  function clearRemoteOverlay(reason='stale'){
   if(!cfg.privateMode||!overlayOwnerToken)return;
   visualRequest?.abort?.();visualRequest=null;
    postJson('/api/overlay/clear',{session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
  }
- function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display=cfg.privateMode?'':'none';if(cfg.privateMode)el('results').replaceChildren()}
+ function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display='none';if(cfg.privateMode)el('results').replaceChildren()}
  function center(s,rect,ori){let file=s.charCodeAt(0)-97,rank=Number(s[1])-1;if(ori==='black'){file=7-file}else{rank=7-rank}return [rect.left+(file+.5)*rect.width/8,rect.top+(rank+.5)*rect.height/8]}
  function drawArrow(svg,rect,ori,uci,color,opacity=.87){
   if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci||''))return;
@@ -652,7 +667,10 @@
    const previousBoard=currentBoard;const visibleBoard=readBoardSnapshot();
    if(previousBoard&&visibleBoard&&previousBoard!==visibleBoard.board)resetBoardSession('board_changed');
    observeBoardGeometry(visibleBoard?.board||null);
-   wrapper.style.display='';if(visibleBoard)placePanel(visibleBoard.board);
+  // In private mode the entire page-owned HUD must be absent from the
+  // rendered page. Hiding only the SVG layer still leaves the panel, status,
+  // controls and bubble in tab/window screenshots.
+  wrapper.style.display=cfg.privateMode?'none':'';if(visibleBoard&&!cfg.privateMode)placePanel(visibleBoard.board);
   if(!visibleBoard){if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();clearRemoteOverlay('stale');show({})}return}
   // Private mode hides all page-owned DOM/SVG HUDs, but it must not stop the
   // browser tracker or analysis pipeline.  The native protected window gets
@@ -697,7 +715,7 @@
  window.visualViewport?.addEventListener('resize',requestRepaint,{passive:true});
  window.visualViewport?.addEventListener('scroll',requestRepaint,{passive:true});
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
- function hideForInactive(){clearOverlay();if(document.hidden||!cfg.privateMode)clearRemoteOverlay(document.hidden?'stale':'focus_lost')}
+ function hideForInactive(){clearOverlay();clearRemoteOverlay(document.hidden?'stale':'focus_lost')}
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else scheduleTick(true)},{passive:true});
  window.addEventListener('blur',hideForInactive,{passive:true});
  window.addEventListener('focus',()=>scheduleTick(true),{passive:true});
