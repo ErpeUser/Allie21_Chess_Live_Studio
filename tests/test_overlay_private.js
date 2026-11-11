@@ -17,7 +17,7 @@ for (const needle of [
   "sendVisualUpdate(cfg.privateMode?'private':'normal',pendingInsights(history));",
   'Privates Overlay aktiv:',
   'Capture-Ausschluss bestätigt; Methode prüfen',
-  "if(document.hidden){clearOverlay();clearRemoteOverlay('stale');return;}",
+  "if(document.hidden){clearOverlay();return;}",
   "if(cfg.privateMode&&!overlayOwnerToken)",
   "if(mode==='private')",
   "let privateModeQueue=Promise.resolve()",
