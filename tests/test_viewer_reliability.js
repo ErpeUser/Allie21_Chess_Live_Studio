@@ -63,6 +63,7 @@ function loadViewer({privateRequested = false, response} = {}) {
       const data = response ? await response(url, options) : url === '/health'
         ? {ready: true, model_loaded: true, stockfish_available: true, instance_id: 'instance'}
         : {mode: 'normal', available: false, capture_excluded: false, state: 'normal'};
+      if (data && typeof data === 'object' && typeof data.json === 'function' && 'status' in data) return data;
       return {ok: true, status: 200, json: async () => data};
     },
   };
@@ -157,5 +158,21 @@ test('viewer rejects empty and out-of-range numeric/time settings before capture
 test('an idle normal viewer does not switch off another client native overlay', async () => {
   const viewer=loadViewer(); await settle();
   assert.equal(viewer.requests.some(x=>x.url==='/api/overlay/mode'),false);
+});
+
+test('viewer refreshes capability after a server restart without a manual reload', async () => {
+  let rejected = true;
+  const viewer = loadViewer({response: async url => {
+    if (url === '/api/capability') return {ok:true,status:200,json:async()=>({token:'fresh-token',instance_id:'fresh-instance'})};
+    if (url === '/api/test' && rejected) { rejected=false; return {ok:false,status:401,json:async()=>({error:'Token abgelaufen'})}; }
+    return {ok:true,status:200,json:async()=>({ok:true})};
+  }});
+  await settle();
+  await viewer.run("req('/api/test', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})");
+  assert.equal(viewer.context.__ALLIE_CONFIG__.capability_token, 'fresh-token');
+  assert.equal(viewer.context.__ALLIE_CONFIG__.instance_id, 'fresh-instance');
+  const attempts = viewer.requests.filter(x=>x.url==='/api/test');
+  assert.equal(attempts.length, 2);
+  assert.equal(attempts[1].options.headers.Authorization, 'Bearer fresh-token');
 });
 
