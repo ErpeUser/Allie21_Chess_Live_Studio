@@ -52,7 +52,7 @@ MAX_JSON = 64 * 1024
 SESSION = LiveSession()
 BROWSER_TRACKERS = BrowserTrackerPool()
 PRIVATE_OVERLAY = PrivateOverlayController()
-OVERLAY_LEASES = OverlayLeaseManager()
+OVERLAY_LEASES = OverlayLeaseManager(on_expire=lambda _lease: PRIVATE_OVERLAY.clear('lease_expired'))
 REQUEST_LIMITER = RequestRateLimiter()
 ANALYZE_GATE = threading.Semaphore(1)
 FRAME_GATE = threading.Semaphore(1)
