@@ -73,10 +73,10 @@ def _load_overlay_settings() -> dict[str, object]:
     """Load desired and last natively confirmed modes from local state."""
     try:
         value = json.loads(_OVERLAY_SETTINGS_PATH.read_text(encoding='utf-8'))
-        if (isinstance(value, dict) and value.get('mode') in {'private', 'share'}
+        if (isinstance(value, dict) and value.get('mode') in {'private', 'share', 'normal'}
                 and isinstance(value.get('version'), int) and value['version'] >= 1):
             confirmed = value.get('confirmed_mode', value['mode'])
-            if confirmed not in {'private', 'share'}:
+            if confirmed not in {'private', 'share', 'normal'}:
                 confirmed = 'private'
             return {
                 'mode': value['mode'],
@@ -227,7 +227,7 @@ class OverlayModeRequest(InputModel):
 class OverlaySettingsRequest(InputModel):
     """Versioned shared overlay setting used by viewer and MV3 clients."""
 
-    mode: Literal['private', 'share']
+    mode: Literal['private', 'share', 'normal']
     version: int | None = Field(None, ge=0)
     updated_at: float | str | None = None
     source: str = Field('unknown', max_length=32)
@@ -608,18 +608,38 @@ def overlay_settings_update(payload: OverlaySettingsRequest, request: Request):
                          and requested_timestamp <= current_timestamp))):
             return _overlay_settings_payload(accepted=False, conflict=True)
         if payload.version == current_version and payload.mode == current_mode:
-            return _overlay_settings_payload()
-        next_version = max(current_version + 1, int(payload.version or 0))
-        next_updated = max(
-            time.time(), requested_timestamp,
-            float(OVERLAY_SETTINGS.get('updated_at', 0)) + 1e-6,
-        )
-        OVERLAY_SETTINGS.update({
-            'mode': payload.mode,
-            'version': next_version,
-            'updated_at': next_updated,
-        })
-        _persist_overlay_settings(OVERLAY_SETTINGS)
+            # Keep the normal-mode transition idempotent.  A sleeping client
+            # can repeat the same request after a worker restart; the native
+            # window and lease must still be released on that retry.
+            unchanged = _overlay_settings_payload()
+        else:
+            unchanged = None
+        if unchanged is not None and payload.mode != 'normal':
+            return unchanged
+        if unchanged is None:
+            next_version = max(current_version + 1, int(payload.version or 0))
+            next_updated = max(
+                time.time(), requested_timestamp,
+                float(OVERLAY_SETTINGS.get('updated_at', 0)) + 1e-6,
+            )
+            OVERLAY_SETTINGS.update({
+                'mode': payload.mode,
+                'version': next_version,
+                'updated_at': next_updated,
+            })
+            _persist_overlay_settings(OVERLAY_SETTINGS)
+    # Turning the shared setting off must hide an existing native frame even
+    # when no browser tab currently owns the lease.  Enabling private/share is
+    # intentionally still lease-gated through /api/overlay/mode.
+    if payload.mode == 'normal':
+        try:
+            PRIVATE_OVERLAY.set_mode('normal')
+        except Exception:  # noqa: BLE001 - normal mode must remain fail-safe
+            pass
+        OVERLAY_LEASES.force_release()
+        with _OVERLAY_SETTINGS_LOCK:
+            OVERLAY_SETTINGS['confirmed_mode'] = 'normal'
+            _persist_overlay_settings(OVERLAY_SETTINGS)
     result = _overlay_settings_payload()
     result['source'] = payload.source
     return result
@@ -639,7 +659,9 @@ def overlay_mode(request: OverlayModeRequest):
         OVERLAY_LEASES.release(request.session_id, request.owner_token)
         result = dict(result)
         result['lease_active'] = False
-    if request.mode in {'private', 'share'} and confirmed:
+    if request.mode in {'private', 'share', 'normal'} and confirmed:
+        if request.mode == 'normal':
+            OVERLAY_LEASES.force_release()
         with _OVERLAY_SETTINGS_LOCK:
             current_version = int(OVERLAY_SETTINGS.get('version', 1))
             current_mode = str(OVERLAY_SETTINGS.get('mode', 'private'))
