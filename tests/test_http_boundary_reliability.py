@@ -23,6 +23,8 @@ class HTTPBoundaryReliabilityTests(unittest.IsolatedAsyncioTestCase):
         @app.api_route('/api/start', methods=['POST'])
         @app.api_route('/api/frame', methods=['POST'])
         @app.api_route('/api/stop', methods=['POST'])
+        @app.get('/api/state')
+        @app.get('/viewer')
         async def echo(request: Request):
             self.called += 1
             raw = await request.body()
@@ -122,6 +124,16 @@ class HTTPBoundaryReliabilityTests(unittest.IsolatedAsyncioTestCase):
     async def test_website_origin_needs_overlay_header(self):
         r = await self.client.post('/api/start', content=b'{}', headers={**self.auth, 'Origin':'https://www.chess.com'})
         self.assertEqual(r.status_code, 403)
+
+    async def test_viewer_bootstrap_is_not_exposed_to_website_origins(self):
+        r = await self.request('GET', '/viewer', headers={'Origin':'https://www.chess.com', 'X-Allie-Overlay':'1'})
+        self.assertEqual(r.status_code, 403)
+
+    async def test_state_requires_capability(self):
+        r = await self.request('GET', '/api/state')
+        self.assertEqual(r.status_code, 401)
+        r = await self.request('GET', '/api/state', headers=self.auth)
+        self.assertEqual(r.status_code, 200)
 
     async def test_preflight_allows_current_protocol_headers(self):
         r = await self.client.options('/api/start', headers={'Origin':'https://www.chess.com',
