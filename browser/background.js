@@ -75,7 +75,7 @@ async function capability() {
 }
 
 function normalizeOverlayMode(value) {
-  return value === 'share' ? 'share' : 'private';
+  return value === 'share' ? 'share' : value === 'normal' ? 'normal' : 'private';
 }
 
 async function overlaySettingsRequest(method = 'GET', payload = null) {

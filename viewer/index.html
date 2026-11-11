@@ -95,6 +95,7 @@ details{border-top:1px solid #644832;margin-top:13px;padding-top:3px}summary{cur
         <label class="recommendation-switch" id="recommendationSwitch"><span><strong>Live-Zugpfeile &amp; Empfehlungen</strong><small>Zum Spielen mit Freunden einfach ausschalten.</small></span><span class="switch-state" id="recommendationState">Ein</span><span class="switch-control"><input type="checkbox" id="recommendationsToggle" checked aria-label="Live-Zugpfeile und Empfehlungen ein- oder ausschalten"><span class="switch-track" aria-hidden="true"></span></span></label>
         <label class="recommendation-switch" id="privateOverlaySwitch"><span><strong>Privates Windows-Overlay</strong><small>Separates Windows-Fenster. Aufnahmeausschluss muss mit deiner Capture-Methode geprueft werden.</small></span><span class="switch-state" id="privateOverlayState">Aus</span><span class="switch-control"><input type="checkbox" id="privateOverlayToggle" aria-label="Privates Windows-Overlay ein- oder ausschalten"><span class="switch-track" aria-hidden="true"></span></span></label>
         <label class="recommendation-switch" id="shareOverlaySwitch"><span><strong>HUD in Bildschirmübertragung anzeigen</strong><small>Expliziter Share-Modus für Discord-Gesamtbildschirm und unterstützte Browserfenster.</small></span><span class="switch-state" id="shareOverlayState">Aus</span><span class="switch-control"><input type="checkbox" id="shareOverlayToggle" aria-label="HUD in Bildschirmübertragung anzeigen"><span class="switch-track" aria-hidden="true"></span></span></label>
+        <label class="recommendation-switch" id="normalOverlaySwitch"><span><strong>Browser-HUD nur im Schach-Tab</strong><small>Kein natives Windows-Overlay; Pfeile und Hinweise bleiben im geöffneten Schach-Tab.</small></span><span class="switch-state" id="normalOverlayState">Aus</span><span class="switch-control"><input type="checkbox" id="normalOverlayToggle" aria-label="Browser-HUD nur im Schach-Tab"><span class="switch-track" aria-hidden="true"></span></span></label>
         <p class="hint" id="privateOverlayStatus" role="status" aria-live="polite">Capture-Schutz wird geprueft ...</p>
         <button class="btn ghost" id="retryPrivateOverlay" hidden>Privates Overlay erneut pruefen</button>
         <div class="field"><label for="playStyle">Menschliches Analyseprofil</label>
@@ -147,8 +148,8 @@ $('white').value=FORM_SETTINGS.white_elo;$('black').value=FORM_SETTINGS.black_el
 $('openingWhite').value=FORM_SETTINGS.opening_white||'grob';$('openingBlack').value=FORM_SETTINGS.opening_black||'englund';
 try{$('recommendationsToggle').checked=localStorage.getItem('allie-live-recommendations')!=='off'}catch{}
 let overlayMode='private',overlaySettingsVersion=0,overlaySettingsUpdatedAt='';
-try{const saved=JSON.parse(localStorage.getItem('allie-overlay-mode.v1')||'{}');if(saved&&['private','share'].includes(saved.mode))overlayMode=saved.mode;else if(localStorage.getItem('allie-private-overlay')==='off')overlayMode='normal';overlaySettingsVersion=Number(saved.version)||0;overlaySettingsUpdatedAt=String(saved.updated_at||'')}catch{}
-$('privateOverlayToggle').checked=overlayMode==='private';$('shareOverlayToggle').checked=overlayMode==='share';
+try{const saved=JSON.parse(localStorage.getItem('allie-overlay-mode.v1')||'{}');if(saved&&['private','share','normal'].includes(saved.mode))overlayMode=saved.mode;else if(localStorage.getItem('allie-private-overlay')==='off')overlayMode='normal';overlaySettingsVersion=Number(saved.version)||0;overlaySettingsUpdatedAt=String(saved.updated_at||'')}catch{}
+$('privateOverlayToggle').checked=overlayMode==='private';$('shareOverlayToggle').checked=overlayMode==='share';$('normalOverlayToggle').checked=overlayMode==='normal';
  let stream=null,timer=null,busyId=null,lastState=null,tickId=0,geometryRefreshTimer=0,geometryRevision=0,privateOverlayAvailable=false;
  let privateOverlayStatus=null,privateOverlayPending=false,overlaySyncPromise=null,overlayOwnerToken='';
 let overlayPublishBusy=false,overlayPublishQueued=null,viewerFocused=true;
@@ -170,6 +171,7 @@ function setRunning(running){for(const el of document.querySelectorAll('.stream-
 function recommendationsEnabled(state=lastState){return $('recommendationsToggle').checked&&state?.recommendations_enabled!==false}
 function privateOverlayRequested(){return overlayMode==='private'}
 function shareOverlayRequested(){return overlayMode==='share'}
+function normalOverlayRequested(){return overlayMode==='normal'}
 function overlayRequested(){return privateOverlayRequested()||shareOverlayRequested()}
 function overlayEnabled(){return !privateOverlayPending&&Boolean(overlayOwnerToken)&&((privateOverlayRequested()&&privateOverlayAvailable)||(shareOverlayRequested()&&privateOverlayStatus?.mode==='share'))}
 function privateOverlayEnabled(){
@@ -193,18 +195,21 @@ function updatePrivateOverlayLabel(status){
   const nativePrivateVerified=privateOverlayStatus?.available===true&&privateOverlayStatus?.capture_excluded===true&&privateOverlayStatus?.mode==='private';
   $('privateOverlayState').textContent=privateOverlayPending?(requested?'Startet ...':'Stoppt ...'):!requested?'Aus':enabled?(privateOverlayStatus?.visible?'Ein':'Bereit'):'Nicht verfuegbar';
   $('shareOverlayState').textContent=privateOverlayPending?(share?'Startet ...':'Stoppt ...'):share?(enabled?'Ein':'Warte auf Dienst'):'Aus';
+  $('normalOverlayState').textContent=privateOverlayPending?(normalOverlayRequested()?'Startet ...':'Stoppt ...'):normalOverlayRequested()?'Ein':'Aus';
   $('privateOverlaySwitch').classList.toggle('off',!requested);$('shareOverlaySwitch').classList.toggle('off',!share);
-  $('privateOverlaySwitch').setAttribute('aria-busy',String(privateOverlayPending));$('shareOverlaySwitch').setAttribute('aria-busy',String(privateOverlayPending));
-  $('privateOverlayToggle').checked=requested;$('shareOverlayToggle').checked=share;$('privateOverlayToggle').disabled=privateOverlayPending;$('shareOverlayToggle').disabled=privateOverlayPending;
+  $('normalOverlaySwitch').classList.toggle('off',!normalOverlayRequested());
+  $('privateOverlaySwitch').setAttribute('aria-busy',String(privateOverlayPending));$('shareOverlaySwitch').setAttribute('aria-busy',String(privateOverlayPending));$('normalOverlaySwitch').setAttribute('aria-busy',String(privateOverlayPending));
+  $('privateOverlayToggle').checked=requested;$('shareOverlayToggle').checked=share;$('normalOverlayToggle').checked=normalOverlayRequested();$('privateOverlayToggle').disabled=privateOverlayPending;$('shareOverlayToggle').disabled=privateOverlayPending;$('normalOverlayToggle').disabled=privateOverlayPending;
   $('retryPrivateOverlay').hidden=!overlayRequested() || enabled || privateOverlayPending;
-  const detail=privateOverlayStatus?.reason || privateOverlayStatus?.state || 'Status wird geprueft';
-  $('privateOverlayStatus').textContent=requested?(privateOverlayPending?'Windows-Overlay wird geprueft; Browser-HUD bleibt verborgen.':enabled?`Privatmodus aktiv; Capture-Ausschluss ${privateOverlayStatus?.capture_excluded===true?'bestätigt':'nicht verifiziert'}.`:nativePrivateVerified?'Capture-Ausschluss bestätigt; Overlay wartet auf aktive Analyse.':`Privatmodus nicht verifiziert: ${detail}. Browser-HUD bleibt verborgen.`):share?(enabled?'Share-Modus aktiv: HUD ist im Viewer sichtbar; Gesamtbildschirm-Aufnahme unterstützt. Browserfenster-Aufnahme gilt nur bei sichtbarem Browser-HUD.':`Share-Modus nicht gekoppelt: ${detail}.`):'Overlay nicht gekoppelt.';
-  $('privateOverlayStatus').className='hint '+(enabled?'good':overlayRequested()?'warning':'');
+  const rawDetail=privateOverlayStatus?.reason || privateOverlayStatus?.state || 'Status wird geprueft';
+  const detail=rawDetail==='capture_exclusion_verified'&&!nativePrivateVerified?'Capture-Ausschluss nicht bestätigt':rawDetail;
+  $('privateOverlayStatus').textContent=requested?(privateOverlayPending?'Windows-Overlay wird geprueft; Browser-HUD bleibt verborgen.':enabled?`Privatmodus aktiv; Capture-Ausschluss ${privateOverlayStatus?.capture_excluded===true?'bestätigt':'nicht verifiziert'}.`:nativePrivateVerified?'Capture-Ausschluss bestätigt; Overlay wartet auf aktive Analyse.':`Privatmodus nicht verifiziert: ${detail}. Browser-HUD bleibt verborgen.`):share?(enabled?'Share-Modus aktiv: HUD ist im Viewer sichtbar; Gesamtbildschirm-Aufnahme unterstützt. Browserfenster-Aufnahme gilt nur bei sichtbarem Browser-HUD.':`Share-Modus nicht gekoppelt: ${detail}.`):normalOverlayRequested()?'Browser-HUD im Schach-Tab aktiv; natives Overlay ist ausgeschaltet.':'Overlay nicht gekoppelt.';
+  $('privateOverlayStatus').className='hint '+(enabled||normalOverlayRequested()?'good':overlayRequested()?'warning':'');
   if(requested)hideBrowserHints();
 }
 async function syncOverlaySettings(force=false){
   let requested=overlayMode;
-  if(!['private','share'].includes(requested))return {mode:requested,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt};
+  if(!['private','share','normal'].includes(requested))return {mode:requested,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt};
   const updatedSeconds=Number(overlaySettingsUpdatedAt)||0;
   if(!force&&overlaySettingsVersion&&updatedSeconds>0&&Date.now()/1000-updatedSeconds<4)return null;
   try{
@@ -212,7 +217,7 @@ async function syncOverlaySettings(force=false){
     const version=Number(remote?.version);
     if(Number.isFinite(version)&&version>=overlaySettingsVersion){
       overlaySettingsVersion=version;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);
-      const winner=['private','share'].includes(remote?.mode)?remote.mode:requested;
+      const winner=['private','share','normal'].includes(remote?.mode)?remote.mode:requested;
       if(winner!==overlayMode){overlayMode=winner;}
       try{localStorage.setItem('allie-overlay-mode.v1',JSON.stringify({mode:overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{}
     }
@@ -220,7 +225,7 @@ async function syncOverlaySettings(force=false){
   }catch(error){
     try{
       const remote=await (await req('/api/overlay/settings',{timeout:6000})).json();
-      const version=Number(remote?.version);if(Number.isFinite(version)&&version>=overlaySettingsVersion){overlaySettingsVersion=version;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);if(['private','share'].includes(remote?.mode))overlayMode=remote.mode;try{localStorage.setItem('allie-overlay-mode.v1',JSON.stringify({mode:overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};return remote}
+      const version=Number(remote?.version);if(Number.isFinite(version)&&version>=overlaySettingsVersion){overlaySettingsVersion=version;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);if(['private','share','normal'].includes(remote?.mode))overlayMode=remote.mode;try{localStorage.setItem('allie-overlay-mode.v1',JSON.stringify({mode:overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};return remote}
     }catch{}
     return null
   }
@@ -230,12 +235,14 @@ async function syncOverlaySettings(force=false){
   // browser extension needs that lease for live Lichess/Chess.com analysis;
   // claim it only after a capture stream is actually running.
   if(!stream){
-   if(overlayOwnerToken){post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});overlayOwnerToken='';}
-   privateOverlayPending=false;
-   privateOverlayAvailable=false;
-   privateOverlayStatus={mode:overlayMode,state:'waiting_for_capture',reason:'Warte auf eine aktive Bildschirmquelle',available:true,capture_excluded:overlayMode==='private'};
-   updatePrivateOverlayLabel();
-   return Promise.resolve(null);
+   return syncOverlaySettings(explicit).catch(()=>null).then(()=>{
+    if(overlayOwnerToken){post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});overlayOwnerToken='';}
+    privateOverlayPending=false;
+    privateOverlayAvailable=false;
+    privateOverlayStatus={mode:overlayMode,state:'waiting_for_capture',reason:'Warte auf eine aktive Bildschirmquelle',available:true,capture_excluded:overlayMode==='private'};
+    updatePrivateOverlayLabel();
+    return null;
+   });
   }
   if(!overlayRequested()&&!explicit&&!overlayOwnerToken){updatePrivateOverlayLabel();return Promise.resolve(null);}
   if(overlaySyncPromise)return overlaySyncPromise;
@@ -245,15 +252,21 @@ async function syncOverlaySettings(force=false){
      try{
        await syncOverlaySettings(explicit);
        requested=overlayMode;
+       if(requested==='normal'){
+         if(overlayOwnerToken){await post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});overlayOwnerToken='';}
+         privateOverlayStatus={mode:'normal',state:'normal',reason:'explicit_normal_mode',available:false,visible:false,capture_excluded:false};
+         privateOverlayAvailable=false;
+         return privateOverlayStatus;
+       }
        if(requested==='private'||requested==='share'){
          if(!overlayOwnerToken){const lease=await post('/api/overlay/claim',{session_id:viewerSessionId});overlayOwnerToken=lease.owner_token;}
-         else await post('/api/overlay/renew',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});
+         else await post('/api/overlay/renew',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(async()=>{overlayOwnerToken='';const lease=await post('/api/overlay/claim',{session_id:viewerSessionId});overlayOwnerToken=lease.owner_token});
        }
        const status=await post('/api/overlay/mode',{session_id:viewerSessionId,owner_token:overlayOwnerToken,mode:requested});
-       privateOverlayStatus=status;
+       privateOverlayStatus=status?.status&&typeof status.status==='object'?status.status:status;
       if(status?.lease_active===false)overlayOwnerToken='';
-      privateOverlayAvailable=status.available===true && status.capture_excluded===true;
-      return status;
+      privateOverlayAvailable=privateOverlayStatus?.available===true && privateOverlayStatus?.capture_excluded===true && privateOverlayStatus?.mode==='private';
+      return privateOverlayStatus;
     }catch(error){
       privateOverlayAvailable=false;
       privateOverlayStatus={mode:requested,state:'error',reason:errorText(error),available:false,capture_excluded:false};
@@ -291,8 +304,8 @@ let overlayRevision=0;
  function clearPrivateOverlay(reason='cleared'){if(!overlayRequested()||!overlayOwnerToken)return Promise.resolve(null);return post('/api/overlay/clear',{session_id:viewerSessionId,owner_token:overlayOwnerToken,generation:lastState?.generation||0,render_revision:++overlayRevision,reason})}
 async function publishPrivateOverlay(state){
   if(!overlayEnabled())return;
-  if(!stream||document.hidden||!recommendationsEnabled(state)){
-    await clearPrivateOverlay('hidden').catch(()=>{});return;
+  if(!stream||!recommendationsEnabled(state)){
+    await clearPrivateOverlay(!stream?'stopped':'disabled').catch(()=>{});return;
   }
   overlayPublishQueued=state;
   if(overlayPublishBusy)return;
@@ -516,19 +529,21 @@ $('historyGo').onclick=async()=>{const pgn=$('historyPgn').value.trim();if(!pgn)
 $('manualGo').onclick=async()=>{if(privateOverlayRequested()){setStatus('Manuelle Browseranalyse erst nach bewusstem Ausschalten des privaten Modus.','idle');return;}const text=$('manual').value.trim();if(!text){$('manual').focus();return}if(!validSettings())return;setButtonBusy($('manualGo'),true,'Analysiere …');$('manualResult').className='panel manual-result';$('manualResult').textContent='Analyse läuft. Der erste Allie-Aufruf kann große Modellgewichte laden.';const data={...settings(),analysis_source:'allie',review_finished:true,preview:true};if(text.includes('/')&&/\s[wb]\s/.test(text)){data.fen=text;data.analysis_source='stockfish';data.preview=false;}else data.pgn=text;try{let out=await(await req('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json();if(!data.fen&&(!Array.isArray(out?.moves)||!out.moves.length||out?.allie_skip_reason)){out=await(await req('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,analysis_source:'stockfish',preview:false})})).json()}if(!privateOverlayRequested())$('manualResult').innerHTML=format(out)}catch(e){$('manualResult').innerHTML=`<p class="error">Fehler: ${esc(errorText(e))}</p>`}finally{setButtonBusy($('manualGo'),false,'')}};
 async function checkHealth(){try{const h=await(await req('/health',{timeout:6000})).json();const mismatch=Boolean(SETTINGS.instance_id&&h.instance_id&&h.instance_id!==SETTINGS.instance_id),ready=h.ready!==false&&!mismatch;$('engineHealth').textContent=!ready?'Dienst nicht bereit':h.stockfish_available?'Stockfish bereit':'Stockfish fehlt';$('engineHealth').className='health '+(ready&&h.stockfish_available?'good':'warn');$('modelHealth').textContent=!ready?'Instanz wird aktualisiert':h.model_loaded?'Allie geladen':'Allie bei Bedarf';$('modelHealth').className='health '+(ready&&h.model_loaded?'good':'');$('modelHealth').hidden=false;if(!privateOverlayPending&&h.overlay)updatePrivateOverlayLabel(h.overlay);if(!ready&&stream)setStatus(mismatch?'Neue Serverinstanz erkannt – bitte Analyse neu starten.':'Dienst wird bereitgestellt …','error')}catch{$('engineHealth').textContent='System nicht erreichbar';$('engineHealth').className='health warn';$('modelHealth').hidden=false;$('modelHealth').textContent='Nicht verfügbar';updatePrivateOverlayLabel({state:'nicht erreichbar',available:false})}}
 async function setOverlayMode(mode){
-  overlayMode=mode==='share'?'share':'private';overlaySettingsVersion=Math.max(0,overlaySettingsVersion)+1;overlaySettingsUpdatedAt=String(Date.now()/1000);
+  overlayMode=['private','share','normal'].includes(mode)?mode:'private';overlaySettingsVersion=Math.max(0,overlaySettingsVersion)+1;overlaySettingsUpdatedAt=String(Date.now()/1000);
   try{localStorage.setItem('allie-overlay-mode.v1',JSON.stringify({mode:overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}));}catch{}
   updatePrivateOverlayLabel();if(privateOverlayRequested())hideBrowserHints();else if(lastState)report(lastState);
   await syncPrivateOverlay(true);if(lastState)report(lastState);
 }
 $('privateOverlayToggle').onchange=()=>setOverlayMode('private');
 $('shareOverlayToggle').onchange=()=>setOverlayMode('share');
+$('normalOverlayToggle').onchange=()=>setOverlayMode('normal');
 $('retryPrivateOverlay').onclick=async()=>{await syncPrivateOverlay();if(lastState)report(lastState);};
 
-document.addEventListener('visibilitychange',()=>{if(document.hidden){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('hud').hidden=true;clearPrivateOverlay('hidden').catch(()=>{})}else{syncPrivateOverlay();if(lastState)report(lastState)}},{passive:true});
-window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;if(document.hidden)clearPrivateOverlay('hidden').catch(()=>{});else if(lastState)publishPrivateOverlay(lastState)},{passive:true});
-window.addEventListener('focus',()=>{viewerFocused=true;if(lastState)publishPrivateOverlay(lastState);},{passive:true});
-window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{});if(overlayOwnerToken)post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);setInterval(()=>{if(overlayRequested()&&overlayOwnerToken)post('/api/overlay/renew',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{overlayOwnerToken='';syncPrivateOverlay(true)});syncOverlaySettings(false).then(remote=>{if(remote&&['private','share'].includes(remote.mode)&&remote.mode!==overlayMode){overlayMode=remote.mode;updatePrivateOverlayLabel();syncPrivateOverlay(true);if(lastState)report(lastState)}})},10000);updateSteps(null);
+ async function restoreOverlayAfterVisibility(){try{await syncPrivateOverlay();if(lastState)report(lastState)}catch{}}
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){$('arrows').replaceChildren();$('allieBubble').replaceChildren();$('hud').hidden=true}else{restoreOverlayAfterVisibility()}},{passive:true});
+ window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;if(!document.hidden&&lastState)publishPrivateOverlay(lastState)},{passive:true});
+ window.addEventListener('focus',()=>{viewerFocused=true;restoreOverlayAfterVisibility()},{passive:true});
+window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{});if(overlayOwnerToken)post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);setInterval(()=>{if(overlayRequested()&&overlayOwnerToken)post('/api/overlay/renew',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{overlayOwnerToken='';syncPrivateOverlay(true)});syncOverlaySettings(false).then(remote=>{if(remote&&['private','share','normal'].includes(remote.mode)&&remote.mode!==overlayMode){overlayMode=remote.mode;updatePrivateOverlayLabel();syncPrivateOverlay(true);if(lastState)report(lastState)}})},10000);updateSteps(null);
 </script>
 </body>
 </html>

@@ -241,7 +241,7 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.2.19', overlay)
+        self.assertIn('@version      11.2.20', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
         self.assertEqual(manifest['version_name'], manifest['version'].rsplit('.', 1)[0])
         self.assertIn('@match        https://www.chess.com/play/*', overlay)

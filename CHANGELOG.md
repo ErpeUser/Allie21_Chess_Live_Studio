@@ -1,3 +1,9 @@
+## v11.2.20
+
+- Privates natives Overlay bleibt bei Tab-, Fokus- und Discord-Wechseln erhalten und wird nach der Rückkehr mit derselben Analyse neu gezeichnet.
+- Viewer, Userscript, Erweiterungsoptionen und Backend synchronisieren jetzt alle drei Overlay-Modi (`private`, `share`, `normal`) konsistent.
+- Lease-Wiederherstellung nach Dienstneustarts, verschachtelte Statusantworten und Capture-Exclusion-Meldungen werden robust behandelt.
+
 ## v11.2.19
 
 - Explizite Overlay-Modi: verifiziert geschütztes Windows-HWND im Privatmodus und aufnahmefähiger Share-Modus mit identischem HUD.

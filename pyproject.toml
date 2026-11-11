@@ -1,6 +1,6 @@
 [project]
 name = "allie21-chess-live-studio"
-version = "11.2.19"
+version = "11.2.20"
 description = "Local Windows chess video and browser analysis with Allie 2.1 and Stockfish"
 requires-python = "==3.12.*"
 dependencies = [

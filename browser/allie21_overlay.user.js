@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.19
+// @version      11.2.20
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
@@ -71,10 +71,11 @@
  <div class='row'><div><label>Weißes Opening</label><select id='whiteOpening'><option value='grob'>Grob Gambit · Ragebait</option><option value='bongcloud'>Bongcloud</option><option value='halloween'>Halloween-Gambit</option><option value='vienna'>Wiener Gambit</option><option value='steinitz'>Steinitz-Gambit</option><option value='frankenstein'>Frankenstein-Dracula</option><option value='danish'>Dänisches Gambit</option></select></div>
   <div><label>Schwarzes Opening</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='stafford'>Stafford-Gambit</option><option value='traxler'>Traxler-Gegenangriff</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
- <label class='private-row'><input id='privateMode' type='checkbox'> Privater Modus (geschütztes Windows-Overlay)</label>
- <label class='private-row'><input id='shareMode' type='checkbox'> HUD in Bildschirmübertragung anzeigen</label>
+ <label class='private-row'><input id='privateMode' type='radio' name='overlayMode'> Privater Modus (geschütztes Windows-Overlay)</label>
+ <label class='private-row'><input id='shareMode' type='radio' name='overlayMode'> HUD in Bildschirmübertragung anzeigen</label>
+ <label class='private-row'><input id='normalMode' type='radio' name='overlayMode'> Browser-HUD nur im Schach-Tab</label>
  <button id='retryPrivate' type='button'>Overlay-Status erneut pruefen</button>
- <p id='privateStatus' class='small'>Privatmodus wird synchronisiert …</p><p class='small'>Die beiden Modi sind gegenseitig exklusiv. Privat ein/aus: Alt+Shift+P</p>
+ <p id='privateStatus' class='small'>Privatmodus wird synchronisiert …</p><p class='small'>Privat schützt den HUD vor Aufnahmen, Share zeigt ihn in Aufnahmen, Browser-HUD bleibt im Tab.</p>
  <p id='status' class='stat'>Warte auf ein Brett. Die Verbindung startet automatisch.</p>
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move (bedingt): gilt nur fuer die vorhergesagte Fortsetzung, nicht garantiert. Allie klickt nie selbst.</p>
  </section>`;
@@ -98,15 +99,16 @@
  for(const field of ['elo','tc','port','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
  // Legacy status wording retained for compatibility: Privates Overlay aktiv:
  // Capture-Ausschluss bestätigt; Methode prüfen
- const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('shareMode').checked=cfg.overlayMode==='share';el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privatmodus nicht verifiziert. Browser-HUD bleibt aus.':privateOverlayState==='active'&&privateOverlayArrowCount>0?`Privatmodus aktiv: ${privateOverlayArrowCount} Pfeile im geschützten Windows-Fenster; Capture-Ausschluss bestätigt.`:'Privatmodus bereit; warte auf eine aktuelle Analyse.'):(cfg.overlayMode==='share'?'Share-Modus aktiv: Browser-HUD ist sichtbar; Gesamtbildschirm-Aufnahme unterstützt. Browserfenster-Aufnahme gilt nur bei sichtbarem HUD.':'Overlay nicht gekoppelt.');};fill();
+ const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('shareMode').checked=cfg.overlayMode==='share';el('normalMode').checked=cfg.overlayMode==='normal';el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privatmodus nicht verifiziert. Browser-HUD bleibt aus.':privateOverlayState==='active'&&privateOverlayArrowCount>0?`Privatmodus aktiv: ${privateOverlayArrowCount} Pfeile im geschützten Windows-Fenster; Capture-Ausschluss bestätigt.`:'Privatmodus bereit; warte auf eine aktuelle Analyse.'):(cfg.overlayMode==='share'?'Share-Modus aktiv: Browser-HUD ist sichtbar; Gesamtbildschirm-Aufnahme unterstützt. Browserfenster-Aufnahme gilt nur bei sichtbarem HUD.':cfg.overlayMode==='normal'?'Browser-HUD aktiv; geschütztes Windows-Overlay ist aus.':'Overlay nicht gekoppelt.');};fill();
  persistOpeningSelection();save();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
- const setOverlayMode=mode=>{const next=normalizeOverlayMode(mode);cfg.overlayMode=next;cfg.privateMode=next==='private';overlaySettingsVersion=Math.max(overlaySettingsVersion,0)+1;overlaySettingsUpdatedAt=String(Date.now()/1000);el('privateMode').checked=cfg.privateMode;el('shareMode').checked=next==='share';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}));localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:next,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};fill();invalidate();syncOverlayMode(true);if(next==='share')scheduleTick(true)};
- el('privateMode').onchange=()=>setOverlayMode(el('privateMode').checked?'private':'share');
- el('shareMode').onchange=()=>setOverlayMode(el('shareMode').checked?'share':'private');
+ const setOverlayMode=mode=>{const next=normalizeOverlayMode(mode);cfg.overlayMode=next;cfg.privateMode=next==='private';overlaySettingsVersion=Math.max(overlaySettingsVersion,0)+1;overlaySettingsUpdatedAt=String(Date.now()/1000);el('privateMode').checked=cfg.privateMode;el('shareMode').checked=next==='share';el('normalMode').checked=next==='normal';try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}));localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:next,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};fill();invalidate();syncOverlayMode(true);if(next!=='private')scheduleTick(true)};
+ el('privateMode').onchange=()=>{if(el('privateMode').checked)setOverlayMode('private')};
+ el('shareMode').onchange=()=>{if(el('shareMode').checked)setOverlayMode('share')};
+ el('normalMode').onchange=()=>{if(el('normalMode').checked)setOverlayMode('normal')};
  window.addEventListener('keydown',event=>{if(event.altKey&&event.shiftKey&&!event.ctrlKey&&event.code==='KeyP'){event.preventDefault();setOverlayMode(cfg.privateMode?'share':'private')}},{capture:true});
  el('retryPrivate').onclick=()=>syncPrivateMode(true);
- let sessionHash=Date.now()>>>0;
+ let sessionHash=Date.now()>>>0,visualRefreshPending=false;
   let boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2)),overlayOwnerToken='';
  const selectors=['wc-simple-move-list [data-node]','wc-vertical-move-list [data-node]','wc-horizontal-move-list [data-node]','wc-move-list [data-node]','wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
  const sanPattern=/^(?:O-O(?:-O)?|0-0(?:-0)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][+#]?)$/;
@@ -351,21 +353,29 @@
   request.promise.catch(()=>{}).finally(()=>{if(visualRequest===request)visualRequest=null});
  }
  function applyPrivateStatus(state){
-  privateUnavailable=cfg.privateMode&&!(state?.available===true&&state?.capture_excluded===true&&state?.mode==='private');
-  privateOverlayState=String(state?.state||'not_started');privateOverlayArrowCount=Number.isFinite(Number(state?.arrow_count))?Number(state.arrow_count):0;
+  const status=state?.status&&typeof state.status==='object'?state.status:state;
+  privateUnavailable=cfg.privateMode&&!(status?.available===true&&status?.capture_excluded===true&&status?.mode==='private');
+  privateOverlayState=String(status?.state||'not_started');privateOverlayArrowCount=Number.isFinite(Number(status?.arrow_count))?Number(status.arrow_count):0;
   fill();
-  if(privateUnavailable&&state?.reason)el('privateStatus').textContent+=' '+String(state.reason).slice(0,160);
+  if(privateUnavailable&&status?.reason&&status.reason!=='capture_exclusion_verified')el('privateStatus').textContent+=' '+String(status.reason).slice(0,160);
   if(cfg.privateMode){el('results').replaceChildren();clearOverlay();}
  }
   let privateModeQueue=Promise.resolve();
   function sendOverlayMode(mode){
    // Legacy private branch marker: if(mode==='private')
    privateModeQueue=privateModeQueue.catch(()=>{}).then(async()=>{
-    if(mode==='normal'){if(overlayOwnerToken){postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});overlayOwnerToken='';}return null;}
+    if(mode==='normal'){
+     if(overlayOwnerToken){
+      await postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise.catch(()=>{});
+      postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});
+      overlayOwnerToken='';
+     }
+     fill();return null;
+    }
     if(mode==='private'||mode==='share'){
      const wantsPrivate=mode==='private';
      if(!overlayOwnerToken){const lease=await postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise;overlayOwnerToken=lease.owner_token}
-     else await postJson('/api/overlay/renew',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});
+     else await postJson('/api/overlay/renew',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(async()=>{overlayOwnerToken='';const lease=await postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise;overlayOwnerToken=lease.owner_token});
      const state=await postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise;
      if(state?.lease_active===false)overlayOwnerToken='';
      if(wantsPrivate&&cfg.privateMode)applyPrivateStatus(state);
@@ -373,15 +383,6 @@
      if(overlayOwnerToken&&pendingVisualUpdate){const queued=pendingVisualUpdate;pendingVisualUpdate=null;sendVisualUpdate(mode==='private'?'private':'share',queued.data)}
      return state;
     }
-    if(mode==='normal'){
-     if(!overlayOwnerToken){const lease=await postJson('/api/overlay/claim',{session_id:boardSessionId},6000).promise;overlayOwnerToken=lease.owner_token}
-     const state=await postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise;
-     if(cfg.privateMode)applyPrivateStatus(state);
-     return state;
-    }
-    if(!overlayOwnerToken)return null;
-    try{return await postJson('/api/overlay/mode',{session_id:boardSessionId,owner_token:overlayOwnerToken,mode},6000).promise}
-    finally{postJson('/api/overlay/release',{session_id:boardSessionId,owner_token:overlayOwnerToken},4000).promise.catch(()=>{});overlayOwnerToken='';}
    }).catch(error=>{if(cfg.privateMode)applyPrivateStatus({available:false,reason:error.message});return null;});
    return privateModeQueue;
   }
@@ -563,7 +564,8 @@
    const epoch=serviceEpoch;
    const response=await fetch(serviceUrl(path),{method:'POST',headers:{'Content-Type':'application/json','X-Allie-Overlay':'1','Authorization':'Bearer '+token,'X-Allie-Instance':capabilityInstance,...extraHeaders},body:JSON.stringify(data),signal:controller.signal});
    if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');
-   if(response.status===401&&retry){resetCapability();markBrowserSessionReset();return send(false)}
+   if(response.status===401&&retry){resetCapability();overlayOwnerToken='';markBrowserSessionReset();return send(false)}
+   if(response.status===409&&path.startsWith('/api/overlay/'))overlayOwnerToken='';
    let parsed={};try{parsed=await response.json()}catch{}
    if(!response.ok){const error=new Error(parsed.error||String(response.status));error.status=response.status;throw error}return parsed;
   };
@@ -572,7 +574,6 @@
  }
  async function syncOverlayPreference(force=false){
   const requested=overlayMode();
-  if(requested==='normal')return null;
   const updatedSeconds=Number(overlaySettingsUpdatedAt)||0;
   if(!force&&overlaySettingsVersion&&updatedSeconds>0&&Date.now()/1000-updatedSeconds<4)return {mode:requested,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt};
   const payload={mode:requested,version:overlaySettingsVersion,updated_at:Number(overlaySettingsUpdatedAt)||0,source:'viewer-extension'};
@@ -715,6 +716,7 @@
   el('now').onclick=async()=>{markBrowserSessionReset();updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';await tick(true)};
  async function tick(manual=false){
    if(trackingPending)return;
+   if(document.hidden){clearOverlay();return;}
    const previousBoard=currentBoard;const visibleBoard=readBoardSnapshot();
    if(previousBoard&&visibleBoard&&previousBoard!==visibleBoard.board)resetBoardSession('board_changed');
    observeBoardGeometry(visibleBoard?.board||null);
@@ -746,7 +748,8 @@
     return;
    }
     unsettledPlacement=history.placement;unsettledRetries=0;
-    const playerSide=playerSideFor(history.orientation,detectedPlayerSide(currentBoard));
+   if(visualRefreshPending&&currentResult&&basis===lastPGN){paint(currentResult);visualRefreshPending=false;}
+   const playerSide=playerSideFor(history.orientation,detectedPlayerSide(currentBoard));
     const wanted=JSON.stringify([pgn,fen,history.placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle,cfg.whiteOpening,cfg.blackOpening]);
     if(basis!==lastPGN||wanted!==analysisKey||(!pending&&!currentResult&&Date.now()>=retryAfter)){
      if(basis!==lastPGN||wanted!==analysisKey)busyRetries=0;
@@ -769,15 +772,21 @@
  window.visualViewport?.addEventListener('scroll',requestRepaint,{passive:true});
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
  function hideForInactive(){
-  // A window blur is normal when the user switches to Discord or another
-  // monitor. Keep the protected native snapshot alive; only a hidden tab is
-  // stale enough to clear it.
-  if(document.hidden){clearOverlay();clearRemoteOverlay('stale');return;}
-  scheduleTick(true);
+  // A window blur or tab switch must not destroy the native snapshot: the
+  // protected window is precisely what keeps arrows visible over Discord and
+  // other desktop apps. Clear only the page-owned DOM and repaint on return.
+  visualRefreshPending=true;
+  if(document.hidden){clearOverlay();return;}
+  restoreOverlayAfterVisibility();
  }
- document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else scheduleTick(true)},{passive:true});
+ async function restoreOverlayAfterVisibility(){
+  visualRefreshPending=true;
+  try{await syncPrivateMode(true)}catch{}
+  if(!document.hidden)scheduleTick(true);
+ }
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else restoreOverlayAfterVisibility()},{passive:true});
  window.addEventListener('blur',hideForInactive,{passive:true});
- window.addEventListener('focus',()=>scheduleTick(true),{passive:true});
+ window.addEventListener('focus',restoreOverlayAfterVisibility,{passive:true});
  function resetBoardSession(reason='navigation'){
   clearRemoteOverlay(reason);
   cancelAnalysis();
