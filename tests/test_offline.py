@@ -200,6 +200,7 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('$expectedStockfishSha256', script)
         self.assertIn("--onedir", script)
         self.assertNotIn("--onefile", script)
+        self.assertIn("__pycache__", script)
 
     def test_quality_tooling_is_declared_on_demand(self):
         project = (ROOT / 'pyproject.toml').read_text(encoding='utf-8')
@@ -383,4 +384,3 @@ class StandaloneTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

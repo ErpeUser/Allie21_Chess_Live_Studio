@@ -15,6 +15,8 @@ for (const needle of [
   "window.addEventListener('blur'",
   'if(cfg.privateMode)clearOverlay();',
   "sendVisualUpdate(cfg.privateMode?'private':'normal',pendingInsights(history));",
+  'Privates Overlay aktiv:',
+  'nicht in Browser-Screenshots sichtbar',
   "(!cfg.privateMode&&document.hasFocus?.()===false)",
   "if(document.hidden||!cfg.privateMode)clearRemoteOverlay",
   "if(cfg.privateMode&&!overlayOwnerToken)",

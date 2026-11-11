@@ -78,7 +78,7 @@
  function persistOpeningSelection(){const selected=selectedOpeningSettings();Object.assign(cfg,selected,{whiteOpening:selected.opening_white,blackOpening:selected.opening_black});}
  function selectedOpeningSettings(){const white=el('whiteOpening').value,black=el('blackOpening').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
@@ -87,7 +87,7 @@
  cfg.port=normalizePort(cfg.port);
  const updateSettings=()=>{cfg.elo=Number(el('elo').value)||1950;cfg.tc=el('tc').value.trim()||'300+0';cfg.port=normalizePort(el('port').value);cfg.orientation=el('orientation').value;cfg.playerSide=el('playerSide').value;cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=el('playStyle').value;persistOpeningSelection();save();setServicePort(cfg.port);try{chrome?.storage?.local?.set?.({port:cfg.port})}catch{};invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','port','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
- const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privates Overlay nicht bereit. Hinweise bleiben verborgen; erneut pruefen oder bewusst ausschalten.':'Privater Modus angefordert: Hinweise nur im verifizierten Windows-Overlay.'):'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
+ const fill=()=>{el('results').hidden=Boolean(cfg.privateMode);el('elo').value=cfg.elo;el('tc').value=cfg.tc;el('port').value=cfg.port;el('orientation').value=cfg.orientation;el('playerSide').value=cfg.playerSide;el('playStyle').value=cfg.playStyle;el('whiteOpening').value=cfg.whiteOpening;el('blackOpening').value=cfg.blackOpening;el('toggle').textContent=`Live-Hinweise: ${cfg.enabled?'Ein':'Aus'}`;el('privateMode').checked=cfg.privateMode;el('privateStatus').textContent=cfg.privateMode?(privateUnavailable?'Privates Overlay nicht bereit. Hinweise bleiben verborgen; erneut pruefen oder bewusst ausschalten.':privateOverlayState==='active'&&privateOverlayArrowCount>0?`Privates Overlay aktiv: ${privateOverlayArrowCount} Pfeile im geschützten Windows-Fenster (nicht in Browser-Screenshots sichtbar).`:'Privates Overlay bereit; warte auf eine aktuelle Analyse.'):'Privater Modus aus: DOM-/SVG-HUDs sind sichtbar.'};fill();
  persistOpeningSelection();save();
  el('toggle').onclick=()=>{cfg.enabled=!cfg.enabled;save();fill();invalidate();if(cfg.enabled)scheduleTick(true)};
  el('privateMode').onchange=()=>{cfg.privateMode=Boolean(el('privateMode').checked);try{localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate();sendOverlayMode(cfg.privateMode?'private':'normal');if(!cfg.privateMode)scheduleTick(true)};
@@ -335,6 +335,7 @@
  }
  function applyPrivateStatus(state){
   privateUnavailable=cfg.privateMode&&!(state?.available===true&&state?.capture_excluded===true&&state?.mode==='private');
+  privateOverlayState=String(state?.state||'not_started');privateOverlayArrowCount=Number.isFinite(Number(state?.arrow_count))?Number(state.arrow_count):0;
   fill();
   if(privateUnavailable&&state?.reason)el('privateStatus').textContent+=' '+String(state.reason).slice(0,160);
   if(cfg.privateMode){el('results').replaceChildren();clearOverlay();}
@@ -487,14 +488,28 @@
   }).finally(()=>{pairingPromise=null});
   return pairingPromise;
  }
+ function requestExtensionCapability(){
+  if(typeof chrome==='undefined'||!chrome.runtime?.sendMessage)return null;
+  return new Promise((resolve,reject)=>{
+   let settled=false,timer=setTimeout(()=>{if(!settled){settled=true;const error=Error('Edge-Erweiterung antwortet nicht. Erweiterung und Tab neu laden.');error.code='extension';reject(error)}},6000);
+   const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);error?reject(error):resolve(value)};
+   try{chrome.runtime.sendMessage({type:'allie21:get-capability'},response=>{
+    const runtimeError=chrome.runtime?.lastError;
+    if(runtimeError){const error=Error('Edge-Erweiterung ist in diesem Tab nicht aktiv. Tab neu laden.');error.code='extension';finish(error);return}
+    if(!response?.token||!response?.instance_id){const error=Error(response?.error||'Browser-Pairing erforderlich. Erweiterung und Tab neu laden.');error.code='pairing';error.status=401;finish(error);return}
+    finish(null,response);
+   })}catch{const error=Error('Edge-Erweiterung ist in diesem Tab nicht aktiv. Tab neu laden.');error.code='extension';finish(error)}
+  });
+ }
  function ensureCapability(){
   return ensureServicePort().then(()=>{
    if(capabilityToken)return capabilityToken;
    if(Date.now()<capabilityRetryAfter){const error=Error('Browser-Pairing erforderlich. Edge-Erweiterung laden und Tab neu laden.');error.code='pairing';error.status=401;throw error}
    if(capabilityPromise)return capabilityPromise;
    const epoch=serviceEpoch,controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
-   const pending=ensurePairingCode().then(pairing=>fetch(serviceUrl('/api/capability'),{headers:{'X-Allie-Overlay':'1',...(pairing?{'X-Allie-Pairing':pairing}:{})},cache:'no-store',signal:controller.signal}))
-    .then(async response=>{const data=await response.json();if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');if(!response.ok||!data.token||!data.instance_id){const error=Error(data.error||data.detail||`HTTP ${response.status}`);if(response.status===401||response.status===429){error.code='pairing';error.status=response.status;capabilityRetryAfter=Date.now()+30000}throw error}capabilityToken=data.token;capabilityInstance=data.instance_id;return capabilityToken})
+   const extensionHandshake=requestExtensionCapability();
+   const pending=(extensionHandshake||ensurePairingCode().then(pairing=>fetch(serviceUrl('/api/capability'),{headers:{'X-Allie-Overlay':'1',...(pairing?{'X-Allie-Pairing':pairing}:{})},cache:'no-store',signal:controller.signal})))
+    .then(async response=>{const extensionData=response?.json?await response.json():response;const ok=response?.json?response.ok:true;if(epoch!==serviceEpoch)throw new DOMException('Server changed','AbortError');if(!ok||!extensionData?.token||!extensionData?.instance_id){const error=Error(extensionData?.error||extensionData?.detail||`HTTP ${response?.status||500}`);if(response?.status===401||response?.status===429||error.code==='pairing'){error.code='pairing';error.status=response?.status||401;capabilityRetryAfter=Date.now()+30000}throw error}capabilityToken=extensionData.token;capabilityInstance=extensionData.instance_id;return capabilityToken})
     .finally(()=>{clearTimeout(timer);if(capabilityPromise===pending)capabilityPromise=null});
    capabilityPromise=pending;
    return pending;

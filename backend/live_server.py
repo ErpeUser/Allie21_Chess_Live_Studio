@@ -312,14 +312,15 @@ def readyz(source: Literal['allie', 'stockfish', 'both'] = 'both'):
 
 @app.get('/api/capability')
 def capability(request: Request):
-    if not request.headers.get('origin') or request.headers.get('x-allie-overlay') != '1':
-        raise HTTPException(403, 'Capability-Handshake benötigt eine erlaubte Overlay-Herkunft')
     origin = request.headers.get('origin', '')
+    extension_worker = not origin and request.headers.get('x-allie-extension') == '1'
+    if (not origin and not extension_worker) or request.headers.get('x-allie-overlay') != '1':
+        raise HTTPException(403, 'Capability-Handshake benötigt eine erlaubte Overlay-Herkunft')
     local_origin = origin in {
         f'http://127.0.0.1:{PORT}', f'http://localhost:{PORT}',
         'http://127.0.0.1', 'http://localhost',
     }
-    if not local_origin:
+    if not local_origin and not extension_worker:
         if not pairing_attempt_allowed(origin):
             raise HTTPException(429, 'Zu viele Pairing-Versuche')
         if not verify_pairing_code(request.headers.get('x-allie-pairing', '')):
@@ -332,7 +333,8 @@ def pairing_status(request: Request):
     origin = request.headers.get('origin', '')
     if origin.startswith('http://127.0.0.1') or origin.startswith('http://localhost'):
         return {'pairing_code': get_pairing_code()}
-    if origin in EXTENSION_ORIGINS and request.headers.get('x-allie-overlay') == '1':
+    extension_worker = not origin and request.headers.get('x-allie-extension') == '1'
+    if (origin in EXTENSION_ORIGINS or extension_worker) and request.headers.get('x-allie-overlay') == '1':
         return {'pairing_code': get_pairing_code()}
     raise HTTPException(403, 'Nur der lokale Viewer darf den Pairing-Code anzeigen')
 

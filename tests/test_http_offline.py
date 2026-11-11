@@ -85,7 +85,7 @@ class HTTPBoundaryTests(unittest.TestCase):
          app.find_stockfish) = cls.originals
 
     def call(self, method, path, origin='', host=None, payload=None, overlay=False,
-             preflight=False, auth=True, pairing=False):
+             preflight=False, auth=True, pairing=False, extension=False):
         client = HTTPConnection('127.0.0.1', self.port, timeout=5)
         headers = {}
         if origin:
@@ -96,6 +96,8 @@ class HTTPBoundaryTests(unittest.TestCase):
             headers['Content-Type'] = 'application/json'
         if overlay:
             headers['X-Allie-Overlay'] = '1'
+        if extension:
+            headers['X-Allie-Extension'] = '1'
         if pairing:
             headers['X-Allie-Pairing'] = app.get_pairing_code()
         if auth and method.upper() == 'POST':
@@ -251,6 +253,15 @@ class HTTPBoundaryTests(unittest.TestCase):
         self.assertEqual(self.call('POST', '/api/browser-position',
                                    origin='chrome-extension://omboihgfgofgmidefcpkihgglhkiielo', overlay=True, payload=payload)[0], 200)
 
+    def test_extension_worker_pairing_without_browser_origin_is_allowed(self):
+        status, data = self.call('GET', '/api/pairing', overlay=True, extension=True)
+        self.assertEqual(status, 200, data)
+        self.assertRegex(data.decode(), r'"pairing_code":"\d{8}"')
+        status, data = self.call('GET', '/api/capability', overlay=True,
+                                 pairing=True, extension=True)
+        self.assertEqual(status, 200, data)
+        self.assertIn(b'instance_id', data)
+
     def test_overlay_request_must_explicitly_identify_itself(self):
         payload = {'session_id': 'web-test', 'placement': '8/8/8/3k4/8/8/4K3/8', 'pgn': '*'}
         self.assertEqual(self.call('POST', '/api/browser-position',
@@ -334,4 +345,3 @@ class HTTPBoundaryTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

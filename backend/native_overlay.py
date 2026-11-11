@@ -873,6 +873,7 @@ class PrivateOverlayController:
             if self._mode == "private" and not available and state in {"active", "ready"}:
                 state = "unavailable"
                 reason = self._native._failure_reason or "native_window_stopped"
+            snapshot = self._native.snapshot if visible else OverlaySnapshot()
             return {
                 "mode": self._mode,
                 "state": state,
@@ -880,6 +881,12 @@ class PrivateOverlayController:
                 "available": available,
                 "visible": visible,
                 "capture_excluded": available,
+                # Keep diagnostics deliberately aggregate: the local status
+                # endpoint may confirm that a protected frame was published
+                # without exposing move data or board contents.
+                "arrow_count": len(snapshot.arrows),
+                "bounds": snapshot.bounds,
+                "has_message": bool(snapshot.message),
             }
 
     def _retire_locked(self, session_id: str | None) -> None:

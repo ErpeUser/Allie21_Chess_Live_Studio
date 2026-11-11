@@ -154,6 +154,20 @@ test('pairing rejection is surfaced once instead of being mislabeled as a server
   });
 });
 
+test('extension worker performs capability handshake before page-origin fetch', async () => {
+  const messages = [];
+  const app = loadBrowser({
+    chrome: {runtime: {sendMessage(message, callback) {
+      messages.push(message.type);
+      if (message.type === 'allie21:get-port') callback({port: 8765});
+      else callback({token: 'worker-token', instance_id: 'worker-instance', api_version: 2, schema_version: 1});
+    }}},
+  });
+  await app.hooks.postJson('/test', {}).promise;
+  assert.deepEqual(messages, ['allie21:get-port', 'allie21:get-capability']);
+  assert.equal(app.requests.some(request => request.url.endsWith('/api/capability')), false);
+});
+
 test('extension port discovery has a bounded fallback if the worker never answers', async () => {
   const app = loadBrowser({chrome:{runtime:{sendMessage(){}}}});
   let settled = false;

@@ -21,7 +21,11 @@ function worker() {
   const context = {chrome, importScripts() {}, AllieUpdates: {check: async () => ({state: 'current'})},
     AllieConnection: {DEFAULT_PORT: 8765, parsePort: Number, healthStatus: () => ({text: 'OK'})},
     AbortController, setTimeout, clearTimeout,
-    fetch: async url => {if (url.endsWith('/api/pairing')) requests++; return {ok: true, json: async () => ({pairing_code: '12345678'})};},
+    fetch: async url => {
+      if (url.endsWith('/api/pairing')) { requests++; return {ok: true, json: async () => ({pairing_code: '12345678'})}; }
+      if (url.endsWith('/api/capability')) return {ok: true, json: async () => ({token:'token', instance_id:'instance', api_version:2, schema_version:1})};
+      return {ok: false, status:404, json: async () => ({})};
+    },
   };
   vm.createContext(context); vm.runInContext(source, context);
   const send = (type, id = 'owned') => new Promise(resolve => {
@@ -41,6 +45,10 @@ test('worker rejects foreign senders', async () => {
 test('concurrent pairing messages use one request and both receive a valid code', async () => {
   const w = worker(); const responses = await Promise.all([w.send('allie21:get-pairing'), w.send('allie21:get-pairing')]);
   assert.deepEqual(responses.map(x => x.pairing_code), ['12345678', '12345678']); assert.equal(w.requests(), 1);
+});
+test('worker completes the capability handshake with the pairing code', async () => {
+  const w = worker(); const reply = await w.send('allie21:get-capability');
+  assert.deepEqual(reply, {token:'token', instance_id:'instance', api_version:2, schema_version:1});
 });
 test('toolbar handler and persisted alarm are available after every start', async () => {
   const w = worker(); assert.equal(typeof w.clicked, 'function');

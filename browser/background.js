@@ -35,7 +35,8 @@ async function pairingCode() {
     try {
       const port = await configuredPort();
       const response = await fetch(serviceUrl(port, '/api/pairing'), {
-        cache: 'no-store', signal: controller.signal, headers: {'X-Allie-Overlay': '1'},
+        cache: 'no-store', signal: controller.signal,
+        headers: {'X-Allie-Overlay': '1', 'X-Allie-Extension': '1'},
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
@@ -50,6 +51,26 @@ async function pairingCode() {
   pairingRequest = request;
   try { return await request; }
   finally { if (pairingRequest === request) pairingRequest = null; }
+}
+
+async function capability() {
+  const port = await configuredPort();
+  const pairing = await pairingCode();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4500);
+  try {
+    const response = await fetch(serviceUrl(port, '/api/capability'), {
+      cache: 'no-store', signal: controller.signal,
+      headers: {'X-Allie-Overlay': '1', 'X-Allie-Extension': '1', 'X-Allie-Pairing': pairing},
+    });
+    const data = await response.json();
+    if (!response.ok || !data?.token || !data?.instance_id) {
+      throw new Error(data?.error || data?.detail || `HTTP ${response.status}`);
+    }
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function refreshBadge() {
@@ -106,6 +127,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch(error => sendResponse({error: error.message || 'Pairing-Code nicht verfuegbar'}));
     return true;
   }
+  if (message?.type === 'allie21:get-capability') {
+    capability().then(sendResponse)
+      .catch(error => sendResponse({error: error.message || 'Capability-Handshake fehlgeschlagen'}));
+    return true;
+  }
   return false;
 });
 chrome.action?.onClicked?.addListener(() => {
@@ -134,4 +160,3 @@ chrome.alarms.onAlarm.addListener(alarm => {
 ensureHealthAlarm();
 refreshBadge();
 AllieUpdates.check();
-
