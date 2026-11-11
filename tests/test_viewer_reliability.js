@@ -105,6 +105,16 @@ test('private failure preserves request and suppresses browser fallback', async 
   assert.equal(viewer.elements.get('arrows').children.length, 0);
 });
 
+test('verified private overlay is shown as ready while waiting for capture', async () => {
+  const viewer = loadViewer({privateRequested: true, response: async url => url === '/health'
+    ? {ready: true, instance_id: 'instance'}
+    : {mode: 'private', available: true, capture_excluded: true,
+       state: 'waiting_for_capture', reason: 'Warte auf eine aktive Bildschirmquelle'}});
+  await settle();
+  assert.equal(viewer.elements.get('privateOverlayState').textContent, 'Bereit');
+  assert.match(viewer.elements.get('privateOverlayStatus').textContent, /Capture-Ausschluss bestätigt/);
+});
+
 test('private mode also removes board facts and history from the viewer HUD', async () => {
   const viewer = loadViewer({privateRequested: true});
   await settle();

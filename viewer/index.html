@@ -193,7 +193,7 @@ function updatePrivateOverlayLabel(status){
   }
   const requested=privateOverlayRequested(),share=shareOverlayRequested(),enabled=overlayEnabled();
   const nativePrivateVerified=privateOverlayStatus?.available===true&&privateOverlayStatus?.capture_excluded===true&&privateOverlayStatus?.mode==='private';
-  $('privateOverlayState').textContent=privateOverlayPending?(requested?'Startet ...':'Stoppt ...'):!requested?'Aus':enabled?(privateOverlayStatus?.visible?'Ein':'Bereit'):'Nicht verfuegbar';
+  $('privateOverlayState').textContent=privateOverlayPending?(requested?'Startet ...':'Stoppt ...'):!requested?'Aus':enabled?(privateOverlayStatus?.visible?'Ein':'Bereit'):nativePrivateVerified?'Bereit':'Nicht verfuegbar';
   $('shareOverlayState').textContent=privateOverlayPending?(share?'Startet ...':'Stoppt ...'):share?(enabled?'Ein':'Warte auf Dienst'):'Aus';
   $('normalOverlayState').textContent=privateOverlayPending?(normalOverlayRequested()?'Startet ...':'Stoppt ...'):normalOverlayRequested()?'Ein':'Aus';
   $('privateOverlaySwitch').classList.toggle('off',!requested);$('shareOverlaySwitch').classList.toggle('off',!share);
