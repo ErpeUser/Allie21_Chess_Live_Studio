@@ -223,3 +223,35 @@ test('normal extension health polling does not disable another client native mod
   const app=loadBrowser();await app.hooks.syncPrivateMode();await settle();
   assert.equal(app.requests.some(x=>x.url.endsWith('/api/overlay/mode')),false);
 });
+
+test('private overlay heartbeat renews the native lease while the board is unchanged', async () => {
+  const app=loadBrowser({stored:{privateMode:true},privateStored:{privateMode:true},response:async url => {
+    if(url.endsWith('/api/capability'))return {token:'token',instance_id:'instance'};
+    if(url.endsWith('/api/overlay/claim'))return {session_id:'test-uuid',owner_token:'owner'};
+    if(url.endsWith('/api/overlay/mode'))return {mode:'private',state:'ready',available:true,capture_excluded:true};
+    return {available:true,capture_excluded:true,mode:'private',state:'ready'};
+  }});
+  await app.hooks.syncPrivateMode(); await settle();
+  const firstModeCalls=app.requests.filter(x=>x.url.endsWith('/api/overlay/mode')).length;
+  await app.hooks.syncPrivateMode(); await settle();
+  const modeCalls=app.requests.filter(x=>x.url.endsWith('/api/overlay/mode')).length;
+  assert.equal(firstModeCalls,1);
+  assert.equal(modeCalls,2);
+});
+
+test('private overlay retries its claim after a service-start race', async () => {
+  let claims=0;
+  const app=loadBrowser({stored:{privateMode:true},privateStored:{privateMode:true},response:async url => {
+    if(url.endsWith('/api/capability'))return {token:'token',instance_id:'instance'};
+    if(url.endsWith('/api/overlay/claim')){
+      claims++;
+      if(claims===1)return {ok:false,status:503,json:async()=>({error:'Dienst startet'})};
+      return {session_id:'test-uuid',owner_token:'owner'};
+    }
+    if(url.endsWith('/api/overlay/mode'))return {mode:'private',state:'ready',available:true,capture_excluded:true};
+    return {available:true,capture_excluded:true,mode:'private',state:'ready'};
+  }});
+  await app.hooks.syncPrivateMode(); await settle();
+  await app.hooks.syncPrivateMode(); await settle();
+  assert.equal(claims,2);
+});

@@ -740,7 +740,19 @@
   const requested=Boolean(cfg.privateMode);
   if(!requested){fill();return null;}
   const pending=(async()=>{
-   if(force||privateModeSent!==requested){privateModeSent=requested;return sendOverlayMode(requested?'private':'normal')}
+   if(force||privateModeSent!==requested){
+    const state=await sendOverlayMode(requested?'private':'normal');
+    // Do not latch a failed startup attempt.  The EXE may still be bringing
+    // the local server up when the tab's content script runs; a later poll
+    // must be allowed to claim the native overlay again.
+    if(state&&(!requested||state.available===true))privateModeSent=requested;
+    return state;
+   }
+   // Keep the short-lived native lease alive even when the board and
+   // analysis are unchanged.  A status GET cannot renew ownership; without
+   // this heartbeat the protected HWND expires after 30 seconds and private
+   // mode correctly hides every browser HUD, leaving the user with nothing.
+   if(requested)return sendOverlayMode('private');
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
    try{
     await ensureServicePort();
