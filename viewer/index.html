@@ -285,22 +285,39 @@ async function publishPrivateOverlay(state){
 }
 function updateRecommendationLabel(){const enabled=$('recommendationsToggle').checked;$('recommendationState').textContent=enabled?'Ein':'Aus';$('recommendationSwitch').classList.toggle('off',!enabled);if(!stream){$('analysis').className='panel empty';$('analysis').textContent=enabled?'Die Ergebnisse erscheinen nach einer bestätigten Stellung.':'Live-Zugpfeile und Empfehlungen sind ausgeschaltet.';updateSteps(lastState)}}
 function updateSteps(state){const running=Boolean(stream),det=Boolean(state?.detection),enabled=recommendationsEnabled(state),ready=Boolean(enabled&&det&&state?.result?.fen===state.detection.fen);$('stepSource').className='step '+(running?'done':'');$('stepBoard').className='step '+(det?'done':running?'active':'');$('stepAnalysis').textContent=enabled?'3 · Analyse':'3 · Empfehlungen aus';$('stepAnalysis').className='step '+(ready?'done':enabled&&state?.analysing?'active':'');}
+let capabilityRefresh=null;
+async function refreshCapability(){
+  if(capabilityRefresh)return capabilityRefresh;
+  capabilityRefresh=(async()=>{
+    const response=await fetch('/api/capability',{cache:'no-store',headers:{'X-Allie-Overlay':'1'}});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const data=await response.json();
+    if(!data?.token||!data?.instance_id)throw new Error('Ungültige Capability-Antwort');
+    SETTINGS.capability_token=data.token;SETTINGS.instance_id=data.instance_id;
+    return data;
+  })().finally(()=>{capabilityRefresh=null});
+  return capabilityRefresh;
+}
 async function req(url,options={}){
   const {signal:externalSignal,timeout=15000,...fetchOptions}=options;
-  const headers={...(fetchOptions.headers||{})};
-  if(SETTINGS.capability_token){headers.Authorization=`Bearer ${SETTINGS.capability_token}`;headers['X-Allie-Instance']=SETTINGS.instance_id||'';}
-  const controller=new AbortController();
-  const onAbort=()=>controller.abort(externalSignal?.reason);
-  if(externalSignal?.aborted)onAbort();else externalSignal?.addEventListener('abort',onAbort,{once:true});
-  const timer=setTimeout(()=>controller.abort(),Math.max(1,Number(timeout)||15000));
-  try{
-    const response=await fetch(url,{...fetchOptions,cache:'no-store',headers,signal:controller.signal});
-    if(!response.ok){
+  let retried=false;
+  while(true){
+    const headers={...(fetchOptions.headers||{})};
+    if(SETTINGS.capability_token){headers.Authorization=`Bearer ${SETTINGS.capability_token}`;headers['X-Allie-Instance']=SETTINGS.instance_id||'';}
+    const controller=new AbortController();
+    const onAbort=()=>controller.abort(externalSignal?.reason);
+    if(externalSignal?.aborted)onAbort();else externalSignal?.addEventListener('abort',onAbort,{once:true});
+    const timer=setTimeout(()=>controller.abort(),Math.max(1,Number(timeout)||15000));
+    try{
+      const response=await fetch(url,{...fetchOptions,cache:'no-store',headers,signal:controller.signal});
+      if(response.ok)return response;
+      if(!retried&&(response.status===401||response.status===403)&&url!=='/api/capability'){
+        retried=true;await refreshCapability();continue;
+      }
       let data={};try{data=await response.json();}catch{}
       const error=new Error(data.error||`HTTP ${response.status}`);error.status=response.status;throw error;
-    }
-    return response;
-  }finally{clearTimeout(timer);externalSignal?.removeEventListener('abort',onAbort);}
+    }finally{clearTimeout(timer);externalSignal?.removeEventListener('abort',onAbort);}
+  }
 }
 async function post(path,data){return(await req(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json()}
 const OPENING_VALUES=Object.freeze({white:['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'],black:['englund','stafford','traxler','budapest','alekhine']});
