@@ -580,6 +580,8 @@ class NativeOverlayController:
         self._thread: Thread | None = None
         self._hwnd: int | None = None
         self._wndproc: Any = None
+        # Keep the ctypes callback alive for the lifetime of SetWinEventHook.
+        self._winevent_proc: Any = None
         self._class_name = f"Allie21NativeOverlay_{id(self):x}"
         self._snapshot = OverlaySnapshot()
         self._started = False
