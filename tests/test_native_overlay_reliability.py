@@ -58,6 +58,23 @@ class NativeReliabilityTests(unittest.TestCase):
         self.assertIs(api.user32.SetLayeredWindowAttributes.argtypes[0], wintypes.HWND)
         self.assertEqual(api.kernel32.GetModuleHandleW.argtypes, (wintypes.LPCWSTR,))
 
+    def test_show_window_forces_visibility_when_windows_keeps_popup_hidden(self):
+        api = overlay._Win32.__new__(overlay._Win32)
+        api.user32 = Library()
+        class Visibility:
+            def __init__(self):
+                self.calls = []
+            def __call__(self, hwnd):
+                self.calls.append(hwnd)
+                return int(len(self.calls) > 1)
+        api.user32.IsWindowVisible = Visibility()
+        api.user32.ShowWindow.result = 1
+        api.user32.SetWindowPos.result = 1
+        api.show_window(42, overlay.SW_SHOWNOACTIVATE)
+        self.assertEqual(len(api.user32.SetWindowPos.calls), 1)
+        self.assertEqual(api.user32.SetWindowPos.calls[0][0], 42)
+        self.assertEqual(api.user32.SetWindowPos.calls[0][-1], overlay.SWP_NOSIZE | overlay.SWP_NOMOVE | overlay.SWP_NOACTIVATE | overlay.SWP_SHOWWINDOW)
+
     def test_message_structure_contains_reserved_private_field(self):
         self.assertEqual(overlay._MSG._fields_[-1], ("lPrivate", wintypes.DWORD))
 

@@ -395,6 +395,16 @@ class _Win32:
 
     def show_window(self, hwnd: int, command: int) -> None:
         self.user32.ShowWindow(hwnd, command)
+        # Some Win32/DWM combinations keep a layered, no-activate popup
+        # without WS_VISIBLE after the first ShowWindow call.  Do not report
+        # the native overlay as visible while the OS still hides its HWND;
+        # force the visibility bit with SetWindowPos and verify it again.
+        if command != SW_HIDE and not self.user32.IsWindowVisible(hwnd):
+            flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW
+            if not self.user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags):
+                raise ctypes.WinError(ctypes.get_last_error())
+            if not self.user32.IsWindowVisible(hwnd):
+                raise OSError("native overlay window remained hidden")
 
     def move_window(self, hwnd: int, x: int, y: int, width: int, height: int) -> None:
         success = self.user32.SetWindowPos(
