@@ -50,8 +50,8 @@ OPENING_OPTIONS = {
 TROLL_OPENING_OPTIONS = {
     'white': {
         'bongcloud': ('Bongcloud', ('e2e4', 'e7e5', 'e1e2')),
-        'halloween': ('Halloween-Gambit', ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'b1c3', 'g8f6', 'c3e5')),
-        'steinitz': ('Steinitz-Gambit', ('e2e4', 'e7e5', 'b1c3', 'b8c6', 'f2f4', 'e5f4', 'd2d4')),
+        'halloween': ('Halloween-Gambit', ('e2e4', 'e7e5', 'b1c3', 'g8f6', 'g1f3', 'b8c6', 'f3e5')),
+        'steinitz': ('Steinitz-Gambit', ('e2e4', 'e7e5', 'b1c3', 'b8c6', 'f2f4', 'e5f4', 'd2d4', 'd8h4', 'e1e2')),
         'frankenstein': ('Frankenstein-Dracula', ('e2e4', 'e7e5', 'b1c3', 'g8f6', 'f1c4', 'f6e4', 'd1h5')),
     },
     'black': {
