@@ -8,6 +8,7 @@
   const viewer = document.getElementById('viewer');
   const privateMode = document.getElementById('privateMode');
   const shareMode = document.getElementById('shareMode');
+  const normalMode = document.getElementById('normalMode');
   const overlayStatus = document.getElementById('overlayStatus');
   let testController = null;
   let overlayVersion = 0;
@@ -25,16 +26,20 @@
     viewer.href = `http://127.0.0.1:${value}/viewer`;
   }
   function setOverlayUi(settings) {
-    const mode = settings?.mode === 'share' ? 'share' : 'private';
+    const mode = ['private', 'share', 'normal'].includes(settings?.mode) ? settings.mode : 'private';
+    const state = settings?.status && typeof settings.status === 'object' ? settings.status : settings;
     privateMode.checked = mode === 'private';
     shareMode.checked = mode === 'share';
+    normalMode.checked = mode === 'normal';
     overlayVersion = Number(settings?.version) || overlayVersion;
     overlayUpdatedAt = Number(settings?.updated_at) || overlayUpdatedAt;
-    const state = settings?.state === 'service_unavailable' ? 'Dienst noch nicht bereit' : (settings?.state || settings?.reason);
+    const detail = state?.state === 'service_unavailable' ? 'Dienst noch nicht bereit' : (state?.state || state?.reason);
     overlayStatus.textContent = mode === 'share'
-      ? `Share-Modus aktiv: HUD wird in Bildschirmübertragungen angezeigt.${state ? ` (${state})` : ''}`
-      : `Privatmodus aktiv; Capture-Ausschluss wird vom Dienst verifiziert.${state ? ` (${state})` : ''}`;
-    overlayStatus.dataset.kind = settings?.available === false ? 'error' : 'good';
+      ? `Share-Modus aktiv: HUD wird in Bildschirmübertragungen angezeigt.${detail ? ` (${detail})` : ''}`
+      : mode === 'normal'
+        ? `Browser-HUD im Schach-Tab aktiv; natives Overlay ist aus.${detail ? ` (${detail})` : ''}`
+        : `Privatmodus aktiv; Capture-Ausschluss wird vom Dienst verifiziert.${detail ? ` (${detail})` : ''}`;
+    overlayStatus.dataset.kind = mode === 'normal' || state?.available !== false ? 'good' : 'error';
   }
   function runtimeMessage(message) {
     return new Promise((resolve, reject) => {
@@ -55,19 +60,20 @@
     catch (error) { overlayStatus.textContent = `Overlay-Status nicht verfuegbar: ${error.message}`; overlayStatus.dataset.kind='error'; }
   }
   async function saveOverlayMode(mode) {
-    privateMode.disabled = true; shareMode.disabled = true;
+    privateMode.disabled = true; shareMode.disabled = true; normalMode.disabled = true;
     const nextVersion = Math.max(overlayVersion, 0) + 1;
     try {
       const result = await runtimeMessage({type:'allie21:set-overlay-settings', settings:{mode, version:nextVersion, updated_at:Date.now()/1000}});
       if (result?.mode && result.mode !== mode) {
         setOverlayUi(result);
-        overlayStatus.textContent = `Konflikt aufgelöst: ${result.mode === 'share' ? 'Share-Modus' : 'Privatmodus'} ist jetzt maßgeblich.`;
+        const labels = {private:'Privatmodus', share:'Share-Modus', normal:'Browser-HUD im Schach-Tab'};
+        overlayStatus.textContent = `Konflikt aufgelöst: ${labels[result.mode] || 'Overlay-Modus'} ist jetzt maßgeblich.`;
       } else setOverlayUi(result);
     } catch (error) {
       overlayStatus.textContent = `Overlay-Einstellung konnte nicht synchronisiert werden: ${error.message}`;
       overlayStatus.dataset.kind='error';
       await loadOverlaySettings();
-    } finally { privateMode.disabled = false; shareMode.disabled = false; }
+    } finally { privateMode.disabled = false; shareMode.disabled = false; normalMode.disabled = false; }
   }
   function storageCall(method, value) {
     return new Promise((resolve, reject) => {
@@ -128,6 +134,7 @@
   });
   privateMode.addEventListener('change', () => { if (privateMode.checked) saveOverlayMode('private'); });
   shareMode.addEventListener('change', () => { if (shareMode.checked) saveOverlayMode('share'); });
+  normalMode.addEventListener('change', () => { if (normalMode.checked) saveOverlayMode('normal'); });
   save.disabled = true;
   storageCall('get', {port:DEFAULT_PORT}).then(values => {
     port.value = parsePort(values?.port) ?? DEFAULT_PORT;
