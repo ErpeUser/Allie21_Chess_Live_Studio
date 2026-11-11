@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const {test} = require('node:test');
 const html = fs.readFileSync(path.join(__dirname, '..', 'viewer', 'index.html'), 'utf8');
 assert.match(html, /if\(!stream\|\|document\.hidden\|\|!recommendationsEnabled\(state\)\)/);
-assert.doesNotMatch(html, /viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay\('focus_lost'\)/);
+assert.match(html, /viewerFocused=false;overlayPublishQueued=null;clearPrivateOverlay\(document.hidden\?'hidden':'focus_lost'\)/);
 
 function loadViewer({privateRequested = false, response} = {}) {
   const elements = new Map();
@@ -100,6 +100,14 @@ test('private failure preserves request and suppresses browser fallback', async 
   assert.equal(viewer.elements.get('arrows').children.length, 0);
 });
 
+test('private mode also removes board facts and history from the viewer HUD', async () => {
+  const viewer = loadViewer({privateRequested: true});
+  await settle();
+  viewer.run("report({message:'ok',detection:{fen:'8/8/8/8/8/8/8/4K2k',confidence:1},moves_seen:12,history_source:'ocr',history_complete:true,turn_verified:true,recommendations_enabled:true,result:null})");
+  assert.match(viewer.elements.get('position').textContent, /Privater Modus/);
+  assert.match(viewer.elements.get('history').textContent, /Privater Modus/);
+});
+
 test('capture resize preserves source aspect ratio including portrait and ultrawide sources', async () => {
   const viewer = loadViewer();
   await settle();
@@ -133,6 +141,17 @@ test('playing style is an explicit validated setting, not silent extra randomnes
   assert.equal(viewer.run('settings().play_style'), 'aggressive');
   viewer.elements.get('playStyle').value = 'invalid';
   assert.equal(viewer.run('settings().play_style'), 'normal');
+});
+
+test('viewer rejects empty and out-of-range numeric/time settings before capture starts', async () => {
+  const viewer = loadViewer();
+  await settle();
+  viewer.elements.get('white').value = '';
+  assert.equal(viewer.run('validSettings()'), false);
+  viewer.elements.get('white').value = '500';
+  viewer.elements.get('black').value = '3000';
+  viewer.elements.get('tc').value = '999999+0';
+  assert.equal(viewer.run('validSettings()'), false);
 });
 
 test('an idle normal viewer does not switch off another client native overlay', async () => {
