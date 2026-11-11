@@ -111,7 +111,10 @@ class NativeReliabilityTests(unittest.TestCase):
                         }, "arrows": [{"uci": "a1a2", "color": "#2f80ed"}],
                     })
                     self.assertTrue(result["available"])
-                    self.assertEqual(private._native.snapshot.bounds, (left, top, 640, 640))
+                    bounds = private._native.snapshot.bounds
+                    self.assertEqual(bounds[:2], (left, top))
+                    self.assertGreaterEqual(bounds[2], 640)
+                    self.assertGreaterEqual(bounds[3], 640)
                     self.assertEqual(private._native.snapshot.arrows[0].start, expected)
                 finally:
                     private.close()
@@ -141,6 +144,24 @@ class NativeReliabilityTests(unittest.TestCase):
             self.assertGreaterEqual(y, 0)
             self.assertLessEqual(x + width, 1920)
             self.assertLessEqual(y + height, 1080)
+        finally:
+            private.close()
+
+    def test_native_hud_adds_compact_chip_without_plan_messages(self):
+        private = overlay.PrivateOverlayController()
+        fake = FakeWin32()
+        private._native = overlay.NativeOverlayController(api=fake)
+        try:
+            private.update({
+                "session_id": "chip", "generation": 1, "render_revision": 1,
+                "mode": "private", "geometry": {
+                    "screen_board": {"left": 200, "top": 100, "width": 640, "height": 640},
+                    "orientation": "white",
+                }, "arrows": [{"uci": "e2e4"}],
+            })
+            snapshot = private._native.snapshot
+            self.assertTrue(snapshot.message.startswith("Allie · Analyse"))
+            self.assertIsNotNone(snapshot.message_rect)
         finally:
             private.close()
 

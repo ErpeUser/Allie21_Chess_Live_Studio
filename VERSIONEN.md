@@ -1,11 +1,19 @@
 # Reproduzierbare Versionen und Prüfstand
 
+## Update 11.2.21 / Edge-Erweiterung 11.2.21.0
+
+Der aktuelle Stand verwendet für Anwendung und Userscript 11.2.21; `browser/manifest.json` ist 11.2.21.0 mit `version_name` 11.2.21.
+Die feste Erweiterungs-ID bleibt unverändert.
+
+Der Fokus-Lifecycle leert native und Browser-HUD beim Tab-/Programmwechsel,
+der Share-Pfad publiziert seinen bestätigten Modus, und der private/native
+Renderer zeigt neben Pfeilen einen kompakten Allie-Chip. Der Windows-Workflow
+archiviert zusätzlich `Allie21-EdgeOverlay.zip` samt `allie-build.json`.
+
 ## Update 11.2.20 / Edge-Erweiterung 11.2.20
 
-Der aktuelle `main`-Stand verwendet für Anwendung, Userscript und WebExtension
-den geprüften Stand 11.2.20; `browser/manifest.json` ist 11.2.20.0 mit
-`version_name` 11.2.20.
-Die feste Erweiterungs-ID bleibt unverändert.
+Der vorherige `main`-Stand verwendete für Anwendung und Userscript 11.2.20;
+`browser/manifest.json` war 11.2.20.0 mit `version_name` 11.2.20.
 
 Der nachfolgende Wartungsstand basiert auf Commit `13131c8` vom 10. November
 2026. Historische Angaben zu `v11.2.16` beziehen sich auf den früheren Branch

@@ -1187,7 +1187,14 @@ class PrivateOverlayController:
             raw_messages = payload.get("messages", [])
             if not isinstance(raw_messages, Sequence) or isinstance(raw_messages, (str, bytes)):
                 raw_messages = ()
-            message = " · ".join(str(item) for item in raw_messages[:2])
+            message_parts = [str(item) for item in raw_messages[:2] if str(item).strip()]
+            # Keep the private/share HUD visually recognisable even when the
+            # current analysis has no prose hints.  This is the native
+            # equivalent of the browser's small "Allie · Analyse" bubble and
+            # remains capture-safe in private mode.
+            if self._mode in {"private", "share"} and (arrows or message_parts):
+                message_parts.insert(0, "Allie · Analyse")
+            message = " · ".join(message_parts)
             message_rect = None
             if message:
                 # Extend the transparent window beside/below the board, never
@@ -1199,7 +1206,8 @@ class PrivateOverlayController:
                 except OSError:
                     LOGGER.warning("Native overlay work area unavailable; omitting message panel")
                     area = (left, top, left + width, top + height)
-                gap, panel_width, panel_height = 12, 320, 144
+                gap, panel_width = 12, 320
+                panel_height = 64 if len(message_parts) == 1 else 144
                 candidates = [
                     (left + width + gap, top, panel_width, min(height, 320)),
                     (left - panel_width - gap, top, panel_width, min(height, 320)),

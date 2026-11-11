@@ -14,10 +14,10 @@ for (const needle of [
   "document.addEventListener('visibilitychange'",
   "window.addEventListener('blur'",
   'if(cfg.privateMode)clearOverlay();',
-  "sendVisualUpdate(cfg.privateMode?'private':'normal',pendingInsights(history));",
+  "sendVisualUpdate(cfg.privateMode?'private':'share',pendingInsights(history));",
   'Privates Overlay aktiv:',
   'Capture-Ausschluss bestätigt; Methode prüfen',
-  "if(document.hidden){clearOverlay();return;}",
+  "pageInactive=true;visualRefreshPending=true;clearOverlay();clearRemoteOverlay('inactive');",
   "if(cfg.privateMode&&!overlayOwnerToken)",
   "if(mode==='private')",
   "let privateModeQueue=Promise.resolve()",
@@ -29,6 +29,15 @@ for (const needle of [
 
 if (source.includes("if(cfg.privateMode){clearOverlay();clearRemoteOverlay('stale');return}")) {
   throw new Error('private mode must keep the browser analysis pipeline running');
+}
+if (source.includes("sendVisualUpdate('normal',data)")) {
+  throw new Error('share-mode paints must not be downgraded to normal mode');
+}
+if (!source.includes('sendVisualUpdate(overlayMode(),data)')) {
+  throw new Error('paint must publish the active overlay mode');
+}
+if (!source.includes("clearRemoteOverlay('inactive')")) {
+  throw new Error('inactive tabs must clear the native snapshot');
 }
 
 const start = source.indexOf('function visualGeometry');

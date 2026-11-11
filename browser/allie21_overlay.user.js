@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.20
+// @version      11.2.21
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
@@ -80,6 +80,7 @@
  <div id='results'></div><p class='small'>Starkgrün: Mein Top 1 · Hellgrün: Mein Top 2<br>Starkrot: Gegner Top 1 · Hellrot: Gegner Top 2<br>Blau: Sicherer Pre-Move (bedingt): gilt nur fuer die vorhergesagte Fortsetzung, nicht garantiert. Allie klickt nie selbst.</p>
  </section>`;
  const el=id=>shadow.getElementById(id);
+ const syncBubbleVisibility=()=>{const bubble=el('bubble'),panel=el('panel');if(!bubble||!panel)return;bubble.style.display=panel.classList.contains('open')?'none':''};
  const OPENING_VALUES=Object.freeze({white:['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'],black:['englund','stafford','traxler','budapest','alekhine']});
  for(const [side,legacy] of [['white','whiteOpening'],['black','blackOpening']]){
   const choice=stored['opening_'+side]??stored[legacy];
@@ -88,10 +89,10 @@
  function persistOpeningSelection(){const selected=selectedOpeningSettings();Object.assign(cfg,selected,{whiteOpening:selected.opening_white,blackOpening:selected.opening_black});}
  function selectedOpeningSettings(){const white=el('whiteOpening').value,black=el('blackOpening').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0,overlaySettingsVersion=Number(overlayStored.version)||0,overlaySettingsUpdatedAt=String(overlayStored.updated_at||'');
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0,overlaySettingsVersion=Number(overlayStored.version)||0,overlaySettingsUpdatedAt=String(overlayStored.updated_at||''),pageInactive=false;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
- el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');el('bubble').style.display='none';placePanel()};
- el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');el('bubble').style.display=''};
+ el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');syncBubbleVisibility();placePanel()};
+ el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');syncBubbleVisibility()};
  const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
  const normalizePort=value=>{const port=Number(value);return Number.isInteger(port)&&port>=1024&&port<=65535?port:8765};
  cfg.port=normalizePort(cfg.port);
@@ -344,7 +345,7 @@
  function sendVisualUpdate(mode='stale',data={}){
   // Legacy focus guard expression retained for diagnostics: (!cfg.privateMode&&document.hasFocus?.()===false)
   // Legacy private lease guard: if(cfg.privateMode&&!overlayOwnerToken)
-  if(!cfg.enabled||document.hidden||overlayMode()==='normal')return;
+  if(!cfg.enabled||pageInactive||document.hidden||document.hasFocus?.()===false||overlayMode()==='normal')return;
   if(!overlayOwnerToken){pendingVisualUpdate={mode,data};return;}
   const payload=visualPayload(mode,data);
   visualRequest?.abort?.();
@@ -395,7 +396,7 @@
   visualRequest?.abort?.();visualRequest=null;
    postJson('/api/overlay/clear',{session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
  }
- function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display='none';if(cfg.privateMode)el('results').replaceChildren()}
+ function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display='none';if(cfg.privateMode){el('results').replaceChildren();el('panel').classList.remove('open')}syncBubbleVisibility()}
  function center(s,rect,ori){let file=s.charCodeAt(0)-97,rank=Number(s[1])-1;if(ori==='black'){file=7-file}else{rank=7-rank}return [rect.left+(file+.5)*rect.width/8,rect.top+(rank+.5)*rect.height/8]}
  function drawArrow(svg,rect,ori,uci,color,opacity=.87){
   if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci||''))return;
@@ -451,7 +452,7 @@
     if(renderedPosition==='static')board.style.position='relative';
    }
    renderedBoard=board;renderedSvg=svg;
-   board.appendChild(svg);sendVisualUpdate('normal',data);
+   board.appendChild(svg);sendVisualUpdate(overlayMode(),data);
  }
  function insightLines(data){
   return (Array.isArray(data?.plan_messages)?data.plan_messages:[]).filter(Boolean).slice(0,6);
@@ -481,7 +482,7 @@
   wrapper.style.right='auto';wrapper.style.bottom='auto';
   el('panel').style.width=`${pos.width}px`;el('panel').style.maxHeight=`${pos.maxHeight}px`;
  }
- function show(data){if(cfg.privateMode){el('results').replaceChildren();el('results').hidden=true;return}el('results').hidden=false;let html='';
+ function show(data){if(cfg.privateMode){el('results').replaceChildren();el('results').hidden=true;el('panel').classList.remove('open');syncBubbleVisibility();wrapper.style.display='none';return}el('results').hidden=false;wrapper.style.display='';let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
   if(data.repertoire?.primary)html+=`<p class='small'><b>Repertoire:</b> ${escape(data.repertoire.primary)}${data.repertoire.selection?` · Auswahl ${escape(data.repertoire.selection)}`:''}${data.repertoire.expected_san?` · nächster Wunschzug ${escape(data.repertoire.expected_san)}`:''}</p>`;
   const choices=Array.isArray(data.moves)?data.moves.slice(0,5):[];
@@ -493,7 +494,8 @@
   for(const message of messages)html+=`<div class='insight'>${escape(message)}</div>`;
   if(data.stockfish){html+='<h3>Stockfish: objektiv</h3>';if(!data.stockfish.available)html+=`<p>${escape(data.stockfish.error||'Engine fehlt')}</p>`;else for(const m of data.stockfish.lines||[])html+=`<div class='item'><span>${escape(m.san)} | ${escape(m.variation)}</span><span>${escape(m.score)}</span></div>`}
   el('results').innerHTML=html;
-  if(messages.length&&!panelDismissed){el('panel').classList.add('open');el('bubble').style.display='none';placePanel()}
+  if(messages.length&&!panelDismissed){el('panel').classList.add('open');placePanel()}
+  syncBubbleVisibility();
  }
  let capabilityToken='',capabilityInstance='',capabilityPromise=null,capabilityRetryAfter=0,pairingCode='',pairingPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null,serviceEpoch=0;
  function serviceUrl(path){return `http://127.0.0.1:${servicePort}${path}`}
@@ -758,8 +760,6 @@
      // private mode a normal-mode payload is deliberately rejected by the
      // fail-closed router, which used to make the overlay disappear during
      // every analysis request.
-     // Legacy private-mode contract (kept in this comment for packaged
-     // extension diagnostics): sendVisualUpdate(cfg.privateMode?'private':'normal',pendingInsights(history));
      sendVisualUpdate(cfg.privateMode?'private':'share',pendingInsights(history));
      if(pending)cancelAnalysis();
      if(Date.now()>=retryAfter){lastPGN=basis;analyze(pgn,history.placement,fen,playerSide)}
@@ -772,21 +772,21 @@
  window.visualViewport?.addEventListener('scroll',requestRepaint,{passive:true});
  function scheduleTick(manual=false){clearTimeout(tickTimer);tickTimer=setTimeout(()=>tick(manual),120)}
  function hideForInactive(){
-  // A window blur or tab switch must not destroy the native snapshot: the
-  // protected window is precisely what keeps arrows visible over Discord and
-  // other desktop apps. Clear only the page-owned DOM and repaint on return.
-  visualRefreshPending=true;
-  if(document.hidden){clearOverlay();return;}
-  restoreOverlayAfterVisibility();
+  // A tab/program switch invalidates the board context. Clear both renderers
+  // immediately so stale arrows cannot remain over another application.
+  pageInactive=true;visualRefreshPending=true;clearOverlay();clearRemoteOverlay('inactive');
  }
  async function restoreOverlayAfterVisibility(){
+  if(document.hidden)return;
+  pageInactive=false;
   visualRefreshPending=true;
   try{await syncPrivateMode(true)}catch{}
-  if(!document.hidden)scheduleTick(true);
+  if(document.hidden||pageInactive)return;
+  if(currentResult){show(currentResult);paint(currentResult)}else scheduleTick(true);
  }
- document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else restoreOverlayAfterVisibility()},{passive:true});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else if(document.hasFocus?.()!==false)restoreOverlayAfterVisibility()},{passive:true});
  window.addEventListener('blur',hideForInactive,{passive:true});
- window.addEventListener('focus',restoreOverlayAfterVisibility,{passive:true});
+ window.addEventListener('focus',()=>restoreOverlayAfterVisibility(),{passive:true});
  function resetBoardSession(reason='navigation'){
   clearRemoteOverlay(reason);
   cancelAnalysis();

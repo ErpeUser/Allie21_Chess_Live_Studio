@@ -1,6 +1,13 @@
+## v11.2.21
+
+- Tab- und Programmwechsel löschen private/native Snapshots sofort; der HUD wird erst nach Fokus-Rückkehr und einer aktuellen Stellung wieder aufgebaut.
+- Share-Analysen veröffentlichen wieder den aktiven `share`-Modus statt versehentlich `normal` zu senden; der native HUD bleibt dadurch während der Bildschirmübertragung sichtbar.
+- Browser-Bubble wird nach Analyse, Clear und Fokuswechsel deterministisch eingeblendet; der private/native HUD zeigt einen kompakten „Allie · Analyse“-Chip neben dem Brett.
+- Das Windows-Release erzeugt zusätzlich ein versioniertes, entpacktes Edge-ZIP mit `allie-build.json` und SHA-256-Fingerprint.
+
 ## v11.2.20
 
-- Privates natives Overlay bleibt bei Tab-, Fokus- und Discord-Wechseln erhalten und wird nach der Rückkehr mit derselben Analyse neu gezeichnet.
+- Privates natives Overlay blieb bei Tab-, Fokus- und Discord-Wechseln erhalten und wurde nach der Rückkehr mit derselben Analyse neu gezeichnet.
 - Viewer, Userscript, Erweiterungsoptionen und Backend synchronisieren jetzt alle drei Overlay-Modi (`private`, `share`, `normal`) konsistent.
 - Lease-Wiederherstellung nach Dienstneustarts, verschachtelte Statusantworten und Capture-Exclusion-Meldungen werden robust behandelt.
 

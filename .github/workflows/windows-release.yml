@@ -36,6 +36,9 @@ jobs:
       - name: Verify hashes and local server startup
         shell: pwsh
         run: python tools/release_smoke.py --bundle 'release/Allie21 Chess Live Studio' --with-model
+      - name: Build unpacked Edge extension bundle
+        shell: pwsh
+        run: python tools/build_edge.py --source browser --output 'release/Allie21-EdgeOverlay' --archive 'release/Allie21-EdgeOverlay.zip' --commit '${{ github.sha }}'
       - name: Archive full onedir bundle
         shell: pwsh
         run: |
@@ -47,5 +50,7 @@ jobs:
           path: |
             release/Allie21-Windows.zip
             release/Allie21-Windows.zip.sha256
+            release/Allie21-EdgeOverlay.zip
+            release/Allie21-EdgeOverlay/allie-build.json
           if-no-files-found: error
           retention-days: 7

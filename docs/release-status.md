@@ -2,7 +2,7 @@
 
 ## Current branch
 
-The reviewed implementation is on the permanent `main` branch at version **11.2.17**. The browser extension and userscript support the configured local port. The release contains GUI opening-setting synchronization, persistent viewer settings, centered arrowheads, blue premove rendering, bounded request handling, native-overlay lifecycle fixes, and the offline-vendored Allie model loader.
+The reviewed implementation is on the permanent `main` branch at version **11.2.21**. The browser extension and userscript support the configured local port. The release contains GUI opening-setting synchronization, persistent viewer settings, centered arrowheads, blue premove rendering, bounded request handling, focus-safe native-overlay lifecycle, the private HUD chip, and the offline-vendored Allie model loader.
 
 ## Automated evidence
 
@@ -10,6 +10,7 @@ The reviewed implementation is on the permanent `main` branch at version **11.2.
 - Native-overlay and regression unittest checks: 14 executed, 12 passed, 2 skipped because the global runtime lacks `python-chess`; the locked project environment runs the chess-dependent cases.
 - All checked-in JavaScript tests pass (10/10), including opening propagation, settings persistence, dynamic port configuration, arrow geometry, and premove coverage.
 - CI now runs unittest, pytest, Ruff, Mypy, compileall, JavaScript tests, and version-alignment checks.
+- The Windows workflow now publishes both the complete onedir bundle and a separate unpacked Edge ZIP with a signed-by-content `allie-build.json` revision stamp.
 
 ## Remaining release gate
 
