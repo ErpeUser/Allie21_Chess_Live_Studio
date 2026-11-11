@@ -83,6 +83,13 @@ class NativeReliabilityTests(unittest.TestCase):
         self.assertEqual(len(api.user32.SetWindowPos.calls), 1)
         self.assertEqual(api.user32.SetWindowPos.calls[0][1], overlay.HWND_TOPMOST)
 
+    def test_topmost_heartbeat_reasserts_window_order(self):
+        api = overlay._Win32.__new__(overlay._Win32)
+        api.user32 = Library()
+        api.user32.SetWindowPos.result = 1
+        api.keep_topmost(42)
+        self.assertEqual(api.user32.SetWindowPos.calls[0][1], overlay.HWND_TOPMOST)
+
     def test_message_structure_contains_reserved_private_field(self):
         self.assertEqual(overlay._MSG._fields_[-1], ("lPrivate", wintypes.DWORD))
 

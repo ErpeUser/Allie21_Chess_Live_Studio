@@ -45,6 +45,8 @@ WM_ERASEBKGND = 0x0014
 WM_NCHITTEST = 0x0084
 WM_APP = 0x8000
 WM_APP_RENDER = WM_APP + 21
+WM_TIMER = 0x0113
+TOPMOST_TIMER_ID = 0xA21
 HTTRANSPARENT = -1
 COLOR_KEY = 0x00FF00FF  # magenta, transparent through the color-keyed layer
 TRANSPARENT = 1
@@ -288,6 +290,10 @@ class _Win32:
         bind(u, "ShowWindow", wintypes.BOOL, wintypes.HWND, ctypes.c_int)
         bind(u, "SetWindowPos", wintypes.BOOL, wintypes.HWND, wintypes.HWND,
              ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.UINT)
+        pointer_uint = getattr(wintypes, "UINT_PTR", ctypes.c_size_t)
+        bind(u, "SetTimer", pointer_uint, wintypes.HWND, pointer_uint,
+             wintypes.UINT, ctypes.c_void_p)
+        bind(u, "KillTimer", wintypes.BOOL, wintypes.HWND, pointer_uint)
         bind(u, "PostMessageW", wintypes.BOOL,
              wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
         bind(u, "IsWindow", wintypes.BOOL, wintypes.HWND)
@@ -404,6 +410,19 @@ class _Win32:
                 raise ctypes.WinError(ctypes.get_last_error())
             if not self.user32.IsWindowVisible(hwnd):
                 raise OSError("native overlay window remained hidden")
+
+    def keep_topmost(self, hwnd: int) -> None:
+        """Reassert z-order without activating or stealing keyboard focus."""
+        flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW
+        if not self.user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    def arm_topmost(self, hwnd: int, interval_ms: int = 250) -> None:
+        if not self.user32.SetTimer(hwnd, TOPMOST_TIMER_ID, interval_ms, None):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    def disarm_topmost(self, hwnd: int) -> None:
+        self.user32.KillTimer(hwnd, TOPMOST_TIMER_ID)
 
     def move_window(self, hwnd: int, x: int, y: int, width: int, height: int) -> None:
         success = self.user32.SetWindowPos(
@@ -794,6 +813,9 @@ class NativeOverlayController:
                     destroy(hwnd)
                 hwnd = None
                 return
+            arm_timer = getattr(api, "arm_topmost", None)
+            if arm_timer is not None:
+                arm_timer(hwnd)
             with self._lock:
                 self._hwnd = hwnd
                 self._capture_excluded = requested
@@ -818,6 +840,12 @@ class NativeOverlayController:
                 self._fail_locked()
         finally:
             if hwnd is not None:
+                disarm_timer = getattr(api, "disarm_topmost", None)
+                if disarm_timer is not None:
+                    try:
+                        disarm_timer(hwnd)
+                    except Exception as exc:  # noqa: BLE001 - window is already being torn down
+                        LOGGER.debug("Native overlay timer cleanup failed: %s", type(exc).__name__)
                 destroy = getattr(api, "destroy_window", None)
                 if destroy is not None:
                     try:
@@ -856,6 +884,13 @@ class NativeOverlayController:
         if message == WM_CLOSE:
             self._bindings().show_window(hwnd, SW_HIDE)
             self._bindings().destroy_window(hwnd)
+            return 0
+        if message == WM_TIMER and int(wparam) == TOPMOST_TIMER_ID:
+            try:
+                self._bindings().keep_topmost(hwnd)
+            except Exception as exc:  # noqa: BLE001 - fail closed on z-order errors
+                LOGGER.warning("Native overlay topmost refresh failed: %s", type(exc).__name__)
+                self._fail_closed()
             return 0
         if message == WM_DESTROY:
             self._bindings().post_quit(0)
