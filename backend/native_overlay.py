@@ -28,6 +28,11 @@ WS_POPUP = 0x80000000
 WS_EX_LAYERED = 0x00080000
 WS_EX_TRANSPARENT = 0x00000020
 WS_EX_TOOLWINDOW = 0x00000080
+# Mark the popup as topmost at creation time as well as reasserting its z-order
+# with SetWindowPos.  On some Windows 11/DWM combinations a layered,
+# no-activate popup can otherwise remain in the normal z-order band after a
+# foreground transition even when SetWindowPos reports success.
+WS_EX_TOPMOST = 0x00000008
 WS_EX_NOACTIVATE = 0x08000000
 LWA_COLORKEY = 0x00000001
 LWA_ALPHA = 0x00000002
@@ -364,7 +369,7 @@ class _Win32:
         if not atom and ctypes.get_last_error() != 1410:  # ERROR_CLASS_ALREADY_EXISTS
             raise ctypes.WinError(ctypes.get_last_error())
         hwnd = self.user32.CreateWindowExW(
-            WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
+            WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE,
             controller._class_name,
             controller.title,
             WS_POPUP,
