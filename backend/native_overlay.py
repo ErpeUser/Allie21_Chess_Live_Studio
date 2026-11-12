@@ -1092,6 +1092,13 @@ class PrivateOverlayController:
             raise ValueError("overlay session is invalid")
         with self._render_lock:
             with self._lock:
+                # A claim can be retried while the lease is still active.  In
+                # that case the cursor belongs to the same incarnation and
+                # must remain monotonic; only a tombstoned session is a fresh
+                # incarnation after a global reset.
+                was_retired = session_id in self._retired_sessions
+                if not was_retired:
+                    return
                 self._retired_sessions.discard(session_id)
                 try:
                     self._retired_order.remove(session_id)

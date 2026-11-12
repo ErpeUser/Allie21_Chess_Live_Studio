@@ -198,3 +198,10 @@ PR #9 `feat: finalize opening, loading, overlay, and launcher reliability` wurde
 - Weiterhin UNTESTED/BLOCKED: echte Windows-Onedir-/EXE-Abnahme, Edge-Reload,
   Playwright-/DPI-/HWND-/OBS-/getDisplayMedia-Capture, vollständige
   `uv`-Qualitätsumgebung sowie neue CI-Ausführung nach dem Korrektur-Commit.
+
+## Nachtrag – Active-lease Cursor Guard (2026-11-12)
+
+- Review-Korrektur: `PrivateOverlayController.resume_session()` leert den Render-Cursor nur noch, wenn die Session tatsächlich durch `reset()` tombstoned wurde.
+- Ein erneuter Claim einer noch aktiven Lease-Session lässt die monotone Generation/Revision unverändert; verspätete Frames bleiben dadurch verworfen.
+- Neuer Regressionstest: `tests/test_native_overlay.py::test_resuming_active_session_keeps_render_cursor`.
+- Aktuelle gezielte Verifikation: native Overlay 17/17 PASS, PositionTracker 1/1 PASS, Node-Suite 73/73 PASS.
