@@ -1,5 +1,10 @@
 # Reproduzierbare Versionen und Prüfstand
 
+## Update 11.2.22 / Edge-Erweiterung 11.2.22.0
+
+Der aktuelle Stand synchronisiert Anwendung, Userscript und Edge-Erweiterung auf 11.2.22 beziehungsweise 11.2.22.0. Eröffnungs-Auswahlen für beide Farben werden im Ergebnis gespiegelt. Die Oberfläche zeigt Modell-Ladezustände und vorsichtige Taktik-Hinweise; unbekannte Partiegeschichten bleiben ohne konkrete Pfeile. Der Windows-Launcher verwendet zusätzlich einen benannten Single-Instance-Mutex und Overlay-Sessions werden beim Start/Stop invalidiert.
+
+
 ## Update 11.2.21 / Edge-Erweiterung 11.2.21.0
 
 Der aktuelle Stand verwendet für Anwendung und Userscript 11.2.21; `browser/manifest.json` ist 11.2.21.0 mit `version_name` 11.2.21.

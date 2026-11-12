@@ -100,6 +100,44 @@ def repertoire_move_for(moves: list[str], side: str, selection: str | None = Non
         return line[len(history)]
     return None
 
+def tactical_hints(board: chess.Board) -> list[str]:
+    """Return short, legal mate hints for the visible position.
+
+    This is deliberately a bounded tactical scan, separate from Allie's human
+    move probabilities and Stockfish evaluation.  It never claims a forced
+    mate in two: the second message describes one legal continuation so the
+    UI can label it as a possibility rather than a certainty.
+    """
+    legal = list(board.legal_moves)
+    for move in legal:
+        after = board.copy(stack=False)
+        san = board.san(move)
+        after.push(move)
+        if after.is_checkmate():
+            return [f"Nächster Schachmatt: {san}#"]
+
+    # Keep the UI responsive in busy middlegames while still covering every
+    # move in ordinary opening positions.  Move ordering puts checks first.
+    ordered = sorted(legal, key=lambda candidate: (board.gives_check(candidate), board.is_capture(candidate)), reverse=True)[:24]
+    for first in ordered:
+        after_first = board.copy(stack=False)
+        first_san = board.san(first)
+        after_first.push(first)
+        replies = list(after_first.legal_moves)
+        replies = sorted(replies, key=lambda candidate: (after_first.gives_check(candidate), after_first.is_capture(candidate)), reverse=True)[:24]
+        for reply in replies:
+            after_reply = after_first.copy(stack=False)
+            reply_san = after_first.san(reply)
+            after_reply.push(reply)
+            finishes = sorted(list(after_reply.legal_moves), key=lambda candidate: (after_reply.gives_check(candidate), after_reply.is_capture(candidate)), reverse=True)[:64]
+            for finish in finishes:
+                final = after_reply.copy(stack=False)
+                final_san = after_reply.san(finish)
+                final.push(finish)
+                if final.is_checkmate():
+                    return [f"Mögliche Mattfolge in 2 Zügen: {first_san} … {reply_san} {final_san}#"]
+    return []
+
 def epd_key(board: chess.Board) -> str:
     return board.epd(en_passant='legal')
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.21
+// @version      11.2.22
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
@@ -57,7 +57,7 @@
  *{box-sizing:border-box}button,input,select{font:inherit}#bubble{background:#4b3426;color:#fff3e2;border:1px solid #a77a4d;border-radius:999px;padding:10px 14px;font-size:12px;font-weight:650;cursor:pointer;box-shadow:0 6px 18px #1a0e088c,0 0 0 1px #f2d4a522 inset;letter-spacing:.01em}#bubble:before{content:'';display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:#d6ad67;box-shadow:0 0 8px #d6ad67}
  #panel{display:none;width:360px;max-width:calc(100vw - 20px);max-height:76vh;overflow:auto;background:#2a1d17f7;color:#f7ead8;border:1px solid #806044;box-shadow:0 18px 42px #160b08bf,0 0 0 1px #f2d4a51a inset;border-radius:14px;padding:16px;line-height:1.45;font-size:12px;backdrop-filter:blur(10px)}
  #panel.open{display:block}h3{margin:10px 0 5px;color:#e1bd7c;font-size:13px}p{margin:6px 0}label{display:block;margin:8px 0 4px;color:#dfc7ab}.row{display:flex;gap:9px;align-items:center}.row>*{flex:1;min-width:0}#close{flex:0 0 32px;padding:6px;background:transparent;color:#f7ead8;border-color:#8c694d}input,select{width:100%;min-height:38px;padding:8px 9px;background:#1d1410;border:1px solid #72543d;border-radius:8px;color:#f8eee3}input:focus,select:focus{outline:2px solid #c99a5c;outline-offset:1px}
- button{min-height:38px;border:1px solid #8b6546;background:#704c32;color:#fff3e2;border-radius:8px;padding:7px;cursor:pointer;transition:background .15s ease,border-color .15s ease}button:hover{background:#8a5d3a;border-color:#b78755}.item{display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #604631;padding:7px 0}.stat{color:#d2b991}.warn{color:#f0b28c}.small{font-size:11px;color:#c5ab8b}#results{margin-top:10px}.insight{background:#39271d;border:1px solid #694b35;border-radius:9px;margin:8px 0;padding:10px 11px;box-shadow:0 4px 12px #180c081f}.analysis-title{display:flex;justify-content:space-between;align-items:center;color:#e1bd7c;font-weight:700;margin-top:11px}
+ button{min-height:38px;border:1px solid #8b6546;background:#704c32;color:#fff3e2;border-radius:8px;padding:7px;cursor:pointer;transition:background .15s ease,border-color .15s ease}button:hover{background:#8a5d3a;border-color:#b78755}.item{display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid #604631;padding:7px 0}.opening-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0}.opening-card{border:1px solid #765538;border-radius:9px;padding:8px;background:#39271d}.opening-card small{display:block;color:#c5ab8b;font-size:10px;text-transform:uppercase}.opening-card b{color:#f0d49f}.tactical{background:#4a3325;border:1px solid #987240;color:#ffdc91;font-weight:700;border-radius:9px;padding:9px 10px;margin:8px 0}.stat{color:#d2b991}.warn{color:#f0b28c}.small{font-size:11px;color:#c5ab8b}#results{margin-top:10px}.insight{background:#39271d;border:1px solid #694b35;border-radius:9px;margin:8px 0;padding:10px 11px;box-shadow:0 4px 12px #180c081f}.analysis-title{display:flex;justify-content:space-between;align-items:center;color:#e1bd7c;font-weight:700;margin-top:11px}
  </style>
  <button id='bubble'>Allie · Analyse</button>
  <section id='panel'><div class='row'><b style='font-size:15px'>Allie Live-Analyse</b><button id='close' aria-label='Fenster schließen'>×</button></div>
@@ -72,7 +72,7 @@
   <div><label>Schwarzes Opening</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='stafford'>Stafford-Gambit</option><option value='traxler'>Traxler-Gegenangriff</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <label class='private-row'><input id='privateMode' type='radio' name='overlayMode'> Privater Modus (geschütztes Windows-Overlay)</label>
- <label class='private-row'><input id='shareMode' type='radio' name='overlayMode'> HUD in Bildschirmübertragung anzeigen</label>
+ <label class='private-row'><input id='shareMode' type='radio' name='overlayMode'> HUD in Bildschirmübertragung anzeigen (Viewer-Fenster teilen)</label>
  <label class='private-row'><input id='normalMode' type='radio' name='overlayMode'> Browser-HUD nur im Schach-Tab</label>
  <button id='retryPrivate' type='button'>Overlay-Status erneut pruefen</button>
  <p id='privateStatus' class='small'>Privatmodus wird synchronisiert …</p><p class='small'>Privat schützt den HUD vor Aufnahmen, Share zeigt ihn in Aufnahmen, Browser-HUD bleibt im Tab.</p>
@@ -332,6 +332,10 @@
  function visualSource(){return /(^|\.)lichess\.org$/.test(location.hostname)?'lichess_dom':/\.chess\.com$/.test('.'+location.hostname)?'chesscom_dom':'unknown'}
  function shortAnalysisKey(value){let hash=2166136261;for(const char of String(value||'')){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619)}return (hash>>>0).toString(16).padStart(8,'0')}
  function visualArrows(data){
+  // Never publish concrete arrows for a FEN/partial-history position.  This
+  // guard covers both the board-local SVG and the native screen overlay.
+  const historyKnown=data?.fen_only!==true&&data?.show_moves!==false&&data?.history_complete!==false&&data?.turn_verified!==false;
+  if(!historyKnown)return [];
   const out=[];
   for(const [items,color] of [[(data?.opponent_moves||[]).slice(0,2),[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[(data?.my_moves||[]).slice(0,2),[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[data?.premove].filter(Boolean),[ARROW_COLORS.premove]]])for(const [index,item] of items.entries())if(/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(item?.uci||''))out.push({uci:item.uci,color:color[index]||color[0],opacity:index?0.65:0.96});
   return out.slice(0,8);
@@ -339,7 +343,8 @@
  function overlayMode(){return normalizeOverlayMode(cfg.overlayMode)}
  function visualPayload(mode='stale',data={}){
   const board=boardElement();
-   return{schema_version:1,session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:(mode==='share'||mode==='normal')&&!cfg.privateMode&&cfg.enabled};
+  const nativeVisible=(mode==='private'&&cfg.privateMode)||(mode==='share'&&!cfg.privateMode&&cfg.enabled)||(mode==='normal'&&!cfg.privateMode&&cfg.enabled);
+   return{schema_version:1,session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,analysis_key:shortAnalysisKey(analysisKey),fen:data?.fen||'',mode,source:visualSource(),geometry:visualGeometry(board),arrows:visualArrows(data),messages:insightLines(data),visible:nativeVisible};
  }
  let pendingVisualUpdate=null;
  function sendVisualUpdate(mode='stale',data={}){
@@ -427,7 +432,7 @@
    }
    return true;
  }
- function paint(data){currentResult=data;if(data?.reviewed_finished_game||!cfg.enabled||cfg.privateMode||!atHistoryEnd()){clearOverlay();sendVisualUpdate(cfg.privateMode?'private':'stale',data);return}
+ function paint(data){currentResult=data;if(data?.reviewed_finished_game||data?.fen_only===true||data?.show_moves===false||data?.history_complete===false||data?.turn_verified===false||!cfg.enabled||cfg.privateMode||!atHistoryEnd()){clearOverlay();sendVisualUpdate(cfg.privateMode?'private':'stale',data);return}
    const board=boardElement();if(!board)return clearOverlay();observeBoardGeometry(board);const rect=board.getBoundingClientRect();
   if(rect.width<130||rect.height<130)return clearOverlay();
   // Render in board-local pixels instead of a viewport-sized SVG.  A global
@@ -455,7 +460,7 @@
    board.appendChild(svg);sendVisualUpdate(overlayMode(),data);
  }
  function insightLines(data){
-  return (Array.isArray(data?.plan_messages)?data.plan_messages:[]).filter(Boolean).slice(0,6);
+  return [...(Array.isArray(data?.tactical_hints)?data.tactical_hints.map(h=>'⚡ '+h):[]),...(Array.isArray(data?.plan_messages)?data.plan_messages:[])].filter((message,index,array)=>message&&array.indexOf(message)===index).slice(0,6);
  }
  // Use space outside the board; on a full-screen board the panel is placed
  // below it in document coordinates and remains accessible by scrolling.
@@ -484,6 +489,9 @@
  }
  function show(data){if(cfg.privateMode){el('results').replaceChildren();el('results').hidden=true;el('panel').classList.remove('open');syncBubbleVisibility();wrapper.style.display='none';return}el('results').hidden=false;wrapper.style.display='';let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
+  const selected=data.opening_selection||{};
+  if(selected.white?.primary&&selected.black?.primary)html+=`<div class='opening-grid'><div class='opening-card'><small>Weißes Opening</small><b>${escape(selected.white.primary)}</b></div><div class='opening-card'><small>Schwarzes Opening</small><b>${escape(selected.black.primary)}</b></div></div>`;
+  const planText=(data.plan_messages||[]).join(' ');for(const hint of data.tactical_hints||[])if(!planText.includes(String(hint)))html+=`<div class='tactical'>⚡ ${escape(hint)}</div>`;
   if(data.repertoire?.primary)html+=`<p class='small'><b>Repertoire:</b> ${escape(data.repertoire.primary)}${data.repertoire.selection?` · Auswahl ${escape(data.repertoire.selection)}`:''}${data.repertoire.expected_san?` · nächster Wunschzug ${escape(data.repertoire.expected_san)}`:''}</p>`;
   const choices=Array.isArray(data.moves)?data.moves.slice(0,5):[];
   if(choices.length){html+='<h3>Menschliche Zugwahrscheinlichkeit</h3>';for(const choice of choices){const probability=Number(choice.probability);html+=`<div class='item'><span>${escape(choice.san||choice.uci||'')}</span><span>${Number.isFinite(probability)&&probability>=0&&probability<=1?(100*probability).toFixed(1)+' %':'unbekannt'}</span></div>`}html+="<p class='small'>Allie-Modellausgabe, keine Gewinnchance. Stil und Repertoire koennen die Reihenfolge beeinflussen.</p>";}
@@ -675,7 +683,7 @@
    const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
    const request=(source,preview,final)=>{
      const fallback=source==='stockfish'&&!fen;
-     const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,...openingSettings,analysis_source:fen?'stockfish':source,preview:fen?false:preview};
+     const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,...openingSettings,analysis_source:fen?'stockfish':source,preview:fen?false:preview,show_moves:fen?false:true};
     const fail=error=>{
      if(serial!==analysisSerial)return;
      activeRequest=null;
@@ -691,6 +699,12 @@
        const delay=Math.min(12000,2000*(2**Math.min(busyRetries++,3)));
        retryAfter=Date.now()+delay;
        if(current())el('status').textContent='Analyse bereits aktiv – erneuter Versuch folgt.';
+       setTimeout(()=>{if(serial===analysisSerial)scheduleTick()},delay+50);
+       return;
+     }
+     if(error?.status===503&&/Modell wird noch geladen|model_loading/i.test(message)){
+       pending=false;busyRetries=0;const delay=5000;retryAfter=Date.now()+delay;
+       if(current())el('status').textContent='Allie-Modell wird geladen … neuer Versuch folgt.';
        setTimeout(()=>{if(serial===analysisSerial)scheduleTick()},delay+50);
        return;
      }
