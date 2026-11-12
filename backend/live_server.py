@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import html
 import json
+import logging
 import os
 import threading
 import time
 import uuid
 import webbrowser
 from collections.abc import Mapping
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 from urllib.error import URLError
 from urllib.request import Request as URLRequest
 from urllib.request import urlopen
@@ -49,11 +50,18 @@ from service_status import readiness_status
 from starlette.concurrency import run_in_threadpool
 
 ROOT = Path(__file__).resolve().parents[1]
+LOGGER = logging.getLogger(__name__)
 MAX_JSON = 64 * 1024
 SESSION = LiveSession()
 BROWSER_TRACKERS = BrowserTrackerPool()
 PRIVATE_OVERLAY = PrivateOverlayController()
-OVERLAY_LEASES = OverlayLeaseManager(on_expire=lambda _lease: PRIVATE_OVERLAY.clear('lease_expired'))
+
+
+def _expire_overlay(_lease) -> None:
+    PRIVATE_OVERLAY.clear('lease_expired')
+
+
+OVERLAY_LEASES = OverlayLeaseManager(on_expire=_expire_overlay)
 REQUEST_LIMITER = RequestRateLimiter()
 ANALYZE_GATE = threading.Semaphore(1)
 FRAME_GATE = threading.Semaphore(1)
@@ -126,12 +134,6 @@ def restore_overlay_mode() -> dict[str, object]:
 @app.on_event('startup')
 async def _restore_overlay_on_startup() -> None:
     restore_overlay_mode()
-
-
-@app.on_event('startup')
-async def _preload_model_on_startup() -> None:
-    if os.environ.get('ALLIE_NO_PRELOAD') != '1':
-        start_model_preload()
 
 
 def _preload_model() -> None:
@@ -253,16 +255,16 @@ class OverlaySettingsRequest(InputModel):
         if value is None:
             return None
         if isinstance(value, bool):
-            raise ValueError('updated_at muss ein Zeitstempel sein')
+            raise TypeError('updated_at muss ein Zeitstempel sein')
         if isinstance(value, (int, float)):
             if value < 0 or not float(value) == float(value):
                 raise ValueError('updated_at muss ein Zeitstempel sein')
             return float(value)
         if isinstance(value, str):
             try:
-                parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                parsed = datetime.fromisoformat(value)
                 if parsed.tzinfo is None:
-                    parsed = parsed.replace(tzinfo=timezone.utc)
+                    parsed = parsed.replace(tzinfo=UTC)
                 return parsed.timestamp()
             except ValueError as exc:
                 raise ValueError('updated_at muss ein ISO-Zeitstempel sein') from exc
@@ -439,7 +441,7 @@ def capability(request: Request):
 @app.get('/api/pairing')
 def pairing_status(request: Request):
     origin = request.headers.get('origin', '')
-    if origin.startswith('http://127.0.0.1') or origin.startswith('http://localhost'):
+    if origin.startswith(('http://127.0.0.1', 'http://localhost')):
         return {'pairing_code': get_pairing_code()}
     extension_worker = not origin and request.headers.get('x-allie-extension') == '1'
     if (origin in EXTENSION_ORIGINS or extension_worker) and request.headers.get('x-allie-overlay') == '1':
@@ -450,7 +452,7 @@ def pairing_status(request: Request):
 @app.post('/api/pairing/regenerate')
 def pairing_regenerate(request: Request):
     origin = request.headers.get('origin', '')
-    if origin.startswith('http://127.0.0.1') or origin.startswith('http://localhost'):
+    if origin.startswith(('http://127.0.0.1', 'http://localhost')):
         return {'pairing_code': regenerate_pairing_code()}
     raise HTTPException(403, 'Nur der lokale Viewer darf den Pairing-Code ändern')
 
@@ -593,7 +595,7 @@ def _require_overlay_settings_access(request: Request) -> None:
     """
     origin = request.headers.get('origin', '')
     extension_worker = not origin and request.headers.get('x-allie-extension') == '1'
-    local_origin = origin.startswith('http://127.0.0.1') or origin.startswith('http://localhost')
+    local_origin = origin.startswith(('http://127.0.0.1', 'http://localhost'))
     extension_origin = origin in EXTENSION_ORIGINS and request.headers.get('x-allie-overlay') == '1'
     web_origin = origin in WEB_ORIGINS and request.headers.get('x-allie-overlay') == '1'
     if local_origin or extension_worker:
@@ -617,10 +619,10 @@ def overlay_settings_update(payload: OverlaySettingsRequest, request: Request):
     # state. A supplied version must be at least the current monotonic value;
     # stale writes are reported without changing the mode.
     with _OVERLAY_SETTINGS_LOCK:
-        current_version = int(OVERLAY_SETTINGS.get('version', 1))
+        current_version = int(cast(int, OVERLAY_SETTINGS.get('version', 1)))
         current_mode = str(OVERLAY_SETTINGS.get('mode', 'private'))
-        requested_timestamp = float(payload.updated_at or 0)
-        current_timestamp = float(OVERLAY_SETTINGS.get('updated_at', 0))
+        requested_timestamp = float(cast(float | str | None, payload.updated_at) or 0)
+        current_timestamp = float(cast(float, OVERLAY_SETTINGS.get('updated_at', 0)))
         if (payload.version is not None
                 and (payload.version < current_version
                      or (payload.version == current_version and payload.mode != current_mode
@@ -639,7 +641,7 @@ def overlay_settings_update(payload: OverlaySettingsRequest, request: Request):
             next_version = max(current_version + 1, int(payload.version or 0))
             next_updated = max(
                 time.time(), requested_timestamp,
-                float(OVERLAY_SETTINGS.get('updated_at', 0)) + 1e-6,
+                float(cast(float, OVERLAY_SETTINGS.get('updated_at', 0))) + 1e-6,
             )
             OVERLAY_SETTINGS.update({
                 'mode': payload.mode,
@@ -653,8 +655,8 @@ def overlay_settings_update(payload: OverlaySettingsRequest, request: Request):
     if payload.mode == 'normal':
         try:
             PRIVATE_OVERLAY.set_mode('normal')
-        except Exception:  # noqa: BLE001 - normal mode must remain fail-safe
-            pass
+        except Exception:
+            LOGGER.debug('Normal overlay transition failed during settings update', exc_info=True)
         OVERLAY_LEASES.force_release()
         with _OVERLAY_SETTINGS_LOCK:
             OVERLAY_SETTINGS['confirmed_mode'] = 'normal'
@@ -682,7 +684,7 @@ def overlay_mode(request: OverlayModeRequest):
         if request.mode == 'normal':
             OVERLAY_LEASES.force_release()
         with _OVERLAY_SETTINGS_LOCK:
-            current_version = int(OVERLAY_SETTINGS.get('version', 1))
+            current_version = int(cast(int, OVERLAY_SETTINGS.get('version', 1)))
             current_mode = str(OVERLAY_SETTINGS.get('mode', 'private'))
             current_confirmed = str(OVERLAY_SETTINGS.get('confirmed_mode', 'private'))
             if current_mode != request.mode or current_confirmed != request.mode:
@@ -690,7 +692,7 @@ def overlay_mode(request: OverlayModeRequest):
                     'mode': request.mode,
                     'confirmed_mode': request.mode,
                     'version': current_version + 1,
-                    'updated_at': max(time.time(), float(OVERLAY_SETTINGS.get('updated_at', 0)) + 1e-6),
+                    'updated_at': max(time.time(), float(cast(float, OVERLAY_SETTINGS.get('updated_at', 0))) + 1e-6),
                 })
                 _persist_overlay_settings(OVERLAY_SETTINGS)
     return result

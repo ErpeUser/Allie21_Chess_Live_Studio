@@ -103,9 +103,8 @@ class PolicyTests(unittest.TestCase):
                 if path == stage:
                     raise PermissionError('file locked')
                 return original(path, destination)
-            with patch.object(Path, 'rename', rename):
-                with self.assertRaises(PermissionError):
-                    m.replace_directory(stage, target, backup)
+            with patch.object(Path, 'rename', rename), self.assertRaises(PermissionError):
+                m.replace_directory(stage, target, backup)
             self.assertEqual((target / 'old').read_text(), 'preserve')
             self.assertTrue(stage.exists())
             self.assertFalse(backup.exists())

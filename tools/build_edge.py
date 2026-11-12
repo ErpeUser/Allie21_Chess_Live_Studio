@@ -7,7 +7,7 @@ import json
 import shutil
 import subprocess
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -44,7 +44,7 @@ def build(source: Path, output: Path, archive: Path | None, commit: str | None) 
         "revision": source_revision(output),
         "commit": commit or git_revision(),
         "version": version,
-        "built_at_utc": datetime.now(timezone.utc).isoformat(),
+        "built_at_utc": datetime.now(UTC).isoformat(),
     }
     (output / "allie-build.json").write_text(
         json.dumps(stamp, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"

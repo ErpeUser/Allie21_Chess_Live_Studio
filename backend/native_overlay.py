@@ -822,7 +822,9 @@ class NativeOverlayController:
             try:
                 api.show_window(hwnd, SW_HIDE)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug(
+                    'Failed to hide overlay after capture-policy failure', exc_info=True
+                )
             return False
         with self._lock:
             self._capture_excluded = bool(enabled)

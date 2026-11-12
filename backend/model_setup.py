@@ -25,7 +25,7 @@ def prepare_model(*, download: bool = False) -> Path:
         allow_patterns=MODEL_FILES, local_files_only=not download,
     )
     if not isinstance(location, str):
-        raise RuntimeError('Model cache did not return a snapshot directory')
+        raise TypeError('Model cache did not return a snapshot directory')
     folder = Path(location)
     for name in MODEL_FILES:
         path = folder / name

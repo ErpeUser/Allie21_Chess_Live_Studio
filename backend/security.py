@@ -1,15 +1,15 @@
 """Per-process capability and bounded request controls for the local API."""
 from __future__ import annotations
 
-import math
 import json
+import math
 import os
-from pathlib import Path
 import secrets
 import threading
 import time
 from collections import deque
 from collections.abc import Callable
+from pathlib import Path
 
 from fastapi import HTTPException, Request
 
@@ -135,12 +135,13 @@ class RequestRateLimiter:
                     events.popleft()
                 if not events:
                     del self._events[old_policy]
-            events = self._events.get(policy)
-            if events is None:
+            current_events = self._events.get(policy)
+            if current_events is None:
                 if len(self._events) >= self.max_keys:
                     return False
-                events = deque()
-                self._events[policy] = events
+                current_events = deque()
+                self._events[policy] = current_events
+            events = current_events
             if len(events) >= limit:
                 return False
             events.append(now)

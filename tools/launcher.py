@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import ctypes
-from ctypes import wintypes
 import json
 import os
 import socket
 import subprocess
 import sys
 import webbrowser
+from ctypes import wintypes
 from pathlib import Path
 from threading import Thread
 from time import sleep

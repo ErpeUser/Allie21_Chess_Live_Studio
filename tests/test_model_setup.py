@@ -48,9 +48,8 @@ def test_partial_cache_not_reported_ready(tmp_path):
     module = setup_module_under_test()
     (tmp_path / 'config.json').write_text('{"model_type":"allie"}')
     downloader = Mock(return_value=str(tmp_path))
-    with patch.dict(sys.modules, {'huggingface_hub': SimpleNamespace(snapshot_download=downloader)}):
-        with pytest.raises(RuntimeError, match='model.safetensors'):
-            module.prepare_model(download=False)
+    with patch.dict(sys.modules, {'huggingface_hub': SimpleNamespace(snapshot_download=downloader)}), pytest.raises(RuntimeError, match='model.safetensors'):
+        module.prepare_model(download=False)
 
 
 def test_bad_config_not_reported_ready(tmp_path):
@@ -58,9 +57,8 @@ def test_bad_config_not_reported_ready(tmp_path):
     snapshot(tmp_path)
     (tmp_path / 'config.json').write_text('[]')
     downloader = Mock(return_value=str(tmp_path))
-    with patch.dict(sys.modules, {'huggingface_hub': SimpleNamespace(snapshot_download=downloader)}):
-        with pytest.raises(RuntimeError, match='config'):
-            module.prepare_model(download=False)
+    with patch.dict(sys.modules, {'huggingface_hub': SimpleNamespace(snapshot_download=downloader)}), pytest.raises(RuntimeError, match='config'):
+        module.prepare_model(download=False)
 
 
 def test_cli_failure_has_nonzero_exit_and_no_sensitive_exception(capsys):

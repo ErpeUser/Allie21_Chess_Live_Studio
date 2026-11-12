@@ -41,7 +41,7 @@ def route_functions():
     except ImportError:
         pass
     code = ast.Module(body=[ast.ImportFrom(module='__future__', names=[ast.alias(name='annotations')], level=0), *definitions], type_ignores=[])
-    exec(compile(ast.fix_missing_locations(code), 'live_server_routes', 'exec'), namespace)
+    exec(compile(ast.fix_missing_locations(code), 'live_server_routes', 'exec'), namespace)  # noqa: S102
     return namespace
 
 

@@ -6,7 +6,12 @@ from pathlib import Path
 from fastapi import HTTPException, Request
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
-from security import CAPABILITY_TOKEN, INSTANCE_ID, RequestRateLimiter, require_capability
+from security import (
+    CAPABILITY_TOKEN,
+    INSTANCE_ID,
+    RequestRateLimiter,
+    require_capability,
+)
 
 
 def request_with(token, instance=INSTANCE_ID):

@@ -1,18 +1,22 @@
 """Chess recognition via published chessvision API; optional RapidOCR for visible move lists."""
 from __future__ import annotations
 
+import logging
 import math
 import re
 import time
+from typing import cast
+
+LOGGER = logging.getLogger(__name__)
 
 
 def sanitize_ocr_history(text: str) -> str:
     """Conservatively keep numbered moves, not stream chat. Legal PGN is checked later."""
     text = (text.replace('×', 'x').replace('–', '-').replace('—', '-')
-                 .translate(str.maketrans({
+                 .translate(str.maketrans(cast(dict[str, str | int | None], {
                      '♔': 'K', '♕': 'Q', '♖': 'R', '♗': 'B', '♘': 'N',
                      '♚': 'K', '♛': 'Q', '♜': 'R', '♝': 'B', '♞': 'N',
-                 })))
+                 }))))
     # Lichess often renders move numbers in a separate column without a
     # trailing period (for example: 1 e4 e5 2 Nf3). Normalize only numbers
     # directly followed by a SAN token; clocks and board coordinates remain untouched.
@@ -95,7 +99,7 @@ class BoardVision:
         # depend on the board size and missed histories on responsive layouts.
         top = max(0, int(y - .20 * h))
         bottom = min(fh, int(y + 1.15 * h))
-        gap = max(4, int(round(.03 * w)))
+        gap = max(4, round(.03 * w))
         reach = max(96, int(2.1 * w))
         candidates: list[tuple[int, int, int, int]] = []
 
@@ -119,7 +123,10 @@ class BoardVision:
         for bounds in candidates:
             try:
                 result = self.ocr(np.asarray(frame.crop(bounds)))
-            except Exception:  # noqa: BLE001 - optional OCR failure yields no text
+            except Exception:
+                LOGGER.debug('Optional OCR crop failed', exc_info=True)
+                result = None
+            if result is None:
                 continue
             rows = []
             if result is None or any(getattr(result, name, None) is None

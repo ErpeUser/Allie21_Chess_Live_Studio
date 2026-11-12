@@ -25,7 +25,12 @@ from allie_local_server import (
     safe_aggressive_order,
 )
 from browser_session import BrowserTrackerPool
-from chess_extras import opening_for_position, repertoire_move_for, standard_repertoire, tactical_hints
+from chess_extras import (
+    opening_for_position,
+    repertoire_move_for,
+    standard_repertoire,
+    tactical_hints,
+)
 from live_session import LiveSession
 from position_tracker import PositionTracker
 
@@ -282,7 +287,7 @@ class ChessTests(unittest.TestCase):
         hints = tactical_hints(mate_in_one)
         self.assertTrue(any('Nächster Schachmatt' in hint for hint in hints))
 
-        mate_in_two = chess.Board('kr6/1r1N3/2Q5/8/8/8/8/K7 w - - 0 1')
+        mate_in_two = chess.Board('kr6/1r1N4/2Q5/8/8/8/8/K7 w - - 0 1')
         hints = tactical_hints(mate_in_two)
         self.assertTrue(any('2 Zügen' in hint for hint in hints))
 

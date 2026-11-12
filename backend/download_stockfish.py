@@ -8,7 +8,7 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import BinaryIO
+from typing import Protocol
 from urllib.request import Request, urlopen
 
 URL = 'https://github.com/official-stockfish/Stockfish/releases/download/sf_19/stockfish-windows-x86-64-universal.zip'
@@ -18,6 +18,14 @@ DEST = Path(__file__).resolve().parent / 'engines'
 MAX_ARCHIVE_SIZE = 125_000_000
 MAX_EXE_SIZE = 175_000_000
 CHUNK_SIZE = 1024 * 1024
+
+
+class _ReadableBinary(Protocol):
+    def read(self, size: int = -1) -> bytes: ...
+
+
+class _WritableBinary(Protocol):
+    def write(self, data: bytes) -> int: ...
 
 
 def verified_executable(path: Path) -> bool:
@@ -31,7 +39,8 @@ def verified_executable(path: Path) -> bool:
         return False
 
 
-def _copy_verified(source: BinaryIO, destination: BinaryIO, limit: int, expected: str) -> int:
+def _copy_verified(source: _ReadableBinary, destination: _WritableBinary,
+                   limit: int, expected: str) -> int:
     digest = hashlib.sha256()
     total = 0
     while chunk := source.read(CHUNK_SIZE):

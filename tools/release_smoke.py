@@ -47,7 +47,7 @@ def fetch_json(url: str, *, timeout: float = 1.0) -> tuple[int, dict[str, object
         status = int(response.status)
         payload = json.loads(response.read(64 * 1024).decode('utf-8'))
     if not isinstance(payload, dict):
-        raise ValueError('JSON-Antwort ist kein Objekt')
+        raise TypeError('JSON-Antwort ist kein Objekt')
     return status, payload
 
 

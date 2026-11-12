@@ -129,7 +129,7 @@ def tactical_hints(board: chess.Board) -> list[str]:
             after_reply = after_first.copy(stack=False)
             reply_san = after_first.san(reply)
             after_reply.push(reply)
-            finishes = sorted(list(after_reply.legal_moves), key=lambda candidate: (after_reply.gives_check(candidate), after_reply.is_capture(candidate)), reverse=True)[:64]
+            finishes = sorted(after_reply.legal_moves, key=lambda candidate: (after_reply.gives_check(candidate), after_reply.is_capture(candidate)), reverse=True)[:64]
             for finish in finishes:
                 final = after_reply.copy(stack=False)
                 final_san = after_reply.san(finish)

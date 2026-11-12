@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
 
-from service_status import readiness_status  # noqa: E402
+from service_status import readiness_status
 
 
 def test_loading_phase_is_not_ready_even_when_model_object_exists():

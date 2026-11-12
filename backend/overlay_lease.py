@@ -1,14 +1,15 @@
 """Short-lived ownership leases for the single native private overlay."""
 from __future__ import annotations
 
+import logging
 import secrets
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 LEASE_SECONDS = 30.0
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -46,8 +47,8 @@ class OverlayLeaseManager:
             if callback is not None:
                 try:
                     callback(lease)
-                except Exception:  # noqa: BLE001 - cleanup must not break auth
-                    pass
+                except Exception:
+                    LOGGER.debug('Overlay lease expiry cleanup failed', exc_info=True)
             lease = None
         return lease
 
