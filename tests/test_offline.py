@@ -115,6 +115,14 @@ class StandaloneTests(unittest.TestCase):
         self.assertNotIn('AllieLauncher', script)
         self.assertNotIn('auto_setup.ps1', script)
 
+    def test_launcher_has_os_level_single_instance_guard(self):
+        source = (ROOT / 'tools/launcher.py').read_text(encoding='utf-8')
+        self.assertIn('CreateMutexW', source)
+        self.assertIn('ERROR_ALREADY_EXISTS', source)
+        guard = allie_launcher.SingleInstanceGuard()
+        self.assertTrue(guard.acquire())
+        guard.release()
+
     def test_launcher_check_mode_validates_adjacent_project(self):
         launcher = ROOT / 'tools' / 'launcher.py'
         self.assertTrue(launcher.is_file())
@@ -241,7 +249,7 @@ class StandaloneTests(unittest.TestCase):
 
     def test_overlay_is_targeted_batched_and_latest_only(self):
         overlay = (ROOT / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8')
-        self.assertIn('@version      11.2.20', overlay)
+        self.assertIn('@version      11.2.22', overlay)
         manifest = json.loads((ROOT / 'browser/manifest.json').read_text(encoding='utf-8'))
         self.assertEqual(manifest['version_name'], manifest['version'].rsplit('.', 1)[0])
         self.assertIn('@match        https://www.chess.com/play/*', overlay)

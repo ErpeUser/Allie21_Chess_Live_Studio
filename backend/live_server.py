@@ -59,6 +59,7 @@ ANALYZE_GATE = threading.Semaphore(1)
 FRAME_GATE = threading.Semaphore(1)
 MODEL_STATE_LOCK = threading.RLock()
 MODEL_STATE = 'not_started'
+_MODEL_PRELOAD_THREAD: threading.Thread | None = None
 _CHESSCOM_HISTORY_CACHE: dict[str, tuple[float, str]] = {}
 _CHESSCOM_HISTORY_LOCK = threading.RLock()
 _OVERLAY_SETTINGS_LOCK = threading.RLock()
@@ -127,6 +128,12 @@ async def _restore_overlay_on_startup() -> None:
     restore_overlay_mode()
 
 
+@app.on_event('startup')
+async def _preload_model_on_startup() -> None:
+    if os.environ.get('ALLIE_NO_PRELOAD') != '1':
+        start_model_preload()
+
+
 def _preload_model() -> None:
     global MODEL_STATE
     with MODEL_STATE_LOCK:
@@ -152,15 +159,23 @@ def _preload_model() -> None:
 
 
 def start_model_preload() -> threading.Thread:
-    """Load Allie and warm its opening cache while the local UI starts."""
-    global MODEL_STATE
+    """Load Allie once and warm its opening cache while the UI starts.
+
+    Startup hooks can be invoked more than once by a tray/reloader host.
+    Reusing the existing worker avoids duplicate multi-gigabyte loads and keeps
+    the health phase monotonic.
+    """
+    global MODEL_STATE, _MODEL_PRELOAD_THREAD
     with MODEL_STATE_LOCK:
+        if _MODEL_PRELOAD_THREAD is not None:
+            return _MODEL_PRELOAD_THREAD
         MODEL_STATE = 'loading'
-    worker = threading.Thread(
-        target=_preload_model, name='allie-model-warmup', daemon=True
-    )
-    worker.start()
-    return worker
+        worker = threading.Thread(
+            target=_preload_model, name='allie-model-warmup', daemon=True
+        )
+        _MODEL_PRELOAD_THREAD = worker
+        worker.start()
+        return worker
 
 
 class InputModel(BaseModel):
@@ -459,7 +474,7 @@ def analyze(request: AnalysisRequest):
             headers={'Retry-After': '5'},
         )
         return response
-    if needs_model and model_phase == 'failed' and allie._model is None:
+    if needs_model and model_phase == 'failed':
         response = JSONResponse(
             {'error': 'Allie-Modell konnte nicht geladen werden', 'phase': 'model_failed'},
             status_code=503,
@@ -476,12 +491,16 @@ def analyze(request: AnalysisRequest):
 
 @app.post('/api/start')
 def start(request: StartRequest):
-    return run(lambda: (PRIVATE_OVERLAY.clear('session-start'), SESSION.start(request.model_dump()))[1])
+    # A new capture session invalidates every delayed frame and lease first.
+    OVERLAY_LEASES.force_release()
+    PRIVATE_OVERLAY.reset('session-start')
+    return run(lambda: SESSION.start(request.model_dump()))
 
 
 @app.post('/api/stop')
 def stop():
-    PRIVATE_OVERLAY.clear('session-stop')
+    OVERLAY_LEASES.force_release()
+    PRIVATE_OVERLAY.reset('session-stop')
     return SESSION.stop()
 
 

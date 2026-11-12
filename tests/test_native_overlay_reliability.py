@@ -231,6 +231,46 @@ class NativeReliabilityTests(unittest.TestCase):
         controller.stop()
         self.assertEqual(sum(item[0] == "unregister_class" for item in fake.calls), 2)
 
+    def test_payload_visibility_is_fail_closed_for_native_hud(self):
+        private = overlay.PrivateOverlayController()
+        private._native = overlay.NativeOverlayController(api=FakeWin32())
+        try:
+            result = private.update({
+                'session_id': 'visibility', 'generation': 1, 'render_revision': 1,
+                'mode': 'private', 'visible': False,
+                'geometry': {'screen_board': {'left': 100, 'top': 100, 'width': 640, 'height': 640}, 'orientation': 'white'},
+                'arrows': [{'uci': 'e2e4'}],
+            })
+            self.assertFalse(result['visible'])
+            self.assertEqual(result['reason'], 'payload_not_visible')
+        finally:
+            private.close()
+
+    def test_reset_retires_session_and_hides_delayed_overlay_updates(self):
+        private = overlay.PrivateOverlayController()
+        private._native = overlay.NativeOverlayController(api=FakeWin32())
+        try:
+            private.update({
+                'session_id': 'reset-session', 'generation': 1, 'render_revision': 1,
+                'mode': 'private', 'geometry': {
+                    'screen_board': {'left': 100, 'top': 100, 'width': 640, 'height': 640},
+                    'orientation': 'white',
+                }, 'arrows': [{'uci': 'e2e4'}],
+            })
+            self.assertEqual(private.status()['state'], 'active')
+            private.reset('session-stop')
+            self.assertEqual(private.status()['state'], 'hidden')
+            stale = private.update({
+                'session_id': 'reset-session', 'generation': 2, 'render_revision': 2,
+                'mode': 'private', 'geometry': {
+                    'screen_board': {'left': 100, 'top': 100, 'width': 640, 'height': 640},
+                    'orientation': 'white',
+                }, 'arrows': [{'uci': 'e2e4'}],
+            })
+            self.assertEqual(stale['reason'], 'retired_session_ignored')
+            self.assertFalse(stale['visible'])
+        finally:
+            private.close()
     def test_status_does_not_report_active_after_native_window_dies(self):
         private = overlay.PrivateOverlayController()
         private._state = "active"

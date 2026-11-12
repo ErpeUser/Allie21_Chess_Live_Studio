@@ -1072,9 +1072,8 @@ class PrivateOverlayController:
             pass
         max_retired = self._retired_order.maxlen or 64
         if len(self._retired_order) >= max_retired:
-            # The deque is only a diagnostic bound. Keep the set as a durable
-            # tombstone so a delayed session can never reactivate after many
-            # navigation cycles.
+            # The deque is only a diagnostic bound; retain durable tombstones
+            # so delayed sessions can never reactivate after many switches.
             self._retired_order.popleft()
         self._retired_order.append(session_id)
 
@@ -1158,6 +1157,11 @@ class PrivateOverlayController:
             mode = str(payload.get("mode", "private"))
             if mode != self._mode:
                 self._native.hide()
+                return self.status()
+            if payload.get('visible') is False:
+                self._native.hide()
+                with self._lock:
+                    self._state, self._reason = 'hidden', 'payload_not_visible'
                 return self.status()
             geometry = payload.get("geometry") or {}
             board = (geometry.get("screen_board") or geometry.get("board")) if isinstance(geometry, Mapping) else None
@@ -1280,6 +1284,19 @@ class PrivateOverlayController:
                     self._active_session_id = session_id
                     self._last_update_by_session[session_id] = cursor
                 self._state, self._reason = "hidden", str(reason)[:120]
+            self._native.hide()
+            return self.status()
+
+    def reset(self, reason: str = 'session_reset') -> dict[str, object]:
+        """Retire every pending visual update at a session boundary."""
+        with self._render_lock:
+            with self._lock:
+                self._retire_locked(self._active_session_id)
+                self._active_session_id = None
+                self._last_update_by_session.clear()
+                # Keep bounded tombstones so delayed requests from the
+                # immediately preceding sessions remain fail-closed.
+                self._state, self._reason = 'hidden', str(reason)[:120]
             self._native.hide()
             return self.status()
 

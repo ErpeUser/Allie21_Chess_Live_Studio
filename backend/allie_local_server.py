@@ -32,6 +32,7 @@ from chess_extras import (
     repertoire_move_for,
     standard_repertoire,
     stockfish_lines,
+    tactical_hints,
 )
 from config import MODEL_ID, MODEL_REVISION, parse_port, time_profile
 
@@ -337,8 +338,20 @@ def risk_weighted_premove(branches: list[tuple[float, list[dict[str, Any]]]]) ->
 def make_plan_messages(output: dict[str, Any]) -> list[str]:
     """Add information that is not already obvious from arrows and labels."""
     messages: list[str] = []
+    unknown_history = (output.get('uncertainty') or {}).get('level') == 'warning'
+    if unknown_history:
+        messages.append('Verlauf unbekannt: Pfeile bleiben ausgeblendet; PGN ab Zug 1 importieren.')
+    # Tactical bubbles are the most time-sensitive context and must remain
+    # visible in the native HUD, which intentionally carries only two lines.
+    for hint in (output.get('tactical_hints') or []):
+        messages.append('⚡ ' + str(hint))
+    selected = output.get('opening_selection') or {}
+    white = selected.get('white') or {}
+    black = selected.get('black') or {}
+    if white.get('primary') and black.get('primary'):
+        messages.append(f"Ausgewählte Eröffnungen · Weiß: {white['primary']} · Schwarz: {black['primary']}")
     repertoire = output.get('repertoire') or {}
-    if output.get('move_count', 0) <= 2 and repertoire.get('primary'):
+    if not unknown_history and output.get('move_count', 0) <= 2 and repertoire.get('primary'):
         messages.append(
             f"Standardrepertoire: {repertoire['primary']} · Alternative: {repertoire['alternative']}"
             f" · Weitere Option: {repertoire.get('additional', 'keine')}."
@@ -346,7 +359,7 @@ def make_plan_messages(output: dict[str, Any]) -> list[str]:
         if repertoire.get('expected_move'):
             messages.append('Allie-Kandidat aus dem Repertoire: ' +
                             str(repertoire.get('expected_san') or repertoire['expected_move']) + '.')
-    elif repertoire.get('expected_move'):
+    elif not unknown_history and repertoire.get('expected_move'):
         messages.append('Ausgewähltes Repertoire folgt weiter: ' +
                         str(repertoire.get('expected_san') or repertoire['expected_move']) + '.')
     opening = output.get('opening') or {}
@@ -451,6 +464,9 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
     opening = opening_for_position(board, moves)
     if opening:
         opening = {**opening, 'idea': opening_note(opening)}
+    tactical = tactical_hints(board)
+    if fen_only or payload.get('show_moves') is False:
+        tactical = [f'Stellungs-Hinweis ohne Zugverlauf: {hint}' for hint in tactical]
     candidate_moves: list[dict[str, Any]] = []
     wdl = None
     expected_think_time = None
@@ -465,8 +481,12 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
     player_to_move = player_side == ('white' if board.turn else 'black')
     requested_opening = payload.get('opening_white' if player_side == 'white' else 'opening_black')
     repertoire: dict[str, Any] = standard_repertoire(player_side, requested_opening)
+    opening_selection = {
+        'white': standard_repertoire('white', payload.get('opening_white')),
+        'black': standard_repertoire('black', payload.get('opening_black')),
+    }
     repertoire['expected_move'] = None
-    if player_to_move:
+    if player_to_move and not fen_only and payload.get('show_moves', True) is not False:
         repertoire['expected_move'] = repertoire_move_for(moves, player_side, repertoire['selection'])
     if repertoire['expected_move']:
         try:
@@ -616,10 +636,13 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
         'rating_white': white_elo, 'rating_black': black_elo,
         'mode': mode, 'play_style': play_style, 'time_control': tc, 'move_count': len(moves),
         'side_to_move': 'white' if board.turn else 'black', 'fen': board.fen(),
-        'fen_only': fen_only, 'opening': opening, 'position_facts': position_facts(board),
+        'fen_only': fen_only, 'show_moves': bool(payload.get('show_moves', True)),
+        'opening': opening, 'position_facts': position_facts(board),
         'moves': candidate_moves, 'wdl': wdl, 'expected_think_time_s': expected_think_time,
         'player_side': player_side, 'player_to_move': player_to_move,
         'repertoire': repertoire,
+        'opening_selection': opening_selection,
+        'tactical_hints': tactical,
         'my_moves': my_moves, 'opponent_moves': opponent_moves, 'premove': premove,
         'tactical_warnings': warnings,
         'stockfish': sf,

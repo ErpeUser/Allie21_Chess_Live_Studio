@@ -11,6 +11,10 @@ def check(root: Path) -> dict:
     userscript = re.search(r'@version\s+([^\r\n]+)', (root / 'browser/allie21_overlay.user.js').read_text(encoding='utf-8'))
     if not project or not userscript or project[1] != userscript[1].strip():
         raise ValueError('Application/userscript version mismatch')
+    lock_text = (root / 'uv.lock').read_text(encoding='utf-8')
+    lock = re.search(r'(?ms)\[\[package\]\]\s*name = "allie21-chess-live-studio"\s*version = "([^"]+)"', lock_text)
+    if not lock or lock[1] != project[1]:
+        raise ValueError('uv.lock project version mismatch')
     manifest = json.loads((root / 'browser/manifest.json').read_text(encoding='utf-8'))
     version = manifest.get('version', '')
     if not re.fullmatch(r'\d+\.\d+\.\d+\.\d+', version):

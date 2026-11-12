@@ -17,7 +17,7 @@ def readiness_status(*, model_loaded: bool, stockfish_available: bool,
     """Describe the requested engine combination, not just HTTP availability."""
     if source not in {'allie', 'stockfish', 'both'}:
         raise ValueError('Unknown analysis source')
-    if source in {'allie', 'both'} and not model_loaded:
+    if source in {'allie', 'both'} and (not model_loaded or model_phase in {'loading', 'failed'}):
         phase = {
             'failed': 'model_failed',
             'not_started': 'model_not_started',

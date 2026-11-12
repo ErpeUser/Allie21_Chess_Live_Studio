@@ -145,3 +145,15 @@ Beim Fortsetzen zuerst diese Datei, `AGENT_TASK.md` und die referenzierten Agent
   HWND-/OBS-/getDisplayMedia-Capture und GitHub-Actions-Nachlauf am neuen
   Commit. Keine EXE oder Release-URL wird für diesen Arbeitsstand behauptet.
 
+
+## Checkpoint 12.11.2026 — final-integrity 11.2.22 worktree
+
+- Ausgangsstand geprüft: remote `main` war `758776e4cd6ae19afd80e2628bed751207c295b1`; der aktuelle Abschluss wird über einen Review-Branch und anschließend per Pull Request in `main` integriert.
+- Behoben: beide Opening-Auswahlen werden als `opening_selection.white/black` normalisiert und in Viewer, Userscript und Native-HUD sichtbar gemacht; die aktive Repertoirelinie bleibt seitenbezogen.
+- Behoben: objektive Taktik-Blobs für unmittelbares Matt und vorsichtige mögliche Mattfolgen in zwei Zügen; bei FEN/unvollständigem Verlauf sind sie ausdrücklich als Stellungs-Hinweise markiert, während konkrete Pfeile und Repertoirezüge unterdrückt werden.
+- Behoben: FEN-/unbekannte-history-Anfragen senden `show_moves=false`; Browser-SVG, Bildschirm-HUD und native Overlay respektieren die Sichtbarkeits-/History-Gates. Viewer-Share weist ausdrücklich auf die unterstützte Viewer-Fenster-/Monitor-Aufnahme und die Grenzen des Quellfenster-Koordinatenpfads hin.
+- Behoben: Modellphase `loading`/`failed` bleibt auch bei vorhandenem Modellobjekt nicht bereit; ASGI-Startup startet den idempotenten Preload. Viewer und Userscript zeigen den Ladevorgang mit Spinner und begrenztem Retry.
+- Behoben: `/api/start` und `/api/stop` invalidieren Overlay-Sessions und geben Leases frei; native `reset()` und `visible=false` verhindern verspätete Reaktivierung. Windows-Launcher nutzt einen benannten Mutex mit expliziten HANDLE-Signaturen.
+- Synchronisiert: Anwendung, Userscript, Extension, Lockfile und Dokumentation auf 11.2.22 / 11.2.22.0; `tools/check_versions.py` prüft jetzt auch `uv.lock`.
+- Verifikation in dieser Umgebung: `python -m compileall -q backend tools tests` PASS; `python -m unittest discover -s tests -v` 138 gesammelt, dependency-gated Fehler wegen fehlendem `python-chess`/`pytest`, ein Tombstone-Test nach Korrektur PASS; `python -m unittest tests.test_offline -v` 35/35 PASS; `node --test tests/*.js` 72/72 PASS; `python tools/check_versions.py` PASS.
+- Externe Gates bleiben bewusst offen: Windows-Onedir-/EXE-Build, echte Edge-/Playwright-/DPI-/OBS-/Discord-Capture-Abnahme und Full-Python-Lauf mit gesperrter `uv`-Umgebung müssen in der Zielumgebung nach dem Merge laufen.

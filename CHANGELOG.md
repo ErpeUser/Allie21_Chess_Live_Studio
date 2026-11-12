@@ -1,3 +1,10 @@
+## v11.2.22
+
+- Opening-Auswahl für Weiß und Schwarz wird im Analyseergebnis separat angezeigt; die Auswahl bleibt unabhängig vom aktuell ziehenden Spieler sichtbar.
+- Taktik-Blobs zeigen unmittelbares Matt und vorsichtige mögliche Mattfolgen in zwei Zügen.
+- Ladezustand, Modellfehler und API-/Schema-Kompatibilität werden im Viewer sichtbar; FEN- und unbekannte Verläufe bleiben pfeilfrei.
+- Native Overlay-Sessions werden beim Start/Stop sauber invalidiert; der Windows-Launcher schützt sich mit einem benannten Mutex gegen Doppelstarts.
+
 ## v11.2.21
 
 - Tab- und Programmwechsel löschen private/native Snapshots sofort; der HUD wird erst nach Fokus-Rückkehr und einer aktuellen Stellung wieder aufgebaut.

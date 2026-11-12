@@ -49,5 +49,6 @@ echo.
 echo FEHLER: Der lokale Server konnte nicht starten. Ist Port %ALLIE_PORT% bereits belegt?
 
 :failed
+if "%ALLIE_NO_BROWSER%"=="1" exit /b 1
 pause
 exit /b 1

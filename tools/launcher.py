@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ctypes
+from ctypes import wintypes
 import json
 import os
 import socket
@@ -60,6 +61,44 @@ PORTABLE_REQUIRED = (
     "app/release-version.json",
     "runtime/python.exe",
 )
+
+
+class SingleInstanceGuard:
+    """Use a Windows named mutex to close the launcher race window."""
+
+    ERROR_ALREADY_EXISTS = 183
+    NAME = r'Global\Allie21ChessLiveStudioLauncher'
+
+    def __init__(self) -> None:
+        self._handle = None
+
+    def acquire(self) -> bool:
+        if os.name != 'nt':
+            return True
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32.CreateMutexW.argtypes = (wintypes.LPVOID, wintypes.BOOL, wintypes.LPCWSTR)
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        ctypes.set_last_error(0)
+        handle = kernel32.CreateMutexW(None, False, self.NAME)
+        if not handle:
+            error_code = ctypes.get_last_error()
+            raise OSError(error_code, 'CreateMutexW fehlgeschlagen')
+        if ctypes.get_last_error() == self.ERROR_ALREADY_EXISTS:
+            kernel32.CloseHandle(handle)
+            return False
+        self._handle = handle
+        return True
+
+    def release(self) -> None:
+        if self._handle is None or os.name != 'nt':
+            return
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        kernel32.CloseHandle(self._handle)
+        self._handle = None
 
 
 def is_portable_bundle(root: Path) -> bool:
@@ -259,6 +298,13 @@ class TrayApp:
         if self.process is not None and self.owns_process:
             self.process.wait()
             icon.stop()
+            return
+        if self.reused_existing:
+            # A tray restart may attach to a healthy server that we do not
+            # own; still close the stale tray icon when that service vanishes.
+            while self.reused_existing and is_allie_service(health_snapshot(self.port)):
+                sleep(1.0)
+            icon.stop()
 
     def run(self) -> int:
         import pystray
@@ -293,15 +339,20 @@ def main() -> int:
         if sys.stdout is not None:
             print(f"{TITLE}: OK ({root})")
         return 0
-    app = None
+    guard = SingleInstanceGuard()
     try:
+        if not guard.acquire():
+            error('Allie läuft bereits. Das vorhandene Fenster/Tray-Symbol wird weiterverwendet.')
+            return 3
         app = TrayApp(root)
         return app.run()
     except (ImportError, OSError, RuntimeError) as exc:
-        if app is not None:
+        if 'app' in locals() and app is not None:
             app.stop_server()
         error(f"Der Start ist fehlgeschlagen:\n\n{exc}")
         return 1
+    finally:
+        guard.release()
 
 
 if __name__ == "__main__":

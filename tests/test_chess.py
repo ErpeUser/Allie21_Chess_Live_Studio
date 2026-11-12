@@ -25,7 +25,7 @@ from allie_local_server import (
     safe_aggressive_order,
 )
 from browser_session import BrowserTrackerPool
-from chess_extras import opening_for_position, repertoire_move_for, standard_repertoire
+from chess_extras import opening_for_position, repertoire_move_for, standard_repertoire, tactical_hints
 from live_session import LiveSession
 from position_tracker import PositionTracker
 
@@ -265,6 +265,26 @@ class ChessTests(unittest.TestCase):
         self.assertEqual(repertoire_move_for([], 'white', 'vienna'), 'e2e4')
         self.assertEqual(standard_repertoire('black', 'alekhine')['primary'], 'Aljechin-Verteidigung')
         self.assertEqual(repertoire_move_for(['e2e4'], 'black', 'alekhine'), 'g8f6')
+
+    def test_analysis_exposes_both_selected_openings(self):
+        result = analyse_position({
+            'pgn': '*', 'analysis_source': 'stockfish',
+            'opening_white': 'vienna', 'opening_black': 'stafford',
+        }, FakeAllie())
+        self.assertEqual(result['opening_selection']['white']['primary'], 'Wiener Gambit')
+        self.assertEqual(result['opening_selection']['black']['primary'], 'Stafford-Gambit')
+        joined = ' '.join(result['plan_messages'])
+        self.assertIn('Weiß: Wiener Gambit', joined)
+        self.assertIn('Schwarz: Stafford-Gambit', joined)
+
+    def test_tactical_hints_find_immediate_mate_and_two_ply_mate(self):
+        mate_in_one = chess.Board('7k/5Q2/6K1/8/8/8/8/8 w - - 0 1')
+        hints = tactical_hints(mate_in_one)
+        self.assertTrue(any('Nächster Schachmatt' in hint for hint in hints))
+
+        mate_in_two = chess.Board('kr6/1r1N3/2Q5/8/8/8/8/K7 w - - 0 1')
+        hints = tactical_hints(mate_in_two)
+        self.assertTrue(any('2 Zügen' in hint for hint in hints))
 
     def test_troll_repertoire_uses_existing_legal_opening_lines(self):
         self.assertEqual(standard_repertoire('white', 'halloween')['primary'], 'Halloween-Gambit')
