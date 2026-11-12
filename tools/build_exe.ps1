@@ -20,7 +20,18 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Stockfish download failed.' }
     }
     $expectedStockfishSha256 = '45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0'
-    if ((Get-FileHash -LiteralPath $stockfish -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedStockfishSha256) {
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $stream = [System.IO.File]::OpenRead($stockfish)
+        try {
+            $stockfishSha256 = ([System.BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+        } finally {
+            $stream.Dispose()
+        }
+    } finally {
+        $sha256.Dispose()
+    }
+    if ($stockfishSha256 -ne $expectedStockfishSha256) {
         throw 'Stockfish SHA-256 mismatch.'
     }
     $bundle = Join-Path $DistPath 'Allie21 Chess Live Studio'
