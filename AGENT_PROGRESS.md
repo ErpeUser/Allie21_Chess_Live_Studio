@@ -157,3 +157,8 @@ Beim Fortsetzen zuerst diese Datei, `AGENT_TASK.md` und die referenzierten Agent
 - Synchronisiert: Anwendung, Userscript, Extension, Lockfile und Dokumentation auf 11.2.22 / 11.2.22.0; `tools/check_versions.py` prüft jetzt auch `uv.lock`.
 - Verifikation in dieser Umgebung: `python -m compileall -q backend tools tests` PASS; `python -m unittest discover -s tests -v` 138 gesammelt, dependency-gated Fehler wegen fehlendem `python-chess`/`pytest`, ein Tombstone-Test nach Korrektur PASS; `python -m unittest tests.test_offline -v` 35/35 PASS; `node --test tests/*.js` 72/72 PASS; `python tools/check_versions.py` PASS.
 - Externe Gates bleiben bewusst offen: Windows-Onedir-/EXE-Build, echte Edge-/Playwright-/DPI-/OBS-/Discord-Capture-Abnahme und Full-Python-Lauf mit gesperrter `uv`-Umgebung müssen in der Zielumgebung nach dem Merge laufen.
+
+
+## Merge-Nachweis 12.11.2026
+
+PR #9 `feat: finalize opening, loading, overlay, and launcher reliability` wurde nach Rücklese des Review-Branches in `main` gemergt. Main-Commit: `e1cc10be4dd79d30619aad7047253b7b5f53d93b`. Die im Final-Integrity-Checkpoint genannten externen Gates bleiben weiterhin ausdrücklich offen, bis Windows-Onedir, echte Capture-/DPI-Abnahme und die vollständige gelockte Python-Suite in der Zielumgebung gelaufen sind.
