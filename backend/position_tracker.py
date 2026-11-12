@@ -182,8 +182,19 @@ class PositionTracker:
             self.history_origin = "initial-position" if self.complete_history else "partial-video"
             return Change(True, "Initial board acquired" if self.complete_history else "Started in midgame: unknown prior history")
         if self.board.board_fen() == placement:
-            if turn_known and self.board.turn != observed.turn:
-                return Change(False, "Side to move changed without a board move")
+            if turn_known:
+                if self.turn_verified and self.board.turn != observed.turn:
+                    return Change(False, "Side to move changed without a board move")
+                if not self.turn_verified:
+                    # A placement-only snapshot deliberately has no reliable
+                    # turn, castling, or en-passant state.  When a later full
+                    # FEN confirms the same placement, adopt those explicit
+                    # fields instead of keeping the synthetic white turn.
+                    self.board.turn = observed.turn
+                    self.board.castling_rights = observed.castling_rights
+                    self.board.ep_square = observed.ep_square
+                    self.turn_verified = True
+                    return Change(True, "Side to move verified")
             return Change(False, "Position unchanged")
 
         # A bot-selection preview can be replaced by a real game between two

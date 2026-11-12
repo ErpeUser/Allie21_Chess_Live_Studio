@@ -162,3 +162,39 @@ Beim Fortsetzen zuerst diese Datei, `AGENT_TASK.md` und die referenzierten Agent
 ## Merge-Nachweis 12.11.2026
 
 PR #9 `feat: finalize opening, loading, overlay, and launcher reliability` wurde nach Rücklese des Review-Branches in `main` gemergt. Main-Commit: `e1cc10be4dd79d30619aad7047253b7b5f53d93b`. Die im Final-Integrity-Checkpoint genannten externen Gates bleiben weiterhin ausdrücklich offen, bis Windows-Onedir, echte Capture-/DPI-Abnahme und die vollständige gelockte Python-Suite in der Zielumgebung gelaufen sind.
+
+## Checkpoint 12.11.2026 — aktueller main `683e5847`
+
+- Remote-Stand: `main` steht auf `683e5847eb53b5ef4bc18d0781a17be3d8448c35`
+  (`fix: exclude global packages from portable runtime`). Es gibt keine offenen
+  Pull Requests; das Repository ist privat und der authentifizierte Zugriff
+  besitzt Admin/Maintain/Push-Rechte.
+- CI #209 (`43245984541`) und Security #188 (`43245984443`) für diesen Commit
+  schlagen jeweils bereits im ersten Lauf und nach Wiederholung
+  (`run_attempt=2`) innerhalb weniger Sekunden fehl. Alle Jobs haben `steps=[]`,
+  `duration_ms=0` und keine Logs; der Log-Endpunkt liefert `BlobNotFound`.
+  Damit ist aktuell kein Test-, Lint-, CodeQL- oder Gitleaks-Fehler als
+  Codeursache belegbar. Windows-Release wurde nicht ausgeführt, weil der
+  Workflow ausschließlich `workflow_dispatch` verwendet. Der Blocker ist als
+  GitHub-Actions-/Runner-Infrastrukturproblem zu behandeln.
+- Lokale Prüfungen gegen den aus diesem Remote-Stand gelesenen Quellbaum:
+  `node --test tests/*.js` 73/73 PASS, `python -m compileall -q backend tools
+  tests` PASS, `tests.test_chess` 49/49 PASS mit den verfügbaren kleinen
+  Laufzeitabhängigkeiten. `uv sync --frozen --extra quality` wurde begonnen,
+  konnte aber wegen eines `fsspec`-Download-/Extraktions-Timeouts nicht
+  vollständig abgeschlossen werden; ein vollständiger locked Pytest-, Ruff- und
+  Mypy-Lauf ist daher weiterhin nicht nachgewiesen.
+- Korrektur: `PositionTracker` übernimmt bei unveränderter Platzierung eine
+  später gelieferte vollständige FEN (Zugrecht, Rochade- und En-passant-Feld)
+  und setzt `turn_verified`; Regressionstest
+  `tests/test_position_tracker_turn.py` ergänzt.
+- Korrektur: Ein frisch beanspruchtes Overlay-Lease darf nach einem globalen
+  `/api/start`-/`/api/stop`-Reset dieselbe logische Client-Sitzungs-ID erneut
+  verwenden. `PrivateOverlayController.resume_session()` entfernt nur das
+  Tombstone nach erfolgreichem Claim; alte Frames bleiben durch das neue
+  Lease-Token abgewiesen. Der Viewer rotiert seine Session-ID vor jedem neuen
+  Capture-Start. Regressionen in `tests/test_native_overlay.py` und
+  `tests/test_viewer_reliability.js`.
+- Weiterhin UNTESTED/BLOCKED: echte Windows-Onedir-/EXE-Abnahme, Edge-Reload,
+  Playwright-/DPI-/HWND-/OBS-/getDisplayMedia-Capture, vollständige
+  `uv`-Qualitätsumgebung sowie neue CI-Ausführung nach dem Korrektur-Commit.

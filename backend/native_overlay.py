@@ -1079,6 +1079,26 @@ class PrivateOverlayController:
             self._retired_order.popleft()
         self._retired_order.append(session_id)
 
+    def resume_session(self, session_id: str) -> None:
+        """Allow a freshly claimed lease to reuse its client session id.
+
+        A global server start/stop reset tombstones the previous session so
+        delayed frames cannot return.  The lease layer issues a new owner token
+        when that client claims the overlay again; removing only the matching
+        session tombstone here lets that new incarnation publish while old
+        frames remain rejected by the lease token check.
+        """
+        if not isinstance(session_id, str) or not session_id:
+            raise ValueError("overlay session is invalid")
+        with self._render_lock:
+            with self._lock:
+                self._retired_sessions.discard(session_id)
+                try:
+                    self._retired_order.remove(session_id)
+                except ValueError:
+                    pass
+                self._last_update_by_session.pop(session_id, None)
+
     def set_mode(self, mode: str) -> dict[str, object]:
         if mode not in {"private", "share", "normal"}:
             raise ValueError("overlay mode must be private, share or normal")

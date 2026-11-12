@@ -12,6 +12,7 @@ assert.match(html, /viewerFocused=false;overlayPublishQueued=null;if\(document\.
 assert.match(html, /if\(document\.hidden\)/);
 assert.match(html, /Capture-Ausschluss bestätigt; Overlay wartet auf aktive Analyse/);
 assert.match(html, /if\(privateOverlayRequested\(\)!==requested\)syncPrivateOverlay\(true\)/);
+assert.match(html, /function rotateViewerSession\(\)/);
 
 function loadViewer({privateRequested = false, response} = {}) {
   const elements = new Map();
@@ -91,6 +92,16 @@ test('viewer first run defaults to private mode', async () => {
   const viewer = loadViewer({privateRequested: null});
   await settle();
   assert.equal(viewer.elements.get('privateOverlayToggle').checked, true);
+});
+
+test('viewer rotates native overlay session before a new capture', async () => {
+  const viewer = loadViewer();
+  await settle();
+  const first = viewer.run('viewerSessionId');
+  viewer.context.crypto.randomUUID = () => 'next-test-uuid';
+  const second = viewer.run('rotateViewerSession()');
+  assert.notEqual(second, first);
+  assert.match(html, /rotateViewerSession\(\);\s*captureStartRequest=post\('\/api\/start'/);
 });
 
 test('private failure preserves request and suppresses browser fallback', async () => {

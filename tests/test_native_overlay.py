@@ -165,6 +165,23 @@ class NativeOverlayTests(unittest.TestCase):
         self.assertEqual(private._native.snapshot, current)
         private.close()
 
+    def test_claimed_session_can_resume_after_global_reset(self):
+        private = PrivateOverlayController()
+        fake = FakeWin32()
+        private._native = NativeOverlayController(api=fake)
+        geometry = {'board': {'left': 10, 'top': 20, 'width': 320, 'height': 320}, 'orientation': 'white'}
+        frame = {'session_id': 'viewer-session', 'generation': 1, 'render_revision': 1,
+                 'mode': 'private', 'geometry': geometry, 'arrows': []}
+        self.assertEqual(private.update(frame)['state'], 'active')
+        private.reset('session-stop')
+        self.assertEqual(private.update(frame)['reason'], 'retired_session_ignored')
+
+        private.resume_session('viewer-session')
+
+        resumed = dict(frame, generation=0, render_revision=1)
+        self.assertEqual(private.update(resumed)['state'], 'active')
+        private.close()
+
     def test_clear_with_new_session_retires_old_frames(self):
         private = PrivateOverlayController()
         fake = FakeWin32()

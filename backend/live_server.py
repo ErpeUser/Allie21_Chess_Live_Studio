@@ -704,6 +704,9 @@ def overlay_claim(request: OverlayClaimRequest):
         lease = OVERLAY_LEASES.claim(request.session_id)
     except OverlayLeaseConflict as exc:
         raise HTTPException(409, 'Privates Overlay wird bereits von einer anderen Sitzung verwendet') from exc
+    # A fresh lease is a new client incarnation even when the browser reused
+    # its logical session id after the global start/stop reset.
+    PRIVATE_OVERLAY.resume_session(request.session_id)
     return {'session_id': lease.session_id, 'owner_token': lease.owner_token,
             'expires_at': lease.expires_at}
 

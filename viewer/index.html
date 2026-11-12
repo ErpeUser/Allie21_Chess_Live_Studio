@@ -154,7 +154,13 @@ $('privateOverlayToggle').checked=overlayMode==='private';$('shareOverlayToggle'
  let privateOverlayStatus=null,privateOverlayPending=false,overlaySyncPromise=null,overlayOwnerToken='';
 let overlayPublishBusy=false,overlayPublishQueued=null,viewerFocused=true;
 let captureStarting=false,captureStopPromise=null,captureStartRequest=null,captureAbort=null;
- const viewerSessionId='viewer-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
+ const makeViewerSessionId=()=> 'viewer-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
+ let viewerSessionId=makeViewerSessionId();
+ function rotateViewerSession(){
+  viewerSessionId=makeViewerSessionId();
+  overlayOwnerToken='';overlayRevision=0;overlayPublishQueued=null;
+  return viewerSessionId;
+ }
 const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d',{alpha:false});
  function fitStage(){const v=$('video');if(!v.videoWidth||!v.videoHeight)return;$('screen').style.aspectRatio=`${v.videoWidth}/${v.videoHeight}`;}
  function refreshViewerGeometry(){fitStage();if(geometryRefreshTimer)return;geometryRefreshTimer=setTimeout(()=>{geometryRefreshTimer=0;geometryRevision++;if(privateOverlayEnabled()&&lastState)publishPrivateOverlay(lastState)},0)}
@@ -512,6 +518,7 @@ async function startCapture(){
     track.addEventListener('ended',()=>{if(id===tickId)end();},{once:true});
     const video=$('video');video.srcObject=stream;await video.play();
     if(id!==tickId||track.readyState==='ended')return;
+    rotateViewerSession();
     captureStartRequest=post('/api/start',settings());
     const state=await captureStartRequest;captureStartRequest=null;
     if(id!==tickId||track.readyState==='ended')return;

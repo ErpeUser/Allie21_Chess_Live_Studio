@@ -16,7 +16,8 @@ requireSource(viewer, 'function selectedOpeningSettings()', 'viewer has no norma
 requireSource(viewer, '...selectedOpeningSettings()', 'viewer requests do not use the selected opening snapshot');
 requireSource(viewer, 'USER_SETTINGS_KEY', 'viewer settings are not persisted between starts');
 requireSource(viewer, 'persistSettings()', 'viewer changes are not written to persistent settings');
-requireSource(viewer, 'const viewerSessionId=', 'viewer overlay uses a fixed session id');
+requireSource(viewer, 'let viewerSessionId=makeViewerSessionId()', 'viewer overlay session id is not generated');
+requireSource(viewer, 'function rotateViewerSession()', 'viewer overlay session is not rotated between captures');
 requireSource(overlay, 'function selectedOpeningSettings()', 'browser overlay has no normalized opening settings helper');
 requireSource(overlay, '...openingSettings', 'browser requests do not use the selected opening snapshot');
 
