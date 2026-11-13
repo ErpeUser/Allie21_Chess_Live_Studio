@@ -8,6 +8,7 @@ import unittest
 from ctypes import wintypes
 from pathlib import Path
 from types import SimpleNamespace
+from typing import ClassVar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
@@ -35,6 +36,47 @@ class Library:
 
 
 class NativeReliabilityTests(unittest.TestCase):
+    def test_native_message_expires_without_removing_arrows(self):
+        class FakeTimer:
+            instances: ClassVar[list[object]] = []
+
+            def __init__(self, _delay, callback, args=()):
+                self.callback = callback
+                self.args = args
+                self.cancelled = False
+                type(self).instances.append(self)
+
+            def start(self):
+                return None
+
+            def cancel(self):
+                self.cancelled = True
+
+            def fire(self):
+                if not self.cancelled:
+                    self.callback(*self.args)
+
+        private = overlay.PrivateOverlayController()
+        private._native = overlay.NativeOverlayController(api=FakeWin32())
+        original_timer = overlay.Timer
+        overlay.Timer = FakeTimer
+        try:
+            private.update({
+                'session_id': 'expiry', 'generation': 1, 'render_revision': 1,
+                'mode': 'private', 'geometry': {
+                    'screen_board': {'left': 200, 'top': 100, 'width': 640, 'height': 640},
+                    'orientation': 'white',
+                }, 'arrows': [{'uci': 'e2e4'}], 'messages': ['Develop your pieces.'],
+            })
+            timer = FakeTimer.instances[-1]
+            self.assertTrue(private._native.snapshot.message)
+            timer.fire()
+            self.assertEqual(private._native.snapshot.message, '')
+            self.assertEqual(len(private._native.snapshot.arrows), 1)
+        finally:
+            overlay.Timer = original_timer
+            private.close()
+
     def test_all_handle_apis_have_explicit_pointer_width_signatures(self):
         api = overlay._Win32.__new__(overlay._Win32)
         api.user32, api.gdi32, api.kernel32 = Library(), Library(), Library()

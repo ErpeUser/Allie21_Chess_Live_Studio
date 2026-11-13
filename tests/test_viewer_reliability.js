@@ -161,6 +161,18 @@ test('explanation containers are not descendants of capture screen', () => {
   assert.ok(!screen.includes('id="hud"'), 'text HUD must not cover the video');
 });
 
+test('viewer hints are compact, deduplicated and independently dismissible', async () => {
+  const viewer = loadViewer();
+  await settle();
+  viewer.run("stream={};showTransientHint('Entwickle die Figuren.','hint-1')");
+  assert.equal(viewer.elements.get('allieBubble').hidden, false);
+  assert.equal(viewer.elements.get('allieBubble').textContent, 'Entwickle die Figuren.');
+  viewer.run("showTransientHint('Neue Meldung','hint-1')");
+  assert.equal(viewer.elements.get('allieBubble').textContent, 'Entwickle die Figuren.');
+  viewer.run('clearTransientHint()');
+  assert.equal(viewer.elements.get('allieBubble').hidden, true);
+});
+
 test('playing style is an explicit validated setting, not silent extra randomness', async () => {
   const viewer = loadViewer();
   await settle();

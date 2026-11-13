@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.23
+// @version      11.2.24
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
@@ -89,7 +89,7 @@
  function persistOpeningSelection(){const selected=selectedOpeningSettings();Object.assign(cfg,selected,{whiteOpening:selected.opening_white,blackOpening:selected.opening_black});}
  function selectedOpeningSettings(){const white=el('whiteOpening').value,black=el('blackOpening').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackedHistorySignature='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0,overlaySettingsVersion=Number(overlayStored.version)||0,overlaySettingsUpdatedAt=String(overlayStored.updated_at||''),pageInactive=false;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackedHistorySignature='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0,overlaySettingsVersion=Number(overlayStored.version)||0,overlaySettingsUpdatedAt=String(overlayStored.updated_at||''),pageInactive=false,transientHintTimer=0,transientHintKey='',transientHintSerial=0;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');syncBubbleVisibility();placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');syncBubbleVisibility()};
@@ -445,7 +445,9 @@
   visualRequest?.abort?.();visualRequest=null;
    postJson('/api/overlay/clear',{session_id:boardSessionId,owner_token:overlayOwnerToken,generation:analysisSerial,render_revision:++visualRevision,reason},4000).promise.catch(()=>{});
  }
- function clearOverlay(){layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display='none';if(cfg.privateMode){el('results').replaceChildren();el('panel').classList.remove('open')}syncBubbleVisibility()}
+ function clearTransientHint(){transientHintSerial++;if(transientHintTimer){clearTimeout(transientHintTimer);transientHintTimer=0}transientHintKey='';const bubble=el('bubble');bubble.textContent='Allie · Analyse';bubble.style.display=el('panel').classList.contains('open')?'none':''}
+ function showTransientHint(message,key=''){message=String(message||'').trim();if(cfg.privateMode||!message){clearTransientHint();return}if(key&&key===transientHintKey&&el('bubble').style.display!=='none')return;const serial=++transientHintSerial;if(transientHintTimer)clearTimeout(transientHintTimer);transientHintKey=key||message;const bubble=el('bubble');bubble.textContent=message;bubble.style.display=el('panel').classList.contains('open')?'none':'';placePanel();transientHintTimer=setTimeout(()=>{if(serial!==transientHintSerial)return;transientHintTimer=0;transientHintKey='';bubble.textContent='Allie · Analyse';bubble.style.display=el('panel').classList.contains('open')?'none':''},5000)}
+ function clearOverlay(){clearTransientHint();layer.replaceChildren();if(renderedSvg?.isConnected)renderedSvg.remove();if(renderedBoard&&renderedPosition){renderedBoard.style.position=renderedInlinePosition}renderedBoard=null;renderedSvg=null;renderedPosition='';renderedInlinePosition='';layer.style.display=cfg.privateMode?'none':'';wrapper.style.display='none';if(cfg.privateMode){el('results').replaceChildren();el('panel').classList.remove('open')}syncBubbleVisibility()}
  function center(s,rect,ori){let file=s.charCodeAt(0)-97,rank=Number(s[1])-1;if(ori==='black'){file=7-file}else{rank=7-rank}return [rect.left+(file+.5)*rect.width/8,rect.top+(rank+.5)*rect.height/8]}
  function drawArrow(svg,rect,ori,uci,color,opacity=.87){
   if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci||''))return;
@@ -535,7 +537,8 @@
   for(const message of messages)html+=`<div class='insight'>${escape(message)}</div>`;
   if(data.stockfish){html+='<h3>Stockfish: objektiv</h3>';if(!data.stockfish.available)html+=`<p>${escape(data.stockfish.error||'Engine fehlt')}</p>`;else for(const m of data.stockfish.lines||[])html+=`<div class='item'><span>${escape(m.san)} | ${escape(m.variation)}</span><span>${escape(m.score)}</span></div>`}
   el('results').innerHTML=html;
-  if(messages.length&&!panelDismissed){el('panel').classList.add('open');placePanel()}
+  if(messages.length){let hint=String(messages[0]).replace(/^⚡\s*/,'').trim();if(hint.startsWith('Verlauf unbekannt'))hint='Zugfolge fehlt. Importiere die Partie als PGN.';else if(hint.length>110)hint=`${hint.slice(0,107).replace(/[\s,:;.-]+$/,'')}…`;showTransientHint(hint,`${analysisSerial}:${data.fen||''}:${hint}`)}else clearTransientHint();
+  // Keep the compact hint closed by default; the detailed panel opens only on click.
   syncBubbleVisibility();
  }
  let capabilityToken='',capabilityInstance='',capabilityPromise=null,capabilityRetryAfter=0,pairingCode='',pairingPromise=null,servicePort=normalizePort(cfg.port),servicePortPromise=null,serviceEpoch=0;

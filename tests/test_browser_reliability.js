@@ -59,7 +59,7 @@ function loadBrowser({stored = {}, privateStored = {privateMode: false}, respons
   window.getComputedStyle = context.getComputedStyle;
   const marker = '\n installNavigationLifecycle();';
   assert.ok(source.includes(marker));
-  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,el,wrapper,tick,readBoardSnapshot,hideForInactive,restoreOverlayAfterVisibility:typeof restoreOverlayAfterVisibility===\'function\'?restoreOverlayAfterVisibility:null,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
+  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,show,showTransientHint,clearTransientHint,el,wrapper,tick,readBoardSnapshot,hideForInactive,restoreOverlayAfterVisibility:typeof restoreOverlayAfterVisibility===\'function\'?restoreOverlayAfterVisibility:null,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
   vm.createContext(context);
   vm.runInContext(code, context, {filename: 'allie21_overlay.user.js'});
   return {hooks: context.hooks, context, values, elements, requests, timers, Element};
@@ -112,6 +112,17 @@ test('private mode keeps the browser HUD hidden from captures', async () => {
   const app = loadBrowser({stored:{privateMode:true},privateStored:{privateMode:true}});
   await app.hooks.tick();
   assert.equal(app.hooks.wrapper.style.display, 'none');
+});
+
+test('browser hint stays outside the detailed panel and expires without clearing arrows', () => {
+  const app = loadBrowser();
+  app.hooks.showTransientHint('Entwickle die Figuren.', 'hint-1');
+  assert.equal(app.elements.get('bubble').textContent, 'Entwickle die Figuren.');
+  assert.equal(app.elements.get('panel').classList.contains('open'), false);
+  const timer = [...app.timers.values()].find(item => item.ms === 5000);
+  assert.ok(timer, 'short hints must schedule a five-second dismissal');
+  timer.fn();
+  assert.equal(app.elements.get('bubble').textContent, 'Allie · Analyse');
 });
 
 test('corrupt persisted analysis settings are replaced with safe defaults', () => {

@@ -19,7 +19,7 @@ from collections import deque
 from collections.abc import Iterable, Mapping, Sequence
 from ctypes import wintypes
 from dataclasses import dataclass
-from threading import Event, RLock, Thread, current_thread
+from threading import Event, RLock, Thread, Timer, current_thread
 from typing import Any, cast
 
 # Window styles and messages.  Keeping the values local makes the module easy
@@ -1004,6 +1004,10 @@ class PrivateOverlayController:
         self._retired_order: deque[str] = deque(maxlen=64)
         self._state = "unsupported" if os.name != "nt" else "starting"
         self._reason = "Windows capture exclusion is unavailable" if os.name != "nt" else "not_started"
+        self._message_timer: Timer | None = None
+        self._message_token = 0
+        self._last_render_arrows: list[dict[str, object]] = []
+        self._last_render_bounds: tuple[int, int, int, int] | None = None
 
     @staticmethod
     def _square_point(square: str, board: Mapping[str, object], orientation: str) -> tuple[float, float]:
@@ -1078,6 +1082,30 @@ class PrivateOverlayController:
             # so delayed sessions can never reactivate after many switches.
             self._retired_order.popleft()
         self._retired_order.append(session_id)
+
+    def _cancel_message_timer_locked(self) -> None:
+        self._message_token += 1
+        timer = self._message_timer
+        self._message_timer = None
+        if timer is not None:
+            timer.cancel()
+
+    def _expire_message(self, token: int) -> None:
+        with self._render_lock:
+            with self._lock:
+                if token != self._message_token:
+                    return
+                arrows = [dict(item) for item in self._last_render_arrows]
+                bounds = self._last_render_bounds
+                self._message_timer = None
+            if bounds is None or not self._native.update(arrows, message="", bounds=bounds, message_rect=None):
+                return
+            with self._lock:
+                if token == self._message_token:
+                    self._state, self._reason = (
+                        "active",
+                        "capture_exclusion_verified" if self._mode == "private" else "share_mode_capture_enabled",
+                    )
 
     def resume_session(self, session_id: str) -> None:
         """Allow a freshly claimed lease to reuse its client session id.
@@ -1271,6 +1299,15 @@ class PrivateOverlayController:
                     message = ""
             if self._native.update(arrows, message=message, bounds=bounds, message_rect=message_rect):
                 with self._lock:
+                    self._cancel_message_timer_locked()
+                    self._last_render_arrows = [dict(item) for item in arrows]
+                    self._last_render_bounds = bounds
+                    if message:
+                        token = self._message_token
+                        timer = Timer(5.0, self._expire_message, args=(token,))
+                        timer.daemon = True
+                        self._message_timer = timer
+                        timer.start()
                     self._state, self._reason = (
                         "active",
                         "capture_exclusion_verified" if self._mode == "private" else "share_mode_capture_enabled",
@@ -1311,6 +1348,9 @@ class PrivateOverlayController:
                         return self.status()
                     self._active_session_id = session_id
                     self._last_update_by_session[session_id] = cursor
+                self._cancel_message_timer_locked()
+                self._last_render_arrows = []
+                self._last_render_bounds = None
                 self._state, self._reason = "hidden", str(reason)[:120]
             self._native.hide()
             return self.status()
@@ -1324,14 +1364,20 @@ class PrivateOverlayController:
                 self._last_update_by_session.clear()
                 # Keep bounded tombstones so delayed requests from the
                 # immediately preceding sessions remain fail-closed.
+                self._cancel_message_timer_locked()
+                self._last_render_arrows = []
+                self._last_render_bounds = None
                 self._state, self._reason = 'hidden', str(reason)[:120]
             self._native.hide()
             return self.status()
 
     def close(self) -> None:
-        self._native.stop()
         with self._lock:
+            self._cancel_message_timer_locked()
+            self._last_render_arrows = []
+            self._last_render_bounds = None
             self._state, self._reason = "stopped", "closed"
+        self._native.stop()
 
 
 # Convenient short alias for callers that do not need the longer class name.
