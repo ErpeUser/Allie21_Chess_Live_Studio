@@ -60,28 +60,38 @@ class PositionTracker:
             if game.board().fen() != chess.STARTING_FEN:
                 return Change(False, "Notation starts from a custom position")
             board = chess.Board()
+            states = [board.copy(stack=True)]
             moves = []
             for move in game.mainline_moves():
                 if move not in board.legal_moves:
                     return Change(False, "Illegal move in notation")
                 board.push(move)
                 moves.append(move.uci())
+                states.append(board.copy(stack=True))
             if not moves:
                 return Change(False, "No readable moves")
             if observed_fen:
                 observed = chess.Board(observed_fen)
                 if not self._is_valid_observation(observed, turn_known=verify_turn):
                     return Change(False, "Visible board is not a valid chess position")
-                if (board.board_fen() != observed.board_fen()
-                        or (verify_turn and board.turn != observed.turn)):
+                matching_lengths = [
+                    length for length, state in enumerate(states)
+                    if state.board_fen() == observed.board_fen()
+                    and (not verify_turn or state.turn == observed.turn)
+                ]
+                if not matching_lengths:
                     return Change(False, "Notation does not match visible board")
-            if (
-                self.complete_history
-                and self.board
-                and self.board.board_fen() == board.board_fen()
-                and len(moves) < len(self.moves)
-            ):
-                return Change(False, "Partial notation; retaining longer recorded history")
+                if self.complete_history and self.moves:
+                    selected_length = min(
+                        matching_lengths,
+                        key=lambda length: (abs(length - len(self.moves)), -length),
+                    )
+                else:
+                    selected_length = matching_lengths[0]
+                board = states[selected_length].copy(stack=True)
+                moves = moves[:selected_length]
+                if not moves:
+                    return Change(False, "No readable moves")
             if self.complete_history and moves == self.moves:
                 return Change(False, "Notation unchanged")
             self.board = board
