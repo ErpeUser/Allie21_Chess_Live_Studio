@@ -1,3 +1,9 @@
+## v11.2.23
+
+- Lichess-Verlaufsnavigation über Hash-Ply-Wechsel behält die Browser-Sitzung und den Tracker; ein normaler `<cg-board>`-/`<wc-chess-board>`-DOM-Austausch während eines Zuges löscht die Analyse nicht mehr.
+- Der Zugverlauf liest aktive `.a1t`-/`.selected`-/`aria-current`-Marker, unterstützt obfuskierte Lichess-Move-Tags und analysiert den manuell ausgewählten Halbzug statt ausschließlich das Ende der Partie.
+- Chess.com- und Lichess-Kandidaten werden bei geändertem Verlauf erneut synchronisiert; der Backend-Tracker akzeptiert zusätzlich einen validierten PGN-Präfix, wenn ein vollständiger Kandidat zu einer früher ausgewählten Stellung gehört.
+
 ## v11.2.22
 
 - Opening-Auswahl für Weiß und Schwarz wird im Analyseergebnis separat angezeigt; die Auswahl bleibt unabhängig vom aktuell ziehenden Spieler sichtbar.

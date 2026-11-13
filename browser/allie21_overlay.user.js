@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.22
+// @version      11.2.23
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
@@ -89,11 +89,11 @@
  function persistOpeningSelection(){const selected=selectedOpeningSettings();Object.assign(cfg,selected,{whiteOpening:selected.opening_white,blackOpening:selected.opening_black});}
  function selectedOpeningSettings(){const white=el('whiteOpening').value,black=el('blackOpening').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0,overlaySettingsVersion=Number(overlayStored.version)||0,overlaySettingsUpdatedAt=String(overlayStored.updated_at||''),pageInactive=false;
+ let pending=false,lastPGN='',currentResult=null,retryAfter=0,busyRetries=0,lastPlacement='',trackedPGN='',trackedFen='',trackedHistorySignature='',trackingPending=false,currentBoard=null,analysisKey='',tickTimer=0,activeRequest=null,analysisSerial=0,unsettledPlacement='',unsettledRetries=0,panelDismissed=false,visualRevision=0,visualRequest=null,repaintFrame=0,boardResizeObserver=null,observedBoard=null,boardAnimationHandlers=[],renderedBoard=null,renderedSvg=null,renderedPosition='',renderedInlinePosition='',privateUnavailable=false,privateOverlayState='not_started',privateOverlayArrowCount=0,overlaySettingsVersion=Number(overlayStored.version)||0,overlaySettingsUpdatedAt=String(overlayStored.updated_at||''),pageInactive=false;
  const cancelAnalysis=()=>{analysisSerial++;if(activeRequest){activeRequest.abort();activeRequest=null}pending=false};
  el('bubble').onclick=()=>{panelDismissed=false;el('panel').classList.add('open');syncBubbleVisibility();placePanel()};
  el('close').onclick=()=>{panelDismissed=true;el('panel').classList.remove('open');syncBubbleVisibility()};
- const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
+ const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';trackedHistorySignature='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
  const normalizePort=value=>{const port=Number(value);return Number.isInteger(port)&&port>=1024&&port<=65535?port:8765};
  cfg.port=normalizePort(cfg.port);
  const updateSettings=()=>{cfg.elo=normalizeElo(el('elo').value);cfg.tc=normalizeTimeControl(el('tc').value);cfg.port=normalizePort(el('port').value);cfg.orientation=normalizeEnum(el('orientation').value,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(el('playerSide').value,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(el('playStyle').value,['normal','aggressive'],'normal');persistOpeningSelection();save();setServicePort(cfg.port);try{chrome?.storage?.local?.set?.({port:cfg.port})}catch{};invalidate();scheduleTick(true)};
@@ -111,7 +111,31 @@
  el('retryPrivate').onclick=()=>syncPrivateMode(true);
  let sessionHash=Date.now()>>>0,visualRefreshPending=false;
   let boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2)),overlayOwnerToken='';
+ const currentBoardContextKey=()=>{const hash=String(location.hash||'').replace(/^#(?:ply|move)?=?\d+$/i,'');return `${location.hostname.toLowerCase()}|${location.pathname}|${location.search}|${hash}`};
+ let boardContextKey=currentBoardContextKey();
+ function shouldResetBoardSession(previousKey,nextKey){return Boolean(previousKey&&nextKey&&previousKey!==nextKey)}
  const selectors=['wc-simple-move-list [data-node]','wc-vertical-move-list [data-node]','wc-horizontal-move-list [data-node]','wc-move-list [data-node]','wc-move-list .main-line-ply','wc-move-list .move','wc-move-list [data-ply]','wc-move-list .node','wc-move-list [class*="move-node"]','wc-move-list button','wc-simple-move-list [data-ply]','wc-simple-move-list .node','wc-simple-move-list [class*="move"]','wc-simple-move-list button','wc-vertical-move-list [data-ply]','wc-vertical-move-list [class*="move"]','wc-vertical-move-list button','[data-cy="move-list"] [data-ply]','[data-cy="move-list"] [class*="move"]','[class*="move-list"] button','l4x l4','l4x move','.analyse__moves move','.analyse__moves .san','.vertical-move-list .move','.move-list .move','.move-list-component .move','.pgn-viewer .san','.analysis-moves .san','.move-text-component'];
+ const ACTIVE_MOVE_SELECTOR='.active,.current,.selected,.a1t,.node-highlight,.node-highlight-content,[aria-current="true"],[data-selected="true"],[data-current="true"]';
+ function indexedMovePly(node,index){
+  const raw=node?.getAttribute?.('data-ply')||node?.getAttribute?.('data-index');
+  if(raw!==null&&raw!==undefined&&raw!==''){const value=Number(raw);if(Number.isFinite(value))return value}
+  const dataNode=node?.getAttribute?.('data-node')||'';
+  const match=/^0-(\d+)$/.exec(dataNode);
+  return match?Number(match[1]):index;
+ }
+ function moveNodeIsActive(node){
+  if(!node)return false;
+  try{return Boolean(node.matches?.(ACTIVE_MOVE_SELECTOR)||node.closest?.(ACTIVE_MOVE_SELECTOR))}catch{return false}
+ }
+ function historyCursor(nodes){
+  const ordered=Array.from(nodes||[]).map((node,index)=>({node,index,ply:indexedMovePly(node,index)}));
+  if(!ordered.length)return{selectedPly:null,lastPly:null,atEnd:true,hasSelection:false};
+  ordered.sort((a,b)=>a.ply-b.ply||a.index-b.index);
+  const active=ordered.filter(item=>moveNodeIsActive(item.node));
+  const lastPly=ordered.at(-1).ply;
+  const selectedPly=active.length?active.at(-1).ply:null;
+  return{selectedPly,lastPly,atEnd:selectedPly===null||selectedPly>=lastPly,hasSelection:active.length>0};
+ }
  const sanPattern=/^(?:O-O(?:-O)?|0-0(?:-0)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][+#]?)$/;
  // Lichess changes its short custom tag names regularly. Locate the current
  // mainline structurally via the rewind-to-ply-0 control instead of tag names.
@@ -147,7 +171,8 @@
   walk(node);return out;
  }
  function cleanMove(text,node){
-  let value=String(text||'').trim().replace(/^\d+(?:\.{1,3})?\s*/,'').replace(/[!?]+/g,'').replace(/\s+/g,'');
+  let value=String(text||'').trim().replace(/^\d+(?:\.{1,3})?\s*/,'').replace(/\$\d+/g,'').replace(/e\.?p\.?/ig,'').replace(/[!?]+/g,'').replace(/[–—−]/g,'-').replace(/\s+/g,'');
+  value=value.replace(/^0-0-0$/,'O-O-O').replace(/^0-0$/,'O-O');
   value=value.replace(/^[♔♕♖♗♘♚♛♜♝♞]/,piece=>figurines[piece]);
   if(/^[a-h][1-8](?:x[a-h][1-8])?(?:=[QRBN])?[+#]?$/.test(value)&&node){
    const owner=node.closest?.('button,[data-ply],[data-node],[data-san],move,l4,.main-line-ply,.move,.node')||node;
@@ -168,9 +193,10 @@
   return compact;
  }
  function movesFromRoot(root){
+  let moves=movesFromNodes(root.children||[]);
   const preferred=root.querySelectorAll?.('[data-ply],[data-node],[data-san],button,[role="button"],.main-line-ply,.move,.node,.san,[class*="move-node"],[class*="move-text"],[class*="move-san"]')||[];
-  let moves=movesFromNodes(preferred);
-  const leaves=Array.from(root.querySelectorAll?.('span,div,button,move,l4')||[]).filter(n=>n.children.length===0&&cleanMove(n.textContent,n));
+  const preferredMoves=movesFromNodes(preferred);if(preferredMoves.length>moves.length)moves=preferredMoves;
+  const leaves=Array.from(root.querySelectorAll?.('*')||[]).filter(n=>(n.children?.length||0)===0&&cleanMove(n.textContent,n));
   const leafMoves=movesFromNodes(leaves);if(leafMoves.length>moves.length)moves=leafMoves;
   const compact=[];for(const move of moves)if(move!==compact.at(-1))compact.push(move);
   return compact;
@@ -180,7 +206,24 @@
   const roots=Array.from(document.querySelectorAll(rootSelectors.join(',')));
   return Array.from(new Set(roots)).filter(root=>!root.closest('#allie21-auto-study-root'));
  }
- function historyText(moves){return moves.map((m,i)=>i%2===0?`${1+i/2}. ${m}`:m).join(' ')}
+ function historyNodesFromRoot(root){
+  const isPlayable=node=>node?.getAttribute?.('data-ply')||node?.getAttribute?.('data-node')||node?.getAttribute?.('data-san')||sanPattern.test(cleanMove(node.textContent,node));
+  const direct=Array.from(root?.children||[]).filter(isPlayable);
+  if(direct.length>=2)return direct;
+  const nodes=Array.from(root?.querySelectorAll?.('[data-ply],[data-node],[data-san],button,[role="button"],.main-line-ply,.move,.node,.san,[class*="move-node"],[class*="move-text"],[class*="move-san"],*')||[]).filter(isPlayable);
+  const topLevel=nodes.filter(node=>!nodes.some(parent=>parent!==node&&parent.contains?.(node)));
+  return topLevel.length>=2?topLevel:(nodes.length?nodes:direct);
+ }
+ function visibleHistoryNodes(){
+  const nodes=[];
+  const add=list=>{for(const node of list||[])if(node&&!nodes.includes(node))nodes.push(node)};
+  for(const selector of selectors)add(document.querySelectorAll(selector));
+  for(const root of candidateMoveRoots())add(historyNodesFromRoot(root));
+  const structural=structuralMoveRoot();if(structural)add(historyNodesFromRoot(structural));
+  return nodes;
+ }
+ function currentHistoryCursor(){return historyCursor(visibleHistoryNodes())}
+ function historyText(moves,limit=null){const clipped=Number.isFinite(limit)&&limit>=0?moves.slice(0,limit+1):moves;return clipped.map((m,i)=>i%2===0?`${1+i/2}. ${m}`:m).join(' ')}
  function readHistoryCandidates(){
   const found=[],add=moves=>{if(moves.length)found.push(moves)};
   for(const sel of selectors){
@@ -197,7 +240,8 @@
   // Exact, indexed move-list selectors are added first. Keep that priority:
   // broad descendants can duplicate moves and must never crowd the valid SAN
   // mainline out of the bounded request.
-  const candidates=Array.from(new Set(found.map(historyText))).sort((a,b)=>b.split(/\s+/).length-a.split(/\s+/).length).slice(0,16);
+  const cursor=currentHistoryCursor(),limit=cursor.hasSelection&&!cursor.atEnd?cursor.selectedPly:null;
+  const candidates=Array.from(new Set(found.map(moves=>historyText(moves,limit)))).sort((a,b)=>b.split(/\s+/).length-a.split(/\s+/).length).slice(0,16);
   return candidates.length?candidates:isStandardStartPosition()?['*']:[];
  }
  function readHistory(){return readHistoryCandidates()[0]||''}
@@ -293,7 +337,7 @@
   return Array.from(document.querySelectorAll(selector)).filter(node=>!node.closest('#allie21-auto-study-root')).sort(sortByArea);
  }
  function readBoardSnapshot(){
-   if(currentBoard?.isConnected){const snapshot=placementFromBoard(currentBoard);if(snapshot)return{board:currentBoard,...snapshot}}
+   if(currentBoard?.isConnected){const rect=currentBoard.getBoundingClientRect?.();const visible=!rect||((rect.width||0)>80&&(rect.height||0)>80);if(visible){const snapshot=placementFromBoard(currentBoard);if(snapshot)return{board:currentBoard,...snapshot}}}
    for(const board of boardCandidates()){const snapshot=placementFromBoard(board);if(snapshot){currentBoard=board;return{board,...snapshot}}}
    currentBoard=null;return null;
  }
@@ -416,23 +460,9 @@
   mk('polygon',{points:points.map(p=>p.join(',')).join(' '),fill:color,opacity});
  }
  function atHistoryEnd(){
-   // If a visible move is selected earlier in the score, arrows for the last
-   // move would point at a DIFFERENT board. Suppress rather than mislead.
-   for(const sel of ['l4x move','.analyse__moves move','wc-move-list .main-line-ply','wc-move-list .move','.vertical-move-list .move']){
-     const all=Array.from(document.querySelectorAll(sel));
-     if(all.length<2)continue;
-     const active=all.filter(n=>n.matches('.active,.current,.selected,[aria-current="true"]'));
-     if(active.length && active.at(-1)!==all.at(-1))return false;
-   }
-   const structural=structuralMoveRoot();
-   if(structural){
-     const moves=Array.from(structural.children).filter(n=>sanPattern.test(cleanMove(n.textContent)));
-     const active=moves.filter(n=>n.matches?.('.active,.current,.selected,[aria-current="true"]'));
-     if(active.length&&active.at(-1)!==moves.at(-1))return false;
-   }
-   return true;
+   return currentHistoryCursor().atEnd;
  }
- function paint(data){currentResult=data;if(data?.reviewed_finished_game||data?.fen_only===true||data?.show_moves===false||data?.history_complete===false||data?.turn_verified===false||!cfg.enabled||cfg.privateMode||!atHistoryEnd()){clearOverlay();sendVisualUpdate(cfg.privateMode?'private':'stale',data);return}
+ function paint(data){currentResult=data;if(data?.reviewed_finished_game||data?.fen_only===true||data?.show_moves===false||data?.history_complete===false||data?.turn_verified===false||!cfg.enabled||cfg.privateMode){clearOverlay();sendVisualUpdate(cfg.privateMode?'private':'stale',data);return}
    const board=boardElement();if(!board)return clearOverlay();observeBoardGeometry(board);const rect=board.getBoundingClientRect();
   if(rect.width<130||rect.height<130)return clearOverlay();
   // Render in board-local pixels instead of a viewport-sized SVG.  A global
@@ -654,21 +684,23 @@
  }
  async function historyFromVisibleBoard(){
  const snapshot=readBoardSnapshot();if(!snapshot)return{pgn:readHistory(),orientation:cfg.orientation==='auto'?'white':cfg.orientation,placement:''};
+  const visibleCandidates=readHistoryCandidates(),cursor=currentHistoryCursor();
+  const historySignature=JSON.stringify([visibleCandidates,cursor.selectedPly,cursor.lastPly,cursor.atEnd]);
   const initial=startPositionHistory(snapshot);
    if(initial&&lastPlacement!==START_PLACEMENT)markBrowserSessionReset();
    if(browserSessionResetPending()){
     await localPost('/api/browser-position/reset',{session_id:boardSessionId},4000);
-    browserSessionResetDone();trackedPGN='';trackedFen='';lastPlacement='';
+    browserSessionResetDone();trackedPGN='';trackedFen='';trackedHistorySignature='';lastPlacement='';
    }
    if(initial){
-    lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';return initial;
+    lastPlacement=snapshot.placement;trackedPGN='*';trackedFen='';trackedHistorySignature=historySignature;return initial;
   }
-  if(snapshot.placement===lastPlacement&&trackedPGN)return{pgn:trackedPGN,fen:'',orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:false};
-   const expected=snapshot.placement,candidates=readHistoryCandidates(),fallback=candidates[0]||'',game_id=chessComGameId(),previousPGN=trackedPGN;
+  if(snapshot.placement===lastPlacement&&trackedPGN&&historySignature===trackedHistorySignature)return{pgn:trackedPGN,fen:'',orientation:snapshot.orientation,placement:snapshot.placement,fallback_ready:false};
+   const expected=snapshot.placement,candidates=visibleCandidates,fallback=candidates[0]||'',game_id=chessComGameId(),previousPGN=trackedPGN;
    const state=await localPost('/api/browser-position',{session_id:boardSessionId,placement:expected,pgn:fallback,pgn_candidates:candidates,game_id},12000);
    const latest=readBoardSnapshot();if(!latest||latest.placement!==expected)return{pgn:'',orientation:snapshot.orientation,placement:expected,stale:true};
    if(state.ready&&shorterValidatedRound(previousPGN,state.moves_seen))retryAfter=0;
-  lastPlacement=expected;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
+  lastPlacement=expected;trackedHistorySignature=historySignature;trackedPGN=state.ready?state.pgn:'';trackedFen=state.fallback_ready&&!state.ready?state.fen:'';
   return{pgn:trackedPGN,fen:trackedFen,orientation:snapshot.orientation,placement:expected,message:state.message,ready:state.ready,fallback_ready:state.fallback_ready,moves_seen:state.moves_seen};
  }
  // Plattform-Farbmarker haben Vorrang. Fehlen sie (z.B. bei laufenden Chess.com-
@@ -680,7 +712,7 @@
    const basis=pgn||fen,openingSettings=selectedOpeningSettings(),key=JSON.stringify([pgn,fen,placement,cfg.elo,cfg.tc,playerSide,cfg.playStyle,openingSettings.opening_white,openingSettings.opening_black]);analysisKey=key;
    const serial=++analysisSerial;
    pending=true;el('status').textContent='Allie analysiert den aktuellen Zug...';
-   const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&atHistoryEnd()&&(!placement||readBoardSnapshot()?.placement===placement);
+   const current=()=>serial===analysisSerial&&analysisKey===key&&lastPGN===basis&&(!placement||readBoardSnapshot()?.placement===placement);
    const request=(source,preview,final)=>{
      const fallback=source==='stockfish'&&!fen;
      const data={pgn,fen,white_elo:cfg.elo,black_elo:cfg.elo,time_control:cfg.tc,review_finished:false,player_side:playerSide,play_style:cfg.playStyle,...openingSettings,analysis_source:fen?'stockfish':source,preview:fen?false:preview,show_moves:fen?false:true};
@@ -729,12 +761,13 @@
    };
    request(fen?'stockfish':'allie',!fen,true);
  }
-  el('now').onclick=async()=>{markBrowserSessionReset();updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';await tick(true)};
+  el('now').onclick=async()=>{markBrowserSessionReset();updateSettings();retryAfter=0;lastPlacement='';trackedPGN='';trackedFen='';trackedHistorySignature='';await tick(true)};
  async function tick(manual=false){
    if(trackingPending)return;
    if(document.hidden){clearOverlay();return;}
-   const previousBoard=currentBoard;const visibleBoard=readBoardSnapshot();
-   if(previousBoard&&visibleBoard&&previousBoard!==visibleBoard.board)resetBoardSession('board_changed');
+   const contextKey=currentBoardContextKey();
+   if(shouldResetBoardSession(boardContextKey,contextKey)){boardContextKey=contextKey;resetBoardSession('navigation');}
+   const visibleBoard=readBoardSnapshot();
    observeBoardGeometry(visibleBoard?.board||null);
   // In private mode the entire page-owned HUD must be absent from the
   // rendered page. Hiding only the SVG layer still leaves the panel, status,
@@ -754,7 +787,7 @@
   trackingPending=true;
   try{
    const history=await historyFromVisibleBoard(),pgn=history.pgn,fen=history.fen||'',basis=pgn||fen;
-   if(!basis||!atHistoryEnd()){
+   if(!basis){
     if(currentResult||lastPGN){currentResult=null;lastPGN='';clearOverlay();clearRemoteOverlay('stale');show({})}
     if(manual||history.message)el('status').textContent=history.message||'Brett erkannt – warte auf eine vollständige Zugfolge ab der Startstellung.';
     if(!basis){
@@ -807,17 +840,18 @@
  function resetBoardSession(reason='navigation'){
   clearRemoteOverlay(reason);
   cancelAnalysis();
-  currentResult=null;lastPGN='';trackedPGN='';trackedFen='';analysisKey='';busyRetries=0;lastPlacement='';unsettledPlacement='';unsettledRetries=0;currentBoard=null;markBrowserSessionReset();
+  currentResult=null;lastPGN='';trackedPGN='';trackedFen='';trackedHistorySignature='';analysisKey='';busyRetries=0;lastPlacement='';unsettledPlacement='';unsettledRetries=0;currentBoard=null;boardContextKey=currentBoardContextKey();markBrowserSessionReset();
   sessionHash=Math.imul(sessionHash^Date.now(),16777619);boardSessionId='web-'+(crypto.randomUUID?.()||Math.random().toString(36).slice(2));
   clearOverlay();show({});scheduleTick(true);
  }
  function installNavigationLifecycle(){
   for(const method of ['pushState','replaceState']){
    const original=history[method];if(typeof original!=='function')continue;
-   history[method]=function(...args){const before=location.href;const result=original.apply(this,args);if(location.href!==before)resetBoardSession('navigation');return result};
+   history[method]=function(...args){const before=currentBoardContextKey(),beforeHref=location.href;const result=original.apply(this,args);const after=currentBoardContextKey();if(shouldResetBoardSession(before,after))resetBoardSession('navigation');else if(location.href!==beforeHref){visualRefreshPending=true;scheduleTick(true)}return result};
   }
-  window.addEventListener('popstate',()=>resetBoardSession('navigation'),{passive:true});
-  window.addEventListener('hashchange',()=>resetBoardSession('navigation'),{passive:true});
+  const handleNavigation=()=>{const next=currentBoardContextKey();if(shouldResetBoardSession(boardContextKey,next)){boardContextKey=next;resetBoardSession('navigation')}else{visualRefreshPending=true;scheduleTick(true)}};
+  window.addEventListener('popstate',handleNavigation,{passive:true});
+  window.addEventListener('hashchange',handleNavigation,{passive:true});
  }
  let privateSync=null;
  async function syncPrivateMode(force=false){
