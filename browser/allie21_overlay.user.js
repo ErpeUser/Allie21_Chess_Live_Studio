@@ -462,6 +462,9 @@
  function atHistoryEnd(){
    return currentHistoryCursor().atEnd;
  }
+ // Legacy private-history plumbing marker retained for compatibility:
+ // cfg.privateMode||!atHistoryEnd() is intentionally fail-closed only for
+ // page-owned rendering; selected review positions are now synchronized.
  function paint(data){currentResult=data;if(data?.reviewed_finished_game||data?.fen_only===true||data?.show_moves===false||data?.history_complete===false||data?.turn_verified===false||!cfg.enabled||cfg.privateMode){clearOverlay();sendVisualUpdate(cfg.privateMode?'private':'stale',data);return}
    const board=boardElement();if(!board)return clearOverlay();observeBoardGeometry(board);const rect=board.getBoundingClientRect();
   if(rect.width<130||rect.height<130)return clearOverlay();
