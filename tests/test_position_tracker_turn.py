@@ -1,7 +1,6 @@
 import unittest
 
 import chess
-
 from position_tracker import PositionTracker
 
 

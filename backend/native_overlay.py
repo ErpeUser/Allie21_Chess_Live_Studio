@@ -1090,21 +1090,20 @@ class PrivateOverlayController:
         """
         if not isinstance(session_id, str) or not session_id:
             raise ValueError("overlay session is invalid")
-        with self._render_lock:
-            with self._lock:
-                # A claim can be retried while the lease is still active.  In
-                # that case the cursor belongs to the same incarnation and
-                # must remain monotonic; only a tombstoned session is a fresh
-                # incarnation after a global reset.
-                was_retired = session_id in self._retired_sessions
-                if not was_retired:
-                    return
-                self._retired_sessions.discard(session_id)
-                try:
-                    self._retired_order.remove(session_id)
-                except ValueError:
-                    pass
-                self._last_update_by_session.pop(session_id, None)
+        with self._render_lock, self._lock:
+            # A claim can be retried while the lease is still active.  In
+            # that case the cursor belongs to the same incarnation and
+            # must remain monotonic; only a tombstoned session is a fresh
+            # incarnation after a global reset.
+            was_retired = session_id in self._retired_sessions
+            if not was_retired:
+                return
+            self._retired_sessions.discard(session_id)
+            try:
+                self._retired_order.remove(session_id)
+            except ValueError:
+                pass
+            self._last_update_by_session.pop(session_id, None)
 
     def set_mode(self, mode: str) -> dict[str, object]:
         if mode not in {"private", "share", "normal"}:

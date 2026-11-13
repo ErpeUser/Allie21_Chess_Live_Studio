@@ -62,6 +62,13 @@ class FoolMateAllie:
 
 
 class ChessTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # SimpleEngine owns a non-daemon thread; close it before Python joins
+        # threads at exit, rather than relying on the later atexit callback.
+        from chess_extras import _close_stockfish
+        cls.addClassCleanup(_close_stockfish)
+
     def test_windows_model_load_uses_supported_blitz_settings(self):
         calls = []
 
