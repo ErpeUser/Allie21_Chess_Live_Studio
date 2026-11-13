@@ -95,7 +95,7 @@ try {
     }
     $manifest = Join-Path $bundle 'SHA256SUMS.txt'
     $hashScript = @'
-import hashlib, os, sys
+import hashlib, os, pathlib, sys
 root = os.path.abspath(sys.argv[1])
 manifest = os.path.abspath(sys.argv[2])
 extended = '\\\\?\\' + root
@@ -103,6 +103,8 @@ rows = []
 for directory, _, files in os.walk(extended):
     for name in files:
         path = os.path.join(directory, name)
+        if '__pycache__' in pathlib.PurePath(path).parts or name.endswith('.pyc'):
+            continue
         if os.path.abspath(path) == '\\\\?\\' + manifest:
             continue
         relative = os.path.relpath(path, extended).replace(os.sep, '/')
