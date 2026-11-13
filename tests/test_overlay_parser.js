@@ -64,6 +64,13 @@ if (JSON.stringify(Array.from(context.result)) !== JSON.stringify(['e4', 'c5']))
   throw new Error('Chess.com data-node ply order must be honored');
 }
 
+context.result = [];
+context.nodes = [moveNode('e4', '', '', '', '0-1'), moveNode('e5', '', '', '', '2-0'), moveNode('Nf3', '', '', '', '0-2')];
+vm.runInNewContext('result=movesFromNodes(nodes);', context);
+if (JSON.stringify(Array.from(context.result)) !== JSON.stringify(['e4', 'e5', 'Nf3'])) {
+  throw new Error('variation data-node must not reorder the DOM mainline');
+}
+
 const text = value => ({ nodeType: 3, textContent: value });
 const icon = piece => ({ nodeType: 1, className: `icon-font-chess ${piece}`, childNodes: [], getAttribute() { return ''; } });
 const nestedMove = (ply, children) => ({

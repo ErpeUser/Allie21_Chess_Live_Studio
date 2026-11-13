@@ -125,7 +125,7 @@
  }
  function moveNodeIsActive(node){
   if(!node)return false;
-  try{return Boolean(node.matches?.(ACTIVE_MOVE_SELECTOR)||node.closest?.(ACTIVE_MOVE_SELECTOR))}catch{return false}
+  try{return Boolean(node.matches?.(ACTIVE_MOVE_SELECTOR)||node.closest?.(ACTIVE_MOVE_SELECTOR)||node.querySelector?.(ACTIVE_MOVE_SELECTOR))}catch{return false}
  }
  function historyCursor(nodes){
   const ordered=Array.from(nodes||[]).map((node,index)=>({node,index,ply:indexedMovePly(node,index)}));
@@ -186,8 +186,8 @@
   return value;
  }
  function movesFromNodes(nodes){
-  const ordered=Array.from(nodes).slice(0,1100).map((node,index)=>{const raw=node.getAttribute?.('data-ply'),dataNode=node.getAttribute?.('data-node'),match=/^0-(\d+)$/.exec(dataNode||'');const ply=raw==null||raw===''?(match?Number(match[1]):NaN):Number(raw);return{node,index,ply}});
-  if(ordered.some(item=>Number.isFinite(item.ply)))ordered.sort((a,b)=>(Number.isFinite(a.ply)?a.ply:1e9)-(Number.isFinite(b.ply)?b.ply:1e9)||a.index-b.index);
+  const ordered=Array.from(nodes).slice(0,1100).map((node,index)=>{const raw=node.getAttribute?.('data-ply'),dataNode=node.getAttribute?.('data-node'),match=/^0-(\d+)$/.exec(dataNode||''),hasRaw=raw!==null&&raw!==undefined&&raw!==''&&Number.isFinite(Number(raw)),ply=hasRaw?Number(raw):(match?Number(match[1]):NaN);return{node,index,ply,indexed:hasRaw||Boolean(match)}});
+  if(ordered.length&&ordered.every(item=>item.indexed))ordered.sort((a,b)=>a.ply-b.ply||a.index-b.index);
   const compact=[];
   for(const {node} of ordered){const move=cleanMove(node.getAttribute?.('data-san')||nodeMoveText(node),node);if(sanPattern.test(move))compact.push(move)}
   return compact;
