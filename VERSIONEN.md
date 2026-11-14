@@ -1,13 +1,17 @@
 # Reproduzierbare Versionen und Prüfstand
 
-## Update 11.2.22 / Edge-Erweiterung 11.2.22.0
+## Update 11.2.24 / Edge-Erweiterung 11.2.24.0
 
-Der aktuelle Stand synchronisiert Anwendung, Userscript und Edge-Erweiterung auf 11.2.22 beziehungsweise 11.2.22.0. Eröffnungs-Auswahlen für beide Farben werden im Ergebnis gespiegelt. Die Oberfläche zeigt Modell-Ladezustände und vorsichtige Taktik-Hinweise; unbekannte Partiegeschichten bleiben ohne konkrete Pfeile. Der Windows-Launcher verwendet zusätzlich einen benannten Single-Instance-Mutex und Overlay-Sessions werden beim Start/Stop invalidiert.
+Der aktuelle `main`-Stand synchronisiert Anwendung und Userscript auf 11.2.24 sowie die Edge-Erweiterung auf 11.2.24.0/11.2.24. Der geprüfte Commit ist `15464e2` vom 14. November 2026. Der portable Build bewahrt die erforderlichen Python-Runtime-Dateien und prüft sie vor der Auslieferung. Eröffnungs-Auswahlen, Modell-Ladezustände, vorsichtige Taktik-Hinweise sowie die Session-/Overlay-Gates bleiben erhalten.
+
+## Historischer Stand: Update 11.2.22 / Edge-Erweiterung 11.2.22.0
+
+Der vorherige Stand synchronisierte Anwendung, Userscript und Edge-Erweiterung auf 11.2.22 beziehungsweise 11.2.22.0. Diese Angaben beschreiben den historischen Release-Stand vor 11.2.24 und sind kein aktueller Versionsnachweis.
 
 
 ## Update 11.2.21 / Edge-Erweiterung 11.2.21.0
 
-Der aktuelle Stand verwendet für Anwendung und Userscript 11.2.21; `browser/manifest.json` ist 11.2.21.0 mit `version_name` 11.2.21.
+Der historische Stand verwendete für Anwendung und Userscript 11.2.21; `browser/manifest.json` war 11.2.21.0 mit `version_name` 11.2.21.
 Die feste Erweiterungs-ID bleibt unverändert.
 
 Der Fokus-Lifecycle leert native und Browser-HUD beim Tab-/Programmwechsel,
@@ -29,9 +33,11 @@ Der nachfolgende Wartungsstand basiert auf Commit `13131c8` vom 10. November
 - Pfeilspitzen enden geometrisch exakt in der Mitte des Zielfeldes. Der blaue Best-Premove verwendet denselben gemeinsamen Zeichenpfad.
 - Native Overlay, Session-/Render-Gates, Request-Limits, CORS-Allowlist, Cache-Kanonisierung, Multi-PGN-Ablehnung und Stockfish-Hashprüfung sind gehärtet.
 
-Stand der Prüfung: 9. November 2026. Abhängigkeiten sind in `pyproject.toml` direkt und im Remote-Branch zusätzlich in `uv.lock` festgelegt.
+Historischer Prüfstand: 9. November 2026. Abhängigkeiten sind in `pyproject.toml` direkt und im Remote-Branch zusätzlich in `uv.lock` festgelegt.
 
 ## Aktueller Prüfstand
+
+Der aktuelle Quellstand ist 11.2.24/11.2.24.0; die nachfolgenden externen Windows-Gates müssen für diesen Stand erneut bestätigt werden.
 
 - Overlay-Modi: Privatmodus mit verifizierter Windows-Capture-Exclusion und Share-Modus mit bewusst deaktivierter Exclusion; ein Browser-HUD wird im Privatmodus nie als Rückfall verwendet.
 - Website, Userscript und Edge-Optionsseite verwenden den versionierten lokalen Overlay-Status; Viewer und Extension lösen veraltete Schreibvorgänge über Version/Zeitstempel auf.

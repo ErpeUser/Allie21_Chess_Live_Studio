@@ -3,21 +3,29 @@
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
   "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
   "current_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
-  "current_file": ".codex/maintenance.sh",
-  "original_blob_sha": "4fa3da068959e7eaa10aca88a7a0da27292fc7b8",
-  "current_blob_sha": "4fa3da068959e7eaa10aca88a7a0da27292fc7b8",
-  "original_line_number": 0,
-  "last_fully_checked_line": 0,
+  "current_file": "VERSIONEN.md",
+  "original_blob_sha": "f1645f480d1d538e79dfddac5aa16e6554503c5b",
+  "current_blob_sha": "PENDING",
+  "original_line_number": 3,
+  "last_fully_checked_line": 104,
   "next_unchecked_line": 1,
-  "checked_intervals": [],
+  "checked_intervals": [
+    {
+      "start": 1,
+      "end": 104,
+      "blob_sha": "f1645f480d1d538e79dfddac5aa16e6554503c5b",
+      "status": "RECHECK_REQUIRED",
+      "note": "Current-state version drift finding interrupted normal scan."
+    }
+  ],
   "next_unchecked_fingerprint": null,
   "adjacent_line_fingerprints": [],
-  "active_finding_id": null,
-  "fix_status": "NONE",
+  "active_finding_id": "AUDIT-0002",
+  "fix_status": "FIXED_PENDING_RECHECK",
   "last_validated_commit": null,
   "last_validation": {
     "time": null,
     "result": "NOT_RUN"
   },
-  "status": "BASELINE_INITIALIZED"
+  "status": "AUDIT_INTERRUPTED_FOR_DOCUMENTATION_FIX"
 }
