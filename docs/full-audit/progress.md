@@ -11,9 +11,9 @@
 - Audit branch: `audit/full-repository-2026-11-14`.
 - Audit scaffolding commit: `f90a646eb8316dbe00173eac0abf5828e30a8f8b`.
 
-## Finding AUDIT-0002 — documentation/version drift
+## Finding AUDIT-0002 — documentation/version drift — FIXED
 
-The first confirmed finding interrupted the normal scan. Authoritative current version is 11.2.24/11.2.24.0 in `pyproject.toml`, `uv.lock`, `browser/manifest.json`, and `browser/allie21_overlay.user.js`; five current-state documents still led with 11.2.22 or lacked a 11.2.24 changelog entry. A minimal documentation-only correction is prepared on the audit branch and must be read back and statically checked before the scan resumes.
+Documentation fix commit `39872e32bb53329a0b235546948a1656a250b8b5` updates current version/status claims to 11.2.24/11.2.24.0, labels old evidence historical, adds a v11.2.24 changelog entry, and corrects the update guide. Remote readback and nine static assertions passed. The locked suite and Windows/Edge gates were not run yet.
 
 ## Current blockers
 
@@ -23,4 +23,4 @@ The first confirmed finding interrupted the normal scan. Authoritative current v
 
 ## Resume point
 
-After validating the documentation fix, load the new `VERSIONEN.md` blob, reconcile the changed intervals/fingerprints, then resume with sorted file `.codex/maintenance.sh`. No code finding is confirmed yet; do not claim full coverage.
+Load the current `VERSIONEN.md` blob and reconcile any remaining changed ranges, then resume the stable file order at `.codex/maintenance.sh`. No code finding is confirmed; full repository coverage is not complete.

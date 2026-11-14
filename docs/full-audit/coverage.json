@@ -1,7 +1,73 @@
 {
   "audit_id": "allie21-full-audit-2026-11-14",
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
-  "commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+  "commit": "39872e32bb53329a0b235546948a1656a250b8b5",
   "coverage_policy": "Only current-blob intervals with union covering all relevant text lines may be VERIFIED; inventory is not audit coverage.",
-  "files": []
+  "files": [
+    {
+      "path": "VERSIONEN.md",
+      "blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
+      "line_count": 110,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 110,
+          "scope": "version-consistency",
+          "status": "REVIEWED_VERSION_CONSISTENCY"
+        }
+      ]
+    },
+    {
+      "path": "docs/release-status.md",
+      "blob_sha": "c05613a26188ed28027751893ebd94c4d7fbe9da",
+      "line_count": 16,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 16,
+          "scope": "version-consistency",
+          "status": "REVIEWED_VERSION_CONSISTENCY"
+        }
+      ]
+    },
+    {
+      "path": "README_DE.md",
+      "blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
+      "line_count": 71,
+      "intervals": [
+        {
+          "start": 59,
+          "end": 67,
+          "scope": "version-consistency",
+          "status": "REVIEWED_VERSION_CONSISTENCY"
+        }
+      ]
+    },
+    {
+      "path": "docs/UPDATE_PIPELINE_DE.md",
+      "blob_sha": "802cc3fc0bea93c5392bfeeb586f65ec2f6d2058",
+      "line_count": 100,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 100,
+          "scope": "version-consistency",
+          "status": "REVIEWED_VERSION_CONSISTENCY"
+        }
+      ]
+    },
+    {
+      "path": "CHANGELOG.md",
+      "blob_sha": "fcbc95abbea99323cd4f47de71bcde042a2a35e5",
+      "line_count": 216,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 6,
+          "scope": "version-consistency",
+          "status": "REVIEWED_VERSION_CONSISTENCY"
+        }
+      ]
+    }
+  ]
 }
