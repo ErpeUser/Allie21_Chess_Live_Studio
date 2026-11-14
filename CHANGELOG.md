@@ -1,8 +1,3 @@
-## v11.2.24
-
-- Der portable Build kopiert die erforderlichen Python-Runtime-Dateien in den Runtime-Ordner und prüft `python.exe`, `pythonw.exe`, `python3.dll` und `python312.dll` vor der Auslieferung.
-- Versions- und Prüfstands-Dokumentation nennt den aktuellen `main`-Stand 11.2.24/11.2.24.0; historische Release-Angaben bleiben als solche markiert.
-
 ## v11.2.23
 
 - Lichess-Verlaufsnavigation über Hash-Ply-Wechsel behält die Browser-Sitzung und den Tracker; ein normaler `<cg-board>`-/`<wc-chess-board>`-DOM-Austausch während eines Zuges löscht die Analyse nicht mehr.

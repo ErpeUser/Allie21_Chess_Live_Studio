@@ -1,12 +1,8 @@
 {
   "audit_id": "allie21-full-audit-2026-11-14",
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
-  "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
-  "default_branch": "main",
-  "root_tree_sha": "c4ecfe3a93f71dfc96d96f117300d0bc74d3f026",
-  "tree_truncated": false,
-  "generated_at": "2026-11-14T00:00:00+01:00",
-  "file_count": 144,
+  "commit": "f68c53899b6c547408b887f41c2e346b75069556",
+  "coverage_policy": "Only current-blob intervals with union covering all relevant text lines may be VERIFIED; inventory is not audit coverage.",
   "files": [
     {
       "path": ".codex/maintenance.sh",
@@ -268,6 +264,5 @@
         }
       ]
     }
-  ],
-  "commit": "280d0298985587352b427d35db5d1ff579b04192"
+  ]
 }

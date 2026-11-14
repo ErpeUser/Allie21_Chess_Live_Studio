@@ -53,7 +53,7 @@ There is currently no promise of a public bounty or a guaranteed response
 time. Release readiness and known verification gaps are tracked in
 `VERSIONEN.md` and `README_DE.md`.
 
-## Current hardening (11.2.24)
+## Current hardening (11.2.22)
 
 - The launcher validates `ALLIE_PORT`, claims a Windows named single-instance mutex, probes the loopback port before starting, and forwards the selected port to the server. A port already owned by another process fails closed. The browser extension and userscript store the selected port explicitly; configure the same value as `ALLIE_PORT` in the launcher.
 - The MV3 manifest contains a fixed public key and the server allowlists only the resulting extension origin `chrome-extension://omboihgfgofgmidefcpkihgglhkiielo`; arbitrary extension origins are rejected.
