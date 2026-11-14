@@ -615,6 +615,7 @@ def overlay_settings(request: Request):
 
 @app.api_route('/api/overlay/settings', methods=['POST', 'PUT'])
 def overlay_settings_update(payload: OverlaySettingsRequest, request: Request):
+    _require_overlay_settings_access(request)
     # Last-write-wins is unsafe when a sleeping MV3 worker wakes with stale
     # state. A supplied version must be at least the current monotonic value;
     # stale writes are reported without changing the mode.
