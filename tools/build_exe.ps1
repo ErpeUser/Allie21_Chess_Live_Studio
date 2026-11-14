@@ -70,7 +70,9 @@ try {
     $homeLine = Get-Content -LiteralPath (Join-Path $releaseVenv 'pyvenv.cfg') |
         Where-Object { $_ -match '^home\s*=\s*(.+)$' } | Select-Object -First 1
     if (-not $homeLine -or $homeLine -notmatch '^home\s*=\s*(.+)$') { throw 'Python base directory is missing.' }
-    $basePython = $Matches[1].Trim()
+    $baseMatch = [regex]::Match($homeLine, '^home\s*=\s*(.+)$')
+    if (-not $baseMatch.Success) { throw 'Python base directory is missing.' }
+    $basePython = $baseMatch.Groups[1].Value.Trim()
     foreach ($item in @('DLLs', 'Lib', 'python.exe', 'pythonw.exe', 'python3.dll', 'python312.dll', 'LICENSE.txt')) {
         $source = Join-Path $basePython $item
         if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination $runtime -Recurse -Force }
