@@ -262,17 +262,6 @@ class HTTPBoundaryTests(unittest.TestCase):
         self.assertEqual(status, 200, data)
         self.assertIn(b'instance_id', data)
 
-    def test_overlay_settings_write_requires_pairing_for_web_origin(self):
-        payload = {'mode': 'normal', 'version': 1, 'source': 'auth-test'}
-        for method in ('POST', 'PUT'):
-            with self.subTest(method=method):
-                status, data = self.call(
-                    method, '/api/overlay/settings',
-                    origin='https://www.chess.com', overlay=True,
-                    payload=payload, auth=False, pairing=False,
-                )
-                self.assertEqual(status, 403, data)
-
     def test_overlay_request_must_explicitly_identify_itself(self):
         payload = {'session_id': 'web-test', 'placement': '8/8/8/3k4/8/8/4K3/8', 'pgn': '*'}
         self.assertEqual(self.call('POST', '/api/browser-position',

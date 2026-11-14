@@ -1,0 +1,30 @@
+{
+  "audit_id": "allie21-full-audit-2026-11-14",
+  "repository": "ErpeUser/Allie21_Chess_Live_Studio",
+  "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+  "current_commit": "8514aa17b006c30eb891895710fbb141753abead",
+  "current_file": "backend/live_server.py",
+  "original_blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
+  "current_blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
+  "original_line_number": 616,
+  "last_fully_checked_line": 615,
+  "next_unchecked_line": 616,
+  "checked_intervals": [
+    {
+      "start": 560,
+      "end": 615,
+      "blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
+      "status": "REVIEWED_SECURITY_PATH"
+    }
+  ],
+  "next_unchecked_fingerprint": null,
+  "adjacent_line_fingerprints": [],
+  "active_finding_id": "AUDIT-0003",
+  "fix_status": "FIX_IN_PROGRESS",
+  "last_validated_commit": "8514aa17b006c30eb891895710fbb141753abead",
+  "last_validation": {
+    "time": "2026-11-14T19:33:00+01:00",
+    "result": "RED_REGRESSION_REPRODUCED_STATIC_ROUTE_GUARD"
+  },
+  "status": "FIX_IN_PROGRESS"
+}
