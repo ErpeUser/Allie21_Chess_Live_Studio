@@ -321,6 +321,539 @@
           "status": "PASS"
         }
       ]
+    },
+    {
+      "path": "tests/test_browser_preview.js",
+      "blob_sha": "ea60cd12f0e3a52a843e7b3042e7443e7765c943",
+      "line_count": 51,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 51,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_browser_reliability.js",
+      "blob_sha": "e3f94dea6daa87f949fd1cb2534f708dc9c2cd0f",
+      "line_count": 268,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 268,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_browser_session_prefix.py",
+      "blob_sha": "718a09a831aea7be0f89dcf90c5d165c620d7660",
+      "line_count": 28,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 28,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_build_edge.py",
+      "blob_sha": "b28e358f9909ed404737680d7d47082035a2974a",
+      "line_count": 25,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 25,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_chess.py",
+      "blob_sha": "9f63219c9cd70c4088bb00bbaa94b4bf09055a8a",
+      "line_count": 737,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 737,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_extension_health.js",
+      "blob_sha": "f0fb3b064e713b2276269f994f210ae6a8a9ad53",
+      "line_count": 66,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 66,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_extension_options.js",
+      "blob_sha": "ff241aa374574e4879e70eb3fa7fabd515a3a313",
+      "line_count": 51,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 51,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_extension_options_browser.py",
+      "blob_sha": "151344760b1eda7173fb528bc18d711aa071e453",
+      "line_count": 99,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 99,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_extension_updates.js",
+      "blob_sha": "3490e77c72dc47b6b5f729996602b505849a4cd6",
+      "line_count": 62,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 62,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_frontend_openings_geometry.js",
+      "blob_sha": "88686a4977133f47e043fe33c6b300183fd6c8c0",
+      "line_count": 43,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 43,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_http_boundary_reliability.py",
+      "blob_sha": "d3cf5b5dc47f3732e2a664b488b3cf8069bfc0fe",
+      "line_count": 207,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 207,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_maintenance.py",
+      "blob_sha": "1bb164e358e72404f2638e26fba517cd0c5205fa",
+      "line_count": 158,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 158,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_model_setup.py",
+      "blob_sha": "63df7e24223fad948c58591c0dfe1c33d1523648",
+      "line_count": 77,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 77,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_model_vendor.py",
+      "blob_sha": "53b835cfa4a2a3e9cb813fc67fd9a9d25be3fb6c",
+      "line_count": 66,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 66,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_native_overlay_reliability.py",
+      "blob_sha": "44e6744c5313170badfccd3a30ed49f697ff01e0",
+      "line_count": 345,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 345,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_native_overlay.py",
+      "blob_sha": "21b5bc3d24017835ddae4e57d14486d2f02d3c3a",
+      "line_count": 259,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 259,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_offline.py",
+      "blob_sha": "30c23a53a264896c01e9d2c5d098e9ac5b2c885f",
+      "line_count": 423,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 423,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_auto_side.js",
+      "blob_sha": "9cb94727b1cf3b5a12ff2d630c5b0761a371f984",
+      "line_count": 19,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 19,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_board_adapter.js",
+      "blob_sha": "e3420b42400fea2e77156a99fbabe8fa3b093c7a",
+      "line_count": 69,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 69,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_geometry_lifecycle.js",
+      "blob_sha": "72cee264f60dcaa8e2cb4f2d394a8735d8f1b8eb",
+      "line_count": 26,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 26,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_history_state.js",
+      "blob_sha": "c44eb49faf4cca6a48a21a074e88fe66c29af079",
+      "line_count": 62,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 62,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_insights.js",
+      "blob_sha": "90c4afd91eeed77d33b40645bc706e706aa465a4",
+      "line_count": 32,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 32,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_lease.py",
+      "blob_sha": "804b5da8e86e4d535013b02343f3e498d3de77af",
+      "line_count": 66,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 66,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_lichess_arrows.js",
+      "blob_sha": "76def9b7a65956f3cec78ebc27227967875e036d",
+      "line_count": 33,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 33,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_orientation.js",
+      "blob_sha": "7849c993c19331c95d698e0dfad052a57374e0c4",
+      "line_count": 38,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 38,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_parser.js",
+      "blob_sha": "569775cad3324945706365aca51ce48681b52acb",
+      "line_count": 87,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 87,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_private.js",
+      "blob_sha": "230967ca469f6cfd28e9d66d477fb45248f9939e",
+      "line_count": 57,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 57,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_round_style.js",
+      "blob_sha": "e28f0b3794e19bc717778ee07f115bf802b75856",
+      "line_count": 65,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 65,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_share_sync.js",
+      "blob_sha": "3d9de0cbf98a1eda5ea87c86582950ab52e93ffe",
+      "line_count": 45,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 45,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_overlay_start_position.js",
+      "blob_sha": "5d89e7461b5d6af77a97b3ef29d7bca6bdd6d9e6",
+      "line_count": 32,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 32,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_pairing_bridge.js",
+      "blob_sha": "cca912a90fe3d961b1789d983db0595dba86c0f7",
+      "line_count": 23,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 23,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_position_tracker_turn.py",
+      "blob_sha": "68ef5b97d721401d30ff38e49febd1a914daec25",
+      "line_count": 29,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 29,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_readiness.py",
+      "blob_sha": "73ac3d78ff9f14892bdbe962ca7c2b77b19bad93",
+      "line_count": 113,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 113,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_regressions.py",
+      "blob_sha": "f8aca9ebd1ddfc961dd9a087d47241c17dba071f",
+      "line_count": 57,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 57,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_release_smoke_shutdown.py",
+      "blob_sha": "894cc033489bf164870c98db08ef970cf210cfc1",
+      "line_count": 30,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 30,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_security_reliability.py",
+      "blob_sha": "8d93c1de2d69ef958c3ae449be6ca6be0979095f",
+      "line_count": 91,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 91,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_service_status_contract.py",
+      "blob_sha": "dd86dc6c3afa0f3d932d24b284b1a03d28ccd256",
+      "line_count": 27,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 27,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_stockfish_installer.py",
+      "blob_sha": "5f1b9af56c160edbd2fd0721e01f4f5fb09baf4a",
+      "line_count": 104,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 104,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_viewer_browser.py",
+      "blob_sha": "3d36f31acee938f8acdd39005e1da02e632f3bf2",
+      "line_count": 200,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 200,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_vision_ocr.py",
+      "blob_sha": "00232d4ceb7d0c71b88fc176e554a570f26741e3",
+      "line_count": 78,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 78,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_worker_wakeup.js",
+      "blob_sha": "d7bdb6e968fc724e54c9a1043912d3d2edc01506",
+      "line_count": 56,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 56,
+          "scope": "full-test-file-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
     }
   ],
   "reviewed_blocks": [
@@ -341,6 +874,12 @@
         "tools/** (11 scripts)"
       ],
       "result": "NO_ADDITIONAL_CONFIRMED_DEFECT"
+    },
+    {
+      "source_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+      "scope": "all-tests",
+      "file_count": 43,
+      "result": "ALL_TEST_FILES_READ_FULLY_NO_ADDITIONAL_CONFIRMED_DEFECT"
     }
   ]
 }

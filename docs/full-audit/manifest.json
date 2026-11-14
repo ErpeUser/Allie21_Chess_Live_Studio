@@ -787,8 +787,8 @@
       "type": "test",
       "blob_sha": "ea60cd12f0e3a52a843e7b3042e7443e7765c943",
       "size": 2049,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 51,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -796,8 +796,8 @@
       "type": "test",
       "blob_sha": "e3f94dea6daa87f949fd1cb2534f708dc9c2cd0f",
       "size": 14778,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 268,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -805,8 +805,8 @@
       "type": "test",
       "blob_sha": "718a09a831aea7be0f89dcf90c5d165c620d7660",
       "size": 778,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 28,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -814,8 +814,8 @@
       "type": "test",
       "blob_sha": "b28e358f9909ed404737680d7d47082035a2974a",
       "size": 905,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 25,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -823,8 +823,8 @@
       "type": "test",
       "blob_sha": "9f63219c9cd70c4088bb00bbaa94b4bf09055a8a",
       "size": 33263,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 737,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -832,8 +832,8 @@
       "type": "test",
       "blob_sha": "f0fb3b064e713b2276269f994f210ae6a8a9ad53",
       "size": 3982,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 66,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -841,8 +841,8 @@
       "type": "test",
       "blob_sha": "151344760b1eda7173fb528bc18d711aa071e453",
       "size": 3972,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 99,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -850,8 +850,8 @@
       "type": "test",
       "blob_sha": "ff241aa374574e4879e70eb3fa7fabd515a3a313",
       "size": 4128,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 51,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -859,8 +859,8 @@
       "type": "test",
       "blob_sha": "3490e77c72dc47b6b5f729996602b505849a4cd6",
       "size": 3359,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 62,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -868,8 +868,8 @@
       "type": "test",
       "blob_sha": "88686a4977133f47e043fe33c6b300183fd6c8c0",
       "size": 3154,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 43,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -877,17 +877,17 @@
       "type": "test",
       "blob_sha": "d3cf5b5dc47f3732e2a664b488b3cf8069bfc0fe",
       "size": 10004,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 207,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
       "path": "tests/test_http_offline.py",
       "type": "test",
       "blob_sha": "c396890bf7842f2c25734dca69eb07d33327303c",
-      "size": 16237,
+      "size": 16767,
       "line_count": 364,
-      "audit_status": "REGRESSION_ADDED",
+      "audit_status": "REGRESSION_ADDED_AND_BASELINE_REVIEWED",
       "checked_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e"
     },
     {
@@ -895,8 +895,8 @@
       "type": "test",
       "blob_sha": "1bb164e358e72404f2638e26fba517cd0c5205fa",
       "size": 7747,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 158,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -904,8 +904,8 @@
       "type": "test",
       "blob_sha": "63df7e24223fad948c58591c0dfe1c33d1523648",
       "size": 3267,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 77,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -913,8 +913,8 @@
       "type": "test",
       "blob_sha": "53b835cfa4a2a3e9cb813fc67fd9a9d25be3fb6c",
       "size": 2582,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 66,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -922,8 +922,8 @@
       "type": "test",
       "blob_sha": "44e6744c5313170badfccd3a30ed49f697ff01e0",
       "size": 15425,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 345,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -931,8 +931,8 @@
       "type": "test",
       "blob_sha": "21b5bc3d24017835ddae4e57d14486d2f02d3c3a",
       "size": 12295,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 259,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -940,8 +940,8 @@
       "type": "test",
       "blob_sha": "30c23a53a264896c01e9d2c5d098e9ac5b2c885f",
       "size": 20210,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 423,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -949,8 +949,8 @@
       "type": "test",
       "blob_sha": "9cb94727b1cf3b5a12ff2d630c5b0761a371f984",
       "size": 1248,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 19,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -958,8 +958,8 @@
       "type": "test",
       "blob_sha": "e3420b42400fea2e77156a99fbabe8fa3b093c7a",
       "size": 2823,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 69,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -967,8 +967,8 @@
       "type": "test",
       "blob_sha": "72cee264f60dcaa8e2cb4f2d394a8735d8f1b8eb",
       "size": 1024,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 26,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -976,8 +976,8 @@
       "type": "test",
       "blob_sha": "c44eb49faf4cca6a48a21a074e88fe66c29af079",
       "size": 2473,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 62,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -985,8 +985,8 @@
       "type": "test",
       "blob_sha": "90c4afd91eeed77d33b40645bc706e706aa465a4",
       "size": 1401,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 32,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -994,8 +994,8 @@
       "type": "test",
       "blob_sha": "804b5da8e86e4d535013b02343f3e498d3de77af",
       "size": 2782,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 66,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1003,8 +1003,8 @@
       "type": "test",
       "blob_sha": "76def9b7a65956f3cec78ebc27227967875e036d",
       "size": 1455,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 33,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1012,8 +1012,8 @@
       "type": "test",
       "blob_sha": "7849c993c19331c95d698e0dfad052a57374e0c4",
       "size": 1397,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 38,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1021,8 +1021,8 @@
       "type": "test",
       "blob_sha": "569775cad3324945706365aca51ce48681b52acb",
       "size": 3798,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 87,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1030,8 +1030,8 @@
       "type": "test",
       "blob_sha": "230967ca469f6cfd28e9d66d477fb45248f9939e",
       "size": 2391,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 57,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1039,8 +1039,8 @@
       "type": "test",
       "blob_sha": "e28f0b3794e19bc717778ee07f115bf802b75856",
       "size": 3218,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 65,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1048,8 +1048,8 @@
       "type": "test",
       "blob_sha": "3d9de0cbf98a1eda5ea87c86582950ab52e93ffe",
       "size": 2344,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 45,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1057,8 +1057,8 @@
       "type": "test",
       "blob_sha": "5d89e7461b5d6af77a97b3ef29d7bca6bdd6d9e6",
       "size": 1279,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 32,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1066,8 +1066,8 @@
       "type": "test",
       "blob_sha": "cca912a90fe3d961b1789d983db0595dba86c0f7",
       "size": 1096,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 23,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1075,8 +1075,8 @@
       "type": "test",
       "blob_sha": "68ef5b97d721401d30ff38e49febd1a914daec25",
       "size": 955,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 29,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1084,8 +1084,8 @@
       "type": "test",
       "blob_sha": "73ac3d78ff9f14892bdbe962ca7c2b77b19bad93",
       "size": 4476,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 113,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1093,8 +1093,8 @@
       "type": "test",
       "blob_sha": "f8aca9ebd1ddfc961dd9a087d47241c17dba071f",
       "size": 2271,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 57,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1102,8 +1102,8 @@
       "type": "test",
       "blob_sha": "894cc033489bf164870c98db08ef970cf210cfc1",
       "size": 1235,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 30,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1111,8 +1111,8 @@
       "type": "test",
       "blob_sha": "8d93c1de2d69ef958c3ae449be6ca6be0979095f",
       "size": 3824,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 91,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1120,8 +1120,8 @@
       "type": "test",
       "blob_sha": "dd86dc6c3afa0f3d932d24b284b1a03d28ccd256",
       "size": 803,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 27,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1129,8 +1129,8 @@
       "type": "test",
       "blob_sha": "5f1b9af56c160edbd2fd0721e01f4f5fb09baf4a",
       "size": 4881,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 104,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1138,8 +1138,8 @@
       "type": "test",
       "blob_sha": "3d36f31acee938f8acdd39005e1da02e632f3bf2",
       "size": 9813,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 200,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1147,8 +1147,8 @@
       "type": "test",
       "blob_sha": "0c0c2c23a98161656add47da97d744c93b78e3cd",
       "size": 11970,
-      "line_count": 227,
-      "audit_status": "REGRESSION_TEST_PASS",
+      "line_count": 226,
+      "audit_status": "REGRESSION_TEST_PASS_AND_BASELINE_REVIEWED",
       "checked_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13"
     },
     {
@@ -1156,8 +1156,8 @@
       "type": "test",
       "blob_sha": "00232d4ceb7d0c71b88fc176e554a570f26741e3",
       "size": 2446,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 78,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -1165,8 +1165,8 @@
       "type": "test",
       "blob_sha": "d7bdb6e968fc724e54c9a1043912d3d2edc01506",
       "size": 3169,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 56,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {

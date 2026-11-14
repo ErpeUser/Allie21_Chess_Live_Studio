@@ -3,34 +3,21 @@
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
   "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
   "current_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
-  "current_file": "viewer/index.html",
-  "original_blob_sha": "b08d2bd480d53ead43c0f0f52473044317e7a1c1",
-  "current_blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
-  "original_line_number": 246,
-  "last_fully_checked_line": 572,
-  "next_unchecked_line": 573,
-  "checked_intervals": [
-    {
-      "start": 180,
-      "end": 259,
-      "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
-      "status": "FIXED_RECHECKED_STATUS_PATH"
-    },
-    {
-      "start": 260,
-      "end": 572,
-      "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
-      "status": "REVIEWED_STATIC_FOUR_ROLES"
-    }
-  ],
-  "next_unchecked_fingerprint": "viewer/index.html line 573 onward; then any remaining unread test/tool/browser intervals",
+  "current_file": "ALLIE_ANALYSE_IST.md",
+  "original_blob_sha": "7675864ccd32c6bf46ee5388665c4598e0aa2346",
+  "current_blob_sha": "7675864ccd32c6bf46ee5388665c4598e0aa2346",
+  "original_line_number": 1,
+  "last_fully_checked_line": 0,
+  "next_unchecked_line": 1,
+  "checked_intervals": [],
+  "next_unchecked_fingerprint": "ALLIE_ANALYSE_IST.md line 1",
   "adjacent_line_fingerprints": [],
   "active_finding_id": null,
-  "fix_status": "FIXED",
+  "fix_status": "NONE",
   "last_validated_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
   "last_validation": {
-    "time": "2026-11-14T19:48:00+01:00",
-    "result": "RED_GREEN_VIEWER_RELIABILITY_15_PASS_PLUS_STATIC_REVIEW_NO_NEW_FINDINGS"
+    "time": "2026-11-14T20:02:00+01:00",
+    "result": "ALL_43_TEST_FILES_READ_NO_NEW_CONFIRMED_FINDING"
   },
   "status": "READY_TO_RESUME"
 }
