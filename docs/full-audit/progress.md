@@ -21,7 +21,7 @@
 
 ## Current blockers
 
-- CI/Security runs 43571741050/43571740981 and 43625326792/43625326785 failed before any job step; connector logs return `BlobNotFound`.
+- CI/Security runs 43571741050/43571740981, 43625326792/43625326785, and latest PR runs 43628346970/43628346976 failed before any job step; all job `steps` are null and connector log downloads return `BlobNotFound`.
 - Branch-protection read returned 403; branch object reports `protected=false` and no required status checks.
 - Windows onedir/EXE, Edge/Playwright, DPI/HWND, OBS/getDisplayMedia, and real capture acceptance are NOT_EXECUTED.
 
