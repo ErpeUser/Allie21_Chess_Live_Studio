@@ -2,7 +2,7 @@
   "audit_id": "allie21-full-audit-2026-11-14",
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
   "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
-  "current_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e",
+  "current_commit": "a822b06b549eb75d1c01320f273ec9e54f55d91e",
   "current_file": "backend/live_server.py",
   "original_blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
   "current_blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
@@ -21,10 +21,10 @@
   "adjacent_line_fingerprints": [],
   "active_finding_id": null,
   "fix_status": "NONE",
-  "last_validated_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e",
+  "last_validated_commit": "a822b06b549eb75d1c01320f273ec9e54f55d91e",
   "last_validation": {
-    "time": "2026-11-14T19:43:00+01:00",
-    "result": "RED_GREEN_HTTP_REGRESSION_AND_PYCOMPILE_PASS"
+    "time": "2026-11-14T19:46:00+01:00",
+    "result": "RED_GREEN_HTTP_REGRESSION_4_TESTS_COMPILEALL_PASS"
   },
   "status": "READY_TO_RESUME"
 }
