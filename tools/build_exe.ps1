@@ -75,7 +75,17 @@ try {
     $basePython = $baseMatch.Groups[1].Value.Trim()
     foreach ($item in @('DLLs', 'Lib', 'python.exe', 'pythonw.exe', 'python3.dll', 'python312.dll', 'LICENSE.txt')) {
         $source = Join-Path $basePython $item
-        if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination $runtime -Recurse -Force }
+        if (-not (Test-Path -LiteralPath $source)) { continue }
+        if ((Get-Item -LiteralPath $source).PSIsContainer) {
+            Copy-Item -LiteralPath $source -Destination (Join-Path $runtime (Split-Path $item -Leaf)) -Recurse -Force
+        } else {
+            Copy-Item -LiteralPath $source -Destination (Join-Path $runtime (Split-Path $item -Leaf)) -Force
+        }
+    }
+    foreach ($required in @('python.exe', 'pythonw.exe', 'python3.dll', 'python312.dll')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $runtime $required))) {
+            throw "Portable Python runtime file missing after copy: $required"
+        }
     }
     # The base interpreter may carry user-installed quality tools. Remove its
     # site-packages before copying only the locked release environment.
