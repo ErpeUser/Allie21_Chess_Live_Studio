@@ -79,3 +79,11 @@ The full 144-file inventory is now covered: source, tests, documentation, data, 
 - The failed PR-triggered jobs were rerun as requested: CI `43633388763` and Security `43633388757`.
 - The reruns reproduced the same infrastructure condition: all five jobs completed as failures with `steps: null`, and every job-log request returned `BlobNotFound`.
 - AUDIT-0001 remains BLOCKED on GitHub Actions log availability; no source-level failure was inferred.
+
+
+## Coverage reconciliation
+
+- The three instruction files were line-counted and added to current-blob coverage: `AGENTS.md` 58, `AGENT_TASK.md` 217, and `AGENT_PROGRESS.md` 207 lines.
+- The two icon files are binary metadata-only items with no text-line coverage interval.
+- Coverage now has entries for all 144 manifest paths; 139 text files have line intervals, three instruction files have explicit instruction intervals, and two binary assets are recorded as metadata-only.
+- Manual version-contract assertions passed for application/lock/MV3/userscript versions and the unchanged extension key; the direct extension ID is derived from that key and is unchanged from baseline.

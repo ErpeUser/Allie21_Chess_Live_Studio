@@ -121,8 +121,8 @@
       "type": "documentation",
       "blob_sha": "fa8ad6181401210a8a9a4008865ad9c98d953f00",
       "size": 19206,
-      "line_count": null,
-      "audit_status": "INSTRUCTION_READ",
+      "line_count": 207,
+      "audit_status": "REVIEWED_INSTRUCTIONS",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -130,8 +130,8 @@
       "type": "documentation",
       "blob_sha": "0f3ee52f91bc718e76d776a58524c4ff6bfb0d3a",
       "size": 40271,
-      "line_count": null,
-      "audit_status": "INSTRUCTION_READ",
+      "line_count": 217,
+      "audit_status": "REVIEWED_INSTRUCTIONS",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -139,8 +139,8 @@
       "type": "documentation",
       "blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
       "size": 2856,
-      "line_count": null,
-      "audit_status": "INSTRUCTION_READ",
+      "line_count": 58,
+      "audit_status": "REVIEWED_INSTRUCTIONS",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
