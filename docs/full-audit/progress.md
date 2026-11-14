@@ -35,3 +35,15 @@ Re-read the fixed `viewer/index.html` interval 180–259 and the static-review i
 - AUDIT-0003 — FIXED (overlay-settings authorization gate; HTTP regression 4/4 and compile checks).
 - AUDIT-0004 — FIXED (idle private overlay status; viewer reliability 15/15).
 - AUDIT-0001 — BLOCKED (CI/Security infrastructure/log availability).
+
+
+## Additional completed review blocks
+
+- All 43 test files were read fully at the baseline; no additional confirmed defect was found. The current-blob regression additions in `tests/test_http_offline.py` and `tests/test_viewer_reliability.js` remain covered by focused tests.
+- All top-level backend Python files, all vendored Allie Python files, opening TSVs, engine/openings README files, and the vendor SHA-256 manifest were read and validated. The eight vendored file hashes match the manifest; no new defect was found.
+- Browser files and all 11 tool scripts were read fully. Path, version, manifest, atomic-update, and release checks are internally consistent; no new defect was found.
+- AUDIT-0005 corrected `docs/superpowers/README.md`, which incorrectly exposed the 11.2.22 finalization plan as active.
+
+## Resume point
+
+The next unreviewed inventory block begins at `ALLIE_ANALYSE_IST.md` line 1. Remaining work includes the two large analysis documents, changelog/license/source-license/example data, binary assets, final current-blob coverage reconciliation, and the full locked/platform verification gates.

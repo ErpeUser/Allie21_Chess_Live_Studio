@@ -20,12 +20,18 @@
     {
       "path": "tests/test_http_offline.py",
       "blob_sha": "c396890bf7842f2c25734dca69eb07d33327303c",
-      "line_count": 364,
+      "line_count": 363,
       "intervals": [
+        {
+          "start": 1,
+          "end": 352,
+          "scope": "baseline-full-static-review",
+          "status": "REVIEWED_BASELINE_PLUS_FOCUSED_REGRESSION"
+        },
         {
           "start": 260,
           "end": 278,
-          "scope": "regression-test-added-and-executed",
+          "scope": "overlay-settings-regression",
           "status": "PASS"
         }
       ]
@@ -293,7 +299,7 @@
     {
       "path": "viewer/index.html",
       "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
-      "line_count": 798,
+      "line_count": 572,
       "intervals": [
         {
           "start": 180,
@@ -312,8 +318,14 @@
     {
       "path": "tests/test_viewer_reliability.js",
       "blob_sha": "0c0c2c23a98161656add47da97d744c93b78e3cd",
-      "line_count": 227,
+      "line_count": 226,
       "intervals": [
+        {
+          "start": 1,
+          "end": 216,
+          "scope": "baseline-full-static-review",
+          "status": "REVIEWED_BASELINE_PLUS_FOCUSED_REGRESSION"
+        },
         {
           "start": 100,
           "end": 118,
@@ -854,6 +866,721 @@
           "status": "REVIEWED_STATIC_FOUR_ROLES"
         }
       ]
+    },
+    {
+      "path": "backend/allie_local_server.py",
+      "blob_sha": "59922a7b27c6d5f9f5edd04fe9be5f663034b3b7",
+      "line_count": 713,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 713,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/browser_session.py",
+      "blob_sha": "82c871f6e3507e0a7b5d061d5d55c7ab4920b90a",
+      "line_count": 109,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 109,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/chess_extras.py",
+      "blob_sha": "8009064cd45fd526f28caef61ac2037d9271c732",
+      "line_count": 502,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 502,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/config.py",
+      "blob_sha": "4a614e06bb1ac63e3c3e31287d3e24ad68fa1f43",
+      "line_count": 92,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 92,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/contracts.py",
+      "blob_sha": "aec0994ab691eef013ba81803a90710794bcde30",
+      "line_count": 93,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 93,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/doctor.py",
+      "blob_sha": "fac8045e01d2ad257617c38081d8730a64d2f088",
+      "line_count": 22,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 22,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/download_stockfish.py",
+      "blob_sha": "a7db20bf722ba91b486dde3488fc84303f2ed7b0",
+      "line_count": 114,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 114,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/http_boundary.py",
+      "blob_sha": "1e097ba5832c705683b8267145836ed3cc1fc8ee",
+      "line_count": 190,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 190,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/live_session.py",
+      "blob_sha": "40d9e38841f44d8c68dacc1d81bb35b35178f479",
+      "line_count": 367,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 367,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/model_setup.py",
+      "blob_sha": "7099113d5ce37ebfc5d49146f718333a1656288d",
+      "line_count": 66,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 66,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/native_overlay.py",
+      "blob_sha": "ad5e7dbebd042259b029a57596b60b242dcf012d",
+      "line_count": 1397,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 1397,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/overlay_lease.py",
+      "blob_sha": "99e1110129a083abeef18e11e0aa036874f20b1f",
+      "line_count": 112,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 112,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/position_tracker.py",
+      "blob_sha": "f1b0cced4bbb479c9d1f499df1163f19fda04b32",
+      "line_count": 247,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 247,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/security.py",
+      "blob_sha": "234db0137affdf08852099fd855c10f1a2e5e8d2",
+      "line_count": 157,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 157,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/service_status.py",
+      "blob_sha": "83c3c7ccc9b6bdb943a0311daab551940a5be1d8",
+      "line_count": 29,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 29,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vision.py",
+      "blob_sha": "62799181551f228b178083d8a5e929f2c1794d7a",
+      "line_count": 146,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 146,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/__init__.py",
+      "blob_sha": "d3c42fdb128f150b9dbc1ae5d9f5182bd7e1717a",
+      "line_count": 1,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 1,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model.sha256.csv",
+      "blob_sha": "620ed557babd903b0ca0dc517df487c59f305b89",
+      "line_count": 9,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 9,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model/__init__.py",
+      "blob_sha": "a119ad6be9a56249d70db9df17f7836006522d57",
+      "line_count": 1,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 1,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model/api.py",
+      "blob_sha": "12d59c33a9d671c1f08df3c4518ee1c6fb511ab7",
+      "line_count": 233,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 233,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model/configuration_allie.py",
+      "blob_sha": "d9e83eced25a97d75ee5730b6187f0ef8e20bb41",
+      "line_count": 11,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 11,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model/fast.py",
+      "blob_sha": "d493c6cf359e796fd8bf12707b5a644e5ab033d7",
+      "line_count": 132,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 132,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model/fastrs.py",
+      "blob_sha": "82910e735c928cf04b107acb5b142d6de17d340d",
+      "line_count": 323,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 323,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model/model.py",
+      "blob_sha": "9c3f8853b42e314a0d20b53ba6b691ea61348459",
+      "line_count": 365,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 365,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model/modeling_allie.py",
+      "blob_sha": "b47f0ed797f85172629d2f72cdf4273808eca978",
+      "line_count": 95,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 95,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/vendor/allie_model/tokens.py",
+      "blob_sha": "39b90e0f25cb9fd8397b41475d1ebe37476d5162",
+      "line_count": 119,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 119,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/engines/README.txt",
+      "blob_sha": "802f6e8cdbf7873118cbf3ef45009b0140fd0cb1",
+      "line_count": 2,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 2,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/openings/README.txt",
+      "blob_sha": "232831486c5ded4461e97e1891adaf7d9062409e",
+      "line_count": 2,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 2,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/openings/a.tsv",
+      "blob_sha": "561099854a15dfb523759aa87993a1fe480a6abc",
+      "line_count": 824,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 824,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/openings/b.tsv",
+      "blob_sha": "81e29d1a65aa7e7f0c607b5e47c140a08cfb72ae",
+      "line_count": 782,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 782,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/openings/c.tsv",
+      "blob_sha": "c882c56bcf34c6325b9ca60d20afac2e55604f08",
+      "line_count": 1251,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 1251,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/openings/d.tsv",
+      "blob_sha": "a829bac9d2f288b033d605e842f3b802379e3455",
+      "line_count": 645,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 645,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "backend/openings/e.tsv",
+      "blob_sha": "93a82e1f505e06256530736b45460738bd50e897",
+      "line_count": 368,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 368,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "browser/allie21_overlay.user.js",
+      "blob_sha": "298903726fcb19820d524352be7062e13290a339",
+      "line_count": 880,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 880,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "browser/background.js",
+      "blob_sha": "c6a31c03e52ad973a754e236589f59384cd0bdde",
+      "line_count": 218,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 218,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "browser/connection.js",
+      "blob_sha": "b1d9a8aea41a898d675acc7178aa5147407531d0",
+      "line_count": 31,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 31,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "browser/manifest.json",
+      "blob_sha": "e286cc71e35d2b75dc695e5d7d5a7c1386f56a31",
+      "line_count": 18,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 18,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "browser/options.html",
+      "blob_sha": "a3b6817fe4637dcc40be0bf0714e0646b3948881",
+      "line_count": 43,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 43,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "browser/options.js",
+      "blob_sha": "cf324a6cd4a44c4a96e1fa06008d6c964f3fa932",
+      "line_count": 151,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 151,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "browser/updates.js",
+      "blob_sha": "8f0265f77051c0c7f7465dc8727c0ebdb2d207d5",
+      "line_count": 54,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 54,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "browser/worker_status.js",
+      "blob_sha": "0f32dfaf6a6dd3e1f907805bfc550ee41ca3201c",
+      "line_count": 45,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 45,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/benchmark_runtime.py",
+      "blob_sha": "b34bc757396b0667d211c34fa8c3078881492206",
+      "line_count": 63,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 63,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/build_edge.py",
+      "blob_sha": "e76c88107aee99075c188c0094e98616929e2c26",
+      "line_count": 76,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 76,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/build_exe.ps1",
+      "blob_sha": "44ba9e65c83ca65ba313f862185723353bc41eb5",
+      "line_count": 139,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 139,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/check_versions.py",
+      "blob_sha": "9b6829f8d456812627cf75ff5d21593cc3dfb9c1",
+      "line_count": 32,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 32,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/desktop_shortcut.ps1",
+      "blob_sha": "f968d1861b9ddbb334720fd4144612a2ece64981",
+      "line_count": 15,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 15,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/finalize_release.ps1",
+      "blob_sha": "09e4bf52ae1abc3654527b2a09f62c8fdc7583e1",
+      "line_count": 25,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 25,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/launcher.py",
+      "blob_sha": "36021e37bbec3679641d4b33297347a482aa739e",
+      "line_count": 359,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 359,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/maintain.py",
+      "blob_sha": "f3e902996e4232c7cf5f2f07c90cf1480620318d",
+      "line_count": 330,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 330,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/quality_check.ps1",
+      "blob_sha": "0939f133338bd825805d7cde069238418e9cd620",
+      "line_count": 51,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 51,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/release_smoke.py",
+      "blob_sha": "7e6fa163a3cae17ca36c55db71c4c9e96612381a",
+      "line_count": 166,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 166,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "tools/update_release.ps1",
+      "blob_sha": "63efeacd08ec9c3051510e255fcbbd58f356d9a7",
+      "line_count": 7,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 7,
+          "scope": "full-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/UPDATE_PIPELINE_DE.md",
+      "blob_sha": "802cc3fc0bea93c5392bfeeb586f65ec2f6d2058",
+      "line_count": 99,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 99,
+          "scope": "documentation-version-review",
+          "status": "FIXED_RECHECKED"
+        }
+      ]
+    },
+    {
+      "path": "docs/release-status.md",
+      "blob_sha": "c05613a26188ed28027751893ebd94c4d7fbe9da",
+      "line_count": 17,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 17,
+          "scope": "documentation-version-review",
+          "status": "FIXED_RECHECKED"
+        }
+      ]
+    },
+    {
+      "path": "docs/superpowers/README.md",
+      "blob_sha": "624268f75aab684b177b611e69463545b97229cd",
+      "line_count": 7,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 7,
+          "scope": "documentation-version-review",
+          "status": "FIXED_RECHECKED"
+        }
+      ]
     }
   ],
   "reviewed_blocks": [
@@ -880,6 +1607,72 @@
       "scope": "all-tests",
       "file_count": 43,
       "result": "ALL_TEST_FILES_READ_FULLY_NO_ADDITIONAL_CONFIRMED_DEFECT"
+    },
+    {
+      "source_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+      "scope": "backend-vendor-data-static-review",
+      "files": [
+        "backend/allie_local_server.py",
+        "backend/browser_session.py",
+        "backend/chess_extras.py",
+        "backend/config.py",
+        "backend/contracts.py",
+        "backend/doctor.py",
+        "backend/download_stockfish.py",
+        "backend/http_boundary.py",
+        "backend/live_session.py",
+        "backend/model_setup.py",
+        "backend/native_overlay.py",
+        "backend/overlay_lease.py",
+        "backend/position_tracker.py",
+        "backend/security.py",
+        "backend/service_status.py",
+        "backend/vision.py",
+        "backend/vendor/__init__.py",
+        "backend/vendor/allie_model.sha256.csv",
+        "backend/vendor/allie_model/__init__.py",
+        "backend/vendor/allie_model/api.py",
+        "backend/vendor/allie_model/configuration_allie.py",
+        "backend/vendor/allie_model/fast.py",
+        "backend/vendor/allie_model/fastrs.py",
+        "backend/vendor/allie_model/model.py",
+        "backend/vendor/allie_model/modeling_allie.py",
+        "backend/vendor/allie_model/tokens.py",
+        "backend/engines/README.txt",
+        "backend/openings/README.txt",
+        "backend/openings/a.tsv",
+        "backend/openings/b.tsv",
+        "backend/openings/c.tsv",
+        "backend/openings/d.tsv",
+        "backend/openings/e.tsv"
+      ],
+      "result": "NO_ADDITIONAL_CONFIRMED_DEFECT;_VENDOR_HASHES_MATCH"
+    },
+    {
+      "source_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+      "scope": "browser-and-tools-static-review",
+      "files": [
+        "browser/allie21_overlay.user.js",
+        "browser/background.js",
+        "browser/connection.js",
+        "browser/manifest.json",
+        "browser/options.html",
+        "browser/options.js",
+        "browser/updates.js",
+        "browser/worker_status.js",
+        "tools/benchmark_runtime.py",
+        "tools/build_edge.py",
+        "tools/build_exe.ps1",
+        "tools/check_versions.py",
+        "tools/desktop_shortcut.ps1",
+        "tools/finalize_release.ps1",
+        "tools/launcher.py",
+        "tools/maintain.py",
+        "tools/quality_check.ps1",
+        "tools/release_smoke.py",
+        "tools/update_release.ps1"
+      ],
+      "result": "NO_ADDITIONAL_CONFIRMED_DEFECT"
     }
   ]
 }
