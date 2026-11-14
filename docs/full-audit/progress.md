@@ -27,7 +27,7 @@
 
 ## Resume point
 
-Re-read the fixed `viewer/index.html` interval 180–259 and then resume stable file order at line 260. Continue through the remaining viewer/browser/tests/tools files. Full repository coverage is not complete.
+Re-read the fixed `viewer/index.html` interval 180–259 and the static-review interval 260–572, then resume stable file order at line 573. The browser manifest/options/background/connection/update/worker-status files, userscript sections after line 260, relevant browser/viewer/overlay/pairing/extension/release tests, and all 11 `tools/` scripts had no additional confirmed defect. Full repository coverage is not complete; remaining viewer lines and any unrecorded test intervals still require checkpointed review.
 
 ## Finding status
 

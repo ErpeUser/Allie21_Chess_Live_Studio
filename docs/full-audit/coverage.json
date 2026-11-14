@@ -300,6 +300,12 @@
           "end": 259,
           "scope": "private-overlay-status-review",
           "status": "FIXED_RECHECKED"
+        },
+        {
+          "start": 260,
+          "end": 572,
+          "scope": "browser-viewer-static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
         }
       ]
     },
@@ -315,6 +321,26 @@
           "status": "PASS"
         }
       ]
+    }
+  ],
+  "reviewed_blocks": [
+    {
+      "source_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+      "scope": "browser-and-tools-static-review",
+      "files": [
+        "browser/manifest.json",
+        "browser/options.html",
+        "browser/options.js",
+        "browser/background.js",
+        "browser/connection.js",
+        "browser/updates.js",
+        "browser/worker_status.js",
+        "browser/allie21_overlay.user.js (sections after line 260)",
+        "viewer/index.html (lines 260-572)",
+        "browser/viewer/overlay/pairing/extension/release-related tests",
+        "tools/** (11 scripts)"
+      ],
+      "result": "NO_ADDITIONAL_CONFIRMED_DEFECT"
     }
   ]
 }

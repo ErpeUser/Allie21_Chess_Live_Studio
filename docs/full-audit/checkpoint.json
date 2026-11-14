@@ -7,24 +7,30 @@
   "original_blob_sha": "b08d2bd480d53ead43c0f0f52473044317e7a1c1",
   "current_blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
   "original_line_number": 246,
-  "last_fully_checked_line": 259,
-  "next_unchecked_line": 260,
+  "last_fully_checked_line": 572,
+  "next_unchecked_line": 573,
   "checked_intervals": [
     {
       "start": 180,
       "end": 259,
       "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
       "status": "FIXED_RECHECKED_STATUS_PATH"
+    },
+    {
+      "start": 260,
+      "end": 572,
+      "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
+      "status": "REVIEWED_STATIC_FOUR_ROLES"
     }
   ],
-  "next_unchecked_fingerprint": "viewer/index.html line 260 onward; then remaining browser/viewer/tests/tools files",
+  "next_unchecked_fingerprint": "viewer/index.html line 573 onward; then any remaining unread test/tool/browser intervals",
   "adjacent_line_fingerprints": [],
   "active_finding_id": null,
   "fix_status": "FIXED",
   "last_validated_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
   "last_validation": {
-    "time": "2026-11-14T19:43:39+01:00",
-    "result": "RED_GREEN_VIEWER_RELIABILITY_15_PASS"
+    "time": "2026-11-14T19:48:00+01:00",
+    "result": "RED_GREEN_VIEWER_RELIABILITY_15_PASS_PLUS_STATIC_REVIEW_NO_NEW_FINDINGS"
   },
   "status": "READY_TO_RESUME"
 }
