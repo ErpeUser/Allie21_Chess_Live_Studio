@@ -9,13 +9,14 @@
 - Deterministic inventory: 144 blobs, 19 trees, `truncated=false`.
 - Required instruction files were read; historical `AGENT_PROGRESS.md` remains preserved context, not proof of current coverage.
 - Audit branch: `audit/full-repository-2026-11-14`.
-- Audit commit with current source fix: `a64cb8199371d53839e354fae9da53d6f932fe3e`.
+- Latest audit source-fix commit: `8f4335a8f10177aa80c2abf76c55fe9999de1b13`.
 
 ## Completed review blocks
 
 - Configuration, shell hooks, workflow YAML, root launch/update scripts, `config.json`, and `pyproject.toml` were read in full. No confirmed defect was found in this static pass; actions are SHA-pinned and Windows release remains workflow-dispatch only.
 - Documentation/version finding AUDIT-0002 is fixed; current claims are 11.2.24/11.2.24.0 and old evidence is labeled historical.
 - Backend audit found exactly one confirmed defect, AUDIT-0003. The overlay-settings access gate was added and the regression was observed RED before the fix and GREEN after it. The changed Python files compile.
+- Viewer audit found AUDIT-0004: idle private status failed open. The viewer now preserves backend availability and capture-exclusion flags. The focused/full viewer reliability file is GREEN at 15/15.
 - Baseline CI/Security failures remain infrastructure blockers because all jobs fail before steps and logs are unavailable.
 
 ## Current blockers
@@ -26,11 +27,11 @@
 
 ## Resume point
 
-Re-read the fixed `backend/live_server.py` interval and then resume stable file order at line 619 and the remaining backend/model/browser/viewer/tests/tools files. Full repository coverage is not complete.
+Re-read the fixed `viewer/index.html` interval 180–259 and then resume stable file order at line 260. Continue through the remaining viewer/browser/tests/tools files. Full repository coverage is not complete.
 
-## Finding AUDIT-0004 — idle private status fail-open — FIX_IN_PROGRESS
+## Finding status
 
-- Original file/blob: `viewer/index.html` / `b08d2bd480d53ead43c0f0f52473044317e7a1c1`, lines 246–252.
-- Root cause: the no-stream branch overwrites the remote native status with `available:true` and `capture_excluded:overlayMode==='private'`.
-- Reproduction test added to `tests/test_viewer_reliability.js`; the pre-fix viewer is expected to report `Bereit` despite an unavailable backend.
-- Next: preserve the backend verification flags, run the focused/full Node suite and syntax checks, then update the checkpoint and resume.
+- AUDIT-0002 — FIXED (documentation/version reconciliation).
+- AUDIT-0003 — FIXED (overlay-settings authorization gate; HTTP regression 4/4 and compile checks).
+- AUDIT-0004 — FIXED (idle private overlay status; viewer reliability 15/15).
+- AUDIT-0001 — BLOCKED (CI/Security infrastructure/log availability).

@@ -1,7 +1,7 @@
 {
   "audit_id": "allie21-full-audit-2026-11-14",
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
-  "commit": "a64cb8199371d53839e354fae9da53d6f932fe3e",
+  "commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
   "coverage_policy": "Only current-blob intervals with union covering all relevant lines may be VERIFIED; inventory is not audit coverage.",
   "files": [
     {
@@ -287,6 +287,32 @@
           "end": 64,
           "scope": "static-four-role-review",
           "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "viewer/index.html",
+      "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
+      "line_count": 798,
+      "intervals": [
+        {
+          "start": 180,
+          "end": 259,
+          "scope": "private-overlay-status-review",
+          "status": "FIXED_RECHECKED"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_viewer_reliability.js",
+      "blob_sha": "0c0c2c23a98161656add47da97d744c93b78e3cd",
+      "line_count": 227,
+      "intervals": [
+        {
+          "start": 100,
+          "end": 118,
+          "scope": "idle-private-status-regression",
+          "status": "PASS"
         }
       ]
     }

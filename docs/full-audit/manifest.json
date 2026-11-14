@@ -1145,11 +1145,11 @@
     {
       "path": "tests/test_viewer_reliability.js",
       "type": "test",
-      "blob_sha": "b1c58f34f0632a4dcffd35e9a509d4c25678baea",
-      "size": 11383,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
-      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+      "blob_sha": "0c0c2c23a98161656add47da97d744c93b78e3cd",
+      "size": 11970,
+      "line_count": 227,
+      "audit_status": "REGRESSION_TEST_PASS",
+      "checked_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13"
     },
     {
       "path": "tests/test_vision_ocr.py",
@@ -1298,11 +1298,11 @@
     {
       "path": "viewer/index.html",
       "type": "source",
-      "blob_sha": "b08d2bd480d53ead43c0f0f52473044317e7a1c1",
-      "size": 68360,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
-      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+      "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
+      "size": 68519,
+      "line_count": 798,
+      "audit_status": "FIXED_RECHECKED_STATUS_PATH",
+      "checked_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13"
     }
   ]
 }
