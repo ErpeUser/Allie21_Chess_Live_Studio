@@ -68,8 +68,8 @@ Ein Klick auf das Allie-Symbol oeffnet Verbindung/Updates. **Worker aufwecken un
  testen** prueft die Erweiterung; **Server-Verbindung testen** prueft separat
 localhost. Angezeigt wird die wirklich geladene Erweiterungsversion.
 
-Die Erweiterungsshell ist 11.2.22.0; Anwendung und standalone Userscript sind
-11.2.22. Die Versionen werden gemeinsam veröffentlicht. Der Wartungsstand ersetzt
+Die Erweiterungsshell ist 11.2.24.0; Anwendung und standalone Userscript sind
+11.2.24. Die Versionen werden gemeinsam veröffentlicht. Der Wartungsstand ersetzt
 nicht den separaten frueheren Pfeilfix-Download: er aendert Wartung, Build und
 Worker-Lifecycle, nicht die gesamte Analyse-/Pfeilpipeline. Ein aufgewachter
 Worker allein bestaetigt keine funktionierende Pfeilanzeige.
