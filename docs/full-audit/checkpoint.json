@@ -2,30 +2,22 @@
   "audit_id": "allie21-full-audit-2026-11-14",
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
   "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
-  "current_commit": "39872e32bb53329a0b235546948a1656a250b8b5",
-  "current_file": "VERSIONEN.md",
-  "original_blob_sha": "f1645f480d1d538e79dfddac5aa16e6554503c5b",
-  "current_blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
-  "original_line_number": 3,
-  "last_fully_checked_line": 110,
+  "current_commit": "280d0298985587352b427d35db5d1ff579b04192",
+  "current_file": "AGENTS.md",
+  "original_blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
+  "current_blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
+  "original_line_number": 1,
+  "last_fully_checked_line": 0,
   "next_unchecked_line": 1,
-  "checked_intervals": [
-    {
-      "start": 1,
-      "end": 110,
-      "blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
-      "status": "REVIEWED_VERSION_CONSISTENCY",
-      "note": "Full current file readback after documentation fix; four-role source audit remains outstanding."
-    }
-  ],
+  "checked_intervals": [],
   "next_unchecked_fingerprint": null,
   "adjacent_line_fingerprints": [],
   "active_finding_id": null,
   "fix_status": "NONE",
-  "last_validated_commit": "39872e32bb53329a0b235546948a1656a250b8b5",
+  "last_validated_commit": "280d0298985587352b427d35db5d1ff579b04192",
   "last_validation": {
-    "time": "2026-11-14T19:21:46+01:00",
-    "result": "STATIC_DOC_CONSISTENCY_PASS"
+    "time": "2026-11-14T19:27:00+01:00",
+    "result": "DOC_FIX_AND_STATIC_CONFIG_REVIEW_PASS"
   },
   "status": "READY_TO_RESUME"
 }

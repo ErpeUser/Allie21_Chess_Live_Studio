@@ -1,73 +1,273 @@
 {
   "audit_id": "allie21-full-audit-2026-11-14",
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
-  "commit": "39872e32bb53329a0b235546948a1656a250b8b5",
-  "coverage_policy": "Only current-blob intervals with union covering all relevant text lines may be VERIFIED; inventory is not audit coverage.",
+  "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+  "default_branch": "main",
+  "root_tree_sha": "c4ecfe3a93f71dfc96d96f117300d0bc74d3f026",
+  "tree_truncated": false,
+  "generated_at": "2026-11-14T00:00:00+01:00",
+  "file_count": 144,
   "files": [
     {
-      "path": "VERSIONEN.md",
-      "blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
-      "line_count": 110,
+      "path": ".codex/maintenance.sh",
+      "blob_sha": "4fa3da068959e7eaa10aca88a7a0da27292fc7b8",
+      "line_count": 9,
       "intervals": [
         {
           "start": 1,
-          "end": 110,
-          "scope": "version-consistency",
-          "status": "REVIEWED_VERSION_CONSISTENCY"
+          "end": 9,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
         }
       ]
     },
     {
-      "path": "docs/release-status.md",
-      "blob_sha": "c05613a26188ed28027751893ebd94c4d7fbe9da",
-      "line_count": 16,
+      "path": ".codex/setup.sh",
+      "blob_sha": "a7234b99f141a9f9125a966051b67e609aa38d7b",
+      "line_count": 9,
       "intervals": [
         {
           "start": 1,
-          "end": 16,
-          "scope": "version-consistency",
-          "status": "REVIEWED_VERSION_CONSISTENCY"
+          "end": 9,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
         }
       ]
     },
     {
-      "path": "README_DE.md",
-      "blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
-      "line_count": 71,
-      "intervals": [
-        {
-          "start": 59,
-          "end": 67,
-          "scope": "version-consistency",
-          "status": "REVIEWED_VERSION_CONSISTENCY"
-        }
-      ]
-    },
-    {
-      "path": "docs/UPDATE_PIPELINE_DE.md",
-      "blob_sha": "802cc3fc0bea93c5392bfeeb586f65ec2f6d2058",
-      "line_count": 100,
+      "path": ".gitattributes",
+      "blob_sha": "113a5c450c0cfc8ad729c8966d774bd73fc3c794",
+      "line_count": 2,
       "intervals": [
         {
           "start": 1,
-          "end": 100,
-          "scope": "version-consistency",
-          "status": "REVIEWED_VERSION_CONSISTENCY"
+          "end": 2,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
         }
       ]
     },
     {
-      "path": "CHANGELOG.md",
-      "blob_sha": "fcbc95abbea99323cd4f47de71bcde042a2a35e5",
-      "line_count": 216,
+      "path": ".githooks/post-merge",
+      "blob_sha": "22cde7f04706cb6fdfd2f8cf1759e3613082f54c",
+      "line_count": 10,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 10,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": ".githooks/post-rewrite",
+      "blob_sha": "820f3330e1f855cccef5b0cfb8f0ea0835d8507a",
+      "line_count": 4,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 4,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": ".github/CODEOWNERS",
+      "blob_sha": "90b9c0a597abcc171770ec658d4ddfd7e3da50b4",
+      "line_count": 6,
       "intervals": [
         {
           "start": 1,
           "end": 6,
-          "scope": "version-consistency",
-          "status": "REVIEWED_VERSION_CONSISTENCY"
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "blob_sha": "f12b41db4e7577ae3dfd9845c2fbad39781794e9",
+      "line_count": 13,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 13,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "blob_sha": "58a47a30f228fd5a71aaba72f319c278a7ddff23",
+      "line_count": 111,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 111,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/security.yml",
+      "blob_sha": "eba7886e08ec101422c5f3264978d368488c707f",
+      "line_count": 61,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 61,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/windows-release.yml",
+      "blob_sha": "c19af3603ca6b0c5c4ad798b039537547a76e676",
+      "line_count": 57,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 57,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": ".gitignore",
+      "blob_sha": "1b94dc091a72e38bfe02e61ac6360fdbac45b1fc",
+      "line_count": 23,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 23,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": ".gitleaks.toml",
+      "blob_sha": "3723dc00b52cec65517e0fd3ddff4759593777a7",
+      "line_count": 11,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 11,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "CHROME_OVERLAY_INSTALLIEREN.bat",
+      "blob_sha": "15bc2b7a3af16bb5a87eb3ebfefbfd2daa1f016b",
+      "line_count": 10,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 10,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "EDGE_OVERLAY_INSTALLIEREN.bat",
+      "blob_sha": "641639b7d39cf4492f7ddce347c1ca7d87847c14",
+      "line_count": 11,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 11,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "MODELL_EINRICHTEN.bat",
+      "blob_sha": "8f98a0f4115509e102982587d81d6b6924fc3e85",
+      "line_count": 29,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 29,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "START_HIER.bat",
+      "blob_sha": "89418c07922841392f862ad2ed2395d107d7bc41",
+      "line_count": 55,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 55,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "UPDATE_ALLIE.cmd",
+      "blob_sha": "d46e903c5815082aabc843b71dd2f57cfc44566f",
+      "line_count": 24,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 24,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "config.json",
+      "blob_sha": "9cb42affe895cfc13fedfb5f0e9accd0fda7192b",
+      "line_count": 15,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 15,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "blob_sha": "fe9dc06d68bff26a96e63c0a164b1a6d7e38030c",
+      "line_count": 47,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 47,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "SECURITY.md",
+      "blob_sha": "09057775efbd2a2e5a5941737c86c672eb2be8f8",
+      "line_count": 64,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 64,
+          "scope": "static-four-role-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
         }
       ]
     }
-  ]
+  ],
+  "commit": "280d0298985587352b427d35db5d1ff579b04192"
 }
