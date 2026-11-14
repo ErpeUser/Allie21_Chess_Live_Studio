@@ -47,3 +47,15 @@ Re-read the fixed `viewer/index.html` interval 180–259 and the static-review i
 ## Resume point
 
 The next unreviewed inventory block begins at `ALLIE_ANALYSE_IST.md` line 1. Remaining work includes the two large analysis documents, changelog/license/source-license/example data, binary assets, final current-blob coverage reconciliation, and the full locked/platform verification gates.
+
+
+## Documentation and data review
+
+- The two large analysis documents, dated historical audit reports, licensing files, example PGN, opening tables, and historical Superpowers plans/specs were read completely. The dated blocker statements remain preserved historical evidence; they were not reclassified as current runtime defects.
+- Opening tables contain the expected three-field tabular schema and complete ECO coverage; opening hashes and the vendored Allie SHA-256 manifest match the fetched contents.
+- `docs/superpowers/README.md` was corrected under AUDIT-0005 so the 11.2.22 plan is explicitly archived rather than presented as active.
+- Binary icon assets were checked as metadata-only inventory items; they contain no text-line audit surface.
+
+## Resume point
+
+The next unreviewed inventory entry is `uv.lock` line 1. Remaining work is limited to any files still shown as INVENTORIED in the manifest, current-blob coverage reconciliation, and the locked/platform verification gates.

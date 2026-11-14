@@ -148,8 +148,8 @@
       "type": "documentation",
       "blob_sha": "7675864ccd32c6bf46ee5388665c4598e0aa2346",
       "size": 29539,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 446,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -157,8 +157,8 @@
       "type": "documentation",
       "blob_sha": "e101f73e575c3db436e11381ff8d114d554cbd8e",
       "size": 22245,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 288,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -167,7 +167,7 @@
       "blob_sha": "fbd85fce6009067244a02b39915336825fd61c1a",
       "size": 97385,
       "line_count": null,
-      "audit_status": "INVENTORIED",
+      "audit_status": "REVIEWED_BINARY_METADATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -176,7 +176,7 @@
       "blob_sha": "4e962591e1698fd92ae406ec4c24f99ad3f29aac",
       "size": 1239566,
       "line_count": null,
-      "audit_status": "INVENTORIED",
+      "audit_status": "REVIEWED_BINARY_METADATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -490,8 +490,8 @@
       "type": "data",
       "blob_sha": "46630268276e8d712d2ca1115d695dedba3f6e96",
       "size": 271,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 12,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -569,11 +569,11 @@
     {
       "path": "CHANGELOG.md",
       "type": "documentation",
-      "blob_sha": "060bb75465e083bd795a7f725667c644455c6e5f",
+      "blob_sha": "fcbc95abbea99323cd4f47de71bcde042a2a35e5",
       "size": 15359,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
-      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+      "line_count": 215,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
     },
     {
       "path": "CHROME_OVERLAY_INSTALLIEREN.bat",
@@ -598,8 +598,8 @@
       "type": "documentation",
       "blob_sha": "67aca1cda1919768bb11eb416a0d2bbab805eab2",
       "size": 3073,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 61,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -607,8 +607,8 @@
       "type": "documentation",
       "blob_sha": "f16ece97ffa57b019eb12f2414ab6de17068a5de",
       "size": 8012,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 136,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -616,8 +616,8 @@
       "type": "documentation",
       "blob_sha": "2757c1671199cda78f22604d8d3e1005f3b374f1",
       "size": 1843,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 30,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -625,8 +625,8 @@
       "type": "documentation",
       "blob_sha": "95d37a0c194d11ba63aa36a9c5f1454e749eb4f2",
       "size": 8500,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 143,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -634,8 +634,8 @@
       "type": "documentation",
       "blob_sha": "bf9bdd66fdd52bc6fe3729d94b09f71e1b79cd4d",
       "size": 21817,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 315,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -643,8 +643,8 @@
       "type": "documentation",
       "blob_sha": "a89b57c8adfafdf15e5a06179301792cc375e81d",
       "size": 1868,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 35,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -661,8 +661,8 @@
       "type": "documentation",
       "blob_sha": "c1f70229dd676000a4e660809bf285de846d3b34",
       "size": 5289,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 100,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -670,8 +670,8 @@
       "type": "documentation",
       "blob_sha": "18f2dbb975f11a0dd485a4b96d5e8742a37cba01",
       "size": 4164,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 72,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -681,15 +681,15 @@
       "size": 361,
       "line_count": 7,
       "audit_status": "FIXED_RECHECKED_DOC",
-      "checked_commit": "44c38cbf186eb58a17829c7455f2c8e9671a7a59"
+      "checked_commit": "d61f4d8801f3566cba21f84c521e98d8b6455a09"
     },
     {
       "path": "docs/superpowers/specs/2026-11-12-final-integrity-design.md",
       "type": "documentation",
       "blob_sha": "1906a993b0bcb59445c3ff424c0f2142a2a218a6",
       "size": 2663,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 33,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -697,8 +697,8 @@
       "type": "documentation",
       "blob_sha": "96b048ca9b0db66817e108f0d0f884203afe42a9",
       "size": 6157,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 109,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -724,8 +724,8 @@
       "type": "documentation",
       "blob_sha": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7",
       "size": 35149,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 674,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
@@ -751,27 +751,27 @@
       "type": "documentation",
       "blob_sha": "277fbd00482b7057da306ae26c21fcb16e4d0212",
       "size": 1266,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 20,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
       "path": "README_DE.md",
       "type": "documentation",
-      "blob_sha": "6b8674a07c868fd80ad3c1683a4a24a44ffba13f",
+      "blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
       "size": 6930,
-      "line_count": null,
-      "audit_status": "INSTRUCTION_READ",
-      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+      "line_count": 70,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
     },
     {
       "path": "SECURITY.md",
       "type": "documentation",
-      "blob_sha": "09057775efbd2a2e5a5941737c86c672eb2be8f8",
+      "blob_sha": "452bb8c271e9674ae05bbe2043d9c81345c22b77",
       "size": 3977,
-      "line_count": 64,
-      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
-      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+      "line_count": 63,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
     },
     {
       "path": "START_HIER.bat",
@@ -1289,11 +1289,11 @@
     {
       "path": "VERSIONEN.md",
       "type": "documentation",
-      "blob_sha": "f1645f480d1d538e79dfddac5aa16e6554503c5b",
+      "blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
       "size": 6727,
-      "line_count": null,
-      "audit_status": "INSTRUCTION_READ",
-      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+      "line_count": 109,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
     },
     {
       "path": "viewer/index.html",

@@ -285,14 +285,14 @@
     },
     {
       "path": "SECURITY.md",
-      "blob_sha": "09057775efbd2a2e5a5941737c86c672eb2be8f8",
-      "line_count": 64,
+      "blob_sha": "452bb8c271e9674ae05bbe2043d9c81345c22b77",
+      "line_count": 63,
       "intervals": [
         {
           "start": 1,
-          "end": 64,
-          "scope": "static-four-role-review",
-          "status": "REVIEWED_STATIC_FOUR_ROLES"
+          "end": 63,
+          "scope": "documentation-static-review",
+          "status": "FIXED_RECHECKED"
         }
       ]
     },
@@ -1551,7 +1551,7 @@
         {
           "start": 1,
           "end": 99,
-          "scope": "documentation-version-review",
+          "scope": "documentation-static-review",
           "status": "FIXED_RECHECKED"
         }
       ]
@@ -1564,7 +1564,7 @@
         {
           "start": 1,
           "end": 17,
-          "scope": "documentation-version-review",
+          "scope": "documentation-static-review",
           "status": "FIXED_RECHECKED"
         }
       ]
@@ -1577,7 +1577,241 @@
         {
           "start": 1,
           "end": 7,
-          "scope": "documentation-version-review",
+          "scope": "documentation-static-review",
+          "status": "FIXED_RECHECKED"
+        }
+      ]
+    },
+    {
+      "path": "ALLIE_ANALYSE_IST.md",
+      "blob_sha": "7675864ccd32c6bf46ee5388665c4598e0aa2346",
+      "line_count": 446,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 446,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "ALLIE_ANALYSE_V11_TECHNISCHE_ANALYSE.md",
+      "blob_sha": "e101f73e575c3db436e11381ff8d114d554cbd8e",
+      "line_count": 288,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 288,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "QUELLEN_LIZENZEN.md",
+      "blob_sha": "277fbd00482b7057da306ae26c21fcb16e4d0212",
+      "line_count": 20,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 20,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "LICENSE.txt",
+      "blob_sha": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7",
+      "line_count": 674,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 674,
+          "scope": "license-text-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "beispiele/italienisch_1950.pgn",
+      "blob_sha": "46630268276e8d712d2ca1115d695dedba3f6e96",
+      "line_count": 12,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 12,
+          "scope": "data-schema-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/MAINTENANCE_VERIFICATION.md",
+      "blob_sha": "2757c1671199cda78f22604d8d3e1005f3b374f1",
+      "line_count": 30,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 30,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/PRODUKTVISION_ALLIE21_DE.md",
+      "blob_sha": "bf9bdd66fdd52bc6fe3729d94b09f71e1b79cd4d",
+      "line_count": 315,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 315,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/RELEASE_AND_TRAY.md",
+      "blob_sha": "a89b57c8adfafdf15e5a06179301792cc375e81d",
+      "line_count": 35,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 35,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/admin-handoff.md",
+      "blob_sha": "67aca1cda1919768bb11eb416a0d2bbab805eab2",
+      "line_count": 61,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 61,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/final-reliability-audit.md",
+      "blob_sha": "f16ece97ffa57b019eb12f2414ab6de17068a5de",
+      "line_count": 136,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 136,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/overlay-capture-audit.md",
+      "blob_sha": "95d37a0c194d11ba63aa36a9c5f1454e749eb4f2",
+      "line_count": 143,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 143,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/superpowers/plans/2026-11-12-final-integrity.md",
+      "blob_sha": "c1f70229dd676000a4e660809bf285de846d3b34",
+      "line_count": 100,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 100,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/superpowers/plans/2026-11-13-compact-ui-and-transient-hints.md",
+      "blob_sha": "18f2dbb975f11a0dd485a4b96d5e8742a37cba01",
+      "line_count": 72,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 72,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/superpowers/specs/2026-11-12-final-integrity-design.md",
+      "blob_sha": "1906a993b0bcb59445c3ff424c0f2142a2a218a6",
+      "line_count": 33,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 33,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "docs/superpowers/specs/2026-11-13-compact-ui-and-transient-hints-design.md",
+      "blob_sha": "96b048ca9b0db66817e108f0d0f884203afe42a9",
+      "line_count": 109,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 109,
+          "scope": "documentation-static-review",
+          "status": "REVIEWED_STATIC_FOUR_ROLES"
+        }
+      ]
+    },
+    {
+      "path": "VERSIONEN.md",
+      "blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
+      "line_count": 109,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 109,
+          "scope": "documentation-static-review",
+          "status": "FIXED_RECHECKED"
+        }
+      ]
+    },
+    {
+      "path": "README_DE.md",
+      "blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
+      "line_count": 70,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 70,
+          "scope": "documentation-static-review",
+          "status": "FIXED_RECHECKED"
+        }
+      ]
+    },
+    {
+      "path": "CHANGELOG.md",
+      "blob_sha": "fcbc95abbea99323cd4f47de71bcde042a2a35e5",
+      "line_count": 215,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 215,
+          "scope": "documentation-static-review",
           "status": "FIXED_RECHECKED"
         }
       ]
@@ -1673,6 +1907,44 @@
         "tools/update_release.ps1"
       ],
       "result": "NO_ADDITIONAL_CONFIRMED_DEFECT"
+    },
+    {
+      "source_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+      "scope": "documentation-license-example-data-review",
+      "files": [
+        "ALLIE_ANALYSE_IST.md",
+        "ALLIE_ANALYSE_V11_TECHNISCHE_ANALYSE.md",
+        "QUELLEN_LIZENZEN.md",
+        "LICENSE.txt",
+        "beispiele/italienisch_1950.pgn",
+        "docs/MAINTENANCE_VERIFICATION.md",
+        "docs/PRODUKTVISION_ALLIE21_DE.md",
+        "docs/RELEASE_AND_TRAY.md",
+        "docs/admin-handoff.md",
+        "docs/final-reliability-audit.md",
+        "docs/overlay-capture-audit.md",
+        "docs/superpowers/plans/2026-11-12-final-integrity.md",
+        "docs/superpowers/plans/2026-11-13-compact-ui-and-transient-hints.md",
+        "docs/superpowers/specs/2026-11-12-final-integrity-design.md",
+        "docs/superpowers/specs/2026-11-13-compact-ui-and-transient-hints-design.md",
+        "docs/UPDATE_PIPELINE_DE.md",
+        "docs/release-status.md",
+        "docs/superpowers/README.md",
+        "VERSIONEN.md",
+        "README_DE.md",
+        "CHANGELOG.md",
+        "SECURITY.md"
+      ],
+      "result": "HISTORICAL_DOCS_LABELED_OR_PRESERVED; NO_ADDITIONAL_CONFIRMED_RUNTIME_DEFECT"
+    },
+    {
+      "source_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+      "scope": "binary-assets",
+      "files": [
+        "assets/allie21_icon.ico",
+        "assets/allie21_icon.png"
+      ],
+      "result": "INVENTORIED_METADATA_ONLY; NO_TEXT_LINES"
     }
   ]
 }

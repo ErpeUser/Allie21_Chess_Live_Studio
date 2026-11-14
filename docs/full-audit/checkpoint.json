@@ -3,21 +3,21 @@
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
   "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
   "current_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
-  "current_file": "ALLIE_ANALYSE_IST.md",
-  "original_blob_sha": "7675864ccd32c6bf46ee5388665c4598e0aa2346",
-  "current_blob_sha": "7675864ccd32c6bf46ee5388665c4598e0aa2346",
+  "current_file": "uv.lock",
+  "original_blob_sha": "a340e5f088b78b3c2d5492ec762f649e18968691",
+  "current_blob_sha": "a340e5f088b78b3c2d5492ec762f649e18968691",
   "original_line_number": 1,
   "last_fully_checked_line": 0,
   "next_unchecked_line": 1,
   "checked_intervals": [],
-  "next_unchecked_fingerprint": "ALLIE_ANALYSE_IST.md line 1",
+  "next_unchecked_fingerprint": "uv.lock line 1",
   "adjacent_line_fingerprints": [],
   "active_finding_id": null,
   "fix_status": "NONE",
   "last_validated_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
   "last_validation": {
-    "time": "2026-11-14T20:35:00+01:00",
-    "result": "BACKEND_VENDOR_BROWSER_TOOLS_AND_43_TESTS_REVIEWED; AUDIT-0005_DOC_FIX_PENDING_READBACK"
+    "time": "2026-11-14T20:45:00+01:00",
+    "result": "DOCS_DATA_BACKEND_BROWSER_TOOLS_AND_43_TESTS_REVIEWED; AUDIT-0005_FIXED"
   },
   "status": "READY_TO_RESUME"
 }
