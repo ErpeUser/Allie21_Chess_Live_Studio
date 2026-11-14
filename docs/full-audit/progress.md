@@ -27,3 +27,10 @@
 ## Resume point
 
 Re-read the fixed `backend/live_server.py` interval and then resume stable file order at line 619 and the remaining backend/model/browser/viewer/tests/tools files. Full repository coverage is not complete.
+
+## Finding AUDIT-0004 — idle private status fail-open — FIX_IN_PROGRESS
+
+- Original file/blob: `viewer/index.html` / `b08d2bd480d53ead43c0f0f52473044317e7a1c1`, lines 246–252.
+- Root cause: the no-stream branch overwrites the remote native status with `available:true` and `capture_excluded:overlayMode==='private'`.
+- Reproduction test added to `tests/test_viewer_reliability.js`; the pre-fix viewer is expected to report `Bereit` despite an unavailable backend.
+- Next: preserve the backend verification flags, run the focused/full Node suite and syntax checks, then update the checkpoint and resume.

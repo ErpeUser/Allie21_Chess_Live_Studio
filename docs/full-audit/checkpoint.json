@@ -3,28 +3,28 @@
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
   "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
   "current_commit": "a822b06b549eb75d1c01320f273ec9e54f55d91e",
-  "current_file": "backend/live_server.py",
-  "original_blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
-  "current_blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
-  "original_line_number": 616,
-  "last_fully_checked_line": 618,
-  "next_unchecked_line": 619,
+  "current_file": "viewer/index.html",
+  "original_blob_sha": "b08d2bd480d53ead43c0f0f52473044317e7a1c1",
+  "current_blob_sha": "b08d2bd480d53ead43c0f0f52473044317e7a1c1",
+  "original_line_number": 246,
+  "last_fully_checked_line": 245,
+  "next_unchecked_line": 246,
   "checked_intervals": [
     {
-      "start": 560,
-      "end": 618,
-      "blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
-      "status": "FIXED_RECHECKED"
+      "start": 180,
+      "end": 245,
+      "blob_sha": "b08d2bd480d53ead43c0f0f52473044317e7a1c1",
+      "status": "REVIEWED_PRIVACY_STATUS_PATH"
     }
   ],
   "next_unchecked_fingerprint": "overlay_settings_update route after authorization gate",
   "adjacent_line_fingerprints": [],
-  "active_finding_id": null,
-  "fix_status": "NONE",
+  "active_finding_id": "AUDIT-0004",
+  "fix_status": "FIX_IN_PROGRESS",
   "last_validated_commit": "a822b06b549eb75d1c01320f273ec9e54f55d91e",
   "last_validation": {
-    "time": "2026-11-14T19:46:00+01:00",
-    "result": "RED_GREEN_HTTP_REGRESSION_4_TESTS_COMPILEALL_PASS"
+    "time": "2026-11-14T19:49:00+01:00",
+    "result": "RED_REGRESSION_PENDING"
   },
-  "status": "READY_TO_RESUME"
+  "status": "FIX_IN_PROGRESS"
 }

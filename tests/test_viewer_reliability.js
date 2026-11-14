@@ -104,6 +104,16 @@ test('viewer rotates native overlay session before a new capture', async () => {
   assert.match(html, /rotateViewerSession\(\);\s*captureStartRequest=post\('\/api\/start'/);
 });
 
+test('idle private viewer preserves unavailable native status', async () => {
+  const viewer = loadViewer({privateRequested: true, response: async url => url === '/health'
+    ? {ready: true, instance_id: 'instance'}
+    : {mode: 'private', available: false, capture_excluded: false,
+       state: 'unsupported', reason: 'native_overlay_requires_windows'}});
+  await settle();
+  assert.equal(viewer.elements.get('privateOverlayState').textContent, 'Nicht verfuegbar');
+  assert.doesNotMatch(viewer.elements.get('privateOverlayStatus').textContent, /Capture-Ausschluss bestätigt/);
+});
+
 test('private failure preserves request and suppresses browser fallback', async () => {
   const viewer = loadViewer({privateRequested: true, response: async url => url === '/health'
     ? {ready: true, instance_id: 'instance'}
