@@ -72,3 +72,10 @@ The full 144-file inventory is now covered: source, tests, documentation, data, 
 - Run the exact locked unittest, pytest, Node, Ruff, Mypy, version, and diff checks in a complete checkout.
 - Execute Windows onedir/EXE, Edge/Playwright, DPI/HWND, OBS/getDisplayMedia, and real capture acceptance on the required platform.
 - Recheck CI/Security after the connector/GitHub log availability issue is resolved, then decide whether the draft PR can leave Draft state.
+
+
+## CI rerun evidence
+
+- The failed PR-triggered jobs were rerun as requested: CI `43633388763` and Security `43633388757`.
+- The reruns reproduced the same infrastructure condition: all five jobs completed as failures with `steps: null`, and every job-log request returned `BlobNotFound`.
+- AUDIT-0001 remains BLOCKED on GitHub Actions log availability; no source-level failure was inferred.

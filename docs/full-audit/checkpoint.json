@@ -16,8 +16,8 @@
   "fix_status": "NONE",
   "last_validated_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
   "last_validation": {
-    "time": "2026-11-14T20:39:29+01:00",
-    "result": "FULL_FILE_INVENTORY_AND_STATIC_AUDIT_COMPLETE;_LOCKED_PLATFORM_GATES_PENDING"
+    "time": "2026-11-14T20:41:31+01:00",
+    "result": "FULL_FILE_INVENTORY_COMPLETE; CI_SECURITY_RERUNS_BLOB_NOT_FOUND"
   },
   "status": "AUDIT_COVERAGE_COMPLETE_PENDING_VALIDATION"
 }
