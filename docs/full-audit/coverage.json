@@ -1,9 +1,35 @@
 {
   "audit_id": "allie21-full-audit-2026-11-14",
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
-  "commit": "f68c53899b6c547408b887f41c2e346b75069556",
-  "coverage_policy": "Only current-blob intervals with union covering all relevant text lines may be VERIFIED; inventory is not audit coverage.",
+  "commit": "a64cb8199371d53839e354fae9da53d6f932fe3e",
+  "coverage_policy": "Only current-blob intervals with union covering all relevant lines may be VERIFIED; inventory is not audit coverage.",
   "files": [
+    {
+      "path": "backend/live_server.py",
+      "blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
+      "line_count": 798,
+      "intervals": [
+        {
+          "start": 560,
+          "end": 618,
+          "scope": "overlay-settings-security-review",
+          "status": "FIXED_RECHECKED"
+        }
+      ]
+    },
+    {
+      "path": "tests/test_http_offline.py",
+      "blob_sha": "c396890bf7842f2c25734dca69eb07d33327303c",
+      "line_count": 364,
+      "intervals": [
+        {
+          "start": 260,
+          "end": 278,
+          "scope": "regression-test-added-and-executed",
+          "status": "PASS"
+        }
+      ]
+    },
     {
       "path": ".codex/maintenance.sh",
       "blob_sha": "4fa3da068959e7eaa10aca88a7a0da27292fc7b8",

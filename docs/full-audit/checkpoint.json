@@ -2,29 +2,29 @@
   "audit_id": "allie21-full-audit-2026-11-14",
   "repository": "ErpeUser/Allie21_Chess_Live_Studio",
   "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
-  "current_commit": "8514aa17b006c30eb891895710fbb141753abead",
+  "current_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e",
   "current_file": "backend/live_server.py",
   "original_blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
-  "current_blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
+  "current_blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
   "original_line_number": 616,
-  "last_fully_checked_line": 615,
-  "next_unchecked_line": 616,
+  "last_fully_checked_line": 618,
+  "next_unchecked_line": 619,
   "checked_intervals": [
     {
       "start": 560,
-      "end": 615,
-      "blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
-      "status": "REVIEWED_SECURITY_PATH"
+      "end": 618,
+      "blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
+      "status": "FIXED_RECHECKED"
     }
   ],
-  "next_unchecked_fingerprint": null,
+  "next_unchecked_fingerprint": "overlay_settings_update route after authorization gate",
   "adjacent_line_fingerprints": [],
-  "active_finding_id": "AUDIT-0003",
-  "fix_status": "FIX_IN_PROGRESS",
-  "last_validated_commit": "8514aa17b006c30eb891895710fbb141753abead",
+  "active_finding_id": null,
+  "fix_status": "NONE",
+  "last_validated_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e",
   "last_validation": {
-    "time": "2026-11-14T19:33:00+01:00",
-    "result": "RED_REGRESSION_REPRODUCED_STATIC_ROUTE_GUARD"
+    "time": "2026-11-14T19:43:00+01:00",
+    "result": "RED_GREEN_HTTP_REGRESSION_AND_PYCOMPILE_PASS"
   },
-  "status": "FIX_IN_PROGRESS"
+  "status": "READY_TO_RESUME"
 }

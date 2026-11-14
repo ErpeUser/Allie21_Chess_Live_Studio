@@ -5,7 +5,7 @@
   "default_branch": "main",
   "root_tree_sha": "c4ecfe3a93f71dfc96d96f117300d0bc74d3f026",
   "tree_truncated": false,
-  "generated_at": "2026-11-14T19:27:00+01:00",
+  "generated_at": "2026-11-14T19:43:00+01:00",
   "file_count": 144,
   "files": [
     {
@@ -263,11 +263,11 @@
     {
       "path": "backend/live_server.py",
       "type": "source",
-      "blob_sha": "7711b784544cdb0081e4334c4405bba050da5be5",
+      "blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
       "size": 33196,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
-      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+      "line_count": 798,
+      "audit_status": "FIXED_RECHECKED_ROUTE",
+      "checked_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e"
     },
     {
       "path": "backend/live_session.py",
@@ -884,11 +884,11 @@
     {
       "path": "tests/test_http_offline.py",
       "type": "test",
-      "blob_sha": "b3650897fc567c72b647edb55518c3743ce2647d",
+      "blob_sha": "c396890bf7842f2c25734dca69eb07d33327303c",
       "size": 16237,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
-      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+      "line_count": 364,
+      "audit_status": "REGRESSION_ADDED",
+      "checked_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e"
     },
     {
       "path": "tests/test_maintenance.py",
