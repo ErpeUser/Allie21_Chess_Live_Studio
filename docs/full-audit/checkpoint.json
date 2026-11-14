@@ -1,0 +1,23 @@
+{
+  "audit_id": "allie21-full-audit-2026-11-14",
+  "repository": "ErpeUser/Allie21_Chess_Live_Studio",
+  "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+  "current_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+  "current_file": ".codex/maintenance.sh",
+  "original_blob_sha": "4fa3da068959e7eaa10aca88a7a0da27292fc7b8",
+  "current_blob_sha": "4fa3da068959e7eaa10aca88a7a0da27292fc7b8",
+  "original_line_number": 0,
+  "last_fully_checked_line": 0,
+  "next_unchecked_line": 1,
+  "checked_intervals": [],
+  "next_unchecked_fingerprint": null,
+  "adjacent_line_fingerprints": [],
+  "active_finding_id": null,
+  "fix_status": "NONE",
+  "last_validated_commit": null,
+  "last_validation": {
+    "time": null,
+    "result": "NOT_RUN"
+  },
+  "status": "BASELINE_INITIALIZED"
+}

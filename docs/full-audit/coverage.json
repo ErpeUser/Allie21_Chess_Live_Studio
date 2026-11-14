@@ -1,0 +1,7 @@
+{
+  "audit_id": "allie21-full-audit-2026-11-14",
+  "repository": "ErpeUser/Allie21_Chess_Live_Studio",
+  "commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+  "coverage_policy": "Only current-blob intervals with union covering all relevant text lines may be VERIFIED; inventory is not audit coverage.",
+  "files": []
+}
