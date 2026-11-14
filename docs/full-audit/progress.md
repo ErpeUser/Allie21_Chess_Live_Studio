@@ -58,4 +58,17 @@ The next unreviewed inventory block begins at `ALLIE_ANALYSE_IST.md` line 1. Rem
 
 ## Resume point
 
-The next unreviewed inventory entry is `uv.lock` line 1. Remaining work is limited to any files still shown as INVENTORIED in the manifest, current-blob coverage reconciliation, and the locked/platform verification gates.
+The full 144-file inventory is now covered: source, tests, documentation, data, browser, tools, lockfile, and binary metadata. No files remain INVENTORIED. Remaining work is the locked test suite, platform-specific validation, remote CI/log recovery, and final current-blob/PR publication checks.
+
+
+## Inventory coverage complete
+
+- `uv.lock` was read structurally across all 1,374 physical lines. The project record is 11.2.24 with Python 3.12; all twelve project dependency pins match `pyproject.toml`, registry sources are used consistently, and no Git/path source was found.
+- The 144-file manifest now has no `INVENTORIED` entries. Binary icons are recorded as metadata-only because they have no text-line surface.
+- Static review found no additional confirmed defect beyond AUDIT-0002 through AUDIT-0005. AUDIT-0001 remains an infrastructure blocker until GitHub Actions exposes executable logs.
+
+## Validation gates still open
+
+- Run the exact locked unittest, pytest, Node, Ruff, Mypy, version, and diff checks in a complete checkout.
+- Execute Windows onedir/EXE, Edge/Playwright, DPI/HWND, OBS/getDisplayMedia, and real capture acceptance on the required platform.
+- Recheck CI/Security after the connector/GitHub log availability issue is resolved, then decide whether the draft PR can leave Draft state.

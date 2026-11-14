@@ -1815,6 +1815,19 @@
           "status": "FIXED_RECHECKED"
         }
       ]
+    },
+    {
+      "path": "uv.lock",
+      "blob_sha": "a340e5f088b78b3c2d5492ec762f649e18968691",
+      "line_count": 1374,
+      "intervals": [
+        {
+          "start": 1,
+          "end": 1374,
+          "scope": "lockfile-dependency-contract-review",
+          "status": "REVIEWED_LOCK_CONTRACT"
+        }
+      ]
     }
   ],
   "reviewed_blocks": [
@@ -1945,6 +1958,14 @@
         "assets/allie21_icon.png"
       ],
       "result": "INVENTORIED_METADATA_ONLY; NO_TEXT_LINES"
+    },
+    {
+      "source_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+      "scope": "uv-lock-contract",
+      "files": [
+        "uv.lock"
+      ],
+      "result": "PROJECT_VERSION_AND_PINNED_DEPENDENCIES_MATCH_PYPROJECT; PYTHON_3_12; NO_GIT_OR_PATH_SOURCES;_REGISTRY_HASHES_PRESENT"
     }
   ]
 }

@@ -1282,8 +1282,8 @@
       "type": "configuration",
       "blob_sha": "a340e5f088b78b3c2d5492ec762f649e18968691",
       "size": 156193,
-      "line_count": null,
-      "audit_status": "INVENTORIED",
+      "line_count": 1374,
+      "audit_status": "REVIEWED_LOCK_CONTRACT",
       "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
     },
     {
