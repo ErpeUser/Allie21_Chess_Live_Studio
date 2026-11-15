@@ -153,15 +153,14 @@ def _position_from_pgn(pgn: str) -> tuple[chess.Board, int] | None:
 
 
 @functools.lru_cache(maxsize=1)
-def opening_indexes() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
-    """Parse each opening only once. Exact EPD and cautious placement fallback."""
+def opening_book() -> dict[str, dict[str, Any]]:
+    """Parse each opening once and retain only complete legal EPD matches."""
     rows: list[tuple[str, str, str]] = []
     for file in sorted((BASE / 'openings').glob('?.tsv')):
         with file.open(encoding='utf-8-sig', newline='') as handle:
             rows.extend((x['eco'], x['name'], x['pgn']) for x in csv.DictReader(handle, delimiter='\t')
                         if x.get('eco') and x.get('name') and x.get('pgn'))
     epds: dict[str, dict[str, Any]] = {}
-    placements: dict[str, dict[str, Any]] = {}
     for eco, name, pgn in rows:
         try:
             parsed = _position_from_pgn(pgn)
@@ -172,20 +171,9 @@ def opening_indexes() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, An
             key = epd_key(board)
             if key not in epds or len(name) > len(epds[key]['name']):
                 epds[key] = item
-            placement = board.board_fen()
-            if placement not in placements or ply > placements[placement]['ply']:
-                placements[placement] = item
         except (ValueError, AssertionError):
             continue
-    return epds, placements
-
-
-def opening_book():
-    return opening_indexes()[0]
-
-
-def placement_opening_book():
-    return opening_indexes()[1]
+    return epds
 
 
 def opening_for_position(board: chess.Board, moves: list[str]) -> dict[str, Any] | None:
