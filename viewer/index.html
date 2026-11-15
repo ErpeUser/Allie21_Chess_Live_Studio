@@ -244,11 +244,12 @@ async function syncOverlaySettings(force=false){
   // browser extension needs that lease for live Lichess/Chess.com analysis;
   // claim it only after a capture stream is actually running.
   if(!stream){
-   return syncOverlaySettings(explicit).catch(()=>null).then(()=>{
+   return syncOverlaySettings(explicit).catch(()=>null).then(remote=>{
     if(overlayOwnerToken){post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{});overlayOwnerToken='';}
     privateOverlayPending=false;
     privateOverlayAvailable=false;
-    privateOverlayStatus={mode:overlayMode,state:'waiting_for_capture',reason:'Warte auf eine aktive Bildschirmquelle',available:true,capture_excluded:overlayMode==='private'};
+    const remoteStatus=remote?.status&&typeof remote.status==='object'?remote.status:remote;
+    privateOverlayStatus={...(remoteStatus||{}),mode:overlayMode,state:'waiting_for_capture',reason:'Warte auf eine aktive Bildschirmquelle',available:remoteStatus?.available===true,capture_excluded:remoteStatus?.capture_excluded===true};
     updatePrivateOverlayLabel();
     return null;
    });

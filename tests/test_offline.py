@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
@@ -119,9 +120,20 @@ class StandaloneTests(unittest.TestCase):
         source = (ROOT / 'tools/launcher.py').read_text(encoding='utf-8')
         self.assertIn('CreateMutexW', source)
         self.assertIn('ERROR_ALREADY_EXISTS', source)
-        guard = allie_launcher.SingleInstanceGuard()
-        self.assertTrue(guard.acquire())
-        guard.release()
+        # Never contend with a running user launcher or another test process.
+        with patch.object(allie_launcher.SingleInstanceGuard, 'NAME',
+                          rf'Local\Allie21LauncherTest-{uuid4().hex}'):
+            guard = allie_launcher.SingleInstanceGuard()
+            competitor = allie_launcher.SingleInstanceGuard()
+            try:
+                self.assertTrue(guard.acquire())
+                if os.name == 'nt':
+                    self.assertFalse(competitor.acquire())
+                guard.release()
+                self.assertTrue(competitor.acquire())
+            finally:
+                competitor.release()
+                guard.release()
 
     def test_launcher_check_mode_validates_adjacent_project(self):
         launcher = ROOT / 'tools' / 'launcher.py'

@@ -1,0 +1,1308 @@
+{
+  "audit_id": "allie21-full-audit-2026-11-14",
+  "repository": "ErpeUser/Allie21_Chess_Live_Studio",
+  "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+  "default_branch": "main",
+  "root_tree_sha": "c4ecfe3a93f71dfc96d96f117300d0bc74d3f026",
+  "tree_truncated": false,
+  "generated_at": "2026-11-14T19:43:00+01:00",
+  "file_count": 144,
+  "files": [
+    {
+      "path": ".codex/maintenance.sh",
+      "type": "configuration",
+      "blob_sha": "4fa3da068959e7eaa10aca88a7a0da27292fc7b8",
+      "size": 342,
+      "line_count": 9,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".codex/setup.sh",
+      "type": "configuration",
+      "blob_sha": "a7234b99f141a9f9125a966051b67e609aa38d7b",
+      "size": 213,
+      "line_count": 9,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".gitattributes",
+      "type": "source",
+      "blob_sha": "113a5c450c0cfc8ad729c8966d774bd73fc3c794",
+      "size": 30,
+      "line_count": 2,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".githooks/post-merge",
+      "type": "source",
+      "blob_sha": "22cde7f04706cb6fdfd2f8cf1759e3613082f54c",
+      "size": 440,
+      "line_count": 10,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".githooks/post-rewrite",
+      "type": "source",
+      "blob_sha": "820f3330e1f855cccef5b0cfb8f0ea0835d8507a",
+      "size": 86,
+      "line_count": 4,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".github/CODEOWNERS",
+      "type": "configuration",
+      "blob_sha": "90b9c0a597abcc171770ec658d4ddfd7e3da50b4",
+      "size": 155,
+      "line_count": 6,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "type": "configuration",
+      "blob_sha": "f12b41db4e7577ae3dfd9845c2fbad39781794e9",
+      "size": 261,
+      "line_count": 13,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "type": "configuration",
+      "blob_sha": "58a47a30f228fd5a71aaba72f319c278a7ddff23",
+      "size": 4189,
+      "line_count": 111,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".github/workflows/security.yml",
+      "type": "configuration",
+      "blob_sha": "eba7886e08ec101422c5f3264978d368488c707f",
+      "size": 1578,
+      "line_count": 61,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".github/workflows/windows-release.yml",
+      "type": "configuration",
+      "blob_sha": "c19af3603ca6b0c5c4ad798b039537547a76e676",
+      "size": 2327,
+      "line_count": 57,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".gitignore",
+      "type": "source",
+      "blob_sha": "1b94dc091a72e38bfe02e61ac6360fdbac45b1fc",
+      "size": 446,
+      "line_count": 23,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "type": "configuration",
+      "blob_sha": "3723dc00b52cec65517e0fd3ddff4759593777a7",
+      "size": 303,
+      "line_count": 11,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "AGENT_PROGRESS.md",
+      "type": "documentation",
+      "blob_sha": "fa8ad6181401210a8a9a4008865ad9c98d953f00",
+      "size": 19206,
+      "line_count": 207,
+      "audit_status": "REVIEWED_INSTRUCTIONS",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "AGENT_TASK.md",
+      "type": "documentation",
+      "blob_sha": "0f3ee52f91bc718e76d776a58524c4ff6bfb0d3a",
+      "size": 40271,
+      "line_count": 217,
+      "audit_status": "REVIEWED_INSTRUCTIONS",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "AGENTS.md",
+      "type": "documentation",
+      "blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
+      "size": 2856,
+      "line_count": 58,
+      "audit_status": "REVIEWED_INSTRUCTIONS",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "ALLIE_ANALYSE_IST.md",
+      "type": "documentation",
+      "blob_sha": "7675864ccd32c6bf46ee5388665c4598e0aa2346",
+      "size": 29539,
+      "line_count": 446,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "ALLIE_ANALYSE_V11_TECHNISCHE_ANALYSE.md",
+      "type": "documentation",
+      "blob_sha": "e101f73e575c3db436e11381ff8d114d554cbd8e",
+      "size": 22245,
+      "line_count": 288,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "assets/allie21_icon.ico",
+      "type": "binary_asset",
+      "blob_sha": "fbd85fce6009067244a02b39915336825fd61c1a",
+      "size": 97385,
+      "line_count": null,
+      "audit_status": "REVIEWED_BINARY_METADATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "assets/allie21_icon.png",
+      "type": "binary_asset",
+      "blob_sha": "4e962591e1698fd92ae406ec4c24f99ad3f29aac",
+      "size": 1239566,
+      "line_count": null,
+      "audit_status": "REVIEWED_BINARY_METADATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/allie_local_server.py",
+      "type": "source",
+      "blob_sha": "59922a7b27c6d5f9f5edd04fe9be5f663034b3b7",
+      "size": 34458,
+      "line_count": 713,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/browser_session.py",
+      "type": "source",
+      "blob_sha": "82c871f6e3507e0a7b5d061d5d55c7ab4920b90a",
+      "size": 4801,
+      "line_count": 109,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/chess_extras.py",
+      "type": "source",
+      "blob_sha": "8009064cd45fd526f28caef61ac2037d9271c732",
+      "size": 22453,
+      "line_count": 502,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/config.py",
+      "type": "source",
+      "blob_sha": "4a614e06bb1ac63e3c3e31287d3e24ad68fa1f43",
+      "size": 3353,
+      "line_count": 92,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/contracts.py",
+      "type": "source",
+      "blob_sha": "aec0994ab691eef013ba81803a90710794bcde30",
+      "size": 3168,
+      "line_count": 93,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/doctor.py",
+      "type": "source",
+      "blob_sha": "fac8045e01d2ad257617c38081d8730a64d2f088",
+      "size": 1102,
+      "line_count": 22,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/download_stockfish.py",
+      "type": "source",
+      "blob_sha": "a7db20bf722ba91b486dde3488fc84303f2ed7b0",
+      "size": 4665,
+      "line_count": 114,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/engines/README.txt",
+      "type": "source",
+      "blob_sha": "802f6e8cdbf7873118cbf3ef45009b0140fd0cb1",
+      "size": 160,
+      "line_count": 2,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/http_boundary.py",
+      "type": "source",
+      "blob_sha": "1e097ba5832c705683b8267145836ed3cc1fc8ee",
+      "size": 8405,
+      "line_count": 190,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/live_server.py",
+      "type": "source",
+      "blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
+      "size": 33196,
+      "line_count": 797,
+      "audit_status": "FIXED_RECHECKED_ROUTE",
+      "checked_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e"
+    },
+    {
+      "path": "backend/live_session.py",
+      "type": "source",
+      "blob_sha": "40d9e38841f44d8c68dacc1d81bb35b35178f479",
+      "size": 18379,
+      "line_count": 367,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/model_setup.py",
+      "type": "source",
+      "blob_sha": "7099113d5ce37ebfc5d49146f718333a1656288d",
+      "size": 2813,
+      "line_count": 66,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/native_overlay.py",
+      "type": "source",
+      "blob_sha": "ad5e7dbebd042259b029a57596b60b242dcf012d",
+      "size": 62204,
+      "line_count": 1397,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/openings/a.tsv",
+      "type": "data",
+      "blob_sha": "561099854a15dfb523759aa87993a1fe480a6abc",
+      "size": 67257,
+      "line_count": 824,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/openings/b.tsv",
+      "type": "data",
+      "blob_sha": "81e29d1a65aa7e7f0c607b5e47c140a08cfb72ae",
+      "size": 78137,
+      "line_count": 782,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/openings/c.tsv",
+      "type": "data",
+      "blob_sha": "c882c56bcf34c6325b9ca60d20afac2e55604f08",
+      "size": 132304,
+      "line_count": 1251,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/openings/d.tsv",
+      "type": "data",
+      "blob_sha": "a829bac9d2f288b033d605e842f3b802379e3455",
+      "size": 73318,
+      "line_count": 645,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/openings/e.tsv",
+      "type": "data",
+      "blob_sha": "93a82e1f505e06256530736b45460738bd50e897",
+      "size": 44061,
+      "line_count": 368,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/openings/README.txt",
+      "type": "data",
+      "blob_sha": "232831486c5ded4461e97e1891adaf7d9062409e",
+      "size": 159,
+      "line_count": 2,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/overlay_lease.py",
+      "type": "source",
+      "blob_sha": "99e1110129a083abeef18e11e0aa036874f20b1f",
+      "size": 4087,
+      "line_count": 112,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/position_tracker.py",
+      "type": "source",
+      "blob_sha": "f1b0cced4bbb479c9d1f499df1163f19fda04b32",
+      "size": 11468,
+      "line_count": 247,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/security.py",
+      "type": "source",
+      "blob_sha": "234db0137affdf08852099fd855c10f1a2e5e8d2",
+      "size": 5678,
+      "line_count": 157,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/service_status.py",
+      "type": "source",
+      "blob_sha": "83c3c7ccc9b6bdb943a0311daab551940a5be1d8",
+      "size": 1239,
+      "line_count": 29,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/__init__.py",
+      "type": "vendored_code",
+      "blob_sha": "d3c42fdb128f150b9dbc1ae5d9f5182bd7e1717a",
+      "size": 78,
+      "line_count": 1,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model.sha256.csv",
+      "type": "data",
+      "blob_sha": "620ed557babd903b0ca0dc517df487c59f305b89",
+      "size": 629,
+      "line_count": 9,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model/__init__.py",
+      "type": "vendored_code",
+      "blob_sha": "a119ad6be9a56249d70db9df17f7836006522d57",
+      "size": 54,
+      "line_count": 1,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model/api.py",
+      "type": "vendored_code",
+      "blob_sha": "12d59c33a9d671c1f08df3c4518ee1c6fb511ab7",
+      "size": 11460,
+      "line_count": 233,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model/configuration_allie.py",
+      "type": "vendored_code",
+      "blob_sha": "d9e83eced25a97d75ee5730b6187f0ef8e20bb41",
+      "size": 421,
+      "line_count": 11,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model/fast.py",
+      "type": "vendored_code",
+      "blob_sha": "d493c6cf359e796fd8bf12707b5a644e5ab033d7",
+      "size": 6243,
+      "line_count": 132,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model/fastrs.py",
+      "type": "vendored_code",
+      "blob_sha": "82910e735c928cf04b107acb5b142d6de17d340d",
+      "size": 15886,
+      "line_count": 323,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model/model.py",
+      "type": "vendored_code",
+      "blob_sha": "9c3f8853b42e314a0d20b53ba6b691ea61348459",
+      "size": 17010,
+      "line_count": 365,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model/modeling_allie.py",
+      "type": "vendored_code",
+      "blob_sha": "b47f0ed797f85172629d2f72cdf4273808eca978",
+      "size": 4457,
+      "line_count": 95,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vendor/allie_model/tokens.py",
+      "type": "vendored_code",
+      "blob_sha": "39b90e0f25cb9fd8397b41475d1ebe37476d5162",
+      "size": 5065,
+      "line_count": 119,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "backend/vision.py",
+      "type": "source",
+      "blob_sha": "62799181551f228b178083d8a5e929f2c1794d7a",
+      "size": 6246,
+      "line_count": 146,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "beispiele/italienisch_1950.pgn",
+      "type": "data",
+      "blob_sha": "46630268276e8d712d2ca1115d695dedba3f6e96",
+      "size": 271,
+      "line_count": 12,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "browser/allie21_overlay.user.js",
+      "type": "source",
+      "blob_sha": "298903726fcb19820d524352be7062e13290a339",
+      "size": 77485,
+      "line_count": 880,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "browser/background.js",
+      "type": "source",
+      "blob_sha": "c6a31c03e52ad973a754e236589f59384cd0bdde",
+      "size": 8163,
+      "line_count": 218,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "browser/connection.js",
+      "type": "source",
+      "blob_sha": "b1d9a8aea41a898d675acc7178aa5147407531d0",
+      "size": 1494,
+      "line_count": 31,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "browser/manifest.json",
+      "type": "configuration",
+      "blob_sha": "e286cc71e35d2b75dc695e5d7d5a7c1386f56a31",
+      "size": 1198,
+      "line_count": 18,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "browser/options.html",
+      "type": "source",
+      "blob_sha": "a3b6817fe4637dcc40be0bf0714e0646b3948881",
+      "size": 2892,
+      "line_count": 43,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "browser/options.js",
+      "type": "source",
+      "blob_sha": "cf324a6cd4a44c4a96e1fa06008d6c964f3fa932",
+      "size": 7371,
+      "line_count": 151,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "browser/updates.js",
+      "type": "source",
+      "blob_sha": "8f0265f77051c0c7f7465dc8727c0ebdb2d207d5",
+      "size": 2691,
+      "line_count": 54,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "browser/worker_status.js",
+      "type": "source",
+      "blob_sha": "0f32dfaf6a6dd3e1f907805bfc550ee41ca3201c",
+      "size": 2258,
+      "line_count": 45,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "type": "documentation",
+      "blob_sha": "fcbc95abbea99323cd4f47de71bcde042a2a35e5",
+      "size": 15359,
+      "line_count": 215,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
+    },
+    {
+      "path": "CHROME_OVERLAY_INSTALLIEREN.bat",
+      "type": "configuration",
+      "blob_sha": "15bc2b7a3af16bb5a87eb3ebfefbfd2daa1f016b",
+      "size": 281,
+      "line_count": 10,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "config.json",
+      "type": "configuration",
+      "blob_sha": "9cb42affe895cfc13fedfb5f0e9accd0fda7192b",
+      "size": 327,
+      "line_count": 15,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/admin-handoff.md",
+      "type": "documentation",
+      "blob_sha": "67aca1cda1919768bb11eb416a0d2bbab805eab2",
+      "size": 3073,
+      "line_count": 61,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/final-reliability-audit.md",
+      "type": "documentation",
+      "blob_sha": "f16ece97ffa57b019eb12f2414ab6de17068a5de",
+      "size": 8012,
+      "line_count": 136,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/MAINTENANCE_VERIFICATION.md",
+      "type": "documentation",
+      "blob_sha": "2757c1671199cda78f22604d8d3e1005f3b374f1",
+      "size": 1843,
+      "line_count": 30,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/overlay-capture-audit.md",
+      "type": "documentation",
+      "blob_sha": "95d37a0c194d11ba63aa36a9c5f1454e749eb4f2",
+      "size": 8500,
+      "line_count": 143,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/PRODUKTVISION_ALLIE21_DE.md",
+      "type": "documentation",
+      "blob_sha": "bf9bdd66fdd52bc6fe3729d94b09f71e1b79cd4d",
+      "size": 21817,
+      "line_count": 315,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/RELEASE_AND_TRAY.md",
+      "type": "documentation",
+      "blob_sha": "a89b57c8adfafdf15e5a06179301792cc375e81d",
+      "size": 1868,
+      "line_count": 35,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/release-status.md",
+      "type": "documentation",
+      "blob_sha": "c05613a26188ed28027751893ebd94c4d7fbe9da",
+      "size": 1627,
+      "line_count": 17,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-11-12-final-integrity.md",
+      "type": "documentation",
+      "blob_sha": "c1f70229dd676000a4e660809bf285de846d3b34",
+      "size": 5289,
+      "line_count": 100,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-11-13-compact-ui-and-transient-hints.md",
+      "type": "documentation",
+      "blob_sha": "18f2dbb975f11a0dd485a4b96d5e8742a37cba01",
+      "size": 4164,
+      "line_count": 72,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/superpowers/README.md",
+      "type": "documentation",
+      "blob_sha": "624268f75aab684b177b611e69463545b97229cd",
+      "size": 361,
+      "line_count": 7,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "d61f4d8801f3566cba21f84c521e98d8b6455a09"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-11-12-final-integrity-design.md",
+      "type": "documentation",
+      "blob_sha": "1906a993b0bcb59445c3ff424c0f2142a2a218a6",
+      "size": 2663,
+      "line_count": 33,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-11-13-compact-ui-and-transient-hints-design.md",
+      "type": "documentation",
+      "blob_sha": "96b048ca9b0db66817e108f0d0f884203afe42a9",
+      "size": 6157,
+      "line_count": 109,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "docs/UPDATE_PIPELINE_DE.md",
+      "type": "documentation",
+      "blob_sha": "802cc3fc0bea93c5392bfeeb586f65ec2f6d2058",
+      "size": 5743,
+      "line_count": 99,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
+    },
+    {
+      "path": "EDGE_OVERLAY_INSTALLIEREN.bat",
+      "type": "configuration",
+      "blob_sha": "641639b7d39cf4492f7ddce347c1ca7d87847c14",
+      "size": 278,
+      "line_count": 11,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "LICENSE.txt",
+      "type": "documentation",
+      "blob_sha": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7",
+      "size": 35149,
+      "line_count": 674,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "MODELL_EINRICHTEN.bat",
+      "type": "configuration",
+      "blob_sha": "8f98a0f4115509e102982587d81d6b6924fc3e85",
+      "size": 886,
+      "line_count": 29,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "pyproject.toml",
+      "type": "configuration",
+      "blob_sha": "fe9dc06d68bff26a96e63c0a164b1a6d7e38030c",
+      "size": 867,
+      "line_count": 47,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "QUELLEN_LIZENZEN.md",
+      "type": "documentation",
+      "blob_sha": "277fbd00482b7057da306ae26c21fcb16e4d0212",
+      "size": 1266,
+      "line_count": 20,
+      "audit_status": "REVIEWED_HISTORICAL_OR_DATA",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "README_DE.md",
+      "type": "documentation",
+      "blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
+      "size": 6930,
+      "line_count": 70,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
+    },
+    {
+      "path": "SECURITY.md",
+      "type": "documentation",
+      "blob_sha": "452bb8c271e9674ae05bbe2043d9c81345c22b77",
+      "size": 3977,
+      "line_count": 63,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
+    },
+    {
+      "path": "START_HIER.bat",
+      "type": "configuration",
+      "blob_sha": "89418c07922841392f862ad2ed2395d107d7bc41",
+      "size": 1443,
+      "line_count": 55,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_browser_preview.js",
+      "type": "test",
+      "blob_sha": "ea60cd12f0e3a52a843e7b3042e7443e7765c943",
+      "size": 2049,
+      "line_count": 51,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_browser_reliability.js",
+      "type": "test",
+      "blob_sha": "e3f94dea6daa87f949fd1cb2534f708dc9c2cd0f",
+      "size": 14778,
+      "line_count": 268,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_browser_session_prefix.py",
+      "type": "test",
+      "blob_sha": "718a09a831aea7be0f89dcf90c5d165c620d7660",
+      "size": 778,
+      "line_count": 28,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_build_edge.py",
+      "type": "test",
+      "blob_sha": "b28e358f9909ed404737680d7d47082035a2974a",
+      "size": 905,
+      "line_count": 25,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_chess.py",
+      "type": "test",
+      "blob_sha": "9f63219c9cd70c4088bb00bbaa94b4bf09055a8a",
+      "size": 33263,
+      "line_count": 737,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_extension_health.js",
+      "type": "test",
+      "blob_sha": "f0fb3b064e713b2276269f994f210ae6a8a9ad53",
+      "size": 3982,
+      "line_count": 66,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_extension_options_browser.py",
+      "type": "test",
+      "blob_sha": "151344760b1eda7173fb528bc18d711aa071e453",
+      "size": 3972,
+      "line_count": 99,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_extension_options.js",
+      "type": "test",
+      "blob_sha": "ff241aa374574e4879e70eb3fa7fabd515a3a313",
+      "size": 4128,
+      "line_count": 51,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_extension_updates.js",
+      "type": "test",
+      "blob_sha": "3490e77c72dc47b6b5f729996602b505849a4cd6",
+      "size": 3359,
+      "line_count": 62,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_frontend_openings_geometry.js",
+      "type": "test",
+      "blob_sha": "88686a4977133f47e043fe33c6b300183fd6c8c0",
+      "size": 3154,
+      "line_count": 43,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_http_boundary_reliability.py",
+      "type": "test",
+      "blob_sha": "d3cf5b5dc47f3732e2a664b488b3cf8069bfc0fe",
+      "size": 10004,
+      "line_count": 207,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_http_offline.py",
+      "type": "test",
+      "blob_sha": "c396890bf7842f2c25734dca69eb07d33327303c",
+      "size": 16767,
+      "line_count": 363,
+      "audit_status": "REGRESSION_ADDED_AND_BASELINE_REVIEWED",
+      "checked_commit": "a64cb8199371d53839e354fae9da53d6f932fe3e"
+    },
+    {
+      "path": "tests/test_maintenance.py",
+      "type": "test",
+      "blob_sha": "1bb164e358e72404f2638e26fba517cd0c5205fa",
+      "size": 7747,
+      "line_count": 158,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_model_setup.py",
+      "type": "test",
+      "blob_sha": "63df7e24223fad948c58591c0dfe1c33d1523648",
+      "size": 3267,
+      "line_count": 77,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_model_vendor.py",
+      "type": "test",
+      "blob_sha": "53b835cfa4a2a3e9cb813fc67fd9a9d25be3fb6c",
+      "size": 2582,
+      "line_count": 66,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_native_overlay_reliability.py",
+      "type": "test",
+      "blob_sha": "44e6744c5313170badfccd3a30ed49f697ff01e0",
+      "size": 15425,
+      "line_count": 345,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_native_overlay.py",
+      "type": "test",
+      "blob_sha": "21b5bc3d24017835ddae4e57d14486d2f02d3c3a",
+      "size": 12295,
+      "line_count": 259,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_offline.py",
+      "type": "test",
+      "blob_sha": "30c23a53a264896c01e9d2c5d098e9ac5b2c885f",
+      "size": 20210,
+      "line_count": 423,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_auto_side.js",
+      "type": "test",
+      "blob_sha": "9cb94727b1cf3b5a12ff2d630c5b0761a371f984",
+      "size": 1248,
+      "line_count": 19,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_board_adapter.js",
+      "type": "test",
+      "blob_sha": "e3420b42400fea2e77156a99fbabe8fa3b093c7a",
+      "size": 2823,
+      "line_count": 69,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_geometry_lifecycle.js",
+      "type": "test",
+      "blob_sha": "72cee264f60dcaa8e2cb4f2d394a8735d8f1b8eb",
+      "size": 1024,
+      "line_count": 26,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_history_state.js",
+      "type": "test",
+      "blob_sha": "c44eb49faf4cca6a48a21a074e88fe66c29af079",
+      "size": 2473,
+      "line_count": 62,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_insights.js",
+      "type": "test",
+      "blob_sha": "90c4afd91eeed77d33b40645bc706e706aa465a4",
+      "size": 1401,
+      "line_count": 32,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_lease.py",
+      "type": "test",
+      "blob_sha": "804b5da8e86e4d535013b02343f3e498d3de77af",
+      "size": 2782,
+      "line_count": 66,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_lichess_arrows.js",
+      "type": "test",
+      "blob_sha": "76def9b7a65956f3cec78ebc27227967875e036d",
+      "size": 1455,
+      "line_count": 33,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_orientation.js",
+      "type": "test",
+      "blob_sha": "7849c993c19331c95d698e0dfad052a57374e0c4",
+      "size": 1397,
+      "line_count": 38,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_parser.js",
+      "type": "test",
+      "blob_sha": "569775cad3324945706365aca51ce48681b52acb",
+      "size": 3798,
+      "line_count": 87,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_private.js",
+      "type": "test",
+      "blob_sha": "230967ca469f6cfd28e9d66d477fb45248f9939e",
+      "size": 2391,
+      "line_count": 57,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_round_style.js",
+      "type": "test",
+      "blob_sha": "e28f0b3794e19bc717778ee07f115bf802b75856",
+      "size": 3218,
+      "line_count": 65,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_share_sync.js",
+      "type": "test",
+      "blob_sha": "3d9de0cbf98a1eda5ea87c86582950ab52e93ffe",
+      "size": 2344,
+      "line_count": 45,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_overlay_start_position.js",
+      "type": "test",
+      "blob_sha": "5d89e7461b5d6af77a97b3ef29d7bca6bdd6d9e6",
+      "size": 1279,
+      "line_count": 32,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_pairing_bridge.js",
+      "type": "test",
+      "blob_sha": "cca912a90fe3d961b1789d983db0595dba86c0f7",
+      "size": 1096,
+      "line_count": 23,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_position_tracker_turn.py",
+      "type": "test",
+      "blob_sha": "68ef5b97d721401d30ff38e49febd1a914daec25",
+      "size": 955,
+      "line_count": 29,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_readiness.py",
+      "type": "test",
+      "blob_sha": "73ac3d78ff9f14892bdbe962ca7c2b77b19bad93",
+      "size": 4476,
+      "line_count": 113,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_regressions.py",
+      "type": "test",
+      "blob_sha": "f8aca9ebd1ddfc961dd9a087d47241c17dba071f",
+      "size": 2271,
+      "line_count": 57,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_release_smoke_shutdown.py",
+      "type": "test",
+      "blob_sha": "894cc033489bf164870c98db08ef970cf210cfc1",
+      "size": 1235,
+      "line_count": 30,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_security_reliability.py",
+      "type": "test",
+      "blob_sha": "8d93c1de2d69ef958c3ae449be6ca6be0979095f",
+      "size": 3824,
+      "line_count": 91,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_service_status_contract.py",
+      "type": "test",
+      "blob_sha": "dd86dc6c3afa0f3d932d24b284b1a03d28ccd256",
+      "size": 803,
+      "line_count": 27,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_stockfish_installer.py",
+      "type": "test",
+      "blob_sha": "5f1b9af56c160edbd2fd0721e01f4f5fb09baf4a",
+      "size": 4881,
+      "line_count": 104,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_viewer_browser.py",
+      "type": "test",
+      "blob_sha": "3d36f31acee938f8acdd39005e1da02e632f3bf2",
+      "size": 9813,
+      "line_count": 200,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_viewer_reliability.js",
+      "type": "test",
+      "blob_sha": "0c0c2c23a98161656add47da97d744c93b78e3cd",
+      "size": 11970,
+      "line_count": 226,
+      "audit_status": "REGRESSION_TEST_PASS_AND_BASELINE_REVIEWED",
+      "checked_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13"
+    },
+    {
+      "path": "tests/test_vision_ocr.py",
+      "type": "test",
+      "blob_sha": "00232d4ceb7d0c71b88fc176e554a570f26741e3",
+      "size": 2446,
+      "line_count": 78,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tests/test_worker_wakeup.js",
+      "type": "test",
+      "blob_sha": "d7bdb6e968fc724e54c9a1043912d3d2edc01506",
+      "size": 3169,
+      "line_count": 56,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/benchmark_runtime.py",
+      "type": "source",
+      "blob_sha": "b34bc757396b0667d211c34fa8c3078881492206",
+      "size": 2496,
+      "line_count": 63,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/build_edge.py",
+      "type": "source",
+      "blob_sha": "e76c88107aee99075c188c0094e98616929e2c26",
+      "size": 2821,
+      "line_count": 76,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/build_exe.ps1",
+      "type": "configuration",
+      "blob_sha": "44ba9e65c83ca65ba313f862185723353bc41eb5",
+      "size": 8485,
+      "line_count": 139,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/check_versions.py",
+      "type": "source",
+      "blob_sha": "9b6829f8d456812627cf75ff5d21593cc3dfb9c1",
+      "size": 1732,
+      "line_count": 32,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/desktop_shortcut.ps1",
+      "type": "configuration",
+      "blob_sha": "f968d1861b9ddbb334720fd4144612a2ece64981",
+      "size": 867,
+      "line_count": 15,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/finalize_release.ps1",
+      "type": "configuration",
+      "blob_sha": "09e4bf52ae1abc3654527b2a09f62c8fdc7583e1",
+      "size": 1864,
+      "line_count": 25,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/launcher.py",
+      "type": "source",
+      "blob_sha": "36021e37bbec3679641d4b33297347a482aa739e",
+      "size": 12764,
+      "line_count": 359,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/maintain.py",
+      "type": "source",
+      "blob_sha": "f3e902996e4232c7cf5f2f07c90cf1480620318d",
+      "size": 16635,
+      "line_count": 330,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/quality_check.ps1",
+      "type": "configuration",
+      "blob_sha": "0939f133338bd825805d7cde069238418e9cd620",
+      "size": 2116,
+      "line_count": 51,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/release_smoke.py",
+      "type": "source",
+      "blob_sha": "7e6fa163a3cae17ca36c55db71c4c9e96612381a",
+      "size": 7542,
+      "line_count": 166,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "tools/update_release.ps1",
+      "type": "configuration",
+      "blob_sha": "63efeacd08ec9c3051510e255fcbbd58f356d9a7",
+      "size": 310,
+      "line_count": 7,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "UPDATE_ALLIE.cmd",
+      "type": "configuration",
+      "blob_sha": "d46e903c5815082aabc843b71dd2f57cfc44566f",
+      "size": 836,
+      "line_count": 24,
+      "audit_status": "REVIEWED_STATIC_FOUR_ROLES",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "uv.lock",
+      "type": "configuration",
+      "blob_sha": "a340e5f088b78b3c2d5492ec762f649e18968691",
+      "size": 156193,
+      "line_count": 1374,
+      "audit_status": "REVIEWED_LOCK_CONTRACT",
+      "checked_commit": "15464e24278f540e081d07c067e20d4cc0d076e8"
+    },
+    {
+      "path": "VERSIONEN.md",
+      "type": "documentation",
+      "blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
+      "size": 6727,
+      "line_count": 109,
+      "audit_status": "FIXED_RECHECKED_DOC",
+      "checked_commit": "39872e32bb53329a0b235546948a1656a250b8b5"
+    },
+    {
+      "path": "viewer/index.html",
+      "type": "source",
+      "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
+      "size": 68519,
+      "line_count": 572,
+      "audit_status": "FIXED_RECHECKED_STATUS_PATH",
+      "checked_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13"
+    }
+  ]
+}

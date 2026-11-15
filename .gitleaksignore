@@ -1,0 +1,4 @@
+# Verified public SHA256 entries for api.py and tokens.py in the vendored manifest.
+# Ignore only these two historical findings, never the file or generic-api-key rule.
+011692b1139a8c35abfb0566f9ea3fb832ea91f5:backend/vendor/allie_model.sha256.csv:generic-api-key:3
+011692b1139a8c35abfb0566f9ea3fb832ea91f5:backend/vendor/allie_model.sha256.csv:generic-api-key:9

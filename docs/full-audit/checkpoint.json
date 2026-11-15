@@ -1,0 +1,31 @@
+{
+  "audit_id": "allie21-full-audit-2026-11-14",
+  "repository": "ErpeUser/Allie21_Chess_Live_Studio",
+  "baseline_commit": "15464e24278f540e081d07c067e20d4cc0d076e8",
+  "current_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
+  "current_file": "CROSS-CUTTING_VALIDATION",
+  "original_blob_sha": null,
+  "current_blob_sha": null,
+  "original_line_number": null,
+  "last_fully_checked_line": null,
+  "next_unchecked_line": null,
+  "checked_intervals": [],
+  "next_unchecked_fingerprint": "full 144-file inventory reviewed; locked, platform, and remote CI gates remain",
+  "adjacent_line_fingerprints": [],
+  "active_finding_id": "AUDIT-0001",
+  "fix_status": "NONE",
+  "last_validated_commit": "8f4335a8f10177aa80c2abf76c55fe9999de1b13",
+  "last_validation": {
+    "time": "2026-11-14T20:45:00+01:00",
+    "result": "144_FILES_COVERED;_139_TEXT_INTERVALS_PLUS_3_INSTRUCTION_FILES_AND_2_BINARY_METADATA_ITEMS;_CI_RERUN_BLOCKED"
+  },
+  "status": "AUDIT_COVERAGE_COMPLETE_PENDING_VALIDATION",
+  "integration_review": {
+    "date": "2026-11-15",
+    "reviewed_audit_head": "80217f31634af967ea5a6b55b5e88ab42a30f265",
+    "report": "docs/full-audit/pr-10-local-review.md",
+    "decision": "ACCEPT_AFTER_FREE_LOCAL_VALIDATION",
+    "github_actions_required": false,
+    "real_capture_acceptance_executed": false
+  }
+}

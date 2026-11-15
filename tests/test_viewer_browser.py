@@ -147,6 +147,8 @@ def test_private_unavailable_does_not_silently_enable_browser_hints(browser_page
     open_viewer()
     page.wait_for_function("document.querySelector('#privateOverlayState').textContent==='Nicht verfuegbar'")
     assert page.is_checked("#privateOverlayToggle")
+    assert not page.locator('.settings-details').evaluate('(element) => element.open')
+    page.locator('.settings-details > summary').click()
     assert page.is_visible("#retryPrivateOverlay")
     page.click("#start")
     page.wait_for_function("document.querySelector('#screen').style.display==='block'")

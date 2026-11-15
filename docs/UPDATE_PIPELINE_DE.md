@@ -22,7 +22,7 @@ ausgecheckt. Lokale Aenderungen werden nicht geloescht oder automatisch gestasht
 
 ## Edge erstmalig umstellen
 
-Einmal unter `edge://extensions` die neue Version **11.2.22** neu laden. Fuer einen
+Einmal unter `edge://extensions` die neue Version **11.2.24** neu laden. Fuer einen
 festen Installationspfad die entpackte Erweiterung aus
 `%LOCALAPPDATA%\Allie21\EdgeOverlay` laden; dieser Ordner entsteht beim erfolgreichen
 lokalen Update. Der echte Checkout-Ordner `browser/` funktioniert ebenfalls.
@@ -34,7 +34,7 @@ Version und Fertig-Marker der lokalen Dateien. Bei einem fertigen Update wird di
 Erweiterung neu geladen. Offene Schach-Tabs danach selbst neu laden; laufende
 Spiele werden nicht durch automatische Tab-Reloads unterbrochen. Store-Erweiterungen
 werden nicht ueber diesen Entwicklungs-Updater verwaltet. Die Automatik ist in den
-Optionen abschaltbar. Das erste Neuladen der alten 11.2.21 bleibt manuell notwendig.
+Optionen abschaltbar. Das erste Neuladen der alten 11.2.23 bleibt manuell notwendig.
 
 ## Was UPDATE_ALLIE.cmd macht
 
@@ -68,8 +68,8 @@ Ein Klick auf das Allie-Symbol oeffnet Verbindung/Updates. **Worker aufwecken un
  testen** prueft die Erweiterung; **Server-Verbindung testen** prueft separat
 localhost. Angezeigt wird die wirklich geladene Erweiterungsversion.
 
-Die Erweiterungsshell ist 11.2.22.0; Anwendung und standalone Userscript sind
-11.2.22. Die Versionen werden gemeinsam veröffentlicht. Der Wartungsstand ersetzt
+Die Erweiterungsshell ist 11.2.24.0; Anwendung und standalone Userscript sind
+11.2.24. Die Versionen werden gemeinsam veröffentlicht. Der Wartungsstand ersetzt
 nicht den separaten frueheren Pfeilfix-Download: er aendert Wartung, Build und
 Worker-Lifecycle, nicht die gesamte Analyse-/Pfeilpipeline. Ein aufgewachter
 Worker allein bestaetigt keine funktionierende Pfeilanzeige.

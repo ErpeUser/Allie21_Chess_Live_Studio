@@ -56,15 +56,13 @@ Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begr
 
 Die Browser-Erweiterung öffnet über ihre Optionen die Einstellung „Lokaler Port“ und speichert sie in `chrome.storage.local`; das Userscript bietet denselben Port im Allie-Menü. Beide müssen mit `ALLIE_PORT` des Servers übereinstimmen. Die Erweiterung verwendet für localhost bewusst eine Port-Wildcard und fragt den konfigurierten Port über den MV3-Service-Worker ab.
 
-## Wiederaufnahme- und Release-Status (10.11.2026, main 13131c8)
+## Wiederaufnahme- und Release-Status (14.11.2026, main 15464e2)
 
 Der technische Checkpoint steht in `VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
 
-Die Anwendung/Userscript-Version ist 11.2.22. Die separat versionierte Edge-
-Erweiterung ist 11.2.22.0/11.2.22; `tools/check_versions.py` prüft diese beiden
-Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt.
+Die Anwendung/Userscript-Version ist 11.2.24. Die separat versionierte Edge-Erweiterung ist 11.2.24.0/11.2.24; `tools/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt.
 
-Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `release/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
+Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `release/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben für den aktuellen Stand eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
 
 ## Grenzen
 
