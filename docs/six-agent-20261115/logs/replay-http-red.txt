@@ -1,0 +1,97 @@
+test_invalid_pgn_returns_a_bounded_error_without_private_metadata (test_pgn_replay_http.PgnReplayHTTPTests.test_invalid_pgn_returns_a_bounded_error_without_private_metadata) ... FAIL
+test_replay_is_post_only_and_does_not_put_pgn_in_a_get_url (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_is_post_only_and_does_not_put_pgn_in_a_get_url) ... FAIL
+test_replay_preserves_host_and_origin_boundary (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_preserves_host_and_origin_boundary) ... FAIL
+test_replay_rejects_empty_oversized_and_unexpected_payloads (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_rejects_empty_oversized_and_unexpected_payloads) ... FAIL
+test_replay_requires_current_capability_and_instance (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_requires_current_capability_and_instance) ...
+  test_replay_requires_current_capability_and_instance (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_requires_current_capability_and_instance) (auth=False, headers={}) ... FAIL
+  test_replay_requires_current_capability_and_instance (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_requires_current_capability_and_instance) (auth=True, headers={'Authorization': 'Bearer wrong-token'}) ... FAIL
+  test_replay_requires_current_capability_and_instance (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_requires_current_capability_and_instance) (auth=True, headers={'X-Allie-Instance': 'previous-server-instance'}) ... FAIL
+test_replay_returns_no_headers_comments_or_pairing_secrets (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_returns_no_headers_comments_or_pairing_secrets) ... FAIL
+test_replay_returns_real_positions_without_model_or_live_session (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_returns_real_positions_without_model_or_live_session) ...
+  test_replay_returns_real_positions_without_model_or_live_session (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_returns_real_positions_without_model_or_live_session) (phase='loading') ... FAIL
+  test_replay_returns_real_positions_without_model_or_live_session (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_returns_real_positions_without_model_or_live_session) (phase='failed') ... FAIL
+
+======================================================================
+FAIL: test_invalid_pgn_returns_a_bounded_error_without_private_metadata (test_pgn_replay_http.PgnReplayHTTPTests.test_invalid_pgn_returns_a_bounded_error_without_private_metadata)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 120, in test_invalid_pgn_returns_a_bounded_error_without_private_metadata
+    self.assertEqual(status, 400, result)
+AssertionError: 404 != 400 : {'detail': 'Not Found'}
+
+======================================================================
+FAIL: test_replay_is_post_only_and_does_not_put_pgn_in_a_get_url (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_is_post_only_and_does_not_put_pgn_in_a_get_url)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 137, in test_replay_is_post_only_and_does_not_put_pgn_in_a_get_url
+    self.assertEqual(status, 405)
+AssertionError: 404 != 405
+
+======================================================================
+FAIL: test_replay_preserves_host_and_origin_boundary (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_preserves_host_and_origin_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 104, in test_replay_preserves_host_and_origin_boundary
+    self.assertEqual(status, 200, result)
+AssertionError: 404 != 200 : {'detail': 'Not Found'}
+
+======================================================================
+FAIL: test_replay_rejects_empty_oversized_and_unexpected_payloads (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_rejects_empty_oversized_and_unexpected_payloads)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 108, in test_replay_rejects_empty_oversized_and_unexpected_payloads
+    self.assertEqual(status, 413)
+AssertionError: 404 != 413
+
+======================================================================
+FAIL: test_replay_requires_current_capability_and_instance (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_requires_current_capability_and_instance) (auth=False, headers={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 93, in test_replay_requires_current_capability_and_instance
+    self.assertEqual(status, 401, result)
+AssertionError: 404 != 401 : {'detail': 'Not Found'}
+
+======================================================================
+FAIL: test_replay_requires_current_capability_and_instance (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_requires_current_capability_and_instance) (auth=True, headers={'Authorization': 'Bearer wrong-token'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 93, in test_replay_requires_current_capability_and_instance
+    self.assertEqual(status, 401, result)
+AssertionError: 404 != 401 : {'detail': 'Not Found'}
+
+======================================================================
+FAIL: test_replay_requires_current_capability_and_instance (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_requires_current_capability_and_instance) (auth=True, headers={'X-Allie-Instance': 'previous-server-instance'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 93, in test_replay_requires_current_capability_and_instance
+    self.assertEqual(status, 401, result)
+AssertionError: 404 != 401 : {'detail': 'Not Found'}
+
+======================================================================
+FAIL: test_replay_returns_no_headers_comments_or_pairing_secrets (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_returns_no_headers_comments_or_pairing_secrets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 129, in test_replay_returns_no_headers_comments_or_pairing_secrets
+    self.assertEqual(status, 200, result)
+AssertionError: 404 != 200 : {'detail': 'Not Found'}
+
+======================================================================
+FAIL: test_replay_returns_real_positions_without_model_or_live_session (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_returns_real_positions_without_model_or_live_session) (phase='loading')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 78, in test_replay_returns_real_positions_without_model_or_live_session
+    self.assertEqual(status, 200, result)
+AssertionError: 404 != 200 : {'detail': 'Not Found'}
+
+======================================================================
+FAIL: test_replay_returns_real_positions_without_model_or_live_session (test_pgn_replay_http.PgnReplayHTTPTests.test_replay_returns_real_positions_without_model_or_live_session) (phase='failed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_pgn_replay_http.py", line 78, in test_replay_returns_real_positions_without_model_or_live_session
+    self.assertEqual(status, 200, result)
+AssertionError: 404 != 200 : {'detail': 'Not Found'}
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.227s
+
+FAILED (failures=10)

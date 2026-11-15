@@ -266,3 +266,96 @@ test('private overlay retries its claim after a service-start race', async () =>
   await app.hooks.syncPrivateMode(); await settle();
   assert.equal(claims,2);
 });
+
+function changingBoard(app) {
+  const board = new app.Element();
+  board.tagName = 'WC-CHESS-BOARD';
+  board.className = 'board';
+  board.rect = {left:300, top:100, right:940, bottom:740, width:640, height:640};
+  let pieces = [];
+  board.querySelectorAll = () => pieces;
+  app.context.document.querySelectorAll = selector => selector.includes('wc-chess-board') ? [board] : [];
+  return {
+    setPlacement(placement) {
+      pieces = [];
+      placement.split('/').forEach((rank, row) => {
+        let file = 0;
+        for (const piece of rank) {
+          if (/^[1-8]$/.test(piece)) { file += Number(piece); continue; }
+          const node = new app.Element();
+          node.className = `piece ${piece === piece.toUpperCase() ? 'w' : 'b'}${piece.toLowerCase()} square-${file + 1}${8 - row}`;
+          node.rect = {left:300 + 80 * file, top:100 + 80 * row,
+            right:380 + 80 * file, bottom:180 + 80 * row, width:80, height:80};
+          pieces.push(node);file++;
+        }
+      });
+    },
+    activeSvg: () => board.children.filter(node => node.isConnected && node.viewBox),
+  };
+}
+
+const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+const AFTER_E4 = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR';
+const OLD_START_RESULT = {fen: START + ' w KQkq - 0 1', my_moves:[{uci:'e2e4'}],
+  opponent_moves:[], moves:[], plan_messages:[]};
+
+test('hidden-tab restore clears old arrows and schedules board revalidation', async () => {
+  const app = loadBrowser({response:async url => url.endsWith('/api/capability')
+    ? {token:'test',instance_id:'test'} : {mode:'normal'}});
+  const board = changingBoard(app);
+  board.setPlacement(START);
+  app.hooks.show(OLD_START_RESULT);app.hooks.paint(OLD_START_RESULT);
+  assert.equal(board.activeSvg().length, 1);
+  app.context.document.hidden = true;
+  app.hooks.hideForInactive();
+  board.setPlacement(AFTER_E4);
+  app.context.document.hidden = false;
+  await app.hooks.restoreOverlayAfterVisibility();
+  assert.equal(app.hooks.readBoardSnapshot().placement, AFTER_E4);
+  assert.equal(board.activeSvg().length, 0, 'restoring focus must not redraw e2e4 from the previous board');
+  assert.ok([...app.timers.values()].some(timer => timer.ms === 120), 'restore must schedule position revalidation');
+});
+
+test('hidden-tab restore discards a native update queued before its lease was ready', async () => {
+  const app = loadBrowser({stored:{privateMode:true},privateStored:{privateMode:true},response:async url => {
+    if (url.endsWith('/api/capability')) return {token:'test',instance_id:'test'};
+    if (url.endsWith('/api/overlay/claim')) return {owner_token:'owner'};
+    return {mode:'private',available:true,capture_excluded:true,state:'ready'};
+  }});
+  const board = changingBoard(app);
+  board.setPlacement(START);
+  app.hooks.paint(OLD_START_RESULT);
+  app.context.document.hidden = true;
+  app.hooks.hideForInactive();
+  board.setPlacement(AFTER_E4);
+  app.context.document.hidden = false;
+  await app.hooks.restoreOverlayAfterVisibility();
+  await settle();
+  assert.equal(app.requests.filter(request => request.url.endsWith('/api/overlay/update')).length, 0,
+    'a newly acquired native lease must not publish the queued pre-hide position');
+});
+
+for (const settingsMethod of ['POST', 'GET']) test(`accepted remote private mode via ${settingsMethod} removes browser arrows before a pending claim`, async () => {
+  const app = loadBrowser({response:async (url, options) => {
+    if (url.endsWith('/api/capability')) return {token:'test',instance_id:'test'};
+    if (url.endsWith('/api/overlay/settings')) {
+      if (settingsMethod === 'GET' && options.method === 'POST') {
+        return {ok:false,status:409,json:async () => ({error:'Preference changed'})};
+      }
+      return {mode:'private',version:99,updated_at:Date.now()/1000};
+    }
+    if (url.endsWith('/api/overlay/claim')) return new Promise(() => {});
+    return {};
+  }});
+  const board = changingBoard(app);
+  board.setPlacement(START);
+  app.hooks.show(OLD_START_RESULT);app.hooks.paint(OLD_START_RESULT);
+  assert.equal(board.activeSvg().length, 1);
+  app.hooks.syncPrivateMode(true);
+  await settle();
+  assert.equal(app.hooks.cfg.privateMode, true);
+  assert.equal(board.activeSvg().length, 0, 'private selection must hide browser arrows while native claim is pending');
+  assert.equal(app.hooks.wrapper.style.display, 'none');
+  app.hooks.paint(OLD_START_RESULT);
+  assert.equal(board.activeSvg().length, 0, 'a late repaint must keep the private browser HUD hidden');
+});

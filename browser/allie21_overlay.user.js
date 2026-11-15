@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.24
+// @version      11.2.25
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
@@ -440,6 +440,8 @@
    return syncOverlayPreference(force).then(()=>sendOverlayMode(overlayMode()));
   }
  function clearRemoteOverlay(reason='stale'){
+  // A pending lease must never revive a frame invalidated before it was ready.
+  pendingVisualUpdate=null;
   // Legacy fail-closed guard: if(!cfg.privateMode||!overlayOwnerToken)return
   if(!overlayOwnerToken)return;
   visualRequest?.abort?.();visualRequest=null;
@@ -630,13 +632,15 @@
    if(Number.isFinite(remoteVersion)&&remoteVersion>=overlaySettingsVersion){
     overlaySettingsVersion=remoteVersion;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);
     const winner=normalizeOverlayMode(remote?.mode);
-    if(winner!==requested){cfg.overlayMode=winner;cfg.privateMode=winner==='private';try{localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:winner,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}));localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill()}
+    // A remote preference has the same immediate privacy boundary as a local
+    // mode change. Never leave page-owned arrows visible during native IO.
+    if(winner!==requested){cfg.overlayMode=winner;cfg.privateMode=winner==='private';try{localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:winner,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}));localStorage.setItem(PRIVATE_STORE,JSON.stringify({privateMode:cfg.privateMode}))}catch{};fill();invalidate()}
    }
    return remote;
   }catch(error){
    try{
     const pairing=await ensurePairingCode();await ensureCapability();const response=await fetch(serviceUrl('/api/overlay/settings'),{cache:'no-store',headers:{'X-Allie-Overlay':'1','Authorization':'Bearer '+capabilityToken,'X-Allie-Instance':capabilityInstance,...(pairing?{'X-Allie-Pairing':pairing}:{})}});
-    if(response.ok){const remote=await response.json();const remoteVersion=Number(remote?.version);if(Number.isFinite(remoteVersion)&&remoteVersion>=overlaySettingsVersion){overlaySettingsVersion=remoteVersion;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);const winner=normalizeOverlayMode(remote?.mode);if(winner!==requested){cfg.overlayMode=winner;cfg.privateMode=winner==='private';fill()}try{localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:cfg.overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};return remote}}
+    if(response.ok){const remote=await response.json();const remoteVersion=Number(remote?.version);if(Number.isFinite(remoteVersion)&&remoteVersion>=overlaySettingsVersion){overlaySettingsVersion=remoteVersion;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);const winner=normalizeOverlayMode(remote?.mode);if(winner!==requested){cfg.overlayMode=winner;cfg.privateMode=winner==='private';fill();invalidate()}try{localStorage.setItem(OVERLAY_STORE,JSON.stringify({mode:cfg.overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};return remote}}
    }catch{}
    // Older local services expose status before the versioned settings route.
    // Keep this read-only fallback for diagnostics; it never enables a HUD.
@@ -836,9 +840,12 @@
   if(document.hidden)return;
   pageInactive=false;
   visualRefreshPending=true;
+  // The board may have changed while hidden. Invalidate both cached results
+  // and in-flight responses before any asynchronous overlay handshake.
+  invalidate();
   try{await syncPrivateMode(true)}catch{}
   if(document.hidden||pageInactive)return;
-  if(currentResult){show(currentResult);paint(currentResult)}else scheduleTick(true);
+  scheduleTick(true);
  }
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hideForInactive();else if(document.hasFocus?.()!==false)restoreOverlayAfterVisibility()},{passive:true});
  window.addEventListener('blur',()=>{if(document.hidden)hideForInactive();else{visualRefreshPending=true;clearOverlay()}},{passive:true});

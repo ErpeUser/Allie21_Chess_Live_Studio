@@ -1,0 +1,86 @@
+✔ viewer initialises using real HTML IDs and wires capture and overlay controls (10.21373ms)
+✔ viewer first run defaults to private mode (2.188971ms)
+✔ viewer rotates native overlay session before a new capture (3.194046ms)
+✔ idle private viewer preserves unavailable native status (2.764338ms)
+✔ private failure preserves request and suppresses browser fallback (5.149625ms)
+✔ verified private overlay is shown as ready while waiting for capture (2.299437ms)
+✔ private mode also removes board facts and history from the viewer HUD (2.575393ms)
+✔ capture resize preserves source aspect ratio including portrait and ultrawide sources (2.207308ms)
+✔ human move probabilities are presented without fabricated confidence (2.177663ms)
+✔ explanation containers are not descendants of capture screen (0.35809ms)
+✔ viewer hints are compact, deduplicated and independently dismissible (2.381181ms)
+✔ playing style is an explicit validated setting, not silent extra randomness (2.109621ms)
+✔ viewer rejects empty and out-of-range numeric/time settings before capture starts (2.095289ms)
+✔ an idle normal viewer does not switch off another client native overlay (2.277104ms)
+✔ viewer refreshes capability after a server restart without a manual reload (2.87179ms)
+✔ PGN replay loads a local board without requesting analysis or persisting the game (5.258418ms)
+✔ PGN replay navigation changes only the displayed board, including text and move boundaries (5.231618ms)
+✔ a late PGN import cannot replace a newer accepted game (4.314405ms)
+✔ clearing a pending replay invalidates the response and removes private game text (2.575383ms)
+✔ replay remains unavailable in private mode or during a captured session (2.689405ms)
+✔ failed replay replacement clears the old board and displays a local error (3.309471ms)
+✖ remote private settings clear an existing replay through POST (4.406554ms)
+✖ remote private settings clear an existing replay through GET fallback (4.146812ms)
+✖ remote private settings invalidate a pending PGN reply before it can render (5.166069ms)
+✔ an older remote settings version cannot override the current replay mode (2.631477ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 22
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 195.676391
+
+✖ failing tests:
+
+test at tests/test_viewer_reliability.js:339:3
+✖ remote private settings clear an existing replay through POST (4.406554ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  false !== true
+
+      at TestContext.<anonymous> (/workspace/scratch/e82834a8a22e/allie/tests/test_viewer_reliability.js:361:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/test_viewer_reliability.js:339:3
+✖ remote private settings clear an existing replay through GET fallback (4.146812ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  false !== true
+
+      at TestContext.<anonymous> (/workspace/scratch/e82834a8a22e/allie/tests/test_viewer_reliability.js:361:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/test_viewer_reliability.js:373:1
+✖ remote private settings invalidate a pending PGN reply before it can render (5.166069ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  '1. e4 e5 *' !== ''
+
+      at TestContext.<anonymous> (/workspace/scratch/e82834a8a22e/allie/tests/test_viewer_reliability.js:390:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '1. e4 e5 *',
+    expected: '',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

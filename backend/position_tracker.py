@@ -207,12 +207,11 @@ class PositionTracker:
                     return Change(True, "Side to move verified")
             return Change(False, "Position unchanged")
 
-        # A bot-selection preview can be replaced by a real game between two
-        # samples. If the new board is uniquely one legal ply from the standard
-        # start, that single move is a complete observed history, not a guess.
-        # When initial side to move was inferred from video, try both sides for first transition.
+        # Try both sides only while the initial turn is unknown. A later full
+        # FEN can verify the turn before any move is tracked; incomplete history
+        # alone must not allow a move by the wrong side.
         variants = [self.board.copy(stack=True)]
-        if not self.complete_history and not self.moves:
+        if not self.complete_history and not self.moves and not self.turn_verified:
             alt = self.board.copy(stack=True)
             alt.turn = not alt.turn
             variants.append(alt)

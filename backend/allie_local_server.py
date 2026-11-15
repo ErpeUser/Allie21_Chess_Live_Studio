@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Local-only Allie 2.1 chess training analysis endpoint.
 
 Uses the real yimingzhang/allie-2.1 model; no Stockfish substitute or

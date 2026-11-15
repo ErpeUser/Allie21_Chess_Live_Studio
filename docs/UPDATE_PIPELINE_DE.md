@@ -1,5 +1,7 @@
 # Main, Codex und Windows aktualisieren
 
+Der Prüfbranch vom 15. November 2026 trägt App/Userscript **11.2.25** und Extension **11.2.25.0**. Er ist noch keine lokale Installation oder Windows-Freigabe. [Prüfbelege und offene Abnahmen](six-agent-20261115/README.md) müssen vor einer gesonderten lokalen Aktualisierung beachtet werden; die folgenden Befehle wurden durch den Cloud-Prüflauf nicht ausgeführt.
+
 ## Einmalig auf deinem Windows-PC
 
 Allie im Infobereich beenden. Im echten Git-Checkout, nicht in einer ZIP-Kopie:
@@ -22,7 +24,7 @@ ausgecheckt. Lokale Aenderungen werden nicht geloescht oder automatisch gestasht
 
 ## Edge erstmalig umstellen
 
-Einmal unter `edge://extensions` die neue Version **11.2.24** neu laden. Fuer einen
+Nach einer gesonderten lokalen Installation unter `edge://extensions` die neue Version **11.2.25** neu laden. Fuer einen
 festen Installationspfad die entpackte Erweiterung aus
 `%LOCALAPPDATA%\Allie21\EdgeOverlay` laden; dieser Ordner entsteht beim erfolgreichen
 lokalen Update. Der echte Checkout-Ordner `browser/` funktioniert ebenfalls.
@@ -68,8 +70,8 @@ Ein Klick auf das Allie-Symbol oeffnet Verbindung/Updates. **Worker aufwecken un
  testen** prueft die Erweiterung; **Server-Verbindung testen** prueft separat
 localhost. Angezeigt wird die wirklich geladene Erweiterungsversion.
 
-Die Erweiterungsshell ist 11.2.24.0; Anwendung und standalone Userscript sind
-11.2.24. Die Versionen werden gemeinsam veröffentlicht. Der Wartungsstand ersetzt
+Die Erweiterungsshell dieses Prüfbranches ist 11.2.25.0; Anwendung und standalone Userscript sind
+11.2.25. Die Versionen müssen bei einer späteren Veröffentlichung zusammenpassen. Der Wartungsstand ersetzt
 nicht den separaten frueheren Pfeilfix-Download: er aendert Wartung, Build und
 Worker-Lifecycle, nicht die gesamte Analyse-/Pfeilpipeline. Ein aufgewachter
 Worker allein bestaetigt keine funktionierende Pfeilanzeige.

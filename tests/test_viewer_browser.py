@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from backend.pgn_training import build_replay
+
 try:
     import playwright.sync_api as playwright
 except ImportError:
@@ -70,6 +72,14 @@ def browser_page():
         browser = pw.chromium.launch(executable_path=executable, headless=True, args=["--no-sandbox"] if os.name == "posix" and os.geteuid() == 0 else [])
         context = browser.new_context(viewport={"width": 1440, "height": 1000})
         page = context.new_page()
+
+        def local_replay(pgn):
+            try:
+                return build_replay(pgn)
+            except (TypeError, ValueError) as exc:
+                return {"error": str(exc)}
+
+        page.expose_function("fixtureReplay", local_replay)
         class Requests:
             def __iter__(self):
                 return iter(page.evaluate("window.fixtureRecords || []"))
@@ -94,6 +104,11 @@ def browser_page():
                 const json=options.headers?.['Content-Type']==='application/json';
                 const data=json?JSON.parse(options.body):null;
                 window.fixtureRecords.push([path,data]);
+                if(path==='/api/pgn/replay'){
+                  const replay=await window.fixtureReplay(data.pgn);
+                  return new Response(JSON.stringify(replay),{status:replay.error?400:200,
+                    headers:{'Content-Type':'application/json'}});
+                }
                 if(path==='/api/overlay/mode')configuration.mode=data.mode;
                 const overlay={mode:configuration.mode,available:configuration.available,
                   capture_excluded:configuration.available,visible:false,
@@ -198,5 +213,104 @@ def test_manual_fen_uses_stockfish_not_allie_history_api(browser_page):
     assert len(analyses) == 1
     assert analyses[0]["analysis_source"] == "stockfish"
     assert analyses[0]["fen"] == FEN
+    assert not errors
+
+
+def test_local_pgn_replay_file_board_and_keyboard_navigation(browser_page):
+    page, requests, errors, _, open_viewer = browser_page
+    open_viewer()
+    assert page.locator("#replayDetails").count() == 1, "PGN-Rückblick fehlt"
+    page.locator("#replayDetails > summary").click()
+    page.locator("#replayFile").set_input_files({
+        "name": "training.pgn", "mimeType": "application/x-chess-pgn",
+        "buffer": b"1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 *",
+    })
+    page.wait_for_function("!document.querySelector('#replayViewer').hidden")
+    assert page.locator("#replayBoard .replay-square").count() == 64
+    assert page.locator("#replayFen").inner_text() == FEN
+    page.locator("#replayNavigation").focus()
+    page.keyboard.press("ArrowRight")
+    assert page.locator("#replayPosition").input_value() == "1"
+    assert "Schwarz am Zug" in page.locator("#replayPositionStatus").inner_text()
+    assert "e4: weißer Bauer" in page.locator("#replayPieces").inner_text()
+    page.keyboard.press("End")
+    assert page.locator("#replayPosition").input_value() == "6"
+    assert page.is_disabled("#replayNext")
+    page.keyboard.press("Home")
+    assert page.is_disabled("#replayPrev")
+    page.select_option("#replayPosition", "3")
+    assert "2. Nf3" in page.locator("#replayPositionStatus").inner_text()
+    assert page.locator("#replayPositionStatus").get_attribute("aria-live") == "polite"
+    assert not any(path in {"/analyze", "/api/frame", "/api/start"} for path, _ in requests)
+    assert sum(path == "/api/pgn/replay" for path, _ in requests) == 1
+    page.set_viewport_size({"width": 390, "height": 900})
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    assert not errors
+
+
+def test_replay_errors_and_edits_discard_the_old_board(browser_page):
+    page, _, errors, _, open_viewer = browser_page
+    open_viewer()
+    assert page.locator("#replayDetails").count() == 1, "PGN-Rückblick fehlt"
+    page.locator("#replayDetails > summary").click()
+    page.fill("#replayPgn", '[White "<img src=x onerror=alert(1)>"]\n\n1. e4 e5 *')
+    page.click("#replayLoad")
+    page.wait_for_function("!document.querySelector('#replayViewer').hidden")
+    assert page.locator("#replayViewer img").count() == 0
+    page.fill("#replayPgn", "1. e4 e5 2. Bh6 *")
+    assert page.locator("#replayViewer").is_hidden()
+    page.click("#replayLoad")
+    page.wait_for_function("!document.querySelector('#replayLoad').disabled")
+    assert "ungültigen" in page.locator("#replayStatus").inner_text()
+    assert page.locator("#replayViewer").is_hidden()
+    assert page.locator("#replayBoard .replay-square").count() == 0
+    assert not errors
+
+
+def test_replay_private_mode_removes_game_and_capture_blocks_import(browser_page):
+    page, requests, errors, _, open_viewer = browser_page
+    open_viewer()
+    assert page.locator("#replayDetails").count() == 1, "PGN-Rückblick fehlt"
+    page.locator("#replayDetails > summary").click()
+    page.fill("#replayPgn", "1. e4 e5 *")
+    page.click("#replayLoad")
+    page.wait_for_function("!document.querySelector('#replayViewer').hidden")
+    page.evaluate("setOverlayMode('private')")
+    assert page.locator("#replayViewer").is_hidden()
+    assert page.locator("#replayPgn").input_value() == ""
+    page.evaluate("setOverlayMode('normal')")
+    page.click("#start")
+    page.wait_for_function("document.querySelector('#screen').style.display==='block'")
+    page.fill("#replayPgn", "1. d4 d5 *")
+    page.click("#replayLoad")
+    assert "Bildschirm" in page.locator("#replayStatus").inner_text()
+    assert sum(path == "/api/pgn/replay" for path, _ in requests) == 1
+    assert page.locator("#replayViewer").is_hidden()
+    page.click("#stop")
+    assert not errors
+
+
+@pytest.mark.parametrize("fallback", [False, True], ids=["post", "get-fallback"])
+def test_remote_private_settings_remove_replay_in_real_dom(browser_page, fallback):
+    page, _, errors, _, open_viewer = browser_page
+    open_viewer()
+    page.locator("#replayDetails > summary").click()
+    page.fill("#replayPgn", "1. e4 e5 *")
+    page.click("#replayLoad")
+    page.wait_for_function("!document.querySelector('#replayViewer').hidden")
+    page.evaluate("""async fallback => {
+      const originalFetch=window.fetch;
+      window.fetch=async (path,options={})=>{
+        if(path!=='/api/overlay/settings')return originalFetch(path,options);
+        if(fallback&&options.method==='POST')return new Response('{}',{status:503});
+        return new Response(JSON.stringify({mode:'private',version:99,updated_at:1}),
+          {status:200,headers:{'Content-Type':'application/json'}});
+      };
+      await syncOverlaySettings(true);
+    }""", fallback)
+    assert page.locator("#replayViewer").is_hidden()
+    assert page.locator("#replayBoard .replay-square").count() == 0
+    assert page.locator("#replayPgn").input_value() == ""
+    assert page.locator("#privateOverlayToggle").is_checked()
     assert not errors
 

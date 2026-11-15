@@ -1,0 +1,511 @@
+{
+  "agent": "BUGS_SECURITY",
+  "finding_prefix": "SEC",
+  "updated_utc": "2026-11-15T19:35:45.220702+00:00",
+  "repo": {
+    "path": "/workspace/scratch/e82834a8a22e/worktrees/security",
+    "baseline_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0",
+    "branch": "work/allie21-security-20261115",
+    "origin": "https://github.com/ErpeUser/Allie21_Chess_Live_Studio.git",
+    "commit": "f3f3b75f7506408231a3f25302960ff86b41afe2",
+    "status": "clean",
+    "commit_method": "Normal git commit failed only because the pre-existing icon blob is absent. Root-authorized write-tree --missing-ok + commit-tree + CAS update-ref preserved the exact icon entry.",
+    "preserved_icon_entry": "100644 blob 4e962591e1698fd92ae406ec4c24f99ad3f29aac\tassets/allie21_icon.png"
+  },
+  "constraints": {
+    "loopback_preserved": true,
+    "no_real_profiles_or_accounts": true,
+    "model_weights_downloaded": false,
+    "vendor_or_lockfile_changed": false,
+    "github_writes": false,
+    "windows_acceptance_claimed": false
+  },
+  "coverage": [
+    {
+      "path": "AGENTS.md",
+      "baseline_blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
+      "total_lines": 58,
+      "read_ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 58
+    },
+    {
+      "path": "SECURITY.md",
+      "baseline_blob_sha": "452bb8c271e9674ae05bbe2043d9c81345c22b77",
+      "total_lines": 63,
+      "read_ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 63
+    },
+    {
+      "path": "README_DE.md",
+      "baseline_blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
+      "total_lines": 70,
+      "read_ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 70
+    },
+    {
+      "path": "docs/PRODUKTVISION_ALLIE21_DE.md",
+      "baseline_blob_sha": "bf9bdd66fdd52bc6fe3729d94b09f71e1b79cd4d",
+      "total_lines": 315,
+      "read_ranges": [
+        [
+          1,
+          315
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 315
+    },
+    {
+      "path": "backend/security.py",
+      "baseline_blob_sha": "234db0137affdf08852099fd855c10f1a2e5e8d2",
+      "total_lines": 157,
+      "read_ranges": [
+        [
+          1,
+          157
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 157
+    },
+    {
+      "path": "backend/http_boundary.py",
+      "baseline_blob_sha": "1e097ba5832c705683b8267145836ed3cc1fc8ee",
+      "total_lines": 190,
+      "read_ranges": [
+        [
+          1,
+          190
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 190
+    },
+    {
+      "path": "backend/live_server.py",
+      "baseline_blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
+      "total_lines": 797,
+      "read_ranges": [
+        [
+          1,
+          797
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 797
+    },
+    {
+      "path": "tests/test_security_reliability.py",
+      "baseline_blob_sha": "8d93c1de2d69ef958c3ae449be6ca6be0979095f",
+      "total_lines": 91,
+      "read_ranges": [
+        [
+          1,
+          91
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 91
+    },
+    {
+      "path": "tests/test_http_boundary_reliability.py",
+      "baseline_blob_sha": "d3cf5b5dc47f3732e2a664b488b3cf8069bfc0fe",
+      "total_lines": 207,
+      "read_ranges": [
+        [
+          1,
+          207
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 207
+    },
+    {
+      "path": "tests/test_http_offline.py",
+      "baseline_blob_sha": "c396890bf7842f2c25734dca69eb07d33327303c",
+      "total_lines": 363,
+      "read_ranges": [
+        [
+          1,
+          363
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 363
+    },
+    {
+      "path": "tests/test_overlay_lease.py",
+      "baseline_blob_sha": "804b5da8e86e4d535013b02343f3e498d3de77af",
+      "total_lines": 66,
+      "read_ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 66
+    },
+    {
+      "path": "browser/background.js",
+      "baseline_blob_sha": "c6a31c03e52ad973a754e236589f59384cd0bdde",
+      "total_lines": 218,
+      "read_ranges": [
+        [
+          1,
+          218
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 218
+    },
+    {
+      "path": "pyproject.toml",
+      "baseline_blob_sha": "fe9dc06d68bff26a96e63c0a164b1a6d7e38030c",
+      "total_lines": 46,
+      "read_ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 46
+    },
+    {
+      "path": "browser/allie21_overlay.user.js",
+      "baseline_blob_sha": "298903726fcb19820d524352be7062e13290a339",
+      "total_lines": 880,
+      "read_ranges": [
+        [
+          565,
+          660
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 96
+    },
+    {
+      "path": "backend/allie_local_server.py",
+      "baseline_blob_sha": "59922a7b27c6d5f9f5edd04fe9be5f663034b3b7",
+      "total_lines": 713,
+      "read_ranges": [
+        [
+          1,
+          115
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 115
+    },
+    {
+      "path": "backend/native_overlay.py",
+      "baseline_blob_sha": "ad5e7dbebd042259b029a57596b60b242dcf012d",
+      "total_lines": 1397,
+      "read_ranges": [
+        [
+          982,
+          1070
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 89
+    },
+    {
+      "path": "tests/test_chess.py",
+      "baseline_blob_sha": "9f63219c9cd70c4088bb00bbaa94b4bf09055a8a",
+      "total_lines": 737,
+      "read_ranges": [
+        [
+          461,
+          495
+        ]
+      ],
+      "review": "source read, not just filename/search coverage",
+      "read_line_count": 35
+    }
+  ],
+  "coverage_definition": "Only the explicitly listed source ranges were read. No claim of full-repository review.",
+  "external_instructions_read": [
+    {
+      "path": "/workspace/scratch/e82834a8a22e/upload/allie_bugs_security.toml",
+      "sha256": "48fb224712bcd08300805e3b930588355e935c38fe4fd070bc05a7857e1c3237",
+      "read_ranges": [
+        [
+          1,
+          7
+        ]
+      ]
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/upload/03_BAU_UND_SICHERHEITSVERTRAG.md",
+      "sha256": "28c175932db5bc8021a2c861fe134f47c89d4ab0d0f2a0868811dfef284d7cd4",
+      "read_ranges": [
+        [
+          1,
+          30
+        ]
+      ]
+    }
+  ],
+  "changed_files": [
+    {
+      "path": "backend/security.py",
+      "working_blob_sha": "fa710da256ac3540c26d183ba4846805e5acf5c9",
+      "read_ranges_after_fix": [
+        [
+          1,
+          164
+        ]
+      ],
+      "commit_blob_sha": "fa710da256ac3540c26d183ba4846805e5acf5c9"
+    },
+    {
+      "path": "backend/live_server.py",
+      "working_blob_sha": "fe778861bee9d6813fd3684b7e5e52d5895983f2",
+      "read_ranges_after_fix": [
+        [
+          1,
+          794
+        ]
+      ],
+      "commit_blob_sha": "fe778861bee9d6813fd3684b7e5e52d5895983f2"
+    },
+    {
+      "path": "tests/test_http_pairing_limits.py",
+      "working_blob_sha": "1b2a8670f8419138d9e3ca02fc300d3b7c2004f1",
+      "read_ranges_after_fix": [
+        [
+          1,
+          154
+        ]
+      ],
+      "commit_blob_sha": "1b2a8670f8419138d9e3ca02fc300d3b7c2004f1"
+    }
+  ],
+  "findings": [
+    {
+      "id": "SEC-001",
+      "status": "FIXED_GREEN_REVIEWED_COMMITTED",
+      "severity": "medium",
+      "title": "Overlay settings bypass the pairing guess limit",
+      "root_cause": "The capability route called pairing_attempt_allowed before verify_pairing_code, while GET/POST/PUT overlay settings called verify_pairing_code directly. All callers check the same eight-digit pairing code.",
+      "baseline_callers": [
+        {
+          "path": "backend/live_server.py",
+          "range": [
+            423,
+            438
+          ],
+          "blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c"
+        },
+        {
+          "path": "backend/live_server.py",
+          "range": [
+            589,
+            618
+          ],
+          "blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c"
+        }
+      ],
+      "baseline_callee": {
+        "path": "backend/security.py",
+        "range": [
+          71,
+          86
+        ],
+        "blob_sha": "234db0137affdf08852099fd855c10f1a2e5e8d2"
+      },
+      "affected_trust_boundary": "Code guesses from allowlisted web or extension origins reaching the local service. Arbitrary foreign origins remain blocked.",
+      "impact": "Settings expose a repeated pairing guess oracle and do not consume the handshake budget. Reproduction used a fixed synthetic code, not a brute-force run or real user data.",
+      "fix": "verify_pairing_attempt performs the shared expiry, gate, comparison, and failure recording atomically under the existing RLock. Both routes use it; valid polls neither consume nor reset failures. Trusted viewer and extension-worker flows retain their prior access.",
+      "regression_test": "tests/test_http_pairing_limits.py",
+      "red": {
+        "exit_code": 1,
+        "tests_run": 6,
+        "failure_subcases": 11,
+        "reason": "Expected HTTP429, got HTTP200 after five failures; ten concurrent bad guesses all returned403 instead of five403/five429."
+      },
+      "green": {
+        "exit_code": 0,
+        "tests_run": 6,
+        "failures": 0
+      },
+      "negative_and_compatibility_cases": [
+        "GET/POST/PUT web origin",
+        "GET/POST/PUT extension origin",
+        "shared capability/settings budget",
+        "concurrent requests",
+        "60-second expiry",
+        "valid polling does not consume or reset failures",
+        "trusted viewer and no-Origin extension worker"
+      ],
+      "peer_review": {
+        "reviewer": "ARCHITEKTUR",
+        "status": "PASS",
+        "findings": [],
+        "independent_test_result": "pytest pairing + security reliability: 15 passed, 2 existing FastAPI deprecation warnings"
+      },
+      "root_review": {
+        "status": "PASS",
+        "independent_test_result": "6 HTTP pairing tests passed"
+      },
+      "commit": "f3f3b75f7506408231a3f25302960ff86b41afe2"
+    }
+  ],
+  "tests": [
+    {
+      "name": "pairing regression RED",
+      "status": "FAIL_EXPECTED",
+      "exit_code": 1,
+      "command": "ALLIE_NO_PRELOAD=1 /workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m unittest discover -s tests -p test_http_pairing_limits.py -v",
+      "log": "security_red_pairing.log"
+    },
+    {
+      "name": "pairing regression GREEN after final code edit",
+      "status": "PASS",
+      "exit_code": 0,
+      "tests_run": 6,
+      "log": "security_green_pairing.log"
+    },
+    {
+      "name": "full unittest",
+      "status": "PASS_WITH_SKIP",
+      "exit_code": 0,
+      "tests_run": 218,
+      "skips": [
+        "ExtensionOptionsBrowserTests: Chromium options tests unavailable"
+      ],
+      "log": "security_unittest_full.log"
+    },
+    {
+      "name": "full node",
+      "status": "PASS",
+      "exit_code": 0,
+      "tests_run": 77,
+      "log": "security_node.log"
+    },
+    {
+      "name": "ruff",
+      "status": "FAIL_BASELINE",
+      "exit_code": 1,
+      "errors": 3,
+      "details": "EXE001 in allie_local_server.py, download_stockfish.py, live_server.py; root independently confirmed baseline.",
+      "log": "security_ruff.log"
+    },
+    {
+      "name": "mypy",
+      "status": "FAIL_BASELINE",
+      "exit_code": 1,
+      "errors": 35,
+      "details": "Linux ctypes typing lacks WinDLL/WinError/get_last_error in native_overlay.py; root independently confirmed baseline.",
+      "log": "security_mypy.log"
+    },
+    {
+      "name": "check_versions",
+      "status": "PASS",
+      "exit_code": 0,
+      "application": "11.2.24",
+      "extension": "11.2.24.0",
+      "extension_id": "omboihgfgofgmidefcpkihgglhkiielo"
+    },
+    {
+      "name": "git diff --check",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "name": "full pytest",
+      "status": "NOT_RUN_BY_THIS_AGENT",
+      "details": "Root explicitly owns final integrated full pytest; peer targeted pytest15 passed."
+    },
+    {
+      "name": "Windows/Edge/GPU/model acceptance",
+      "status": "NOT_RUN",
+      "details": "No native Windows, actual model-weight or production-profile test."
+    }
+  ],
+  "cross_reviews_performed": [
+    {
+      "owner": "ARCHITEKTUR",
+      "worktree": "/workspace/scratch/e82834a8a22e/worktrees/architecture",
+      "files": [
+        {
+          "path": "backend/position_tracker.py",
+          "read_ranges": [
+            [
+              1,
+              246
+            ]
+          ],
+          "working_blob_sha": "e56dc22bfe40ca5956cd9c1fe2f1c3b68f962904"
+        },
+        {
+          "path": "tests/test_position_tracker_architecture.py",
+          "read_ranges": [
+            [
+              1,
+              70
+            ]
+          ],
+          "working_blob_sha": "6d2a5590a081c8fe3e744a8054fc6db7a635f370"
+        }
+      ],
+      "verdict": "PASS_NO_FINDINGS",
+      "independent_test": "unittest test_position_tracker_architecture: 3 passed in0.201s",
+      "reason": "Alternative side hypothesis is only meaningful while turn remains unverified; existing accepted-FEN state must prevent subsequent wrong-side moves. Unknown turn still allows both legal hypotheses."
+    }
+  ],
+  "artifacts": {
+    "security_red_pairing.log": {
+      "path": "/workspace/scratch/e82834a8a22e/security_red_pairing.log",
+      "sha256": "8804a829c3beb5aa5ba2c0cbc8b076ebd0e5675fc7efcfe73cfc9bf8097e734c"
+    },
+    "security_green_pairing.log": {
+      "path": "/workspace/scratch/e82834a8a22e/security_green_pairing.log",
+      "sha256": "b66638da733ed864292b82a45a5c25ef6dc00bebf067495132a1b137e9a9f967"
+    },
+    "security_unittest_full.log": {
+      "path": "/workspace/scratch/e82834a8a22e/security_unittest_full.log",
+      "sha256": "f0646c4d3bee4b5b78a4ea7da06103350cd42962a2d2e77cd381e6ca312369b8"
+    },
+    "security_ruff.log": {
+      "path": "/workspace/scratch/e82834a8a22e/security_ruff.log",
+      "sha256": "ee72a74c81a246b1619790e09ebce851238d248d93efcb14b621b0e4cd788ae9"
+    },
+    "security_mypy.log": {
+      "path": "/workspace/scratch/e82834a8a22e/security_mypy.log",
+      "sha256": "b96da77b5fc52a1c9ca891e1e46bb72a466dcfd9727d2dca46b9fd09215ee4cd"
+    },
+    "security_node.log": {
+      "path": "/workspace/scratch/e82834a8a22e/security_node.log",
+      "sha256": "7f12eeb9eaa74d7b01a82c4ee828ccc59e601cc0f319e5024ae63ffbb8d2e492"
+    },
+    "security_fix.diff": {
+      "path": "/workspace/scratch/e82834a8a22e/security_fix.diff",
+      "sha256": "89c96bbe747c860e85e25cb99586370687cba87f446a45d6535b258845da0865"
+    }
+  },
+  "deferred": [
+    "Root will add the protected PGN replay API after handoff; security cross-review requested as a later followup.",
+    "Unicode decimal pairing hypothesis was not treated as a vulnerability because the HTTP header encoding path does not establish reachability."
+  ]
+}

@@ -33,6 +33,7 @@ from http_boundary import EXTENSION_ORIGINS, WEB_ORIGINS, LocalBoundaryMiddlewar
 from live_session import MAX_JPEG, LiveSession
 from native_overlay import PrivateOverlayController
 from overlay_lease import OverlayLeaseConflict, OverlayLeaseManager
+from pgn_training import build_replay
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from security import (
     API_VERSION,
@@ -42,9 +43,8 @@ from security import (
     RequestRateLimiter,
     capability_payload,
     get_pairing_code,
-    pairing_attempt_allowed,
     regenerate_pairing_code,
-    verify_pairing_code,
+    verify_pairing_attempt,
 )
 from service_status import readiness_status
 from starlette.concurrency import run_in_threadpool
@@ -430,11 +430,9 @@ def capability(request: Request):
         f'http://127.0.0.1:{PORT}', f'http://localhost:{PORT}',
         'http://127.0.0.1', 'http://localhost',
     }
-    if not local_origin and not extension_worker:
-        if not pairing_attempt_allowed(origin):
-            raise HTTPException(429, 'Zu viele Pairing-Versuche')
-        if not verify_pairing_code(request.headers.get('x-allie-pairing', '')):
-            raise HTTPException(401, 'Browser-Pairing erforderlich')
+    if (not local_origin and not extension_worker
+            and not verify_pairing_attempt(origin, request.headers.get('x-allie-pairing', ''))):
+        raise HTTPException(401, 'Browser-Pairing erforderlich')
     return capability_payload()
 
 
@@ -531,6 +529,11 @@ def history(request: HistoryRequest):
     return run(lambda: SESSION.import_pgn(request.pgn))
 
 
+@app.post('/api/pgn/replay')
+def pgn_replay(request: HistoryRequest):
+    return run(lambda: build_replay(request.pgn))
+
+
 @app.post('/api/recommendations')
 def recommendations(request: RecommendationRequest):
     return run(lambda: SESSION.set_recommendations(request.enabled))
@@ -601,7 +604,7 @@ def _require_overlay_settings_access(request: Request) -> None:
     if local_origin or extension_worker:
         return
     if ((extension_origin or web_origin)
-            and verify_pairing_code(request.headers.get('x-allie-pairing', ''))):
+            and verify_pairing_attempt(origin, request.headers.get('x-allie-pairing', ''))):
         return
     raise HTTPException(403, 'Overlay-Einstellung benötigt eine erlaubte lokale Sitzung')
 

@@ -1,0 +1,202 @@
+.FFFFFFFFFFFFF.FFFFFFFFFF.FF                                             [100%]
+=================================== FAILURES ===================================
+__ test_build_rejects_overlapping_paths_without_changes[browser-browser-None] __
+tests/test_build_edge_safety.py:57: in test_build_rejects_overlapping_paths_without_changes
+    build(source, output, archive, "test")
+tools/build_edge.py:42: in build
+    shutil.copytree(source, output, ignore=shutil.ignore_patterns("allie-build.json", "__pycache__"))
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py:598: in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/workspace/scratch/e82834a8a22e/tmp/pytest-of-agent/pytest-2/test_build_rejects_overlapping0/browser'
+_ test_build_rejects_overlapping_paths_without_changes[browser-browser/EdgeOverlay-None] _
+tests/test_build_edge_safety.py:56: in test_build_rejects_overlapping_paths_without_changes
+    with pytest.raises(ValueError, match="overlap"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_ test_build_rejects_overlapping_paths_without_changes[parent/browser-parent-None] _
+tests/test_build_edge_safety.py:57: in test_build_rejects_overlapping_paths_without_changes
+    build(source, output, archive, "test")
+tools/build_edge.py:42: in build
+    shutil.copytree(source, output, ignore=shutil.ignore_patterns("allie-build.json", "__pycache__"))
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py:598: in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/workspace/scratch/e82834a8a22e/tmp/pytest-of-agent/pytest-2/test_build_rejects_overlapping2/parent/browser'
+_ test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-browser] _
+tests/test_build_edge_safety.py:57: in test_build_rejects_overlapping_paths_without_changes
+    build(source, output, archive, "test")
+tools/build_edge.py:55: in build
+    archive.unlink()
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1342: in unlink
+    os.unlink(self)
+E   IsADirectoryError: [Errno 21] Is a directory: '/workspace/scratch/e82834a8a22e/tmp/pytest-of-agent/pytest-2/test_build_rejects_overlapping3/browser'
+_ test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-browser/manifest.json] _
+tests/test_build_edge_safety.py:56: in test_build_rejects_overlapping_paths_without_changes
+    with pytest.raises(ValueError, match="overlap"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_ test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-browser/archive.zip] _
+tests/test_build_edge_safety.py:56: in test_build_rejects_overlapping_paths_without_changes
+    with pytest.raises(ValueError, match="overlap"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_ test_build_rejects_overlapping_paths_without_changes[parent/browser-EdgeOverlay-parent] _
+tests/test_build_edge_safety.py:57: in test_build_rejects_overlapping_paths_without_changes
+    build(source, output, archive, "test")
+tools/build_edge.py:55: in build
+    archive.unlink()
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1342: in unlink
+    os.unlink(self)
+E   IsADirectoryError: [Errno 21] Is a directory: '/workspace/scratch/e82834a8a22e/tmp/pytest-of-agent/pytest-2/test_build_rejects_overlapping6/parent'
+_ test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-EdgeOverlay] _
+tests/test_build_edge_safety.py:57: in test_build_rejects_overlapping_paths_without_changes
+    build(source, output, archive, "test")
+tools/build_edge.py:55: in build
+    archive.unlink()
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1342: in unlink
+    os.unlink(self)
+E   IsADirectoryError: [Errno 21] Is a directory: '/workspace/scratch/e82834a8a22e/tmp/pytest-of-agent/pytest-2/test_build_rejects_overlapping7/EdgeOverlay'
+_ test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-EdgeOverlay/archive.zip] _
+tests/test_build_edge_safety.py:56: in test_build_rejects_overlapping_paths_without_changes
+    with pytest.raises(ValueError, match="overlap"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_ test_build_rejects_overlapping_paths_without_changes[browser-archives/EdgeOverlay-archives] _
+tests/test_build_edge_safety.py:57: in test_build_rejects_overlapping_paths_without_changes
+    build(source, output, archive, "test")
+tools/build_edge.py:55: in build
+    archive.unlink()
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1342: in unlink
+    os.unlink(self)
+E   IsADirectoryError: [Errno 21] Is a directory: '/workspace/scratch/e82834a8a22e/tmp/pytest-of-agent/pytest-2/test_build_rejects_overlapping9/archives'
+_____________ test_build_rejects_source_alias_destinations[output] _____________
+tests/test_build_edge_safety.py:75: in test_build_rejects_source_alias_destinations
+    build(source, output, archive, "test")
+tools/build_edge.py:41: in build
+    shutil.rmtree(output)
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py:759: in rmtree
+    _rmtree_safe_fd(stack, onexc)
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py:703: in _rmtree_safe_fd
+    onexc(func, path, err)
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py:680: in _rmtree_safe_fd
+    raise OSError("Cannot call rmtree on a symbolic link")
+E   OSError: [Errno None] None: PosixPath('/workspace/scratch/e82834a8a22e/tmp/pytest-of-agent/pytest-2/test_build_rejects_source_alia0/alias')
+__________ test_build_rejects_source_alias_destinations[output-child] __________
+tests/test_build_edge_safety.py:74: in test_build_rejects_source_alias_destinations
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_________ test_build_rejects_source_alias_destinations[archive-child] __________
+tests/test_build_edge_safety.py:74: in test_build_rejects_source_alias_destinations
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+______________ test_build_rejects_symlinked_destinations[output] _______________
+tests/test_build_edge_safety.py:107: in test_build_rejects_symlinked_destinations
+    build(source, output, archive, "test")
+tools/build_edge.py:41: in build
+    shutil.rmtree(output)
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py:759: in rmtree
+    _rmtree_safe_fd(stack, onexc)
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py:703: in _rmtree_safe_fd
+    onexc(func, path, err)
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py:680: in _rmtree_safe_fd
+    raise OSError("Cannot call rmtree on a symbolic link")
+E   OSError: [Errno None] None: PosixPath('/workspace/scratch/e82834a8a22e/tmp/pytest-of-agent/pytest-2/test_build_rejects_symlinked_d0/link')
+______________ test_build_rejects_symlinked_destinations[archive] ______________
+tests/test_build_edge_safety.py:106: in test_build_rejects_symlinked_destinations
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+________________ test_cli_does_not_resolve_away_output_symlink _________________
+tests/test_build_edge_safety.py:127: in test_cli_does_not_resolve_away_output_symlink
+    assert result.returncode != 0
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['/workspace/scratch/e82834a8a22e/allie/.venv/bin/python', '/workspace/scratch/e82834a8a22e/work...", "revision": "6d75018589188a7983f89832f78c67496b1ac0d10244ebc208aec703be7c67e0", "version": "1.2.3.0"}\n', stderr='').returncode
+________________ test_build_preserves_unrecognized_output[None] ________________
+tests/test_build_edge_safety.py:142: in test_build_preserves_unrecognized_output
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+______________ test_build_preserves_unrecognized_output[not JSON] ______________
+tests/test_build_edge_safety.py:142: in test_build_preserves_unrecognized_output
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_________________ test_build_preserves_unrecognized_output[[]] _________________
+tests/test_build_edge_safety.py:142: in test_build_preserves_unrecognized_output
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_________________ test_build_preserves_unrecognized_output[{}] _________________
+tests/test_build_edge_safety.py:142: in test_build_preserves_unrecognized_output
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_________ test_build_preserves_modified_previous_output[background.js] _________
+tests/test_build_edge_safety.py:158: in test_build_preserves_modified_previous_output
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+___________ test_build_preserves_modified_previous_output[notes.txt] ___________
+tests/test_build_edge_safety.py:158: in test_build_preserves_modified_previous_output
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+____ test_build_preserves_modified_previous_output[nested/allie-build.json] ____
+tests/test_build_edge_safety.py:158: in test_build_preserves_modified_previous_output
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'ValueError'>
+____________ test_copy_failure_preserves_previous_build_and_archive ____________
+tests/test_build_edge_safety.py:199: in test_copy_failure_preserves_previous_build_and_archive
+    assert files(output.parent) == before
+E   assert {'EdgeOverlay..."1.2.3.0"}\n'} == {'EdgeOverlay..."1.2.3.0"}\n'}
+E
+E     Omitting 3 identical items, use -vv to show
+E     Right contains 1 more item:
+E     {'EdgeOverlay/allie-build.json': b'{\n  "revision": "6d75018589188a7983f8983'
+E                                      b'2f78c67496b1ac0d10244ebc208aec703be7c67e'
+E                                      b'0",\n  "commit": "old",\n  "version": "1.2'
+E                                      b'.3.0",\n  "built_at_utc": "2026-11-15T19:'
+E                                      b'38:48.719707+00:00"\n}\n'}
+E     Use -v to get more diff
+____________ test_zip_failure_preserves_previous_build_and_archive _____________
+tests/test_build_edge_safety.py:214: in test_zip_failure_preserves_previous_build_and_archive
+    assert files(output.parent) == before
+E   assert {'EdgeOverlay..."1.2.3.0"}\n'} == {'EdgeOverlay..."1.2.3.0"}\n'}
+E
+E     Omitting 2 identical items, use -vv to show
+E     Differing items:
+E     {'EdgeOverlay.zip': b"PK\x03\x04\x14\x00\x00\x00\x08\x00\xd8\xa4o]0k\xad\x82\x90\x00\x00\x00\xb6\x00\x00\x00\x1c\x00\x...00\x00\x00EdgeOverlay/allie-build.jsonPK\x05\x06\x00\x00\x00\x00\x01\x00\x01\x00J\x00\x00\x00\xca\x00\x00\x00\x00\x00"} != {'EdgeOverlay.zip': b'PK\x03\x04\x14\x00\x00\x00\x08\x00\xd8\xa4o]%\x93\x10\x85\x90\x00\x00\x00\xb6\x00\x00\x00\x1c\x0...3\x01\x00\x00EdgeOverlay/manifest.jsonPK\x05\x06\x00\x00\x00\x00\x03\x00\x03\x00\xd8\x00\x00\x00b\x01\x00\x00\x00\x00'}
+E     {'EdgeOverlay/allie-build.json': ...
+E
+E     ...Full output truncated (2 lines hidden), use '-vv' to show
+=========================== short test summary info ============================
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[browser-browser-None]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[browser-browser/EdgeOverlay-None]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[parent/browser-parent-None]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-browser]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-browser/manifest.json]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-browser/archive.zip]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[parent/browser-EdgeOverlay-parent]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-EdgeOverlay]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[browser-EdgeOverlay-EdgeOverlay/archive.zip]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_overlapping_paths_without_changes[browser-archives/EdgeOverlay-archives]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_source_alias_destinations[output]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_source_alias_destinations[output-child]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_source_alias_destinations[archive-child]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_symlinked_destinations[output]
+FAILED tests/test_build_edge_safety.py::test_build_rejects_symlinked_destinations[archive]
+FAILED tests/test_build_edge_safety.py::test_cli_does_not_resolve_away_output_symlink
+FAILED tests/test_build_edge_safety.py::test_build_preserves_unrecognized_output[None]
+FAILED tests/test_build_edge_safety.py::test_build_preserves_unrecognized_output[not JSON]
+FAILED tests/test_build_edge_safety.py::test_build_preserves_unrecognized_output[[]]
+FAILED tests/test_build_edge_safety.py::test_build_preserves_unrecognized_output[{}]
+FAILED tests/test_build_edge_safety.py::test_build_preserves_modified_previous_output[background.js]
+FAILED tests/test_build_edge_safety.py::test_build_preserves_modified_previous_output[notes.txt]
+FAILED tests/test_build_edge_safety.py::test_build_preserves_modified_previous_output[nested/allie-build.json]
+FAILED tests/test_build_edge_safety.py::test_copy_failure_preserves_previous_build_and_archive
+FAILED tests/test_build_edge_safety.py::test_zip_failure_preserves_previous_build_and_archive
+25 failed, 3 passed in 0.34s
