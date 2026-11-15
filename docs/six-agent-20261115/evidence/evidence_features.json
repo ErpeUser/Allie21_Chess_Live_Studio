@@ -1,0 +1,615 @@
+{
+  "agent": 6,
+  "role": "KREATIV-/FEATURE-ENGINEER",
+  "written_utc": "2026-11-15T19:38:53.844428+00:00",
+  "worktree": "/workspace/scratch/e82834a8a22e/worktrees/features",
+  "branch": "work/allie21-features-20261115",
+  "baseline_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0",
+  "baseline_verified": true,
+  "origin": "https://github.com/ErpeUser/Allie21_Chess_Live_Studio.git",
+  "owned_files": [
+    "viewer/index.html",
+    "backend/pgn_training.py",
+    "tests/test_pgn_training.py",
+    "tests/test_viewer_browser.py",
+    "tests/test_viewer_reliability.js",
+    "docs/PGN_TRAINING_DE.md"
+  ],
+  "coverage": [
+    {
+      "path": "AGENTS.md",
+      "base_git_blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
+      "total_lines": 58,
+      "reviewed_ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "SECURITY.md",
+      "base_git_blob_sha": "452bb8c271e9674ae05bbe2043d9c81345c22b77",
+      "total_lines": 63,
+      "reviewed_ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "README_DE.md",
+      "base_git_blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
+      "total_lines": 70,
+      "reviewed_ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "docs/PRODUKTVISION_ALLIE21_DE.md",
+      "base_git_blob_sha": "bf9bdd66fdd52bc6fe3729d94b09f71e1b79cd4d",
+      "total_lines": 315,
+      "reviewed_ranges": [
+        [
+          1,
+          315
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "viewer/index.html",
+      "base_git_blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
+      "total_lines": 572,
+      "reviewed_ranges": [
+        [
+          1,
+          572
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "tests/test_viewer_browser.py",
+      "base_git_blob_sha": "4edce89fba676ad595360bf90bcbb1702c86441f",
+      "total_lines": 202,
+      "reviewed_ranges": [
+        [
+          1,
+          202
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "tests/test_viewer_reliability.js",
+      "base_git_blob_sha": "0c0c2c23a98161656add47da97d744c93b78e3cd",
+      "total_lines": 226,
+      "reviewed_ranges": [
+        [
+          1,
+          226
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "backend/allie_local_server.py",
+      "base_git_blob_sha": "59922a7b27c6d5f9f5edd04fe9be5f663034b3b7",
+      "total_lines": 713,
+      "reviewed_ranges": [
+        [
+          1,
+          195
+        ],
+        [
+          405,
+          475
+        ]
+      ],
+      "review_kind": "targeted_read"
+    },
+    {
+      "path": "backend/live_server.py",
+      "base_git_blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
+      "total_lines": 797,
+      "reviewed_ranges": [
+        [
+          1,
+          125
+        ],
+        [
+          185,
+          245
+        ],
+        [
+          460,
+          490
+        ]
+      ],
+      "review_kind": "targeted_read"
+    },
+    {
+      "path": "backend/http_boundary.py",
+      "base_git_blob_sha": "1e097ba5832c705683b8267145836ed3cc1fc8ee",
+      "total_lines": 190,
+      "reviewed_ranges": [
+        [
+          1,
+          190
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "backend/browser_session.py",
+      "base_git_blob_sha": "82c871f6e3507e0a7b5d061d5d55c7ab4920b90a",
+      "total_lines": 109,
+      "reviewed_ranges": [
+        [
+          1,
+          95
+        ]
+      ],
+      "review_kind": "targeted_read"
+    },
+    {
+      "path": "backend/chess_extras.py",
+      "base_git_blob_sha": "8009064cd45fd526f28caef61ac2037d9271c732",
+      "total_lines": 502,
+      "reviewed_ranges": [
+        [
+          22,
+          22
+        ],
+        [
+          145,
+          146
+        ],
+        [
+          159,
+          160
+        ],
+        [
+          163,
+          163
+        ],
+        [
+          165,
+          165
+        ],
+        [
+          173,
+          173
+        ],
+        [
+          221,
+          221
+        ],
+        [
+          228,
+          228
+        ],
+        [
+          273,
+          273
+        ],
+        [
+          462,
+          462
+        ],
+        [
+          475,
+          475
+        ]
+      ],
+      "review_kind": "targeted_search"
+    },
+    {
+      "path": "tests/test_regressions.py",
+      "base_git_blob_sha": "f8aca9ebd1ddfc961dd9a087d47241c17dba071f",
+      "total_lines": 57,
+      "reviewed_ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "pyproject.toml",
+      "base_git_blob_sha": "fe9dc06d68bff26a96e63c0a164b1a6d7e38030c",
+      "total_lines": 46,
+      "reviewed_ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "browser/manifest.json",
+      "base_git_blob_sha": "e286cc71e35d2b75dc695e5d7d5a7c1386f56a31",
+      "total_lines": 18,
+      "reviewed_ranges": [
+        [
+          1,
+          18
+        ]
+      ],
+      "review_kind": "full"
+    },
+    {
+      "path": "browser/background.js",
+      "base_git_blob_sha": "c6a31c03e52ad973a754e236589f59384cd0bdde",
+      "total_lines": 218,
+      "reviewed_ranges": [
+        [
+          115,
+          155
+        ]
+      ],
+      "review_kind": "targeted_read"
+    }
+  ],
+  "instruction_inputs": [
+    {
+      "path": "/workspace/scratch/e82834a8a22e/upload/allie_innovationen.toml",
+      "sha256": "7767e3adaea01fd776897a25c42fc1897c51874aa752c1084d09529e46c1f0c3",
+      "read_lines": [
+        [
+          1,
+          7
+        ]
+      ]
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/upload/06_INNOVATIONEN_UND_ONLINE_QUELLEN.md",
+      "sha256": "4df4151c5c1dd75932e507ed3387cf32d881800e00fa437a435f67faf5298eb1",
+      "read_lines": [
+        [
+          1,
+          31
+        ]
+      ]
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/upload/03_BAU_UND_SICHERHEITSVERTRAG.md",
+      "sha256": "28c175932db5bc8021a2c861fe134f47c89d4ab0d0f2a0868811dfef284d7cd4",
+      "read_lines": [
+        [
+          1,
+          30
+        ]
+      ]
+    }
+  ],
+  "written_files": [
+    {
+      "path": "viewer/index.html",
+      "git_blob_sha": "31c5b2731fbed7407211d517dc54d15a5935ea48",
+      "lines": 698
+    },
+    {
+      "path": "backend/pgn_training.py",
+      "git_blob_sha": "bb8d16522ebbd3aa9bd59613c2809b4464954134",
+      "lines": 93
+    },
+    {
+      "path": "tests/test_pgn_training.py",
+      "git_blob_sha": "a7e5c9d75c4fa6276609ffd967e6bd84d6ddd355",
+      "lines": 103
+    },
+    {
+      "path": "tests/test_viewer_browser.py",
+      "git_blob_sha": "0329cdce0f2354acbc83de5c2f3bed5d17ee88f8",
+      "lines": 291
+    },
+    {
+      "path": "tests/test_viewer_reliability.js",
+      "git_blob_sha": "8d55f06f8b201299c488b3a4e0f6a660dac6df6b",
+      "lines": 334
+    },
+    {
+      "path": "docs/PGN_TRAINING_DE.md",
+      "git_blob_sha": "4b812c110cce7c1dc2b81857677f67b402fae0a1",
+      "lines": 154
+    }
+  ],
+  "research_sources": [
+    {
+      "url": "https://python-chess.readthedocs.io/en/latest/pgn.html",
+      "retrieved": "2026-11-15",
+      "primary": true,
+      "used_for": "GameBuilder/Visitor, mainline_moves, SAN/FEN replay, parser error and tolerance contract",
+      "ref": "turn1view0"
+    },
+    {
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html",
+      "retrieved": "2026-11-15",
+      "primary": true,
+      "used_for": "Keyboard equivalents and scoped navigation",
+      "ref": "turn1view1"
+    },
+    {
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/focus-visible",
+      "retrieved": "2026-11-15",
+      "primary": true,
+      "used_for": "Visible focus",
+      "ref": "turn0search3"
+    },
+    {
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html",
+      "retrieved": "2026-11-15",
+      "primary": true,
+      "used_for": "Polite status announcements without forced focus",
+      "ref": "turn1view2"
+    },
+    {
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/Blob/text",
+      "retrieved": "2026-11-15",
+      "primary": true,
+      "used_for": "Local selected file UTF-8 import"
+    },
+    {
+      "url": "https://developer.chrome.com/docs/extensions/develop/concepts/service-workers/lifecycle",
+      "retrieved": "2026-11-15",
+      "primary": true,
+      "used_for": "Existing MV3 worker lifetime/diagnosis candidate",
+      "ref": "turn0search6"
+    },
+    {
+      "url": "https://lichess.org/page/fair-play",
+      "retrieved": "2026-11-15",
+      "primary": true,
+      "used_for": "No assistance during ongoing human games",
+      "ref": "turn0view0"
+    },
+    {
+      "url": "https://www.chess.com/legal/fair-play",
+      "retrieved": "2026-11-15",
+      "source_updated": "2026-03-25",
+      "primary": true,
+      "used_for": "Training/postgame scope; no human live assistance",
+      "ref": "turn1view3"
+    }
+  ],
+  "public_queries": [
+    "site.python-chess.readthedocs.io PGN read_game mainline_moves errors StringExporter",
+    "site.w3.org WAI WCAG status messages keyboard focus visible",
+    "site.developer.chrome.com extensions service workers lifecycle storage"
+  ],
+  "private_project_data_sent_to_web": false,
+  "candidates": [
+    {
+      "name": "Lokaler PGN-Lernrückblick",
+      "status": "IMPLEMENTIERT/GETESTET (fokussiert; HTTP-Integration bei Root offen)",
+      "existence_check": "viewer/index.html baseline 80-84,552 supports final-position PGN/FEN analysis only; no replay board/navigation",
+      "user_impact": "Step through a locally imported game without engines or model startup",
+      "privacy": "Memory-only; no names/URLs/comments in response",
+      "offline": true,
+      "new_dependencies": 0,
+      "decision": "Selected complete small slice"
+    },
+    {
+      "name": "Barrierearme Trainingsdarstellung",
+      "status": "IMPLEMENTIERT im Replay-Slice; tatsächliche Chromium-/Screenreader-Abnahme OFFEN",
+      "existence_check": "Viewer already has focus indicators/status/reduced motion; no replay controls or board text alternative",
+      "user_impact": "Keyboard navigation, move picker, FEN/piece text and live status",
+      "privacy": "Local DOM only",
+      "offline": true,
+      "new_dependencies": 0
+    },
+    {
+      "name": "Anonymisierter Trainingssnapshot",
+      "status": "RECHERCHIERT, NICHT IMPLEMENTIERT",
+      "user_impact": "Redacted reproducible bug reports",
+      "privacy": "Needs explicit export contract and redaction checks",
+      "offline": true,
+      "new_dependencies": 0,
+      "decision": "Deferred to avoid expanding small slice"
+    },
+    {
+      "name": "Lokales PGN-Zugquiz",
+      "status": "RECHERCHIERT, NICHT IMPLEMENTIERT",
+      "user_impact": "Pause and predict a played move with trustworthy reveal",
+      "privacy": "Local training only",
+      "offline": "Requires already available engines/models for evaluation",
+      "new_dependencies": 0,
+      "decision": "Deferred: alternative move scoring exceeds engine-free slice"
+    },
+    {
+      "name": "MV3-Offline-Wiederherstellung",
+      "status": "RECHERCHIERT; TEILWEISE BEREITS VORHANDEN",
+      "existence_check": "browser/background.js 121-155 refreshes health/port badge; existing cold-worker regression tests in full Node suite",
+      "user_impact": "Clearer worker/port diagnosis",
+      "privacy": "Local only",
+      "offline": true,
+      "new_dependencies": 0,
+      "decision": "No duplicate recovery logic"
+    }
+  ],
+  "interface": {
+    "module": "backend/pgn_training.py",
+    "function": "build_replay(pgn: str)",
+    "response": "{ply_count, positions:[{ply,fen,san,uci,last_move_label,turn,in_check,game_over}]}",
+    "max_pgn_chars": 40000,
+    "max_file_bytes": 40000,
+    "max_plies": 1013,
+    "limit_rationale": "Existing allie_local_server.py history boundary len(moves)<1014"
+  },
+  "integration_handoff": {
+    "owner": "Root/Security",
+    "required": [
+      "Register POST /api/pgn/replay with HistoryRequest and run(lambda: build_replay(request.pgn))",
+      "Add route to PROTECTED_PATHS and derived BODY_REQUIRED",
+      "HTTP positive/negative tests; no model readiness gate"
+    ],
+    "files_not_edited": [
+      "backend/live_server.py",
+      "backend/http_boundary.py"
+    ],
+    "status": "PENDING"
+  },
+  "test_environment": {
+    "python": "/workspace/scratch/e82834a8a22e/allie/.venv/bin/python",
+    "dependencies": "Root uv sync --frozen --extra quality; no installs by feature agent",
+    "chromium": "/usr/bin/chromium",
+    "model_weights_downloaded": false
+  },
+  "tests": [
+    {
+      "stage": "RED",
+      "command": ".venv/bin/python -m pytest -q tests/test_pgn_training.py",
+      "status": "FAIL_EXPECTED",
+      "failed": 8,
+      "reason": "Feature module absent; explicit assertion failures"
+    },
+    {
+      "stage": "GREEN",
+      "command": ".venv/bin/python -m pytest -q tests/test_pgn_training.py",
+      "status": "PASS",
+      "passed": 8,
+      "latest_duration_s": 0.16
+    },
+    {
+      "stage": "RED",
+      "command": "node --test tests/test_viewer_reliability.js",
+      "status": "FAIL_EXPECTED",
+      "passed": 15,
+      "failed": 6,
+      "reason": "Replay UI absent"
+    },
+    {
+      "stage": "GREEN",
+      "command": "node --test tests/test_viewer_reliability.js",
+      "status": "PASS",
+      "passed": 21,
+      "skipped": 0
+    },
+    {
+      "stage": "VERIFY",
+      "command": "node --test tests/*.js",
+      "status": "PASS",
+      "passed": 83,
+      "skipped": 0,
+      "log": "/workspace/scratch/e82834a8a22e/features_node.log"
+    },
+    {
+      "stage": "VERIFY",
+      "command": "ALLIE_NO_PRELOAD=1 .venv/bin/python -m unittest discover -s tests -v",
+      "status": "PASS_WITH_SKIP",
+      "tests_run": 220,
+      "skipped": 1,
+      "duration_s": 11.257,
+      "skip_detail": "test_extension_options_browser.ExtensionOptionsBrowserTests setUpClass: Chromium options tests unavailable",
+      "log": "/workspace/scratch/e82834a8a22e/features_unittest.log"
+    },
+    {
+      "stage": "VERIFY",
+      "command": ".venv/bin/python -m ruff check backend/pgn_training.py tests/test_pgn_training.py tests/test_viewer_browser.py",
+      "status": "PASS"
+    },
+    {
+      "stage": "VERIFY",
+      "command": ".venv/bin/python -m mypy backend/pgn_training.py --ignore-missing-imports",
+      "status": "PASS",
+      "note": "Initial SkipType override failed; revised to normal GameBuilder variation callbacks; now no issues"
+    },
+    {
+      "stage": "VERIFY",
+      "command": ".venv/bin/python -m ruff check backend tools tests",
+      "status": "FAIL",
+      "findings": [
+        "EXE001 backend/allie_local_server.py:1",
+        "EXE001 backend/download_stockfish.py:1",
+        "EXE001 backend/live_server.py:1"
+      ],
+      "scope": "Unmodified files; owned by other agents/root"
+    },
+    {
+      "stage": "VERIFY",
+      "command": ".venv/bin/python -m mypy backend --ignore-missing-imports",
+      "status": "FAIL",
+      "errors": 35,
+      "files": 1,
+      "findings": "backend/native_overlay.py Windows-only ctypes attributes WinDLL/WinError/get_last_error absent in Linux typing surface",
+      "scope": "Unmodified file; independent of replay"
+    },
+    {
+      "stage": "VERIFY",
+      "command": ".venv/bin/python tools/check_versions.py",
+      "status": "PASS",
+      "application": "11.2.24",
+      "extension": "11.2.24.0",
+      "extension_id": "omboihgfgofgmidefcpkihgglhkiielo"
+    },
+    {
+      "stage": "VERIFY",
+      "command": "git diff --check",
+      "status": "PASS"
+    },
+    {
+      "stage": "DOM_RED_ATTEMPT",
+      "command": ".venv/bin/python -m pytest -q tests/test_viewer_browser.py -k replay",
+      "status": "ERROR_ENVIRONMENT",
+      "errors": 3,
+      "reason": "Chromium setup before DOM: /tmp did not exist"
+    },
+    {
+      "stage": "DOM_RED_ATTEMPT",
+      "command": "TMPDIR/XDG_* scoped workspace, ALLIE_BROWSER_EXECUTABLE=/usr/bin/chromium ALLIE_REQUIRE_BROWSER_TESTS=1 .venv/bin/python -m pytest -q tests/test_viewer_browser.py -k replay",
+      "status": "ERROR_ENVIRONMENT",
+      "errors": 3,
+      "reason": "Chromium process_singleton_posix.cc:297 socket() failed: Operation not permitted (1)",
+      "dom_executed": false
+    },
+    {
+      "stage": "INTEGRATED",
+      "command": "Full pytest, HTTP positive/negative security, cross-review",
+      "status": "NOT_RUN_BY_FEATURE_AGENT",
+      "owner": "Root; scheduled after merge of exclusive owner changes"
+    },
+    {
+      "stage": "NATIVE",
+      "command": "Windows / Edge / screenreader acceptance",
+      "status": "NOT_RUN",
+      "reason": "No native Windows/Edge runtime was used"
+    }
+  ],
+  "reviews": {
+    "root": "Root reported reading entire module/tests/viewer diff; API tests prepared RED",
+    "security": "PENDING",
+    "independent_dom_review": "PENDING"
+  },
+  "limitations": [
+    "python-chess skips unknown text tokens by design; validated legal mainline is not a complete PGN syntax certificate",
+    "Actual DOM/browser test did not execute because Chromium sockets are blocked",
+    "New route registration/auth tests intentionally owned by Root; standalone feature branch not yet wired to HTTP",
+    "Native Windows/Edge/screenreader checks not run"
+  ],
+  "commit_sha": "578f2c4ab44aa3d9b98db62d08e0352572521d3a",
+  "remote_push": false,
+  "merge": false,
+  "deploy": false,
+  "commit_tree_sha": "07cd37631abf7a19db51fb379a8cbca2386b52aa",
+  "commit_changed_files": [
+    "backend/pgn_training.py",
+    "docs/PGN_TRAINING_DE.md",
+    "tests/test_pgn_training.py",
+    "tests/test_viewer_browser.py",
+    "tests/test_viewer_reliability.js",
+    "viewer/index.html"
+  ],
+  "worktree_clean_after_commit": true,
+  "icon_tree_entry_unchanged": true
+}

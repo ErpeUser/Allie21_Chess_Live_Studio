@@ -1,0 +1,43 @@
+test_ignored_stale_hide_does_not_cancel_current_message_expiry (test_native_overlay_timer.NativeMessageTimerTests.test_ignored_stale_hide_does_not_cancel_current_message_expiry) ... ok
+test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) ...
+  test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) (boundary='not visible') ... FAIL
+  test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) (boundary='missing geometry') ... FAIL
+  test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) (boundary='wrong payload mode') ... FAIL
+  test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) (boundary='normal mode') ... FAIL
+
+======================================================================
+FAIL: test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) (boundary='not visible')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_native_overlay_timer.py", line 71, in test_queued_expiry_cannot_restore_a_newer_hidden_frame
+    self.assertFalse(controller.status()['visible'], name)
+AssertionError: True is not false : not visible
+
+======================================================================
+FAIL: test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) (boundary='missing geometry')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_native_overlay_timer.py", line 71, in test_queued_expiry_cannot_restore_a_newer_hidden_frame
+    self.assertFalse(controller.status()['visible'], name)
+AssertionError: True is not false : missing geometry
+
+======================================================================
+FAIL: test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) (boundary='wrong payload mode')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_native_overlay_timer.py", line 71, in test_queued_expiry_cannot_restore_a_newer_hidden_frame
+    self.assertFalse(controller.status()['visible'], name)
+AssertionError: True is not false : wrong payload mode
+
+======================================================================
+FAIL: test_queued_expiry_cannot_restore_a_newer_hidden_frame (test_native_overlay_timer.NativeMessageTimerTests.test_queued_expiry_cannot_restore_a_newer_hidden_frame) (boundary='normal mode')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/e82834a8a22e/allie/tests/test_native_overlay_timer.py", line 71, in test_queued_expiry_cannot_restore_a_newer_hidden_frame
+    self.assertFalse(controller.status()['visible'], name)
+AssertionError: True is not false : normal mode
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.004s
+
+FAILED (failures=4)

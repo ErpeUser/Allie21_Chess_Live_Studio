@@ -1,0 +1,11 @@
+test_capability_and_settings_share_one_failure_budget (test_http_pairing_limits.HTTPPairingRateLimitTests.test_capability_and_settings_share_one_failure_budget) ... ok
+test_concurrent_settings_guesses_cannot_overrun_the_budget (test_http_pairing_limits.HTTPPairingRateLimitTests.test_concurrent_settings_guesses_cannot_overrun_the_budget) ... ok
+test_expired_failure_budget_allows_pairing_again (test_http_pairing_limits.HTTPPairingRateLimitTests.test_expired_failure_budget_allows_pairing_again) ... ok
+test_settings_methods_stop_pairing_guesses_after_five_failures (test_http_pairing_limits.HTTPPairingRateLimitTests.test_settings_methods_stop_pairing_guesses_after_five_failures) ... ok
+test_trusted_viewer_and_extension_worker_keep_bootstrap_access (test_http_pairing_limits.HTTPPairingRateLimitTests.test_trusted_viewer_and_extension_worker_keep_bootstrap_access) ... ok
+test_valid_polling_does_not_spend_or_reset_the_failure_budget (test_http_pairing_limits.HTTPPairingRateLimitTests.test_valid_polling_does_not_spend_or_reset_the_failure_budget) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.314s
+
+OK

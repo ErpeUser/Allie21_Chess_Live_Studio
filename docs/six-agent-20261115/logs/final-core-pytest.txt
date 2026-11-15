@@ -1,0 +1,26 @@
+........................................................................ [ 24%]
+........................................................................ [ 49%]
+........................................................................ [ 74%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+=============================== warnings summary ===============================
+backend/live_server.py:134
+  /workspace/scratch/e82834a8a22e/allie/backend/live_server.py:134: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    @app.on_event('startup')
+
+.venv/lib/python3.12/site-packages/fastapi/applications.py:4723
+  /workspace/scratch/e82834a8a22e/allie/.venv/lib/python3.12/site-packages/fastapi/applications.py:4723: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+290 passed, 2 warnings in 11.37s

@@ -1,0 +1,396 @@
+[
+  {
+    "original": "evidence_coordinator.json",
+    "retained_as": "evidence/evidence_coordinator.json",
+    "bytes": 18690,
+    "sha256": "0b89513d07a398592da681d29a91728867b2e9bf9da427a9a925b0699771aad6"
+  },
+  {
+    "original": "evidence_architecture.json",
+    "retained_as": "evidence/evidence_architecture.json",
+    "bytes": 18330,
+    "sha256": "0d8771bf5e92688d06f32be671fa2eea8ac745904f30ed783d44256aaf78ac17"
+  },
+  {
+    "original": "evidence_security.json",
+    "retained_as": "evidence/evidence_security.json",
+    "bytes": 15780,
+    "sha256": "b7c296c8ca76a0d930e8d49da3f600a0f403645a4ebd472106bf45b3ddc92cd3"
+  },
+  {
+    "original": "evidence_features.json",
+    "retained_as": "evidence/evidence_features.json",
+    "bytes": 17914,
+    "sha256": "f9ff65a28f43365a8f11c2e1f724f30298ae7c1c57c0806124f6610107b2badb"
+  },
+  {
+    "original": "evidence_modernization.json",
+    "retained_as": "evidence/evidence_modernization.json",
+    "bytes": 26860,
+    "sha256": "7ba137b06d5a79857e6c337a7f83b607ec2204a6b190b437317818041fca91d9"
+  },
+  {
+    "original": "evidence_performance.json",
+    "retained_as": "evidence/evidence_performance.json",
+    "bytes": 95404,
+    "sha256": "ce3d3bb021596dd2ffe6c484f0ea43a59cac469f538c2e86b3cae0168feabbb2"
+  },
+  {
+    "original": "evidence_cleanup.json",
+    "retained_as": "evidence/evidence_cleanup.json",
+    "bytes": 14931,
+    "sha256": "ba69a81b63e11897b1e7adc27e89e85fb3ae203aaac4305cee6811c2b87e05de"
+  },
+  {
+    "original": "cross_review_architecture_final.json",
+    "retained_as": "evidence/cross_review_architecture_final.json",
+    "bytes": 13591,
+    "sha256": "44cca7194861af5f8ee539ba8453f70c65d8913aace119b607d5adc87b79da5c"
+  },
+  {
+    "original": "cross_review_security_final.json",
+    "retained_as": "evidence/cross_review_security_final.json",
+    "bytes": 27624,
+    "sha256": "7aa6c681d43c370256bcda781b410371c5956988eb085d0bd62fd9e32a9f3185"
+  },
+  {
+    "original": "coverage_browser_addendum.json",
+    "retained_as": "evidence/coverage_browser_addendum.json",
+    "bytes": 21083,
+    "sha256": "89139b03ec10520710edacebeadf822cdac1ac647d148c992c1e1e70c098e0e8"
+  },
+  {
+    "original": "coverage_tests_addendum.json",
+    "retained_as": "evidence/coverage_tests_addendum.json",
+    "bytes": 20143,
+    "sha256": "212f89c58908e570c51543c082c4bde4e6497179d7ea2e1884b75e9b3dbfa9d2"
+  },
+  {
+    "original": "performance_after.json",
+    "retained_as": "performance.json",
+    "bytes": 36799,
+    "sha256": "2cceb55ccf84b37ac145260dc5ef8e1fbd6e5d44fc3ef2040c5fd486e0f234a3"
+  },
+  {
+    "original": "final-checks/node.log",
+    "retained_as": "logs/final-node.txt",
+    "bytes": 7713,
+    "sha256": "39c19480bdd92800f17de9a7fe749583263ef4d98cb3598dcfc92c69522c025b",
+    "original_sha256": "39c19480bdd92800f17de9a7fe749583263ef4d98cb3598dcfc92c69522c025b",
+    "original_bytes": 7713,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/diff-check.log",
+    "retained_as": "logs/final-diff-check.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original_bytes": 0,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/ruff.log",
+    "retained_as": "logs/final-ruff.txt",
+    "bytes": 19,
+    "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "original_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "original_bytes": 19,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/core-pytest.log",
+    "retained_as": "logs/final-core-pytest.txt",
+    "bytes": 1395,
+    "sha256": "a8103ea9eec7b7490b77f9819e52dfad48e9dfba9388876da7a351ee990f2eac",
+    "original_sha256": "662379225ce473b75d5b3c9827c063e8fb7b54abb43a3782ce484c64db7ac672",
+    "original_bytes": 1421,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/sync.log",
+    "retained_as": "logs/final-sync.txt",
+    "bytes": 27,
+    "sha256": "91d67b2b05d5f9792c937eee0d6bb2ecd6302988e55a76126613911432308b55",
+    "original_sha256": "91d67b2b05d5f9792c937eee0d6bb2ecd6302988e55a76126613911432308b55",
+    "original_bytes": 27,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/versions.log",
+    "retained_as": "logs/final-versions.txt",
+    "bytes": 113,
+    "sha256": "5d1355d0536c36c6b123cbb71cbb44823d88a80212be680ae4aea7e51387dbd4",
+    "original_sha256": "5d1355d0536c36c6b123cbb71cbb44823d88a80212be680ae4aea7e51387dbd4",
+    "original_bytes": 113,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/mypy-linux.log",
+    "retained_as": "logs/final-mypy-linux.txt",
+    "bytes": 3720,
+    "sha256": "2da84e1a96f7e64bba925120303c13a00f8835f4b42083be59cee6e298ec9717",
+    "original_sha256": "2da84e1a96f7e64bba925120303c13a00f8835f4b42083be59cee6e298ec9717",
+    "original_bytes": 3720,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/unittest.log",
+    "retained_as": "logs/final-unittest.txt",
+    "bytes": 44831,
+    "sha256": "14fca3ea9ad9f018aff91624174fc7049deb1c1240cb3623939456c01a466143",
+    "original_sha256": "14fca3ea9ad9f018aff91624174fc7049deb1c1240cb3623939456c01a466143",
+    "original_bytes": 44831,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/pytest.log",
+    "retained_as": "logs/final-pytest.txt",
+    "bytes": 107639,
+    "sha256": "ffba8d420fe628ff6cbe5ba6c8e0a7459c2925a9022e35c72e2e451b808a9e75",
+    "original_sha256": "e45d160145ac9789c7dc8960077ed698963bb22feeb2c98c10b57ce9b1f19d8a",
+    "original_bytes": 107861,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/mypy-win32.log",
+    "retained_as": "logs/final-mypy-win32.txt",
+    "bytes": 509,
+    "sha256": "d17907f2fab1670002d49f0ce986e16200707de880e55855aa3907568df9065e",
+    "original_sha256": "d17907f2fab1670002d49f0ce986e16200707de880e55855aa3907568df9065e",
+    "original_bytes": 509,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/lock-check.log",
+    "retained_as": "logs/final-lock-check.txt",
+    "bytes": 28,
+    "sha256": "3cae4b5372379b46a7a60e31f1c131b3792025b2e931493ea6968564e04d706d",
+    "original_sha256": "3cae4b5372379b46a7a60e31f1c131b3792025b2e931493ea6968564e04d706d",
+    "original_bytes": 28,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "final-checks/compileall.log",
+    "retained_as": "logs/final-compileall.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original_bytes": 0,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "browser_p1_red.log",
+    "retained_as": "logs/browser_p1_red.txt",
+    "bytes": 1675,
+    "sha256": "c64fd1fa0c0a3e6dad50c9421534d249901a0836a4a299bba55e9f5a95ed647e",
+    "original_sha256": "213d1fcad744f1339b4e9af51b6c02f83ec3de3defbe4941b414eca31de6be40",
+    "original_bytes": 1683,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "browser_p1_native_red.log",
+    "retained_as": "logs/browser_p1_native_red.txt",
+    "bytes": 915,
+    "sha256": "0a119e47936d1e0f1d912b542efc0160d568fbbff43b4a382d37e25abec08773",
+    "original_sha256": "05cfb0a3c4ebc821e00a7db85ab8b976097fb4be03cc868880f45dfb5d64c7f2",
+    "original_bytes": 919,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "browser_p1_final_green.log",
+    "retained_as": "logs/browser_p1_final_green.txt",
+    "bytes": 2372,
+    "sha256": "81a8f4a85de23f458bf96b468ad0e55d384d2be23e60f57cece34ba940b77c90",
+    "original_sha256": "81a8f4a85de23f458bf96b468ad0e55d384d2be23e60f57cece34ba940b77c90",
+    "original_bytes": 2372,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "cross_security_pending_native_red.log",
+    "retained_as": "logs/cross_security_pending_native_red.txt",
+    "bytes": 393,
+    "sha256": "e42f7fa4ac5a902ca76f64db6c97ae7daf2759e1eec69d9a34109c8da72209e3",
+    "original_sha256": "d6ad3d417f328972e003196717251e5c80187349c24ffdfdfe1c1ef2ca8c7504",
+    "original_bytes": 395,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "cross_security_pending_native_independent_green.log",
+    "retained_as": "logs/cross_security_pending_native_independent_green.txt",
+    "bytes": 111,
+    "sha256": "f0e22562fcce17f4f83bb184f7ac7e1c15972d1d141ba7b45d0751182665604b",
+    "original_sha256": "802ecbdb667cd1d54b4f27273d891a5cc867118e5feffabd427b6559fc5289b5",
+    "original_bytes": 112,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "cross_security_sec002_green.log",
+    "retained_as": "logs/cross_security_sec002_green.txt",
+    "bytes": 113,
+    "sha256": "a5e9d2b36577f8f0264f3be0165cf0e18df74063d165b14e12dbd9b79a091502",
+    "original_sha256": "b2065dba326acd992aa7ffa75b47cb0a18c37e35d59fc4ed157f7be9136e3c46",
+    "original_bytes": 114,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "modernization_red.log",
+    "retained_as": "logs/modernization_red.txt",
+    "bytes": 14720,
+    "sha256": "2911c858ee059fa25a22e29a8aef2caff2b9d70880e96de90ca56eeff5562658",
+    "original_sha256": "e558af07c2dc1a437f37c57ecc81a4ae92b7b6a353a6ef393bab834aa77c6f61",
+    "original_bytes": 14735,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "modernization_green.log",
+    "retained_as": "logs/modernization_green.txt",
+    "bytes": 99,
+    "sha256": "b7a0df49402aac8c7c18549d91a864a19fcc359f26f0f8e8cdb264b47b518730",
+    "original_sha256": "b7a0df49402aac8c7c18549d91a864a19fcc359f26f0f8e8cdb264b47b518730",
+    "original_bytes": 99,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "native-timer-red.log",
+    "retained_as": "logs/native-timer-red.txt",
+    "bytes": 3806,
+    "sha256": "b83546a2b9b4df85a587ac82e0d9a3221cbceda053b5c9df3ee265d7c422b76c",
+    "original_sha256": "e8d05505298982485c9e661bd8d5d8a5a642681e5dc0c66e350db0ab5b69e63c",
+    "original_bytes": 3807,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "native-timer-green.log",
+    "retained_as": "logs/native-timer-green.txt",
+    "bytes": 99,
+    "sha256": "68a9be6a4cc7b0eaf279dc9feeb44733473dc9e98dad14539cbe9c68769b3e7a",
+    "original_sha256": "68a9be6a4cc7b0eaf279dc9feeb44733473dc9e98dad14539cbe9c68769b3e7a",
+    "original_bytes": 99,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "remote-private-red.log",
+    "retained_as": "logs/remote-private-red.txt",
+    "bytes": 4233,
+    "sha256": "262a0d8cf3aaf4aae84b2f022471665920e73db192b42e6a2b2e58f9e80d93f4",
+    "original_sha256": "33459398ed49cdf9eb7f3958d35b2edf6e7323d56160fe48b9255a7f9638d478",
+    "original_bytes": 4245,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "remote-private-green.log",
+    "retained_as": "logs/remote-private-green.txt",
+    "bytes": 2305,
+    "sha256": "3ebfa9a133cfcbaec6da732158c47c940af883f57cca4ff2dc3182dbe9ab0fa0",
+    "original_sha256": "3ebfa9a133cfcbaec6da732158c47c940af883f57cca4ff2dc3182dbe9ab0fa0",
+    "original_bytes": 2305,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "replay-http-red.log",
+    "retained_as": "logs/replay-http-red.txt",
+    "bytes": 8293,
+    "sha256": "f234c4b5dae29a91b159b74b3f3dcb6130d34e269c7be034d62c5653f3876496",
+    "original_sha256": "49bdc9f0fcf8c556214ac6d5d4b085d7b75e350f8903ca3ab7b47725c3f475d1",
+    "original_bytes": 8295,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "replay-integrated-green.log",
+    "retained_as": "logs/replay-integrated-green.txt",
+    "bytes": 1073,
+    "sha256": "dd556d434e1d6ca76075364dbc0325a2cab0100ac2161f5a38e920520a72c21f",
+    "original_sha256": "4c60e74db227b0f7cb31deecaf0423b35d6dd2cb8167d6f781a61d18553a390f",
+    "original_bytes": 1099,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "security_red_pairing.log",
+    "retained_as": "logs/security_red_pairing.txt",
+    "bytes": 13287,
+    "sha256": "f4e8a612b1ad408cfe7df8088b7ee0d3f00d71a4ced31aa39f5c3ffe77925339",
+    "original_sha256": "8804a829c3beb5aa5ba2c0cbc8b076ebd0e5675fc7efcfe73cfc9bf8097e734c",
+    "original_bytes": 13289,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "security_green_pairing.log",
+    "retained_as": "logs/security_green_pairing.txt",
+    "bytes": 1158,
+    "sha256": "b66638da733ed864292b82a45a5c25ef6dc00bebf067495132a1b137e9a9f967",
+    "original_sha256": "b66638da733ed864292b82a45a5c25ef6dc00bebf067495132a1b137e9a9f967",
+    "original_bytes": 1158,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "cleanup_green.log",
+    "retained_as": "logs/cleanup_green.txt",
+    "bytes": 180,
+    "sha256": "5c3db812d97b92a24ba6bfba56ad7dbf7d5803a791b91ca220575a5c082d9f19",
+    "original_sha256": "5c3db812d97b92a24ba6bfba56ad7dbf7d5803a791b91ca220575a5c082d9f19",
+    "original_bytes": 180,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "baseline-ruff.log",
+    "retained_as": "logs/baseline-ruff.txt",
+    "bytes": 832,
+    "sha256": "d20a223b4c707f3599e6111e528e4d4dd14d80eec5d6f867e40e03c63d6776f0",
+    "original_sha256": "d20a223b4c707f3599e6111e528e4d4dd14d80eec5d6f867e40e03c63d6776f0",
+    "original_bytes": 832,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "baseline-mypy.log",
+    "retained_as": "logs/baseline-mypy.txt",
+    "bytes": 3801,
+    "sha256": "0f67765fbd03b3b59cec0bf2c5acec9decce808e431f0b15f8e3580d18286226",
+    "original_sha256": "0f67765fbd03b3b59cec0bf2c5acec9decce808e431f0b15f8e3580d18286226",
+    "original_bytes": 3801,
+    "raw_content_record": "raw-logs.json",
+    "display_normalization": "Trailing whitespace and final blank lines removed; exact original UTF-8 content retained in raw-logs.json."
+  },
+  {
+    "original": "manifest_working.json",
+    "retained_as": "evidence/manifest_working.json",
+    "bytes": 45843,
+    "sha256": "a08bef1de04cf362d098b0d333bc770037880261dc21d3ce0a31971b04734aee"
+  },
+  {
+    "original": "snapshot_metadata.json",
+    "retained_as": "evidence/snapshot_metadata.json",
+    "bytes": 43516,
+    "sha256": "6222cac621a5ac6d1ddab98eb07469755e130218f90a407384225aa84646235d"
+  }
+]

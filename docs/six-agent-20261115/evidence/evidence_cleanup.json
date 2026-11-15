@@ -1,0 +1,444 @@
+{
+  "role": "CLEANUP",
+  "baseline": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0",
+  "branch": "work/allie21-cleanup-20261115",
+  "worktree": "/workspace/scratch/e82834a8a22e/worktrees/cleanup",
+  "coverage": [
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/AGENTS.md",
+      "repo_path": "AGENTS.md",
+      "line_ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/SECURITY.md",
+      "repo_path": "SECURITY.md",
+      "line_ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "blob_sha": "452bb8c271e9674ae05bbe2043d9c81345c22b77",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/README_DE.md",
+      "repo_path": "README_DE.md",
+      "line_ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/docs/PRODUKTVISION_ALLIE21_DE.md",
+      "repo_path": "docs/PRODUKTVISION_ALLIE21_DE.md",
+      "line_ranges": [
+        [
+          1,
+          315
+        ]
+      ],
+      "blob_sha": "bf9bdd66fdd52bc6fe3729d94b09f71e1b79cd4d",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/docs/UPDATE_PIPELINE_DE.md",
+      "repo_path": "docs/UPDATE_PIPELINE_DE.md",
+      "line_ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "blob_sha": "802cc3fc0bea93c5392bfeeb586f65ec2f6d2058",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/VERSIONEN.md",
+      "repo_path": "VERSIONEN.md",
+      "line_ranges": [
+        [
+          1,
+          109
+        ]
+      ],
+      "blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/QUELLEN_LIZENZEN.md",
+      "repo_path": "QUELLEN_LIZENZEN.md",
+      "line_ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "blob_sha": "277fbd00482b7057da306ae26c21fcb16e4d0212",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/pyproject.toml",
+      "repo_path": "pyproject.toml",
+      "line_ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "blob_sha": "fe9dc06d68bff26a96e63c0a164b1a6d7e38030c",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/tools/build_exe.ps1",
+      "repo_path": "tools/build_exe.ps1",
+      "line_ranges": [
+        [
+          1,
+          139
+        ]
+      ],
+      "blob_sha": "44ba9e65c83ca65ba313f862185723353bc41eb5",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/tools/check_versions.py",
+      "repo_path": "tools/check_versions.py",
+      "line_ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "blob_sha": "9b6829f8d456812627cf75ff5d21593cc3dfb9c1",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/START_HIER.bat",
+      "repo_path": "START_HIER.bat",
+      "line_ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "blob_sha": "89418c07922841392f862ad2ed2395d107d7bc41",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/browser/manifest.json",
+      "repo_path": "browser/manifest.json",
+      "line_ranges": [
+        [
+          1,
+          18
+        ]
+      ],
+      "blob_sha": "e286cc71e35d2b75dc695e5d7d5a7c1386f56a31",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/backend/openings/README.txt",
+      "repo_path": "backend/openings/README.txt",
+      "line_ranges": [
+        [
+          1,
+          2
+        ]
+      ],
+      "blob_sha": "232831486c5ded4461e97e1891adaf7d9062409e",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/backend/doctor.py",
+      "repo_path": "backend/doctor.py",
+      "line_ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "blob_sha": "fac8045e01d2ad257617c38081d8730a64d2f088",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/backend/chess_extras.py",
+      "repo_path": "backend/chess_extras.py",
+      "line_ranges": [
+        [
+          1,
+          492
+        ]
+      ],
+      "blob_sha": "5aff358c913e459bd727dfc5d83ecb6add980730",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/tests/test_opening_lookup.py",
+      "repo_path": "tests/test_opening_lookup.py",
+      "line_ranges": [
+        [
+          1,
+          59
+        ]
+      ],
+      "blob_sha": "ec42d93b473b0ad5e53bc7f1c60f50028d11572c",
+      "status": "READ_COMPLETE",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/tests/test_chess.py",
+      "repo_path": "tests/test_chess.py",
+      "line_ranges": [
+        [
+          1,
+          110
+        ],
+        [
+          480,
+          540
+        ]
+      ],
+      "blob_sha": "9f63219c9cd70c4088bb00bbaa94b4bf09055a8a",
+      "status": "READ_PARTIAL",
+      "role": "CLEANUP"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/cleanup/tools/launcher.py",
+      "repo_path": "tools/launcher.py",
+      "line_ranges": [
+        [
+          1,
+          180
+        ]
+      ],
+      "blob_sha": "36021e37bbec3679641d4b33297347a482aa739e",
+      "status": "READ_PARTIAL",
+      "role": "CLEANUP"
+    }
+  ],
+  "reachability_scan": {
+    "scope": "All tracked code, hidden configuration, docs and packaging files with rg; Python dynamic-reference patterns scanned in backend/tools/tests. Search-only files are not claimed line-reviewed.",
+    "original_refs": [
+      "backend/chess_extras.py:154 definition opening_indexes",
+      "backend/chess_extras.py:182 opening_book calls opening_indexes()[0]",
+      "backend/chess_extras.py:185 definition placement_opening_book",
+      "backend/chess_extras.py:186 placement_opening_book calls opening_indexes()[1]"
+    ],
+    "internal_callers_of_placement_helper": 0,
+    "external_contract": "Private app, pyproject [tool.uv] package=false; no declared exported Python API or entry points; no dynamic access by these helper names found in repository. Cannot establish use by unknown external scripts."
+  },
+  "findings": [
+    {
+      "id": "CLEAN-001",
+      "severity": "P3",
+      "status": "IMPLEMENTED_TESTED_PENDING_PEER_REVIEW",
+      "path": "backend/chess_extras.py",
+      "baseline_line_ranges": [
+        [
+          153,
+          186
+        ]
+      ],
+      "summary": "Opening lookup constructs and permanently caches a piece-placement index that has no reachable consumer. Existing safe lookup intentionally uses full legal EPD only.",
+      "reproduction": "Cold call of original opening_indexes builds 3865 exact and 3863 unused placement entries. Repository-wide lookup identifies no production/test/dynamic caller of placement_opening_book.",
+      "fix": "Cache opening_book directly and return exact EPD map; remove placement-only allocation and the two obsolete wrappers; keep all parsing, tie-breaks, fallback and safety behavior.",
+      "code_change": {
+        "parent": "7d82d320934c09b9f4ab697ab608ea9a5bffddcf",
+        "commit": "b12ac07f194a6d431f953fc3189f8c5965cb3c20",
+        "tree": "34aa263e19bb3bf4148b6dd7601609c6b3fb9ed0",
+        "changed": [
+          "backend/chess_extras.py",
+          "tests/test_opening_lookup.py"
+        ],
+        "production_before_bytes": 22624,
+        "production_after_bytes": 22236,
+        "production_bytes_removed": 388,
+        "production_net_lines_removed": 12,
+        "diff_numstat": "3\t15\tbackend/chess_extras.py\n59\t0\ttests/test_opening_lookup.py",
+        "icon_blob_unchanged": true
+      },
+      "behavior_verification": "Canonical serialization SHA256 identical across every one of 3865 exact entries; four newly added behavior tests pass before and after; existing castling and transposition regressions retained."
+    }
+  ],
+  "measurements": {
+    "before": {
+      "exact_entries": 3865,
+      "unused_placement_entries": 3863,
+      "exact_sha256": "417386a36f890efd59411b9b97d9b38b90ac3252b0ca107f708169bd77ff2091",
+      "placement_mapping_shallow_bytes": 103856,
+      "placement_key_bytes": 357533,
+      "elapsed_with_tracemalloc_seconds": 6.918483652999839,
+      "tracemalloc_current_peak": [
+        2504690,
+        3126262
+      ]
+    },
+    "after": {
+      "exact_entries": 3865,
+      "exact_sha256": "417386a36f890efd59411b9b97d9b38b90ac3252b0ca107f708169bd77ff2091",
+      "elapsed_with_tracemalloc_seconds": 5.916179958000157,
+      "tracemalloc_current_peak": [
+        2026362,
+        2654839
+      ],
+      "cache_info": {
+        "hits": 0,
+        "misses": 1,
+        "maxsize": 1,
+        "currsize": 1
+      }
+    },
+    "minimum_dead_map_and_keys_bytes_removed": 461389,
+    "tracemalloc_retained_delta_bytes": 478328,
+    "limits": "Single memory observation on Linux CPython3.12; sys.getsizeof excludes referenced values, values can be shared. Timing under tracemalloc is diagnostic only, not a benchmark speedup claim. Backend exact output equivalence checked by full canonical digest."
+  },
+  "tests": [
+    {
+      "stage": "BEFORE_CHARACTERIZATION",
+      "command": "python -m pytest -q tests/test_opening_lookup.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "details": "4 passed in 1.11s on old opening code; no invented RED failure for a behavior-preserving cleanup."
+    },
+    {
+      "stage": "AFTER_REGRESSION",
+      "command": "python -m pytest -q tests/test_opening_lookup.py tests/test_chess.py tests/test_tactical_performance.py tests/test_offline.py tests/test_build_edge.py tests/test_maintenance.py tests/test_model_setup.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "details": "113 passed in 5.43s; tests include import-light launcher, synthetic portable package, maintenance, model integrity and version contracts. No Windows installer executed.",
+      "log": "/workspace/scratch/e82834a8a22e/cleanup_green.log"
+    },
+    {
+      "stage": "FOCUSED_RUFF",
+      "command": "python -m ruff check backend/chess_extras.py tests/test_opening_lookup.py",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "stage": "FOCUSED_MYPY",
+      "command": "python -m mypy backend/chess_extras.py --ignore-missing-imports",
+      "status": "PASS",
+      "exit_code": 0,
+      "details": "Success: no issues found in 1 source file"
+    },
+    {
+      "stage": "VERSIONS",
+      "command": "python tools/check_versions.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "details": "application11.2.24 extension11.2.24.0 IDomboihgfgofgmidefcpkihgglhkiielo"
+    },
+    {
+      "stage": "DIFF",
+      "command": "git diff --check; git diff --cached --check",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "stage": "EXACT_OUTPUT_PARITY",
+      "command": "canonical json.dumps(exact,sort_keys=True,ensure_ascii=False), SHA256 before/after",
+      "status": "PASS",
+      "details": "3865 entries; 417386a36f890efd59411b9b97d9b38b90ac3252b0ca107f708169bd77ff2091"
+    },
+    {
+      "stage": "SOURCE_DATA_INTEGRITY",
+      "status": "PASS",
+      "details": "All five bundled TSV SHA256 hashes match VERSIONEN.md",
+      "sha256": {
+        "a.tsv": "3282e4c9155289a29224f9a85fba0decb46efa35c2fa5e39662d2ac48fb0f793",
+        "b.tsv": "2744a3890879bd9dce79093147fe5b6c3a9d9d42a3388af698e67b6829be1c48",
+        "c.tsv": "447bbd4b15d68067b150faf12bf66aa14b18582cf80d736aaa7c0081131806ef",
+        "d.tsv": "1cf4057a8aece94f27bb3f278ad410ee2844831a642364eeceaafa091dbcceda",
+        "e.tsv": "48c6f6645b031a5937c8386839debab0e2e48837251687ba1afb6369677f8546"
+      }
+    },
+    {
+      "stage": "UNCHANGED_CONTRACTS",
+      "command": "git diff --name-only BASE COMMIT -- protected paths",
+      "status": "PASS",
+      "details": [
+        "uv.lock",
+        "pyproject.toml",
+        "QUELLEN_LIZENZEN.md",
+        "LICENSE.txt",
+        "backend/vendor",
+        "backend/openings",
+        "browser",
+        "tools/build_exe.ps1",
+        "tools/launcher.py",
+        "START_HIER.bat"
+      ]
+    },
+    {
+      "stage": "FULL_PROJECT_FINAL",
+      "status": "DELEGATED_TO_ROOT",
+      "details": "Final integrated Unittest/Pytest/Node/Ruff/Mypy gates run by coordinator, no duplicate full run claimed from this role."
+    },
+    {
+      "stage": "NATIVE_WINDOWS_EDGE_INSTALLER",
+      "status": "NOT_RUN",
+      "details": "Linux only. Real Windows installer/Edge/capture/model weights unavailable or outside this role. No live installation."
+    }
+  ],
+  "runtime": {
+    "python": "/workspace/scratch/e82834a8a22e/allie/.venv/bin/python",
+    "dependency_environment": "Root frozen uv sync --frozen --extra quality environment; no dependency changes by this role",
+    "model_preload": "ALLIE_NO_PRELOAD=1",
+    "tempdir": "/workspace/scratch/e82834a8a22e/tmp"
+  },
+  "commit": "b12ac07f194a6d431f953fc3189f8c5965cb3c20",
+  "commit_tree": "34aa263e19bb3bf4148b6dd7601609c6b3fb9ed0",
+  "parent": "7d82d320934c09b9f4ab697ab608ea9a5bffddcf",
+  "commit_method": "git write-tree --missing-ok + git commit-tree + compare-and-swap update-ref; original unavailable PNG blob entry retained unchanged",
+  "changed_files": [
+    {
+      "path": "backend/chess_extras.py",
+      "blob_sha": "5aff358c913e459bd727dfc5d83ecb6add980730"
+    },
+    {
+      "path": "tests/test_opening_lookup.py",
+      "blob_sha": "ec42d93b473b0ad5e53bc7f1c60f50028d11572c"
+    }
+  ],
+  "peer_review": {
+    "status": "REQUESTED_FROM_ROOT",
+    "requested_roles": [
+      "ARCHITEKTUR",
+      "BUGS_SECURITY"
+    ]
+  },
+  "open_gates": [
+    "Independent cross-review pending at handoff",
+    "Root final integrated full gates pending",
+    "Native Windows/Edge real UI and model runtime not executed",
+    "Unknown callers outside repository cannot be enumerated"
+  ],
+  "final_status": "COMMITTED_CLEAN_WORKTREE_TESTED_PENDING_INTEGRATION_AND_CROSS_REVIEW"
+}

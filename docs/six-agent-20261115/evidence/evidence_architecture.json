@@ -1,0 +1,560 @@
+{
+  "role": "ARCHITEKTUR",
+  "baseline": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0",
+  "branch": "work/allie21-architecture-20261115",
+  "worktree": "/workspace/scratch/e82834a8a22e/worktrees/architecture",
+  "coverage": [
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/AGENTS.md",
+      "repo_path": "AGENTS.md",
+      "line_ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/SECURITY.md",
+      "repo_path": "SECURITY.md",
+      "line_ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "blob_sha": "452bb8c271e9674ae05bbe2043d9c81345c22b77",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/README_DE.md",
+      "repo_path": "README_DE.md",
+      "line_ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/docs/PRODUKTVISION_ALLIE21_DE.md",
+      "repo_path": "docs/PRODUKTVISION_ALLIE21_DE.md",
+      "line_ranges": [
+        [
+          1,
+          315
+        ]
+      ],
+      "blob_sha": "bf9bdd66fdd52bc6fe3729d94b09f71e1b79cd4d",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/upload/allie_architektur.toml",
+      "repo_path": null,
+      "line_ranges": [
+        [
+          1,
+          7
+        ]
+      ],
+      "blob_sha": "4b8af8be0745b0ca5825453527a8ba89baf74724",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/upload/03_BAU_UND_SICHERHEITSVERTRAG.md",
+      "repo_path": null,
+      "line_ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "blob_sha": "0836bbdabaa3538d753cf195952559dd70cf1d92",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/upload/allie_architektur.md",
+      "repo_path": null,
+      "line_ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "blob_sha": "96e871a6167c6b89e2066acf1cf3f45da1a6f13f",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/browser_session.py",
+      "repo_path": "backend/browser_session.py",
+      "line_ranges": [
+        [
+          1,
+          109
+        ]
+      ],
+      "blob_sha": "82c871f6e3507e0a7b5d061d5d55c7ab4920b90a",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/overlay_lease.py",
+      "repo_path": "backend/overlay_lease.py",
+      "line_ranges": [
+        [
+          1,
+          112
+        ]
+      ],
+      "blob_sha": "99e1110129a083abeef18e11e0aa036874f20b1f",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/contracts.py",
+      "repo_path": "backend/contracts.py",
+      "line_ranges": [
+        [
+          1,
+          93
+        ]
+      ],
+      "blob_sha": "aec0994ab691eef013ba81803a90710794bcde30",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/pyproject.toml",
+      "repo_path": "pyproject.toml",
+      "line_ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "blob_sha": "fe9dc06d68bff26a96e63c0a164b1a6d7e38030c",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/live_session.py",
+      "repo_path": "backend/live_session.py",
+      "line_ranges": [
+        [
+          1,
+          367
+        ]
+      ],
+      "blob_sha": "40d9e38841f44d8c68dacc1d81bb35b35178f479",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/position_tracker.py",
+      "repo_path": "backend/position_tracker.py",
+      "line_ranges": [
+        [
+          1,
+          247
+        ]
+      ],
+      "blob_sha": "f1b0cced4bbb479c9d1f499df1163f19fda04b32",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/live_server.py",
+      "repo_path": "backend/live_server.py",
+      "line_ranges": [
+        [
+          1,
+          797
+        ]
+      ],
+      "blob_sha": "e7289ee44630b8bfcb9a8ded344e0272ad1b6e1c",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/tests/test_browser_session_prefix.py",
+      "repo_path": "tests/test_browser_session_prefix.py",
+      "line_ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "blob_sha": "718a09a831aea7be0f89dcf90c5d165c620d7660",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/tests/test_position_tracker_turn.py",
+      "repo_path": "tests/test_position_tracker_turn.py",
+      "line_ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "blob_sha": "68ef5b97d721401d30ff38e49febd1a914daec25",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/tests/test_overlay_lease.py",
+      "repo_path": "tests/test_overlay_lease.py",
+      "line_ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "blob_sha": "804b5da8e86e4d535013b02343f3e498d3de77af",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/tests/test_chess.py",
+      "repo_path": "tests/test_chess.py",
+      "line_ranges": [
+        [
+          1,
+          737
+        ]
+      ],
+      "blob_sha": "9f63219c9cd70c4088bb00bbaa94b4bf09055a8a",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/vision.py",
+      "repo_path": "backend/vision.py",
+      "line_ranges": [
+        [
+          1,
+          146
+        ]
+      ],
+      "blob_sha": "62799181551f228b178083d8a5e929f2c1794d7a",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/config.py",
+      "repo_path": "backend/config.py",
+      "line_ranges": [
+        [
+          1,
+          92
+        ]
+      ],
+      "blob_sha": "4a614e06bb1ac63e3c3e31287d3e24ad68fa1f43",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/allie_local_server.py",
+      "repo_path": "backend/allie_local_server.py",
+      "line_ranges": [
+        [
+          115,
+          186
+        ],
+        [
+          450,
+          540
+        ],
+        [
+          655,
+          713
+        ]
+      ],
+      "blob_sha": "59922a7b27c6d5f9f5edd04fe9be5f663034b3b7",
+      "status": "READ_PARTIAL",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/backend/native_overlay.py",
+      "repo_path": "backend/native_overlay.py",
+      "line_ranges": [
+        [
+          1045,
+          1215
+        ],
+        [
+          1317,
+          1385
+        ]
+      ],
+      "blob_sha": "ad5e7dbebd042259b029a57596b60b242dcf012d",
+      "status": "READ_PARTIAL",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/viewer/index.html",
+      "repo_path": "viewer/index.html",
+      "line_ranges": [
+        [
+          310,
+          358
+        ],
+        [
+          448,
+          510
+        ]
+      ],
+      "blob_sha": "992550ce6de28d51e2ebcb41dd1339a1e7c3ae90",
+      "status": "READ_PARTIAL",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/architecture/tests/test_position_tracker_architecture.py",
+      "repo_path": "tests/test_position_tracker_architecture.py",
+      "line_ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "blob_sha": "6d2a5590a081c8fe3e744a8054fc6db7a635f370",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/security/backend/security.py",
+      "repo_path": "backend/security.py",
+      "line_ranges": [
+        [
+          1,
+          164
+        ]
+      ],
+      "blob_sha": "fa710da256ac3540c26d183ba4846805e5acf5c9",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR_CROSS_REVIEW"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/security/backend/http_boundary.py",
+      "repo_path": "backend/http_boundary.py",
+      "line_ranges": [
+        [
+          1,
+          190
+        ]
+      ],
+      "blob_sha": "1e097ba5832c705683b8267145836ed3cc1fc8ee",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR_CROSS_REVIEW"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/security/tests/test_http_pairing_limits.py",
+      "repo_path": "tests/test_http_pairing_limits.py",
+      "line_ranges": [
+        [
+          1,
+          154
+        ]
+      ],
+      "blob_sha": "1b2a8670f8419138d9e3ca02fc300d3b7c2004f1",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR_CROSS_REVIEW"
+    },
+    {
+      "path": "/workspace/scratch/e82834a8a22e/worktrees/security/tests/test_security_reliability.py",
+      "repo_path": "tests/test_security_reliability.py",
+      "line_ranges": [
+        [
+          1,
+          91
+        ]
+      ],
+      "blob_sha": "8d93c1de2d69ef958c3ae449be6ca6be0979095f",
+      "status": "READ_COMPLETE",
+      "role": "ARCHITEKTUR_CROSS_REVIEW"
+    }
+  ],
+  "findings": [
+    {
+      "id": "ARCH-01",
+      "status": "FIXED_AND_PEER_REVIEWED",
+      "severity": "P2",
+      "path": "backend/position_tracker.py",
+      "baseline_line_ranges": [
+        [
+          194,
+          218
+        ]
+      ],
+      "fixed_line_ranges": [
+        [
+          194,
+          217
+        ]
+      ],
+      "summary": "A partial-history tracker accepted an out-of-turn move even after a full FEN had verified the side to move.",
+      "root_cause": "The first-transition alternate-side branch used incomplete history and an empty move list as its only gate. It ignored turn_verified, which observe can set independently on a same-placement full FEN.",
+      "reproduction": "Observe placement after 1.e4 e5 2.Nf3 without known turn, verify the full FEN (Black to move), then submit the placement after an illegal immediate white Bb5. Baseline accepts f1b5 for both turn_known=True and False.",
+      "fix": "Only create the alternate-side candidate while turn_verified is false; retain legal-transition reconstruction and conservative partial-history behavior.",
+      "behavior_after": "Wrong-side update rejected without mutating board/history; actual Black Nc6 accepted; either first mover still inferable while turn is unknown."
+    }
+  ],
+  "tests": [
+    {
+      "stage": "ENVIRONMENT_PROBE",
+      "command": "python -m unittest discover -s tests -p 'test_position_tracker_architecture.py' -v",
+      "status": "FAIL",
+      "exit_code": 1,
+      "details": "Import ERROR: default Python had no chess. This was not counted as RED."
+    },
+    {
+      "stage": "RED",
+      "command": "ALLIE_NO_PRELOAD=1 /workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m unittest discover -s tests -p 'test_position_tracker_architecture.py' -v",
+      "status": "FAIL",
+      "exit_code": 1,
+      "test_methods": 3,
+      "assertion_failures": 2,
+      "details": "Both turn_known subcases fail assertFalse(change.changed); legal/unknown-turn controls pass."
+    },
+    {
+      "stage": "GREEN",
+      "command": "ALLIE_NO_PRELOAD=1 /workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m unittest discover -s tests -p 'test_position_tracker_architecture.py' -v",
+      "status": "PASS",
+      "exit_code": 0,
+      "test_methods": 3,
+      "details": "3 methods, 5 behavioral cases; zero failures."
+    },
+    {
+      "stage": "REGRESSION",
+      "command": "ALLIE_NO_PRELOAD=1 /workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m pytest -q tests/test_position_tracker_architecture.py tests/test_position_tracker_turn.py tests/test_browser_session_prefix.py tests/test_chess.py tests/test_overlay_lease.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "passed": 59,
+      "duration_seconds": 3.97
+    },
+    {
+      "stage": "LINT_INITIAL",
+      "command": "/workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m ruff check backend tools tests",
+      "status": "FAIL",
+      "exit_code": 1,
+      "errors": 4,
+      "details": "3 unchanged EXE001 baseline issues and 1 I001 blank line in new test. New-test I001 corrected before commit."
+    },
+    {
+      "stage": "LINT_CHANGED_FILES",
+      "command": "/workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m ruff check backend/position_tracker.py tests/test_position_tracker_architecture.py",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "stage": "LINT_FULL_FINAL",
+      "command": "/workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m ruff check backend tools tests",
+      "status": "FAIL",
+      "exit_code": 1,
+      "errors": 3,
+      "details": "EXE001 baseline only: backend/allie_local_server.py:1, backend/download_stockfish.py:1, backend/live_server.py:1. No edits outside ownership made."
+    },
+    {
+      "stage": "TYPES_FULL_LINUX",
+      "command": "/workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m mypy backend --ignore-missing-imports",
+      "status": "FAIL",
+      "exit_code": 1,
+      "errors": 35,
+      "details": "All 35 errors are unchanged WinDLL/WinError/get_last_error attributes in backend/native_overlay.py under Linux; root independently reported same baseline. 17 source files checked."
+    },
+    {
+      "stage": "VERSIONS",
+      "command": "/workspace/scratch/e82834a8a22e/allie/.venv/bin/python tools/check_versions.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "details": "Application 11.2.24, extension 11.2.24.0, extension ID preserved."
+    },
+    {
+      "stage": "DIFF_CHECK",
+      "command": "git diff --check",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "stage": "CROSS_REVIEW_SECURITY",
+      "worktree": "/workspace/scratch/e82834a8a22e/worktrees/security",
+      "command": "ALLIE_NO_PRELOAD=1 /workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m pytest -q tests/test_http_pairing_limits.py tests/test_security_reliability.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "passed": 15,
+      "warnings": 2,
+      "duration_seconds": 0.7,
+      "details": "Existing FastAPI on_event deprecation warnings. No blocking review findings."
+    },
+    {
+      "stage": "FULL_UNITTEST_OWN_BRANCH",
+      "command": "ALLIE_NO_PRELOAD=1 /workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m unittest discover -s tests -v",
+      "status": "NOT_RUN",
+      "details": "Coordinator explicitly directs no duplicate full suites; root runs baseline and integrated final suite."
+    },
+    {
+      "stage": "FULL_PYTEST_OWN_BRANCH",
+      "command": "ALLIE_NO_PRELOAD=1 /workspace/scratch/e82834a8a22e/allie/.venv/bin/python -m pytest -q",
+      "status": "NOT_RUN",
+      "details": "Coordinator explicitly directs no duplicate full suites; root runs integrated final suite."
+    },
+    {
+      "stage": "FULL_NODE_OWN_BRANCH",
+      "command": "node --test tests/*.js",
+      "status": "NOT_RUN",
+      "details": "Coordinator runs integrated final suite."
+    }
+  ],
+  "commit": "5da261ec64e1056d72addaee8cc9104570c55279",
+  "open_gates": [
+    "Root final integrated full unittest/pytest/node suites pending at handoff",
+    "Three pre-existing full Ruff EXE001 findings outside role ownership",
+    "35 pre-existing Linux Mypy Windows-ctypes attribute errors; root performs Windows-target check",
+    "Native Windows/Edge capture, installer, desktop and GPU/model-weight acceptance NOT_RUN on Linux"
+  ],
+  "peer_review": {
+    "reviewer": "/root/allie_bugs_security",
+    "status": "PASS",
+    "findings": [],
+    "evidence": "Reviewer read tracker 1-246 and new tests 1-70, independently executed 3 tests PASS in 0.201s. Root also independently ran 3 tests PASS."
+  },
+  "cross_review_delivered": {
+    "target": "/root/allie_bugs_security",
+    "status": "PASS",
+    "findings": [],
+    "details": "Atomic shared budget per allowed Origin across capability/settings GET/POST/PUT; RLock guards counting and regeneration; successful polling does not spend/reset budget. Origin boundary still gates all callers; local viewer/MV3 bootstrap preserved; no stale references to removed helper."
+  },
+  "changed_files": [
+    {
+      "path": "backend/position_tracker.py",
+      "blob_sha": "e56dc22bfe40ca5956cd9c1fe2f1c3b68f962904"
+    },
+    {
+      "path": "tests/test_position_tracker_architecture.py",
+      "blob_sha": "6d2a5590a081c8fe3e744a8054fc6db7a635f370"
+    }
+  ],
+  "final_status": "COMMITTED_READY_FOR_INTEGRATION",
+  "commit_tree": "cfc0c2ad618ae9670b74fb787525c166b11b7e76",
+  "commit_method": {
+    "normal_commit": "FAILED because original unchanged icon blob is not available in the materialized snapshot",
+    "coordinator_authorized_plumbing": "git write-tree --missing-ok; git commit-tree with exact baseline parent; compare-and-swap update-ref only own branch",
+    "unchanged_icon_blob": "4e962591e1698fd92ae406ec4c24f99ad3f29aac",
+    "changed_paths_verified": [
+      "backend/position_tracker.py",
+      "tests/test_position_tracker_architecture.py"
+    ],
+    "worktree_clean": true
+  }
+}

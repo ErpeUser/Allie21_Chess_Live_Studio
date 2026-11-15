@@ -1,0 +1,4 @@
+{"currentPlacement":"rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR","updates":[{"fen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","mode":"private","visible":true,"generation":1,"arrows":[{"uci":"e2e4","color":"#16c784","opacity":0.96}]}],"scheduledRevalidation":true}
+A queued old native frame must not be published with a new generation after the board changed
+
+true !== false

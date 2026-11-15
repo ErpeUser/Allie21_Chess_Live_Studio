@@ -1,0 +1,156 @@
+{
+  "schema": "allie21-six-role-quality-v1",
+  "tested_local_commit": "16bc123d8a310ff46475c9b6c85b77167c4732e2",
+  "published_equivalent_code_commit": "25aecacb6fb6ee8d9ca8c428d7dee706e8ae5d46",
+  "exact_code_tree": "4f7b961f75ae70f366bf906bdb6e78850d706d6d",
+  "pull_request": "https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/11",
+  "overall": "IMPLEMENTED_LOCAL_VERIFIED_PLATFORM_GATES_OPEN",
+  "checks": [
+    {
+      "name": "sync",
+      "command": "uv sync --frozen --extra quality",
+      "exit_code": 0,
+      "elapsed_seconds": 0.034,
+      "log": "logs/final-sync.txt",
+      "finished_utc": "2026-11-15T19:51:10.352935+00:00",
+      "status": "PASS",
+      "interpretation": "Frozen quality environment; 75 selected packages checked; no model weights."
+    },
+    {
+      "name": "unittest",
+      "command": "uv run --frozen python -m unittest discover -s tests -v",
+      "exit_code": 1,
+      "elapsed_seconds": 14.951,
+      "log": "logs/final-unittest.txt",
+      "finished_utc": "2026-11-15T19:51:25.304661+00:00",
+      "status": "ERROR_ENVIRONMENT",
+      "interpretation": "245 tests executed; 1 extension-browser class setup error, no assertion failures. Chromium socket creation denied."
+    },
+    {
+      "name": "pytest",
+      "command": "uv run --frozen pytest -q",
+      "exit_code": 1,
+      "elapsed_seconds": 20.667,
+      "log": "logs/final-pytest.txt",
+      "finished_utc": "2026-11-15T19:51:45.972000+00:00",
+      "status": "ERROR_ENVIRONMENT",
+      "interpretation": "290 passed, 14 browser setup errors, 2 existing FastAPI on_event deprecation warnings. DOM not reached."
+    },
+    {
+      "name": "core-pytest",
+      "command": "uv run --frozen pytest -q --ignore=tests/test_viewer_browser.py --ignore=tests/test_extension_options_browser.py",
+      "exit_code": 0,
+      "elapsed_seconds": 13.809,
+      "log": "logs/final-core-pytest.txt",
+      "finished_utc": "2026-11-15T19:51:59.782022+00:00",
+      "status": "PASS",
+      "interpretation": "Supplemental run omits exactly the two unavailable browser-fixture modules: 290 passed, 2 existing warnings. Does not replace the required full run."
+    },
+    {
+      "name": "node",
+      "command": "node --test tests/*.js",
+      "exit_code": 0,
+      "elapsed_seconds": 0.529,
+      "log": "logs/final-node.txt",
+      "finished_utc": "2026-11-15T19:51:23.348723+00:00",
+      "status": "PASS",
+      "interpretation": "91 tests, 0 failures, 0 skips. Includes Node-VM DOM/network fixtures; no real browser claim."
+    },
+    {
+      "name": "ruff",
+      "command": "uv run --frozen ruff check backend tools tests",
+      "exit_code": 0,
+      "elapsed_seconds": 0.026,
+      "log": "logs/final-ruff.txt",
+      "finished_utc": "2026-11-15T19:51:23.375315+00:00",
+      "status": "PASS",
+      "interpretation": "All checks passed; 3 baseline EXE001 findings fixed via correct entry-point shebang/modes."
+    },
+    {
+      "name": "mypy-linux",
+      "command": "uv run --frozen mypy backend --ignore-missing-imports",
+      "exit_code": 1,
+      "elapsed_seconds": 44.687,
+      "log": "logs/final-mypy-linux.txt",
+      "finished_utc": "2026-11-15T19:52:08.062860+00:00",
+      "status": "FAIL_BASELINE_PLATFORM",
+      "interpretation": "35 Windows-only ctypes attr-defined errors in native_overlay.py; same diagnostics as baseline."
+    },
+    {
+      "name": "mypy-win32",
+      "command": "uv run --frozen mypy backend --ignore-missing-imports --platform win32",
+      "exit_code": 0,
+      "elapsed_seconds": 42.567,
+      "log": "logs/final-mypy-win32.txt",
+      "finished_utc": "2026-11-15T19:52:50.629822+00:00",
+      "status": "PASS",
+      "interpretation": "18 source files checked for the Windows target; 3 existing untyped-function notes. No native runtime acceptance."
+    },
+    {
+      "name": "versions",
+      "command": "python tools/check_versions.py",
+      "exit_code": 0,
+      "elapsed_seconds": 0.025,
+      "log": "logs/final-versions.txt",
+      "finished_utc": "2026-11-15T19:52:50.654920+00:00",
+      "status": "PASS",
+      "interpretation": "App/userscript 11.2.25, extension 11.2.25.0, identity unchanged."
+    },
+    {
+      "name": "lock-check",
+      "command": "uv lock --check",
+      "exit_code": 0,
+      "elapsed_seconds": 0.01,
+      "log": "logs/final-lock-check.txt",
+      "finished_utc": "2026-11-15T19:52:50.665665+00:00",
+      "status": "PASS",
+      "interpretation": "94 locked packages; only virtual local project version changed, all 93 external package records identical."
+    },
+    {
+      "name": "compileall",
+      "command": "uv run --frozen python -m compileall -q backend tools tests",
+      "exit_code": 0,
+      "elapsed_seconds": 0.048,
+      "log": "logs/final-compileall.txt",
+      "finished_utc": "2026-11-15T19:52:50.713641+00:00",
+      "status": "PASS",
+      "interpretation": "Python syntax compilation for backend/tools/tests."
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff c5ea9a324a28f1b16fb544cfbe2ef140178213a0 --check",
+      "exit_code": 0,
+      "elapsed_seconds": 0.021,
+      "log": "logs/final-diff-check.txt",
+      "finished_utc": "2026-11-15T19:52:50.734806+00:00",
+      "status": "PASS",
+      "interpretation": "Whole change from verified base checked for whitespace errors."
+    }
+  ],
+  "integrity": {
+    "tested_code_commit": "16bc123d8a310ff46475c9b6c85b77167c4732e2",
+    "vendor_opening_assets_unchanged": true,
+    "missing_png_tree_entry_unchanged": true,
+    "tactical_function_matches_benchmark_source": true,
+    "tactical_function_sha256": "428f0f019acb4d9bc48442d875f46300958603a61e01688b16f8d38861dd23db",
+    "changed_code_and_docs_files": 34
+  },
+  "not_run": [
+    "Native Windows/Edge capture exclusion and DPI/HWND/OBS/getDisplayMedia acceptance",
+    "Real model weights, GPU inference and real Stockfish/portable installer acceptance",
+    "UPDATE_ALLIE.cmd and deployment",
+    "Whole repository source-line audit beyond the documented intervals"
+  ],
+  "environment_blocker": {
+    "browser": "Chromium cannot create its ProcessSingleton socket (Operation not permitted); failures occur before page DOM.",
+    "approval": "A sandbox escalation was automatically rejected by the environment approval policy; no bypass attempted."
+  },
+  "lock_update_note": "uv lock --offline could not resolve uncached registry metadata. The single virtual-project version field was updated directly; TOML equality of every other field and uv lock --check then passed.",
+  "baseline_mypy_diagnostics_identical": true,
+  "remote_ci_record": "remote-ci.json",
+  "artifact_validation": {
+    "json_files_parse": true,
+    "retained_log_hashes_match": true,
+    "local_report_links_resolve": true
+  }
+}

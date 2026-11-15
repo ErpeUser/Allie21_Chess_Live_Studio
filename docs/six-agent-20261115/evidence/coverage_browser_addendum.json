@@ -1,0 +1,542 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-11-15T19:50:16.492136+00:00",
+  "agent": "/root/allie_innovationen",
+  "task": "Browser-Coverage-Addendum und autorisierte enge P1-Korrekturen",
+  "worktree": "/workspace/scratch/e82834a8a22e/worktrees/features",
+  "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0",
+  "authorization": "Zunächst read-only Coverage. Root autorisierte anschließend ausdrücklich beide reproduzierten P1-Korrekturen einschließlich der von Security bestätigten nativen Queue-Kante. Kein weiterer Featureumfang.",
+  "coverage": {
+    "fully_read_files": 22,
+    "fully_read_baseline_lines": 2257,
+    "source_files": 5,
+    "test_files": 17,
+    "files": [
+      {
+        "path": "browser/allie21_overlay.user.js",
+        "baseline_blob_sha": "298903726fcb19820d524352be7062e13290a339",
+        "lines": 880,
+        "read_intervals_inclusive": [
+          [
+            1,
+            140
+          ],
+          [
+            141,
+            280
+          ],
+          [
+            281,
+            420
+          ],
+          [
+            421,
+            550
+          ],
+          [
+            551,
+            680
+          ],
+          [
+            681,
+            790
+          ],
+          [
+            791,
+            880
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "browser/background.js",
+        "baseline_blob_sha": "c6a31c03e52ad973a754e236589f59384cd0bdde",
+        "lines": 218,
+        "read_intervals_inclusive": [
+          [
+            1,
+            115
+          ],
+          [
+            116,
+            218
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "browser/connection.js",
+        "baseline_blob_sha": "b1d9a8aea41a898d675acc7178aa5147407531d0",
+        "lines": 31,
+        "read_intervals_inclusive": [
+          [
+            1,
+            31
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "browser/worker_status.js",
+        "baseline_blob_sha": "0f32dfaf6a6dd3e1f907805bfc550ee41ca3201c",
+        "lines": 45,
+        "read_intervals_inclusive": [
+          [
+            1,
+            45
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "browser/updates.js",
+        "baseline_blob_sha": "8f0265f77051c0c7f7465dc8727c0ebdb2d207d5",
+        "lines": 54,
+        "read_intervals_inclusive": [
+          [
+            1,
+            54
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_auto_side.js",
+        "baseline_blob_sha": "9cb94727b1cf3b5a12ff2d630c5b0761a371f984",
+        "lines": 19,
+        "read_intervals_inclusive": [
+          [
+            1,
+            19
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_board_adapter.js",
+        "baseline_blob_sha": "e3420b42400fea2e77156a99fbabe8fa3b093c7a",
+        "lines": 69,
+        "read_intervals_inclusive": [
+          [
+            1,
+            69
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_geometry_lifecycle.js",
+        "baseline_blob_sha": "72cee264f60dcaa8e2cb4f2d394a8735d8f1b8eb",
+        "lines": 26,
+        "read_intervals_inclusive": [
+          [
+            1,
+            26
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_history_state.js",
+        "baseline_blob_sha": "c44eb49faf4cca6a48a21a074e88fe66c29af079",
+        "lines": 62,
+        "read_intervals_inclusive": [
+          [
+            1,
+            62
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_insights.js",
+        "baseline_blob_sha": "90c4afd91eeed77d33b40645bc706e706aa465a4",
+        "lines": 32,
+        "read_intervals_inclusive": [
+          [
+            1,
+            32
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_lichess_arrows.js",
+        "baseline_blob_sha": "76def9b7a65956f3cec78ebc27227967875e036d",
+        "lines": 33,
+        "read_intervals_inclusive": [
+          [
+            1,
+            33
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_orientation.js",
+        "baseline_blob_sha": "7849c993c19331c95d698e0dfad052a57374e0c4",
+        "lines": 38,
+        "read_intervals_inclusive": [
+          [
+            1,
+            38
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_parser.js",
+        "baseline_blob_sha": "569775cad3324945706365aca51ce48681b52acb",
+        "lines": 87,
+        "read_intervals_inclusive": [
+          [
+            1,
+            87
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_private.js",
+        "baseline_blob_sha": "230967ca469f6cfd28e9d66d477fb45248f9939e",
+        "lines": 57,
+        "read_intervals_inclusive": [
+          [
+            1,
+            57
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_round_style.js",
+        "baseline_blob_sha": "e28f0b3794e19bc717778ee07f115bf802b75856",
+        "lines": 65,
+        "read_intervals_inclusive": [
+          [
+            1,
+            65
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_share_sync.js",
+        "baseline_blob_sha": "3d9de0cbf98a1eda5ea87c86582950ab52e93ffe",
+        "lines": 45,
+        "read_intervals_inclusive": [
+          [
+            1,
+            45
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_overlay_start_position.js",
+        "baseline_blob_sha": "5d89e7461b5d6af77a97b3ef29d7bca6bdd6d9e6",
+        "lines": 32,
+        "read_intervals_inclusive": [
+          [
+            1,
+            32
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_browser_preview.js",
+        "baseline_blob_sha": "ea60cd12f0e3a52a843e7b3042e7443e7765c943",
+        "lines": 51,
+        "read_intervals_inclusive": [
+          [
+            1,
+            51
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_browser_reliability.js",
+        "baseline_blob_sha": "e3f94dea6daa87f949fd1cb2534f708dc9c2cd0f",
+        "lines": 268,
+        "read_intervals_inclusive": [
+          [
+            1,
+            140
+          ],
+          [
+            141,
+            268
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_pairing_bridge.js",
+        "baseline_blob_sha": "cca912a90fe3d961b1789d983db0595dba86c0f7",
+        "lines": 23,
+        "read_intervals_inclusive": [
+          [
+            1,
+            23
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_worker_wakeup.js",
+        "baseline_blob_sha": "d7bdb6e968fc724e54c9a1043912d3d2edc01506",
+        "lines": 56,
+        "read_intervals_inclusive": [
+          [
+            1,
+            56
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      },
+      {
+        "path": "tests/test_extension_health.js",
+        "baseline_blob_sha": "f0fb3b064e713b2276269f994f210ae6a8a9ad53",
+        "lines": 66,
+        "read_intervals_inclusive": [
+          [
+            1,
+            66
+          ]
+        ],
+        "coverage": "complete contents read; not inferred from filename or search matches",
+        "basis_commit": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0"
+      }
+    ]
+  },
+  "review_focus": [
+    {
+      "topic": "Stale-Response / FEN / serial-key",
+      "sources": [
+        "browser/allie21_overlay.user.js:378-385",
+        "browser/allie21_overlay.user.js:716-769",
+        "browser/allie21_overlay.user.js:827-845"
+      ],
+      "observation": "Analyseantworten verwenden Serial-, Key-, PGN- und Positionsabgleich; der separate Restore-Pfad umging diese Prüfung für currentResult. Dieser Pfad wird nun vor asynchronem IO invalidiert und zur erneuten Brettprüfung eingeplant."
+    },
+    {
+      "topic": "Privacy und native Lease",
+      "sources": [
+        "browser/allie21_overlay.user.js:393-446",
+        "browser/allie21_overlay.user.js:621-640"
+      ],
+      "observation": "Remote-Einstellung konnte privateMode akzeptieren, während sichtbare Browser-SVGs bis zum Abschluss der nativen Lease blieben. POST- und GET-Fallback invalidieren nun synchron. Pending-Native-Frames werden vor dem owner-token early return beim Clear verworfen."
+    },
+    {
+      "topic": "DOMMutation / rAF / Lifecycle",
+      "sources": [
+        "browser/allie21_overlay.user.js:1-880",
+        "tests/test_overlay_geometry_lifecycle.js:1-26",
+        "tests/test_browser_reliability.js:1-268"
+      ],
+      "observation": "Vollständiger Quelltext gelesen, einschließlich MutationObserver-, Geometry/rAF-, Sichtbarkeits-, Focus- und Navigation-Lifecycle. Neue Tests bedienen Produktionsfunktionen über vorhandenen Node-VM-Harness und synthetische Board/DOM-Grenzen."
+    },
+    {
+      "topic": "Fair Play / keine automatischen Züge",
+      "sources": [
+        "browser/allie21_overlay.user.js:1-880"
+      ],
+      "observation": "Bestehende Liveanalyse ist unveränderter Produktumfang. In der vollständig gelesenen Userscript-Quelle wurden keine automatischen Spielzüge oder Klick-/Input-Injektionen auf das fremde Schachbrett festgestellt. Eigene UI-Handler und pointer-events:none für die Overlaydarstellung sind keine Spielzugautomatisierung. Neue Funktion aus vorherigem Commit bleibt ausschließlich PGN-Lernrückblick."
+    },
+    {
+      "topic": "MV3-Wake und Update-Lifecycle",
+      "sources": [
+        "browser/background.js:1-218",
+        "browser/connection.js:1-31",
+        "browser/worker_status.js:1-45",
+        "browser/updates.js:1-54",
+        "tests/test_worker_wakeup.js:1-56",
+        "tests/test_extension_health.js:1-66"
+      ],
+      "observation": "Background registriert seine Listener auf Worker-Start synchron; Sender-ID wird geprüft. Bestehende Alarm- und Statuspfade ohne neue Keepalive-Mechanik. Updateprüfung verwendet lokale Extension-Ressourcen und Sessionzustand; Reload betrifft die Extension, nicht automatisch eine Schachpartie."
+    }
+  ],
+  "findings": [
+    {
+      "id": "BROWSER-P1-RESTORE",
+      "severity": "P1",
+      "status": "fixed and independently reviewed",
+      "baseline_source_intervals": {
+        "browser/allie21_overlay.user.js": [
+          [
+            393,
+            446
+          ],
+          [
+            827,
+            845
+          ]
+        ]
+      },
+      "trigger": "Startpositions-Ergebnis anzeigen/queuen; Tab verstecken; Brett auf Position nach e4 ändern; Tab wiederherstellen. Im nativen Zweig kann zugleich ein Claim/Mode-Handshake ausstehen.",
+      "observed_red": "DOM: alter e2e4-Pfeil erneut sichtbar statt null SVG. Native Queue: ein altes Start-FEN/e2e4-Update wurde nach Claim als sichtbar mit neuer Generation publiziert.",
+      "minimal_fix": "restoreOverlayAfterVisibility invalidiert gecachte Ergebnisse und In-flight-Antworten vor jedem await und plant Brett-Revalidation ein. clearRemoteOverlay löscht pendingVisualUpdate vor dem owner-token early return; Lifecycle und Supersession nutzen diesen gemeinsamen Pfad.",
+      "green": "Kein altes SVG, Revalidation eingeplant; kein altes natives Overlay-Update. Securitys unabhängig aufgebauter blockierter-Claim-Repro: updates=[] und scheduledRevalidation=true."
+    },
+    {
+      "id": "BROWSER-P1-REMOTE-PRIVATE",
+      "severity": "P1",
+      "status": "fixed and independently reviewed",
+      "baseline_source_intervals": {
+        "browser/allie21_overlay.user.js": [
+          [
+            405,
+            433
+          ],
+          [
+            621,
+            640
+          ]
+        ]
+      },
+      "trigger": "Sichtbare Browser-Pfeile im normalen Modus; Remote-Einstellung entscheidet sich für private; native Claim-Anfrage bleibt ausstehend. POST-Antwort oder GET-Fallback können den Modus akzeptieren.",
+      "observed_red": "cfg.privateMode=true und versteckte Ergebnisliste, aber zuvor gezeichnetes Browser-SVG blieb sichtbar, bis nativer IO abgeschlossen war.",
+      "minimal_fix": "Akzeptierte abweichende Remote-Einstellung ruft synchron invalidate nach fill auf, in POST- und GET-Fallback.",
+      "green": "Vor ausstehendem Claim kein Browser-SVG und wrapper.display=none; späterer paint-Aufruf stellt im privaten Modus keine Browser-Pfeile wieder her."
+    }
+  ],
+  "test_evidence": {
+    "red": [
+      {
+        "log": "browser_p1_red.log",
+        "result": "2 neue DOM-Verhaltensfälle FAIL vor Korrektur; je actual=1 SVG statt expected=0"
+      },
+      {
+        "log": "browser_p1_native_red.log",
+        "result": "Nativer Queue-Regressionsfall FAIL vor Queue-Korrektur; 1 Overlay-Update statt 0"
+      },
+      {
+        "log": "cross_security_pending_native_red.log",
+        "result": "Unabhängiger Security-Repro FAIL vor Queue-Korrektur: altes sichtbares Start-FEN/e2e4 mit neuer Generation"
+      }
+    ],
+    "green": [
+      {
+        "command": "node --test tests/test_browser_reliability.js tests/test_overlay_private.js tests/test_overlay_geometry_lifecycle.js tests/test_overlay_share_sync.js",
+        "exit_code": 0,
+        "tests": 25,
+        "pass": 25,
+        "fail": 0,
+        "skipped": 0,
+        "log": "browser_p1_final_green.log"
+      },
+      {
+        "command": "node /workspace/scratch/e82834a8a22e/cross_security_pending_native_repro.js",
+        "exit_code": 0,
+        "observed": {
+          "updates": [],
+          "scheduledRevalidation": true
+        },
+        "log": "cross_security_pending_native_green.log"
+      },
+      {
+        "command": "git diff --check",
+        "exit_code": 0,
+        "scope": "two-file final diff before local commit"
+      }
+    ],
+    "new_regressions": [
+      "hidden-tab restore clears old arrows and schedules board revalidation",
+      "hidden-tab restore discards a native update queued before its lease was ready",
+      "accepted remote private mode via POST removes browser arrows before a pending claim",
+      "accepted remote private mode via GET removes browser arrows before a pending claim"
+    ],
+    "logs": [
+      {
+        "path": "/workspace/scratch/e82834a8a22e/browser_p1_red.log",
+        "sha256": "213d1fcad744f1339b4e9af51b6c02f83ec3de3defbe4941b414eca31de6be40",
+        "bytes": 1683
+      },
+      {
+        "path": "/workspace/scratch/e82834a8a22e/browser_p1_native_red.log",
+        "sha256": "05cfb0a3c4ebc821e00a7db85ab8b976097fb4be03cc868880f45dfb5d64c7f2",
+        "bytes": 919
+      },
+      {
+        "path": "/workspace/scratch/e82834a8a22e/cross_security_pending_native_red.log",
+        "sha256": "d6ad3d417f328972e003196717251e5c80187349c24ffdfdfe1c1ef2ca8c7504",
+        "bytes": 395
+      },
+      {
+        "path": "/workspace/scratch/e82834a8a22e/browser_p1_final_green.log",
+        "sha256": "81a8f4a85de23f458bf96b468ad0e55d384d2be23e60f57cece34ba940b77c90",
+        "bytes": 2372
+      },
+      {
+        "path": "/workspace/scratch/e82834a8a22e/cross_security_pending_native_green.log",
+        "sha256": "f0e22562fcce17f4f83bb184f7ac7e1c15972d1d141ba7b45d0751182665604b",
+        "bytes": 111
+      }
+    ],
+    "independent_security_review": {
+      "agent": "/root/allie_bugs_security",
+      "reported_result": "Finalen Diff vollständig gelesen, eigener Queue-Repro Exit 0, alle 25 fokussierten Node-Tests unabhängig PASS; keine blockierenden Findings mehr im Fix.",
+      "final_commit_notified": "21174bdc473c8a1d1172bd1d1e290e4bc7385959"
+    }
+  },
+  "commit": {
+    "commit": "21174bdc473c8a1d1172bd1d1e290e4bc7385959",
+    "parent": "578f2c4ab44aa3d9b98db62d08e0352572521d3a",
+    "tree": "763e751f6dfaf7926d995ddd46f1879ca31ab076",
+    "branch": "refs/heads/work/allie21-features-20261115",
+    "changed_files": [
+      "browser/allie21_overlay.user.js",
+      "tests/test_browser_reliability.js"
+    ],
+    "icon_tree_entry_unchanged": "100644 blob 4e962591e1698fd92ae406ec4c24f99ad3f29aac\tassets/allie21_icon.png",
+    "status": "clean"
+  },
+  "changed_file_review": [
+    {
+      "path": "browser/allie21_overlay.user.js",
+      "final_blob_sha": "f63ab84946019aef7d1044db6d026365092c566b",
+      "final_line_count": 887,
+      "review": "complete new diff read after GREEN; baseline complete read recorded above"
+    },
+    {
+      "path": "tests/test_browser_reliability.js",
+      "final_blob_sha": "4e290805ebfebc0b7e1ddf2c3ab5340ecc13eb11",
+      "final_line_count": 361,
+      "review": "complete new diff read after GREEN; baseline complete read recorded above"
+    }
+  ],
+  "boundaries": [
+    "Read coverage refers to actual full source/test content read earlier in this task. Metadata extraction is not counted as source reading.",
+    "Node VM tests execute the production script with synthetic DOM/network boundaries. They are not real Chromium DOM or native Windows capture tests.",
+    "Some pre-existing overlay geometry/share/pairing tests assert source structure; their passes do not prove runtime browser behavior.",
+    "Real Chromium execution remained unavailable because socket creation was blocked by the sandbox and escalation was rejected. No live browser, personal profile, chess-site interaction or native Windows UI was used.",
+    "No new full suite was run during this focused followup; Root owns integrated full-suite verification, API integration and release checks.",
+    "No new dependencies, telemetry, model downloads, automatic moves, network research or external communications were introduced.",
+    "Version/API files were deliberately reserved to Root for the coordinated 11.2.25 / 11.2.25.0 integration. This local commit is a fix handoff, not a release.",
+    "No additional confirmed P0/P1 finding in this fully read browser subset. This is not a proof that all possible defects are absent.",
+    "The large unavailable icon blob remains unchanged in the committed tree. Commit used Root-authorized write-tree --missing-ok, commit-tree and compare-and-swap update-ref."
+  ]
+}

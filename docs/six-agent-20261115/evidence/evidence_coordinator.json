@@ -1,0 +1,755 @@
+{
+  "role": "coordinator",
+  "base_sha": "c5ea9a324a28f1b16fb544cfbe2ef140178213a0",
+  "coverage": [
+    {
+      "path": ".codex/maintenance.sh",
+      "blob_sha": "4fa3da068959e7eaa10aca88a7a0da27292fc7b8",
+      "read_intervals_inclusive": [
+        [
+          1,
+          8
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": ".codex/setup.sh",
+      "blob_sha": "a7234b99f141a9f9125a966051b67e609aa38d7b",
+      "read_intervals_inclusive": [
+        [
+          1,
+          8
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "blob_sha": "58a47a30f228fd5a71aaba72f319c278a7ddff23",
+      "read_intervals_inclusive": [
+        [
+          1,
+          110
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "8dbb6ca1df9f46ea0d4a47008cf21c031c206167",
+      "read_intervals_inclusive": [
+        [
+          1,
+          58
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "README_DE.md",
+      "blob_sha": "84fe9485bf33bd96ec094279e6ac81db91e57384",
+      "read_intervals_inclusive": [
+        [
+          1,
+          70
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "SECURITY.md",
+      "blob_sha": "452bb8c271e9674ae05bbe2043d9c81345c22b77",
+      "read_intervals_inclusive": [
+        [
+          1,
+          63
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "backend/allie_local_server.py",
+      "blob_sha": "59922a7b27c6d5f9f5edd04fe9be5f663034b3b7",
+      "read_intervals_inclusive": [
+        [
+          1,
+          713
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "backend/chess_extras.py",
+      "blob_sha": "8009064cd45fd526f28caef61ac2037d9271c732",
+      "read_intervals_inclusive": [
+        [
+          1,
+          260
+        ]
+      ],
+      "status": "READ_PARTIAL"
+    },
+    {
+      "path": "backend/config.py",
+      "blob_sha": "4a614e06bb1ac63e3c3e31287d3e24ad68fa1f43",
+      "read_intervals_inclusive": [
+        [
+          1,
+          92
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "backend/http_boundary.py",
+      "blob_sha": "1e097ba5832c705683b8267145836ed3cc1fc8ee",
+      "read_intervals_inclusive": [
+        [
+          1,
+          190
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "backend/security.py",
+      "blob_sha": "234db0137affdf08852099fd855c10f1a2e5e8d2",
+      "read_intervals_inclusive": [
+        [
+          1,
+          157
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "backend/service_status.py",
+      "blob_sha": "83c3c7ccc9b6bdb943a0311daab551940a5be1d8",
+      "read_intervals_inclusive": [
+        [
+          1,
+          29
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/PRODUKTVISION_ALLIE21_DE.md",
+      "blob_sha": "bf9bdd66fdd52bc6fe3729d94b09f71e1b79cd4d",
+      "read_intervals_inclusive": [
+        [
+          1,
+          315
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/UPDATE_PIPELINE_DE.md",
+      "blob_sha": "802cc3fc0bea93c5392bfeeb586f65ec2f6d2058",
+      "read_intervals_inclusive": [
+        [
+          1,
+          99
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/full-audit/checkpoint.json",
+      "blob_sha": "eaabbbef9fc012850a7f3ce492e33c2a1144ea29",
+      "read_intervals_inclusive": [
+        [
+          1,
+          31
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/full-audit/pr-10-local-review.md",
+      "blob_sha": "c26753809fcf0b125e9b9e27b09ff8530f436c91",
+      "read_intervals_inclusive": [
+        [
+          1,
+          41
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "pyproject.toml",
+      "blob_sha": "fe9dc06d68bff26a96e63c0a164b1a6d7e38030c",
+      "read_intervals_inclusive": [
+        [
+          1,
+          46
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tests/test_build_edge.py",
+      "blob_sha": "b28e358f9909ed404737680d7d47082035a2974a",
+      "read_intervals_inclusive": [
+        [
+          1,
+          25
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tests/test_extension_options_browser.py",
+      "blob_sha": "151344760b1eda7173fb528bc18d711aa071e453",
+      "read_intervals_inclusive": [
+        [
+          1,
+          99
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tests/test_viewer_browser.py",
+      "blob_sha": "4edce89fba676ad595360bf90bcbb1702c86441f",
+      "read_intervals_inclusive": [
+        [
+          1,
+          202
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/benchmark_runtime.py",
+      "blob_sha": "b34bc757396b0667d211c34fa8c3078881492206",
+      "read_intervals_inclusive": [
+        [
+          1,
+          63
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/build_edge.py",
+      "blob_sha": "e76c88107aee99075c188c0094e98616929e2c26",
+      "read_intervals_inclusive": [
+        [
+          1,
+          76
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/check_versions.py",
+      "blob_sha": "9b6829f8d456812627cf75ff5d21593cc3dfb9c1",
+      "read_intervals_inclusive": [
+        [
+          1,
+          32
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/desktop_shortcut.ps1",
+      "blob_sha": "f968d1861b9ddbb334720fd4144612a2ece64981",
+      "read_intervals_inclusive": [
+        [
+          1,
+          15
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/finalize_release.ps1",
+      "blob_sha": "09e4bf52ae1abc3654527b2a09f62c8fdc7583e1",
+      "read_intervals_inclusive": [
+        [
+          1,
+          25
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/launcher.py",
+      "blob_sha": "36021e37bbec3679641d4b33297347a482aa739e",
+      "read_intervals_inclusive": [
+        [
+          1,
+          359
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/release_smoke.py",
+      "blob_sha": "7e6fa163a3cae17ca36c55db71c4c9e96612381a",
+      "read_intervals_inclusive": [
+        [
+          1,
+          166
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "VERSIONEN.md",
+      "blob_sha": "ed473103e24eae09342aa2e14535ddaaea205622",
+      "read_intervals_inclusive": [
+        [
+          1,
+          109
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "QUELLEN_LIZENZEN.md",
+      "blob_sha": "277fbd00482b7057da306ae26c21fcb16e4d0212",
+      "read_intervals_inclusive": [
+        [
+          1,
+          20
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "browser/manifest.json",
+      "blob_sha": "e286cc71e35d2b75dc695e5d7d5a7c1386f56a31",
+      "read_intervals_inclusive": [
+        [
+          1,
+          18
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": ".github/workflows/security.yml",
+      "blob_sha": "eba7886e08ec101422c5f3264978d368488c707f",
+      "read_intervals_inclusive": [
+        [
+          1,
+          60
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": ".github/workflows/windows-release.yml",
+      "blob_sha": "c19af3603ca6b0c5c4ad798b039537547a76e676",
+      "read_intervals_inclusive": [
+        [
+          1,
+          56
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "blob_sha": "f12b41db4e7577ae3dfd9845c2fbad39781794e9",
+      "read_intervals_inclusive": [
+        [
+          1,
+          12
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": ".github/CODEOWNERS",
+      "blob_sha": "90b9c0a597abcc171770ec658d4ddfd7e3da50b4",
+      "read_intervals_inclusive": [
+        [
+          1,
+          5
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": ".githooks/post-merge",
+      "blob_sha": "22cde7f04706cb6fdfd2f8cf1759e3613082f54c",
+      "read_intervals_inclusive": [
+        [
+          1,
+          9
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": ".githooks/post-rewrite",
+      "blob_sha": "820f3330e1f855cccef5b0cfb8f0ea0835d8507a",
+      "read_intervals_inclusive": [
+        [
+          1,
+          3
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "backend/model_setup.py",
+      "blob_sha": "7099113d5ce37ebfc5d49146f718333a1656288d",
+      "read_intervals_inclusive": [
+        [
+          1,
+          66
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "backend/doctor.py",
+      "blob_sha": "fac8045e01d2ad257617c38081d8730a64d2f088",
+      "read_intervals_inclusive": [
+        [
+          1,
+          22
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "backend/download_stockfish.py",
+      "blob_sha": "a7db20bf722ba91b486dde3488fc84303f2ed7b0",
+      "read_intervals_inclusive": [
+        [
+          1,
+          114
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "backend/vision.py",
+      "blob_sha": "62799181551f228b178083d8a5e929f2c1794d7a",
+      "read_intervals_inclusive": [
+        [
+          1,
+          146
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "tools/maintain.py",
+      "blob_sha": "f3e902996e4232c7cf5f2f07c90cf1480620318d",
+      "read_intervals_inclusive": [
+        [
+          1,
+          330
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "backend/native_overlay.py",
+      "blob_sha": "ad5e7dbebd042259b029a57596b60b242dcf012d",
+      "read_intervals_inclusive": [
+        [
+          1,
+          1397
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "tests/test_http_boundary_reliability.py",
+      "blob_sha": "d3cf5b5dc47f3732e2a664b488b3cf8069bfc0fe",
+      "read_intervals_inclusive": [
+        [
+          1,
+          207
+        ]
+      ],
+      "status": "READ_FULL",
+      "note": "Read during coordinator boundary/installer/native lifecycle review; no native execution claim."
+    },
+    {
+      "path": "tests/test_native_overlay.py",
+      "blob_sha": "21b5bc3d24017835ddae4e57d14486d2f02d3c3a",
+      "read_intervals_inclusive": [
+        [
+          1,
+          259
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tests/test_native_overlay_reliability.py",
+      "blob_sha": "44e6744c5313170badfccd3a30ed49f697ff01e0",
+      "read_intervals_inclusive": [
+        [
+          1,
+          345
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/quality_check.ps1",
+      "blob_sha": "0939f133338bd825805d7cde069238418e9cd620",
+      "read_intervals_inclusive": [
+        [
+          1,
+          51
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "tools/update_release.ps1",
+      "blob_sha": "63efeacd08ec9c3051510e255fcbbd58f356d9a7",
+      "read_intervals_inclusive": [
+        [
+          1,
+          7
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "UPDATE_ALLIE.cmd",
+      "blob_sha": "d46e903c5815082aabc843b71dd2f57cfc44566f",
+      "read_intervals_inclusive": [
+        [
+          1,
+          23
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "START_HIER.bat",
+      "blob_sha": "89418c07922841392f862ad2ed2395d107d7bc41",
+      "read_intervals_inclusive": [
+        [
+          1,
+          54
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "MODELL_EINRICHTEN.bat",
+      "blob_sha": "8f98a0f4115509e102982587d81d6b6924fc3e85",
+      "read_intervals_inclusive": [
+        [
+          1,
+          28
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "CHROME_OVERLAY_INSTALLIEREN.bat",
+      "blob_sha": "15bc2b7a3af16bb5a87eb3ebfefbfd2daa1f016b",
+      "read_intervals_inclusive": [
+        [
+          1,
+          9
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "EDGE_OVERLAY_INSTALLIEREN.bat",
+      "blob_sha": "641639b7d39cf4492f7ddce347c1ca7d87847c14",
+      "read_intervals_inclusive": [
+        [
+          1,
+          10
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": ".gitattributes",
+      "blob_sha": "113a5c450c0cfc8ad729c8966d774bd73fc3c794",
+      "read_intervals_inclusive": [
+        [
+          1,
+          1
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": ".gitignore",
+      "blob_sha": "1b94dc091a72e38bfe02e61ac6360fdbac45b1fc",
+      "read_intervals_inclusive": [
+        [
+          1,
+          22
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "blob_sha": "3723dc00b52cec65517e0fd3ddff4759593777a7",
+      "read_intervals_inclusive": [
+        [
+          1,
+          10
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": ".gitleaksignore",
+      "blob_sha": "691abf778ce99a7533f44bf7e01c4fe1309d77a2",
+      "read_intervals_inclusive": [
+        [
+          1,
+          4
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "config.json",
+      "blob_sha": "9cb42affe895cfc13fedfb5f0e9accd0fda7192b",
+      "read_intervals_inclusive": [
+        [
+          1,
+          14
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/full-audit/decisions.md",
+      "blob_sha": "d9816c9728aa0d2269b06c3a39517e4df839ccd6",
+      "read_intervals_inclusive": [
+        [
+          1,
+          10
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/release-status.md",
+      "blob_sha": "f39cd8e1e42cc7f770ac7397220b056a3d86bf19",
+      "read_intervals_inclusive": [
+        [
+          1,
+          16
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/MAINTENANCE_VERIFICATION.md",
+      "blob_sha": "2757c1671199cda78f22604d8d3e1005f3b374f1",
+      "read_intervals_inclusive": [
+        [
+          1,
+          30
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/RELEASE_AND_TRAY.md",
+      "blob_sha": "a89b57c8adfafdf15e5a06179301792cc375e81d",
+      "read_intervals_inclusive": [
+        [
+          1,
+          35
+        ]
+      ],
+      "status": "READ_FULL"
+    },
+    {
+      "path": "docs/admin-handoff.md",
+      "blob_sha": "67aca1cda1919768bb11eb416a0d2bbab805eab2",
+      "read_intervals_inclusive": [
+        [
+          1,
+          61
+        ]
+      ],
+      "status": "READ_FULL"
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-001",
+      "path": "tools/build_edge.py",
+      "trigger": "source equals output",
+      "reproduction": "TemporaryDirectory fixture source was deleted before copytree raises FileNotFoundError",
+      "status": "CONFIRMED_UNFIXED",
+      "assigned_role": "modernization"
+    },
+    {
+      "id": "NATIVE-001",
+      "severity": "P1",
+      "path": "backend/native_overlay.py",
+      "trigger": "Accepted invisible/missing-geometry/mismatching-mode frame or set_mode(normal), followed by already queued old message expiry callback",
+      "red": "native-timer-red.log: 2 methods, 4 expected subcase assertion failures; stale-hide control passed",
+      "green": "native-timer-green.log: all 36 overlay tests passed using FakeWin32",
+      "commit": "66783f48cdd8430b9c1de1d077e5836180676d82",
+      "status": "IMPLEMENTED_PEER_REVIEW_PENDING"
+    },
+    {
+      "id": "SEC-002",
+      "severity": "P1",
+      "reported_by": "allie_bugs_security independent cross-review",
+      "path": "viewer/index.html",
+      "trigger": "Remote private-mode acceptance while replay already visible or import pending",
+      "red": "remote-private-red.log: 22 passed, 3 expected assertion failures",
+      "green": "remote-private-green.log: 25 passed, no skips",
+      "fix": "Common accepted-settings adoption applies privacy synchronously; poll compares previous mode; two real-DOM regression cases added but execution environment blocked",
+      "commit": "6fa3abd04847548e7c424053a050b84e8d7b7e7f",
+      "peer_review": "Independent original adversarial reproduction rerun PASS by security role",
+      "status": "IMPLEMENTED_FOCUSED_VERIFIED_BROWSER_GATE_OPEN"
+    }
+  ],
+  "changes_reviewed": [
+    {
+      "commit": "02402fcf43699d524412d82f7128babd3271ce31",
+      "status": "DIFF_READ_AND_TARGETED_TESTS_PASS"
+    },
+    {
+      "commit": "b5234df6383e6690601690ce7d624af93f835a64",
+      "status": "DIFF_READ_AND_TARGETED_TESTS_PASS"
+    },
+    {
+      "commit": "57d4a3087d4e3cee5649c46c6f1cc8335e66b9d4",
+      "status": "DIFF_READ_AND_TARGETED_TESTS_PASS"
+    },
+    {
+      "commit": "66783f48cdd8430b9c1de1d077e5836180676d82",
+      "status": "DIFF_READ_AND_TARGETED_TESTS_PASS"
+    }
+  ]
+}

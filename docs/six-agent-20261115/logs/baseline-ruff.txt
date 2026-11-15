@@ -1,0 +1,28 @@
+WARN Failed to acquire project environment lock: Could not create temporary file
+EXE001 Shebang is present but file is not executable
+ --> backend/allie_local_server.py:1:1
+  |
+1 | #!/usr/bin/env python3
+  | ^^^^^^^^^^^^^^^^^^^^^^
+2 | """Local-only Allie 2.1 chess training analysis endpoint.
+  |
+
+EXE001 Shebang is present but file is not executable
+ --> backend/download_stockfish.py:1:1
+  |
+1 | #!/usr/bin/env python3
+  | ^^^^^^^^^^^^^^^^^^^^^^
+2 | """Stream and atomically install the hash-pinned Stockfish Windows release."""
+3 | from __future__ import annotations
+  |
+
+EXE001 Shebang is present but file is not executable
+ --> backend/live_server.py:1:1
+  |
+1 | #!/usr/bin/env python3
+  | ^^^^^^^^^^^^^^^^^^^^^^
+2 | """FastAPI boundary for the local-only studio."""
+3 | from __future__ import annotations
+  |
+
+Found 3 errors.

@@ -1,0 +1,127 @@
+{
+  "code_head": "25aecacb6fb6ee8d9ca8c428d7dee706e8ae5d46",
+  "pull_request": "https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/11",
+  "observed_utc": "2026-11-15T19:58:37Z",
+  "runs": {
+    "workflow_runs": [
+      {
+        "id": 43755351881,
+        "name": "CI",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_number": 270,
+        "jobs_url": "https://api.github.com/repos/ErpeUser/Allie21_Chess_Live_Studio/actions/runs/43755351881/jobs",
+        "logs_url": "https://api.github.com/repos/ErpeUser/Allie21_Chess_Live_Studio/actions/runs/43755351881/logs",
+        "workflow_id": 411954475
+      },
+      {
+        "id": 43755351855,
+        "name": "Security",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_number": 249,
+        "jobs_url": "https://api.github.com/repos/ErpeUser/Allie21_Chess_Live_Studio/actions/runs/43755351855/jobs",
+        "logs_url": "https://api.github.com/repos/ErpeUser/Allie21_Chess_Live_Studio/actions/runs/43755351855/logs",
+        "workflow_id": 412168477
+      }
+    ]
+  },
+  "ci_jobs": {
+    "jobs": [
+      {
+        "id": 132938136180,
+        "name": "maintenance-tests",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 43755351881,
+        "logs_url": null,
+        "steps": null
+      },
+      {
+        "id": 132938136507,
+        "name": "windows-tests",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 43755351881,
+        "logs_url": null,
+        "steps": null
+      }
+    ]
+  },
+  "security_jobs": {
+    "jobs": [
+      {
+        "id": 132938135941,
+        "name": "CodeQL (javascript-typescript)",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 43755351855,
+        "logs_url": null,
+        "steps": null
+      },
+      {
+        "id": 132938136190,
+        "name": "Secret scan",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 43755351855,
+        "logs_url": null,
+        "steps": null
+      },
+      {
+        "id": 132938136533,
+        "name": "CodeQL (python)",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 43755351855,
+        "logs_url": null,
+        "steps": null
+      }
+    ]
+  },
+  "annotation_access": {
+    "error": "HTTPError: 400: GitHub Fetch URL is not an allowed public GitHub repository or search endpoint. (Response: None)",
+    "error_code": "INVALID_ARGUMENT"
+  },
+  "log_probes": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:579203f5-001e-000f-573b-75566e000000\nTime:2026-11-15T19:58:37.3945261Z</Message></Error>"
+          }
+        ],
+        "structuredContent": {
+          "error": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:579203f5-001e-000f-573b-75566e000000\nTime:2026-11-15T19:58:37.3945261Z</Message></Error>",
+          "error_code": "NOT_FOUND",
+          "error_data": {
+            "error_str": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:579203f5-001e-000f-573b-75566e000000\nTime:2026-11-15T19:58:37.3945261Z</Message></Error>"
+          }
+        },
+        "isError": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:267ef13b-a01e-0106-6a3b-75aef6000000\nTime:2026-11-15T19:58:37.4473064Z</Message></Error>"
+          }
+        ],
+        "structuredContent": {
+          "error": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:267ef13b-a01e-0106-6a3b-75aef6000000\nTime:2026-11-15T19:58:37.4473064Z</Message></Error>",
+          "error_code": "NOT_FOUND",
+          "error_data": {
+            "error_str": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:267ef13b-a01e-0106-6a3b-75aef6000000\nTime:2026-11-15T19:58:37.4473064Z</Message></Error>"
+          }
+        },
+        "isError": true
+      }
+    }
+  ],
+  "interpretation": "Both pull-request-triggered workflows failed with null job steps. Representative Windows and secret-scan log downloads return 404 BlobNotFound. Annotation reader is unavailable through this connector. No current root cause, source-code test failure, successful CI, CodeQL or secret scan is inferred."
+}
