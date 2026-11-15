@@ -111,9 +111,9 @@ def tactical_hints(board: chess.Board) -> list[str]:
     legal = list(board.legal_moves)
     for move in legal:
         after = board.copy(stack=False)
-        san = board.san(move)
         after.push(move)
         if after.is_checkmate():
+            san = board.san(move)
             return [f"Nächster Schachmatt: {san}#"]
 
     # Keep the UI responsive in busy middlegames while still covering every
@@ -121,20 +121,22 @@ def tactical_hints(board: chess.Board) -> list[str]:
     ordered = sorted(legal, key=lambda candidate: (board.gives_check(candidate), board.is_capture(candidate)), reverse=True)[:24]
     for first in ordered:
         after_first = board.copy(stack=False)
-        first_san = board.san(first)
         after_first.push(first)
         replies = list(after_first.legal_moves)
         replies = sorted(replies, key=lambda candidate: (after_first.gives_check(candidate), after_first.is_capture(candidate)), reverse=True)[:24]
         for reply in replies:
             after_reply = after_first.copy(stack=False)
-            reply_san = after_first.san(reply)
             after_reply.push(reply)
             finishes = sorted(after_reply.legal_moves, key=lambda candidate: (after_reply.gives_check(candidate), after_reply.is_capture(candidate)), reverse=True)[:64]
             for finish in finishes:
                 final = after_reply.copy(stack=False)
-                final_san = after_reply.san(finish)
                 final.push(finish)
                 if final.is_checkmate():
+                    # Format only the returned continuation, after the scan
+                    # has established that this leaf is checkmate.
+                    first_san = board.san(first)
+                    reply_san = after_first.san(reply)
+                    final_san = after_reply.san(finish)
                     return [f"Mögliche Mattfolge in 2 Zügen: {first_san} … {reply_san} {final_san}#"]
     return []
 
