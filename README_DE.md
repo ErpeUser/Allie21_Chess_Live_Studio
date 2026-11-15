@@ -20,10 +20,20 @@ Das echte Allie-Modell wird beim Serverstart automatisch im Hintergrund mit der 
 
 ## Korrektheit und Anzeigen
 
+### Adaptive Eröffnungen und Ragebait
+
+Die Auswahl für Weiß und Schwarz ist deine bevorzugte Eröffnung. Weicht die Partie davon ab, sucht Allie in den vorhandenen Linien eine zur aktuellen Stellung passende Fortsetzung. Zugumstellungen werden erkannt; gemeinsame nächste Züge können mehrere Eröffnungen kombinieren. Die Anzeige trennt **Deine Wahl** von **Aktuell passend** und erklärt den Wechsel. Ohne passende Buchlinie geht die freie Analyse weiter.
+
+**Ragebait** bevorzugt passende ungewöhnliche Gambits, konkrete Drohungen und Königsdruck. Der Stil darf spekulativer sein als **Aggressiv**; er ist keine Zusage für den objektiv besten Zug. Ein sofortiges Matt und das Vermeiden eines gegnerischen Matts im nächsten Zug haben Vorrang. Die angezeigten Prozentwerte bleiben Allies tatsächliche menschliche Zugwahrscheinlichkeiten. Frische Profile starten mit Ragebait; einen bereits gespeicherten anderen Stil kannst du im Feld **Spielstil** umstellen.
+
+Remisstellungen behalten ihre aktuellen Zughinweise, solange legale Züge vorhanden sind. Bei Matt/Patt ohne legalen Zug bleibt die Anzeige ohne Zugpfeil. Der explizite Rückblick auf eine beendete Partie bleibt getrennt von der sichtbaren Live-Stellung.
+
+### Pfeilfarben
+
 - Starkgrün: mein Allie Top 1; Hellgrün: mein Allie Top 2.
 - Starkrot: Gegner Allie Top 1; Hellrot: Gegner Allie Top 2.
-- Blau: bester sicherer Pre-Move, der über die wahrscheinlichsten Gegnerzweige hinweg legal bleibt.
-- Allie bestimmt bei vollständiger Historie die Reihenfolge; Stockfish bewertet anschließend ihre Kandidaten. Bei einem Einstieg mitten in der Partie startet nach dem ersten eindeutig beobachteten Zug automatisch ein konservativer Stockfish-Fallback ohne erfundene Rochade- oder en-passant-Rechte.
+- Blau: geplante eigene Fortsetzung über die untersuchten Gegnerzweige. Risiko und Zweigabdeckung berücksichtigen, bei welchen Antworten der Zug als Allie-Kandidat verfügbar bleibt.
+- Allie liefert bei vollständiger Historie die menschlichen Zugwahrscheinlichkeiten. Eigene Stil-/Repertoirepräferenzen und verfügbare Stockfish-Bewertungen werden vor der zugehörigen Vorschau angewandt; Gegnerprognosen bleiben in Modellreihenfolge. Bei einem Einstieg mitten in der Partie startet nach dem ersten eindeutig beobachteten Zug automatisch ein konservativer Stockfish-Fallback ohne erfundene Rochade- oder en-passant-Rechte.
 
 Brettorientierung und Spielerfarbe werden getrennt verwaltet und bei Livepartien standardmäßig automatisch aus dem sichtbaren Brett bestimmt; Weiss/Schwarz bleiben als manuelle Overrides verfügbar. Bei einem Einstieg mitten in der Partie werden fehlende Züge, Rochaderechte und en-passant-Rechte nicht erfunden. Allie wartet auf eine vollständige PGN; Stockfish kann eine ausdrücklich gelieferte FEN dennoch analysieren.
 
@@ -56,11 +66,11 @@ Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begr
 
 Die Browser-Erweiterung öffnet über ihre Optionen die Einstellung „Lokaler Port“ und speichert sie in `chrome.storage.local`; das Userscript bietet denselben Port im Allie-Menü. Beide müssen mit `ALLIE_PORT` des Servers übereinstimmen. Die Erweiterung verwendet für localhost bewusst eine Port-Wildcard und fragt den konfigurierten Port über den MV3-Service-Worker ab.
 
-## Wiederaufnahme- und Release-Status (14.11.2026, main 15464e2)
+## Aktueller Quellstand und lokale Installation
 
 Der technische Checkpoint steht in `VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
 
-Die Anwendung/Userscript-Version dieses Prüfbranches ist 11.2.25. Die separat versionierte Edge-Erweiterung ist 11.2.25.0/11.2.25; `tools/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt. Dies ist noch keine Windows-/Edge-Freigabe und aktualisiert keine lokale Installation.
+Die Anwendung/Userscript-Version ist 11.2.26. Die separat versionierte Edge-Erweiterung ist 11.2.26.0/11.2.26; `tools/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt. [PR #12](https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/12) enthält die Remis-, Eröffnungs- und Ragebait-Änderungen mit ihren aktuellen automatisierten Prüfergebnissen. Für die lokale Aktualisierung im Windows-Git-Checkout `UPDATE_ALLIE.cmd` ausführen; die [Update-Anleitung](docs/UPDATE_PIPELINE_DE.md) erklärt Voraussetzungen und PR-Prüfung.
 
 Neu ist der [lokale PGN-Lernrückblick](docs/PGN_TRAINING_DE.md): eine bewusst importierte Partie auf einem Schachbrett schrittweise ansehen, per Tastatur navigieren und Figuren/FEN als Text lesen. Der Rückblick benötigt keine Modellgewichte und startet keine Engine. Die [Sechs-Rollen-Prüfung](docs/six-agent-20261115/README.md) enthält Fixes, Messwerte, unabhängige Gegenprüfungen und offene Abnahmen.
 

@@ -66,8 +66,8 @@ class LiveSession:
         if player_side not in ('white', 'black'):
             raise ValueError('Spielerfarbe muss white oder black sein')
         play_style = str(settings.get('play_style', 'normal'))
-        if play_style not in ('normal', 'aggressive'):
-            raise ValueError('Spielstil muss normal oder aggressive sein')
+        if play_style not in ('normal', 'aggressive', 'ragebait'):
+            raise ValueError('Spielstil muss normal, aggressive oder ragebait sein')
         opening_white = str(settings.get('opening_white', 'grob'))
         if opening_white not in ('grob', 'vienna', 'danish', 'bongcloud', 'halloween', 'steinitz', 'frankenstein'):
             raise ValueError('Ungültiges weißes Opening')

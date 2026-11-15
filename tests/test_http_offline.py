@@ -148,6 +148,29 @@ class HTTPBoundaryTests(unittest.TestCase):
         response.read()
         client.close()
 
+    def test_ragebait_style_crosses_http_and_live_validation(self):
+        from live_session import LiveSession
+        live = LiveSession()
+        try:
+            with patch.object(app, 'SESSION', live):
+                status, data = self.call('POST', '/api/start', payload={
+                    'play_style': 'ragebait', 'opening_white': 'halloween',
+                    'opening_black': 'stafford',
+                })
+                self.assertEqual(status, 200, data)
+                self.assertTrue(json.loads(data)['running'])
+                self.assertEqual(live.settings['play_style'], 'ragebait')
+                self.assertEqual(live.settings['opening_white'], 'halloween')
+                self.assertEqual(live.settings['opening_black'], 'stafford')
+            status, data = self.call('POST', '/analyze', payload={
+                'pgn': '*', 'play_style': 'ragebait', 'analysis_source': 'allie',
+            })
+            self.assertEqual(status, 200, data)
+            status, _ = self.call('POST', '/api/start', payload={'play_style': 'invalid-style'})
+            self.assertEqual(status, 400)
+        finally:
+            live.stop()
+
     def test_capability_handshake_returns_instance_metadata(self):
         status, data = self.call('GET', '/api/capability',
                                  origin='https://www.chess.com', overlay=True,

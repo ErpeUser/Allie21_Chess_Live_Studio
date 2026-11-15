@@ -102,6 +102,18 @@ class DrawAnalysisTests(unittest.TestCase):
         self.assertEqual(result['fen'],
                          'rnbqkb1r/pppppppp/5n2/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 15 8')
 
+    def test_ragebait_keeps_current_arrows_and_drawn_preview_continuations(self):
+        result = analyse_position({
+            'pgn': ' '.join((KNIGHT_CYCLE * 38)[:149]),
+            'analysis_source': 'allie', 'player_side': 'black',
+            'play_style': 'ragebait',
+        }, KnightCycleModel())
+
+        self.assertEqual(result['fen'].split()[-2:], ['149', '75'])
+        self.assertEqual(result['my_moves'][0]['uci'], 'g8f6')
+        self.assertEqual(result['opponent_moves'][0]['uci'], 'f3g1')
+        self.assertEqual(result['premove']['uci'], 'f6g8')
+
     def test_positions_without_legal_moves_still_reject_analysis(self):
         for fen in TERMINAL_FENS:
             with self.subTest(fen=fen), self.assertRaisesRegex(ValueError, 'Partie beendet'):

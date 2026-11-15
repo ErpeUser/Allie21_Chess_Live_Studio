@@ -128,13 +128,14 @@ details{border-top:1px solid #644832;margin-top:13px;padding-top:3px}summary{cur
         <label class="recommendation-switch" id="normalOverlaySwitch"><span><strong>Browser-HUD nur im Schach-Tab</strong><small>Kein natives Windows-Overlay; Pfeile und Hinweise bleiben im geöffneten Schach-Tab.</small></span><span class="switch-state" id="normalOverlayState">Aus</span><span class="switch-control"><input type="checkbox" id="normalOverlayToggle" aria-label="Browser-HUD nur im Schach-Tab"><span class="switch-track" aria-hidden="true"></span></span></label>
         <p class="hint" id="privateOverlayStatus" role="status" aria-live="polite">Capture-Schutz wird geprueft ...</p>
         <button class="btn ghost" id="retryPrivateOverlay" hidden>Privates Overlay erneut pruefen</button>
-        <div class="field"><label for="playStyle">Menschliches Analyseprofil</label>
-          <select class="control stream-setting" id="playStyle"><option value="normal">Allie - normales Profil</option><option value="aggressive">Aggressiv - heuristische Umordnung</option></select>
-          <p class="hint">Elo, Zeitkontrolle und echte Partiegeschichte steuern Allie. Keine zufaelligen Scheinwahrscheinlichkeiten.</p>
+        <div class="field"><label for="playStyle">Spielstil</label>
+          <select class="control stream-setting" id="playStyle"><option value="normal">Normal · menschlich wahrscheinlich</option><option value="aggressive">Aggressiv · Matt und Königsdruck</option><option value="ragebait">Ragebait · Gambits und Fallen</option></select>
+          <p class="hint">Elo, Zeitkontrolle und Partiegeschichte steuern Allie. Ragebait bevorzugt ungewöhnliche Gambits und Fallen.</p>
         </div>
         <div class="field-grid"><div class="field"><label for="white">Weiß-Elo</label><input class="control stream-setting" id="white" type="number" min="600" max="2800" step="50" required></div><div class="field"><label for="black">Schwarz-Elo</label><input class="control stream-setting" id="black" type="number" min="600" max="2800" step="50" required></div></div>
         <div class="field-grid"><div class="field"><label for="tc">Zeitkontrolle</label><input class="control stream-setting" id="tc" placeholder="300+0" pattern="[0-9]{1,5}\+[0-9]{1,4}" aria-describedby="tcHint" required><p class="hint" id="tcHint">Sekunden + Inkrement, z. B. 300+0 (1–86400 + 0–3600)</p></div><div class="field"><label for="playerSide">Deine Farbe</label><select class="control stream-setting" id="playerSide"><option value="white">Weiß</option><option value="black">Schwarz</option></select><p class="hint">Unabhängig von der Brettorientierung</p></div></div>
-        <div class="field-grid"><div class="field"><label for="openingWhite">Weißes Opening</label><select class="control stream-setting" id="openingWhite"><option value="grob">Grob Gambit · Ragebait</option><option value="bongcloud">Bongcloud</option><option value="halloween">Halloween-Gambit</option><option value="vienna">Wiener Gambit</option><option value="steinitz">Steinitz-Gambit</option><option value="frankenstein">Frankenstein-Dracula</option><option value="danish">Dänisches Gambit</option></select></div><div class="field"><label for="openingBlack">Schwarzes Opening</label><select class="control stream-setting" id="openingBlack"><option value="englund">Englund Gambit · Ragebait</option><option value="stafford">Stafford-Gambit</option><option value="traxler">Traxler-Gegenangriff</option><option value="budapest">Budapester Gambit</option><option value="alekhine">Aljechin-Verteidigung</option></select></div></div>
+        <div class="field-grid"><div class="field"><label for="openingWhite">Bevorzugte Eröffnung · Weiß</label><select class="control stream-setting" id="openingWhite"><option value="grob">Grob Gambit · Ragebait</option><option value="bongcloud">Bongcloud</option><option value="halloween">Halloween-Gambit</option><option value="vienna">Wiener Gambit</option><option value="steinitz">Steinitz-Gambit</option><option value="frankenstein">Frankenstein-Dracula</option><option value="danish">Dänisches Gambit</option></select></div><div class="field"><label for="openingBlack">Bevorzugte Eröffnung · Schwarz</label><select class="control stream-setting" id="openingBlack"><option value="englund">Englund Gambit · Ragebait</option><option value="stafford">Stafford-Gambit</option><option value="traxler">Traxler-Gegenangriff</option><option value="budapest">Budapester Gambit</option><option value="alekhine">Aljechin-Verteidigung</option></select></div></div>
+        <p class="hint">Passt deine bevorzugte Linie nicht mehr, kombiniert Allie passende Eröffnungsideen oder folgt einer anderen vorhandenen Linie. Deine Auswahl bleibt gespeichert.</p>
         <label class="check"><input type="checkbox" class="stream-setting" id="ocr"><span>Sichtbare Zugfolge per OCR lesen <span class="hint">(optional, benötigt mehr Leistung)</span></span></label>
         <label class="check"><input type="checkbox" id="hudToggle" checked><span>Hinweise neben dem Streambild anzeigen</span></label>
         <div id="settingsDirty" class="dirty">Änderungen gelten beim nächsten Start.</div></div></details>
@@ -171,7 +172,7 @@ FORM_SETTINGS.white_elo=normalizeElo(FORM_SETTINGS.white_elo);FORM_SETTINGS.blac
 if(!['white','black'].includes(FORM_SETTINGS.player_side))FORM_SETTINGS.player_side=SETTINGS.player_side||'white';
 if(!['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'].includes(FORM_SETTINGS.opening_white))FORM_SETTINGS.opening_white='grob';
 if(!['englund','stafford','traxler','budapest','alekhine'].includes(FORM_SETTINGS.opening_black))FORM_SETTINGS.opening_black='englund';
-$('playStyle').value=['normal','aggressive'].includes(FORM_SETTINGS.play_style)?FORM_SETTINGS.play_style:'normal';
+$('playStyle').value=FORM_SETTINGS.play_style===undefined?'ragebait':['normal','aggressive','ragebait'].includes(FORM_SETTINGS.play_style)?FORM_SETTINGS.play_style:'normal';
 $('captureSource').value=['window','browser','monitor'].includes(FORM_SETTINGS.capture_source)?FORM_SETTINGS.capture_source:'window';
 $('install').href='/install';
 $('white').value=FORM_SETTINGS.white_elo;$('black').value=FORM_SETTINGS.black_elo;$('tc').value=FORM_SETTINGS.time_control;$('playerSide').value=FORM_SETTINGS.player_side;$('ocr').checked=FORM_SETTINGS.ocr_history;
@@ -525,7 +526,7 @@ $('replayNavigation').addEventListener('keydown',event=>{
 });
 const OPENING_VALUES=Object.freeze({white:['grob','bongcloud','halloween','vienna','steinitz','frankenstein','danish'],black:['englund','stafford','traxler','budapest','alekhine']});
 function selectedOpeningSettings(){const white=$('openingWhite').value,black=$('openingBlack').value;return{opening_white:OPENING_VALUES.white.includes(white)?white:'grob',opening_black:OPENING_VALUES.black.includes(black)?black:'englund'}}
-function settings(){return{white_elo:Number($('white').value),black_elo:Number($('black').value),player_side:$('playerSide').value,play_style:$('playStyle').value==='aggressive'?'aggressive':'normal',time_control:$('tc').value.trim(),ocr_history:$('ocr').checked,recommendations_enabled:$('recommendationsToggle').checked,...selectedOpeningSettings()}}
+function settings(){return{white_elo:Number($('white').value),black_elo:Number($('black').value),player_side:$('playerSide').value,play_style:['normal','aggressive','ragebait'].includes($('playStyle').value)?$('playStyle').value:'normal',time_control:$('tc').value.trim(),ocr_history:$('ocr').checked,recommendations_enabled:$('recommendationsToggle').checked,...selectedOpeningSettings()}}
 function persistSettings(){try{localStorage.setItem(USER_SETTINGS_KEY,JSON.stringify({...settings(),capture_source:$('captureSource').value}))}catch{}}
 function validSettings(){
   const white=Number($('white').value),black=Number($('black').value),time=String($('tc').value||'').trim();
@@ -535,13 +536,25 @@ function validSettings(){
   return true;
 }
 const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function repertoireLines(repertoire){
+  if(!repertoire?.primary)return [];
+  const lines=[`Deine Wahl: ${repertoire.primary}`],hasActive=Object.hasOwn(repertoire,'active_selection');
+  if(hasActive){
+    lines.push(`Aktuell passend: ${repertoire.active_selection?(repertoire.active_primary||repertoire.primary):'Freies Spiel'}`);
+    const shared=Array.isArray(repertoire.compatible_openings)?[...new Set(repertoire.compatible_openings.filter(name=>typeof name==='string'&&name.trim()))]:[];
+    if(repertoire.active_selection&&shared.length>1)lines.push(`Gemeinsame Fortsetzung: ${shared.join(' · ')}`);
+  }
+  if(repertoire.adaptation_reason)lines.push(String(repertoire.adaptation_reason));
+  if(repertoire.expected_san&&(!hasActive||repertoire.active_selection))lines.push(`${repertoire.applied===true?'Repertoirezug':'Möglicher Repertoirezug'}: ${repertoire.expected_san}`);
+  return lines;
+}
 function format(d){
   if(!d)return'<div class="empty">Noch keine Engine-Ergebnisse.</div>';let h='';
   h+='<div class="arrow-legend"><span class="green">Mein Top 1 / Mein Top 2</span><span class="red">Gegner Top 1 / Gegner Top 2</span><span class="blue">Sicherer Pre-Move (bedingt)</span></div>';
   const selected=d.opening_selection||{};
-  if(selected.white?.primary&&selected.black?.primary)h+=`<div class="opening-choice-grid"><div class="opening-choice"><small>Weißes Opening</small><b>${esc(selected.white.primary)}</b></div><div class="opening-choice"><small>Schwarzes Opening</small><b>${esc(selected.black.primary)}</b></div></div>`;
+  if(selected.white?.primary&&selected.black?.primary)h+=`<div class="opening-choice-grid"><div class="opening-choice"><small>Deine Wahl · Weiß</small><b>${esc(selected.white.primary)}</b></div><div class="opening-choice"><small>Deine Wahl · Schwarz</small><b>${esc(selected.black.primary)}</b></div></div>`;
   const planText=(d.plan_messages||[]).join(" ");for(const hint of d.tactical_hints||[])if(!planText.includes(String(hint)))h+=`<div class="tactical-bubble">⚡ ${esc(hint)}</div>`;
-  if(d.repertoire?.primary){h+=`<div class="chat-message"><b>Repertoire:</b> ${esc(d.repertoire.primary)}${d.repertoire.selection?` · Auswahl ${esc(d.repertoire.selection)}`:''}${d.repertoire.expected_san?` · nächster Wunschzug ${esc(d.repertoire.expected_san)}`:''}</div>`}
+  const repertoire=repertoireLines(d.repertoire);if(repertoire.length)h+=`<div class="chat-message">${repertoire.map(esc).join('<br>')}</div>`;
   for(const message of d.plan_messages||[])h+=`<div class="chat-message">${esc(message)}</div>`;
   if(Array.isArray(d.moves)&&d.moves.length){
     h+='<div class="analysis-title">Allie - menschliche Zugwahrscheinlichkeiten</div>';

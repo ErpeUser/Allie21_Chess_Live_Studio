@@ -191,7 +191,7 @@ class StartRequest(InputModel):
     time_control: str = CONFIG['time_control']
     ocr_history: bool = CONFIG['ocr_history']
     recommendations_enabled: bool = True
-    play_style: Literal['normal', 'aggressive'] = 'normal'
+    play_style: Literal['normal', 'aggressive', 'ragebait'] = 'normal'
     opening_white: Literal['grob', 'vienna', 'danish', 'bongcloud', 'halloween', 'steinitz', 'frankenstein'] = 'grob'
     opening_black: Literal['englund', 'budapest', 'alekhine', 'stafford', 'traxler'] = 'englund'
 

@@ -1,6 +1,12 @@
 # Reproduzierbare Versionen und Prüfstand
 
-## Prüfbranch 11.2.25 / Edge-Erweiterung 11.2.25.0
+## Quellstand 11.2.26 / Edge-Erweiterung 11.2.26.0
+
+PR #12 erweitert den Remis-Pfeilfix um adaptive Eröffnungen und den zusätzlichen Ragebait-Stil. Eigene Zugauswahl und zugehörige Vorschau werden in konsistenter Reihenfolge berechnet. Die bevorzugten Eröffnungen bleiben gespeichert, während die Anzeige die aktuell passende Linie erklärt.
+
+Anwendung, Userscript und lokale Projektmetadaten sind 11.2.26; die Extension ist 11.2.26.0 mit `version_name` 11.2.26. Der Schlüssel und die ID `omboihgfgofgmidefcpkihgglhkiielo` bleiben erhalten. In `uv.lock` ändert sich ausschließlich die Version des lokalen Projekts. Testergebnisse stehen im PR; ein Quellstand oder CI-Lauf aktualisiert keine Windows-Installation auf dem Benutzer-PC.
+
+## Historischer Prüfbranch 11.2.25 / Edge-Erweiterung 11.2.25.0
 
 Ausgangspunkt ist `main` bei `c5ea9a324a28f1b16fb544cfbe2ef140178213a0` vom 15. November 2026. Der separate Branch `fix/allie21-six-agent-20261115` enthält den lokalen PGN-Lernrückblick sowie reproduzierte Sicherheits-, Lifecycle-, Build- und Performancekorrekturen. Die Änderung am Userscript erfordert die neue App-/Userscript- und Extension-Version. Der Manifest-Schlüssel und die ID `omboihgfgofgmidefcpkihgglhkiielo` bleiben unverändert.
 

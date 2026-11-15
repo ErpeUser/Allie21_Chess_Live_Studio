@@ -1,8 +1,12 @@
-## Noch nicht veröffentlicht — Pfeile in Remisstellungen
+## v11.2.26 — Remis-Pfeile, adaptive Openings und Ragebait
 
+- Bevorzugte Eröffnungen können in eine andere passende vorhandene Linie übergehen. Vollständiger Stellungsabgleich erkennt Zugumstellungen und gemeinsame Pläne, ohne spätere Wiederholungen als neue Eröffnung zu behandeln.
+- Ragebait berücksichtigt spekulative Repertoirezüge und konkrete Angriffsideen aus den tatsächlichen Allie-Kandidaten. Modellwahrscheinlichkeiten bleiben unverändert; taktischer Vorrang und verfügbare Engine-Bewertungen begrenzen die Auswahl.
+- Eigene Hauptzüge werden vor ihren Gegnerantworten und blauen Fortsetzungen endgültig geordnet. Die Oberfläche zeigt bevorzugte und aktuell passende Eröffnungen getrennt; frische Profile starten mit Ragebait, gespeicherte Stile bleiben erhalten.
 - Aktuelle Zugpfeile bleiben auch bei automatischem Remis durch Stellungswiederholung, die 75-Züge-Regel oder unzureichendes Mattmaterial verfügbar, solange die Stellung legale Züge hat.
 - Gegnerantworten und Pre-Move-Fortsetzungen werden bei Remisstellungen weiter analysiert. Matt und Patt ohne legale Züge sowie der ausdrücklich angeforderte Rückblick auf die letzte Entscheidung behalten ihr bisheriges Verhalten.
 - Regressionstests prüfen Remisstellungen, Nullbewertungen, die Vorschau an der 75-Züge-Grenze und die Veröffentlichung durch den Live-Worker.
+- Zwei vorhandene Windows-Testprobleme sind korrigiert: bytegenaue LF-/CRLF-Fixtures und das Öffnen der FEN-Textansicht vor dem Lesen sichtbaren Texts. App/Userscript 11.2.26, Extension 11.2.26.0; unveränderter Schlüssel und unveränderte ID.
 
 ## v11.2.25 — Prüfbranch, native Abnahme offen
 

@@ -59,6 +59,29 @@ TROLL_OPENING_OPTIONS = {
         'traxler': ('Traxler-Gegenangriff', ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'f3g5', 'f8c5')),
     },
 }
+# Exact continuations from the bundled c.tsv: Halloween Oldtimer, Stafford
+# Accepted (5.Nc3 and 5.d3), and Traxler King March. These extend only the
+# adaptive book; the original selected-line helpers retain their contract.
+ADAPTIVE_TRAP_LINES: dict[str, dict[str, tuple[tuple[str, ...], ...]]] = {
+    'white': {
+        'halloween': (
+            ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'b1c3', 'g8f6', 'f3e5', 'c6e5',
+             'd2d4', 'e5g6', 'e4e5', 'f6g8', 'f1c4', 'f8b4', 'd1f3', 'f7f5'),
+        ),
+    },
+    'black': {
+        'stafford': (
+            ('e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5', 'b8c6', 'e5c6', 'd7c6',
+             'b1c3', 'f8c5'),
+            ('e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5', 'b8c6', 'e5c6', 'd7c6',
+             'd2d3', 'f8c5'),
+        ),
+        'traxler': (
+            ('e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'f3g5', 'f8c5',
+             'g5f7', 'c5f2', 'e1f2', 'f6e4', 'f2e3'),
+        ),
+    },
+}
 DEFAULT_OPENINGS = {'white': 'grob', 'black': 'englund'}
 
 
@@ -99,6 +122,72 @@ def repertoire_move_for(moves: list[str], side: str, selection: str | None = Non
     if len(history) < len(line) and line[:len(history)] == history:
         return line[len(history)]
     return None
+
+
+def adaptive_repertoire_candidates(
+    moves: list[str], side: str, selection: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return compatible book continuations for the player's current turn.
+
+    Full legal EPD and equal ply must match: transposed move orders are allowed,
+    but lost castling rights, legal en passant and late repetitions cannot be
+    mistaken for the original opening. This is book compatibility, not an
+    estimate of a move's success probability.
+    """
+    normalized = str(side).lower()
+    if normalized not in OPENING_OPTIONS or not isinstance(moves, list):
+        return []
+    options = {**OPENING_OPTIONS[normalized], **TROLL_OPENING_OPTIONS[normalized]}
+    preferred = str(selection or DEFAULT_OPENINGS[normalized]).lower()
+    if preferred not in options:
+        preferred = DEFAULT_OPENINGS[normalized]
+    extra = ADAPTIVE_TRAP_LINES.get(normalized, {})
+    book_lines = {key: (line, *extra.get(key, ())) for key, (_name, line) in options.items()}
+    history = tuple(moves)
+    ply = len(history)
+    if ply >= max(len(line) for lines in book_lines.values() for line in lines):
+        return []
+    board = chess.Board()
+    try:
+        for uci in history:
+            if not isinstance(uci, str):
+                return []
+            move = chess.Move.from_uci(uci)
+            if move not in board.legal_moves:
+                return []
+            board.push(move)
+    except ValueError:
+        return []
+    if board.turn != (normalized == 'white'):
+        return []
+    current_epd = epd_key(board)
+    candidates: dict[tuple[str, str], dict[str, Any]] = {}
+    for key, (name, _line) in options.items():
+        for line in book_lines[key]:
+            if ply >= len(line):
+                continue
+            prefix = line[:ply]
+            book_board = chess.Board()
+            for uci in prefix:
+                book_board.push_uci(uci)
+            if epd_key(book_board) != current_epd:
+                continue
+            move = chess.Move.from_uci(line[ply])
+            if move not in board.legal_moves:
+                continue
+            identity = (key, move.uci())
+            previous = candidates.get(identity)
+            if previous is not None and previous['match'] == 'exact':
+                continue
+            candidates[identity] = {
+                'selection': key, 'primary': name, 'uci': move.uci(),
+                'san': board.san(move),
+                'match': 'exact' if prefix == history else 'transposition',
+                'matched_plies': ply, 'preferred': key == preferred,
+            }
+    return sorted(candidates.values(),
+                  key=lambda item: (not item['preferred'], item['selection'], item['uci']))
+
 
 def tactical_hints(board: chess.Board) -> list[str]:
     """Return short, legal mate hints for the visible position.
@@ -399,7 +488,8 @@ def stockfish_lines(
             except (ValueError, AssertionError):
                 continue
             lines.append({'san': first_san, 'uci': pv[0].uci(), 'score': label,
-                          'score_cp': centipawns, 'depth': info.get('depth'), 'variation': pv_san})
+                          'score_cp': centipawns, 'score_mate': mate,
+                          'depth': info.get('depth'), 'variation': pv_san})
         return {
             'available': True,
             'engine': 'Stockfish',

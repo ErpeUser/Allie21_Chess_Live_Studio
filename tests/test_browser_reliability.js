@@ -59,7 +59,7 @@ function loadBrowser({stored = {}, privateStored = {privateMode: false}, respons
   window.getComputedStyle = context.getComputedStyle;
   const marker = '\n installNavigationLifecycle();';
   assert.ok(source.includes(marker));
-  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,paint,clearOverlay,show,showTransientHint,clearTransientHint,el,wrapper,tick,readBoardSnapshot,hideForInactive,restoreOverlayAfterVisibility:typeof restoreOverlayAfterVisibility===\'function\'?restoreOverlayAfterVisibility:null,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
+  const code = source.slice(0, source.lastIndexOf(marker)) + '\n globalThis.hooks={cfg,fill,updateSettings,panelPosition,syncPrivateMode,sendOverlayMode,postJson,ensureServicePort,analyze,paint,clearOverlay,show,showTransientHint,clearTransientHint,el,wrapper,tick,readBoardSnapshot,hideForInactive,restoreOverlayAfterVisibility:typeof restoreOverlayAfterVisibility===\'function\'?restoreOverlayAfterVisibility:null,setBoard(b){currentBoard=b;},getKey(){return analysisKey;},setBoardReaders(b){boardElement=()=>b;atHistoryEnd=()=>true;boardOrientation=()=>"white";pieceNodes=()=>[];observeBoardGeometry=()=>{};sendVisualUpdate=()=>{};}};\n})();';
   vm.createContext(context);
   vm.runInContext(code, context, {filename: 'allie21_overlay.user.js'});
   return {hooks: context.hooks, context, values, elements, requests, timers, Element};
@@ -78,6 +78,99 @@ test('opening keys survive save and reload, including legacy snake_case values',
   const restored = loadBrowser({stored: JSON.parse(app.values.get('allie21.auto.v11'))});
   assert.equal(restored.elements.get('whiteOpening').value, 'danish');
   assert.equal(restored.elements.get('blackOpening').value, 'budapest');
+});
+
+test('fresh browser settings use Ragebait without changing remembered styles', () => {
+  assert.equal(loadBrowser().hooks.cfg.playStyle, 'ragebait');
+  for (const playStyle of ['normal', 'aggressive', 'ragebait']) {
+    const app = loadBrowser({stored: {playStyle}});
+    assert.equal(app.elements.get('playStyle').value, playStyle);
+    assert.equal(JSON.parse(app.values.get('allie21.auto.v11')).playStyle, playStyle);
+  }
+});
+
+test('browser Ragebait survives saving and reaches the analysis request', async () => {
+  const app = loadBrowser({stored: {playStyle: 'normal', whiteOpening: 'vienna', blackOpening: 'englund'}});
+  app.elements.get('playStyle').value = 'ragebait';
+  app.hooks.updateSettings();
+  const restored = loadBrowser({stored: JSON.parse(app.values.get('allie21.auto.v11'))});
+  assert.equal(restored.elements.get('playStyle').value, 'ragebait');
+  restored.hooks.analyze('*');
+  await settle();
+  const request = restored.requests.find(item => item.url.endsWith('/analyze'));
+  assert.ok(request, 'analysis must receive the restored setting');
+  const payload = JSON.parse(request.options.body);
+  assert.equal(payload.play_style, 'ragebait');
+  assert.equal(payload.opening_white, 'vienna');
+  assert.equal(payload.opening_black, 'englund');
+});
+
+test('browser explains a compatible opening without overwriting the preferred opening', () => {
+  const app = loadBrowser({stored: {whiteOpening: 'vienna', blackOpening: 'englund'}});
+  const saved = app.values.get('allie21.auto.v11');
+  app.hooks.show({repertoire: {
+    selection: 'englund', primary: 'Englund Gambit',
+    active_selection: 'stafford', active_primary: 'Stafford-Gambit',
+    compatible_openings: ['Stafford-Gambit', 'Traxler-Gegenangriff'],
+    adaptation_reason: 'Nach e4 passen andere Gambits zur Stellung.',
+    expected_san: 'e5', applied: true,
+  }});
+  const html = app.elements.get('results').innerHTML;
+  assert.match(html, /Deine Wahl:.*Englund Gambit/);
+  assert.match(html, /Aktuell passend:.*Stafford-Gambit/);
+  assert.match(html, /Gemeinsame Fortsetzung:.*Stafford-Gambit.*Traxler-Gegenangriff/);
+  assert.match(html, /Nach e4 passen andere Gambits zur Stellung\./);
+  assert.match(html, /Repertoirezug:.*e5/);
+  assert.doesNotMatch(html, /Auswahl englund/);
+  assert.equal(app.elements.get('blackOpening').value, 'englund');
+  assert.equal(app.elements.get('whiteOpening').value, 'vienna');
+  assert.equal(app.values.get('allie21.auto.v11'), saved);
+});
+
+test('browser labels an unapplied repertoire move as a possibility', () => {
+  const app = loadBrowser();
+  app.hooks.show({repertoire: {primary: 'Wiener Gambit', selection: 'vienna',
+    active_selection: 'vienna', active_primary: 'Wiener Gambit',
+    expected_san: 'f4', applied: false}});
+  assert.match(app.elements.get('results').innerHTML, /Möglicher Repertoirezug:.*f4/);
+  assert.doesNotMatch(app.elements.get('results').innerHTML, /nächster Wunschzug|Nächster Repertoirezug/);
+});
+
+test('browser distinguishes free play from a legacy response without adaptation metadata', () => {
+  const app = loadBrowser();
+  app.hooks.show({repertoire: {primary: 'Grob Gambit', selection: 'grob',
+    active_selection: null, active_primary: null, compatible_openings: [],
+    adaptation_reason: 'Keine gespeicherte Eröffnung passt mehr.', applied: false}});
+  assert.match(app.elements.get('results').innerHTML, /Deine Wahl:.*Grob Gambit/);
+  assert.match(app.elements.get('results').innerHTML, /Aktuell passend:.*Freies Spiel/);
+  assert.match(app.elements.get('results').innerHTML, /Keine gespeicherte Eröffnung passt mehr\./);
+  app.hooks.show({repertoire: {primary: 'Wiener Gambit', selection: 'vienna', expected_san: 'e4'}});
+  assert.match(app.elements.get('results').innerHTML, /Deine Wahl:.*Wiener Gambit/);
+  assert.match(app.elements.get('results').innerHTML, /Möglicher Repertoirezug:.*e4/);
+  assert.doesNotMatch(app.elements.get('results').innerHTML, /Freies Spiel|undefined/);
+});
+
+test('browser escapes all adaptive repertoire display values', () => {
+  const app = loadBrowser();
+  app.hooks.show({repertoire: {primary: 'Wunsch <b>', selection: 'grob',
+    active_selection: 'vienna', active_primary: 'Aktiv <i>',
+    compatible_openings: ['Plan <svg>', 'Plan & Angriff'],
+    adaptation_reason: 'Antwort <script> und & Plan', expected_san: '<zug>', applied: false}});
+  const html = app.elements.get('results').innerHTML;
+  for (const escaped of ['Wunsch &lt;b&gt;', 'Aktiv &lt;i&gt;', 'Plan &lt;svg&gt;',
+    'Plan &amp; Angriff', 'Antwort &lt;script&gt; und &amp; Plan', '&lt;zug&gt;']) {
+    assert.ok(html.includes(escaped), escaped);
+  }
+  assert.doesNotMatch(html, /<svg>|<script>|<zug>/);
+});
+
+test('browser private mode suppresses adaptive repertoire text', () => {
+  const app = loadBrowser({privateStored: {privateMode: true}});
+  app.hooks.show({repertoire: {primary: 'Englund Gambit', active_selection: 'stafford',
+    active_primary: 'Stafford-Gambit', adaptation_reason: 'Andere Fortsetzung passt.'}});
+  assert.equal(app.elements.get('results').hidden, true);
+  assert.equal(app.hooks.wrapper.style.display, 'none');
+  assert.doesNotMatch(app.elements.get('results').innerHTML, /Stafford|Englund|Fortsetzung/);
 });
 
 test('narrow-view panel never overlaps the board; document fallback stays below it', () => {
