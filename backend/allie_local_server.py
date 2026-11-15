@@ -23,12 +23,12 @@ from typing import Any
 import chess
 import chess.pgn
 from chess_extras import (
+    adaptive_repertoire_candidates,
     describe_candidate,
     make_brief,
     opening_for_position,
     opening_note,
     position_facts,
-    repertoire_move_for,
     standard_repertoire,
     stockfish_lines,
     tactical_hints,
@@ -232,43 +232,152 @@ def describe_move(board: chess.Board, uci: str, probability: float) -> dict[str,
     }
 
 
+def _candidate_pressure(board: chess.Board, uci: str) -> tuple[int, int, int, int, int]:
+    """Measure actual board tactics without replacing a model probability."""
+    after = board.copy(stack=False)
+    move = after.push_uci(uci)
+    own_mate = after.is_checkmate()
+    opponent_can_mate = False
+    if not own_mate:
+        for reply in after.legal_moves:
+            probe = after.copy(stack=False)
+            probe.push(reply)
+            if probe.is_checkmate():
+                opponent_can_mate = True
+                break
+    attacker = not after.turn
+    king = after.king(after.turn)
+    ring = chess.SquareSet(chess.BB_KING_ATTACKS[king]) if king is not None else ()
+    attacked = sum(after.is_attacked_by(attacker, square) for square in ring)
+    # A pinned piece does not earn a claim of a direct material threat.
+    valuable = 0
+    if not after.is_pinned(attacker, move.to_square):
+        values = {chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9}
+        for square in after.attacks(move.to_square):
+            target = after.piece_at(square)
+            if target is not None and target.color == after.turn:
+                valuable += values.get(target.piece_type, 0)
+    return int(own_mate), int(not opponent_can_mate), int(after.is_check()), attacked, valuable
+
+
 def rank_allie_candidates(
     board: chess.Board, candidates: list[dict[str, Any]], play_style: str
 ) -> list[dict[str, Any]]:
-    """Rerank Allie's legal candidates for direct king pressure only on request."""
+    """Rank our moves; opponent predictions retain their original distribution."""
     if play_style == 'normal':
         return candidates
-    if play_style != 'aggressive':
-        raise ValueError("play_style must be normal or aggressive")
+    if play_style not in ('aggressive', 'ragebait'):
+        raise ValueError('play_style must be normal, aggressive or ragebait')
 
-    def pressure(item: tuple[int, dict[str, Any]]) -> tuple[int, int, int, int, float, int]:
+    def pressure(item: tuple[int, dict[str, Any]]) -> tuple:
         index, candidate = item
-        flags = candidate.get('flags') or []
-        after = board.copy(stack=False)
-        after.push_uci(candidate['uci'])
-        own_mate = int('Schachmatt' in flags)
-        opponent_can_mate = False
-        if not own_mate:
-            for reply in after.legal_moves:
-                probe = after.copy(stack=False)
-                probe.push(reply)
-                if probe.is_checkmate():
-                    opponent_can_mate = True
-                    break
-        king = after.king(after.turn)
-        ring = chess.SquareSet(chess.BB_KING_ATTACKS[king]) if king is not None else ()
-        attacker = not after.turn
-        attacked = sum(after.is_attacked_by(attacker, square) for square in ring)
-        return (
-            own_mate,
-            int(not opponent_can_mate),
-            int('Schach' in flags),
-            attacked,
-            float(candidate.get('probability', 0.0)),
-            -index,
-        )
+        mate, survives, check, ring, valuable = _candidate_pressure(board, candidate['uci'])
+        probability = float(candidate.get('probability', 0.0))
+        if play_style == 'ragebait':
+            return (mate, survives, int(bool(candidate.get('repertoire'))),
+                    check, valuable, ring, probability, -index)
+        return mate, survives, check, ring, probability, -index
 
     return [candidate for _, candidate in sorted(enumerate(candidates), key=pressure, reverse=True)]
+
+
+def _repertoire_context(
+    moves: list[str], side: str, selection: str | None,
+    probabilities: dict[str, float] | None = None, *, allow_book: bool = True,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    repertoire: dict[str, Any] = standard_repertoire(side, selection)
+    repertoire.update({'active_selection': None, 'active_primary': None,
+                       'compatible_openings': [], 'applied': False,
+                       'expected_move': None, 'expected_san': None,
+                       'adaptation_reason': 'Keine passende Buchfortsetzung; freie Stellungsanalyse.'})
+    if not allow_book:
+        repertoire['adaptation_reason'] = 'Eröffnungsabgleich benötigt einen verifizierten vollständigen Zugverlauf.'
+        return repertoire, []
+    options = adaptive_repertoire_candidates(moves, side, repertoire['selection'])
+    supported = [option for option in options if probabilities is not None
+                 and option['uci'] in probabilities
+                 and math.isfinite(float(probabilities[option['uci']]))
+                 and 0 <= float(probabilities[option['uci']]) <= 1]
+    chosen = max(supported, key=lambda option: (
+        bool(option['preferred']), int(option['matched_plies']), option['match'] == 'exact',
+        float((probabilities or {})[option['uci']]),
+    )) if supported else (options[0] if options else None)
+    if chosen is not None:
+        repertoire['expected_move'] = chosen['uci']
+        repertoire['expected_san'] = chosen['san']
+        repertoire['compatible_openings'] = list(dict.fromkeys(
+            option['primary'] for option in options if option['uci'] == chosen['uci']))
+        if supported:
+            repertoire['active_selection'] = chosen['selection']
+            repertoire['active_primary'] = chosen['primary']
+        else:
+            repertoire['adaptation_reason'] = (
+                f"Buchidee {chosen['san']} ist legal, aber kein verfügbarer Allie-Kandidat; freie Analyse.")
+    return repertoire, supported
+
+
+def _finish_repertoire(repertoire: dict[str, Any], candidates: list[dict[str, Any]]) -> None:
+    """Describe whether the possible book move actually became our main choice."""
+    if not repertoire.get('active_selection'):
+        return
+    applied = bool(candidates and candidates[0]['uci'] == repertoire['expected_move'])
+    repertoire['applied'] = applied
+    active = repertoire['active_primary']
+    if repertoire['active_selection'] == repertoire['selection']:
+        reason = f"Gewähltes Repertoire: {active} · {repertoire['expected_san']}."
+    else:
+        reason = f"Angepasst: {repertoire['primary']} → {active} · {repertoire['expected_san']}."
+    if len(repertoire['compatible_openings']) > 1:
+        reason += ' Gemeinsamer Zug mehrerer passender Eröffnungen.'
+    if not applied:
+        reason += ' Der Buchzug bleibt eine Alternative; die aktuelle Empfehlung hat Vorrang.'
+    repertoire['adaptation_reason'] = reason
+
+
+def _own_move_candidates(
+    board: chess.Board, moves: list[str], probabilities: dict[str, float],
+    side: str, opening_selection: str | None, play_style: str, *, allow_book: bool = True,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Select from actual inference, retaining rare supported repertoire moves."""
+    repertoire, supported = _repertoire_context(
+        moves, side, opening_selection, probabilities, allow_book=allow_book)
+    choices = dict(list(probabilities.items())[:12 if play_style == 'ragebait' else 5])
+    expected = repertoire['expected_move'] if repertoire['active_selection'] else None
+    book_moves = [option['uci'] for option in supported] if play_style == 'ragebait' else [expected]
+    for uci in book_moves:
+        if uci is not None:
+            choices[uci] = probabilities[uci]
+    if play_style == 'ragebait':
+        # Even a rare mate beyond the bounded ordinary pool must beat a prank.
+        for uci, probability in probabilities.items():
+            if uci in choices:
+                continue
+            after = board.copy(stack=False)
+            after.push_uci(uci)
+            if after.is_checkmate():
+                choices[uci] = probability
+    candidates = [describe_move(board, uci, probability) for uci, probability in choices.items()]
+    for candidate in candidates:
+        if candidate['uci'] == expected:
+            candidate['repertoire'] = True
+    candidates = rank_allie_candidates(board, candidates, play_style)
+    if (play_style == 'ragebait' and candidates
+            and not _candidate_pressure(board, candidates[0]['uci'])[1]):
+        # Do not overlook a rare real escape when every ordinary candidate
+        # allows mate in one. Add only the first supported safe escape.
+        for uci, probability in probabilities.items():
+            if uci not in choices and _candidate_pressure(board, uci)[1]:
+                candidates.insert(0, describe_move(board, uci, probability))
+                break
+    if play_style != 'ragebait' and expected and candidates:
+        match = next((move for move in candidates if move['uci'] == expected), None)
+        if match and candidates[0]['probability'] - match['probability'] <= .18:
+            # The soft book preference cannot undo mate/survival protection.
+            best_tier = max(_candidate_pressure(board, move['uci'])[:2] for move in candidates)
+            if _candidate_pressure(board, match['uci'])[:2] == best_tier:
+                candidates = [match] + [move for move in candidates if move is not match]
+    _finish_repertoire(repertoire, candidates)
+    return candidates, repertoire
 
 
 def safe_aggressive_order(
@@ -277,9 +386,9 @@ def safe_aggressive_order(
 ) -> list[dict[str, Any]]:
     """Keep aggressive king pressure from overriding a clear engine safety gap.
 
-    Allie still determines the candidates and their pressure order. Stockfish
-    only demotes a move that is materially far below the best Allie candidate;
-    missing engine lines are left in their original Allie order.
+    Allie still supplies every candidate and its probability. Stockfish can
+    demote a material gap or a forced mate loss and promote a forced mate win;
+    missing engine lines retain their relative order.
     """
     if not candidates or not stockfish or not stockfish.get('available'):
         return candidates
@@ -289,42 +398,75 @@ def safe_aggressive_order(
         if line.get('uci') and isinstance(line.get('score_cp'), int)
     }
     known = [scores[move['uci']] for move in candidates if move.get('uci') in scores]
-    if not known:
-        return candidates
-    floor = max(known) - max(50, int(margin_cp))
-    safe = [move for move in candidates if move.get('uci') not in scores or scores[move['uci']] >= floor]
-    unsafe = [move for move in candidates if move.get('uci') in scores and scores[move['uci']] < floor]
-    return safe + unsafe
+    mates = {str(line.get('uci')): line['score_mate'] for line in stockfish.get('lines', [])
+             if line.get('uci') and isinstance(line.get('score_mate'), int)}
+    floor = max(known) - max(50, int(margin_cp)) if known else None
+    wins, safe, unsafe = [], [], []
+    for move in candidates:
+        uci = move['uci']
+        if 'Schachmatt' in (move.get('flags') or []) or mates.get(uci, 0) > 0:
+            wins.append(move)
+        elif (uci in mates and mates[uci] <= 0
+              or floor is not None and uci in scores and scores[uci] < floor):
+            unsafe.append(move)
+        else:
+            safe.append(move)
+    return wins + safe + unsafe
 
 
-def risk_weighted_premove(branches: list[tuple[float, list[dict[str, Any]]]]) -> dict[str, Any] | None:
+def risk_weighted_premove(
+    branches: list[tuple[float, list[dict[str, Any]]]], *, prefer_order: bool = False,
+    branch_boards: list[chess.Board] | None = None,
+) -> dict[str, Any] | None:
     """Pick one Allie move that survives the most likely alternative branches.
 
-    The score uses only Allie's human move probabilities. Missing support in a
-    branch is treated as risk instead of being silently replaced by Stockfish.
+    Likelihood and coverage use only Allie's human move probabilities. An
+    explicit own-move policy may choose by branch coverage and preference;
+    that preference never becomes a probability or an invented engine score.
     """
-    branches = [(max(0.0, float(weight)), moves[:5]) for weight, moves in branches if moves]
+    # A terminal branch still contributes its weight: no available reply is
+    # not evidence that another branch's plan has universal coverage.
+    branches = [(max(0.0, float(weight)), moves if prefer_order else moves[:5])
+                for weight, moves in branches if prefer_order or moves]
     total_weight = sum(weight for weight, _ in branches)
     if total_weight <= 0:
         return None
     candidates: dict[str, dict[str, Any]] = {}
     for weight, moves in branches:
         seen: set[str] = set()
-        for move in moves:
+        for index, move in enumerate(moves):
             uci = move.get('uci')
             if not uci or uci in seen:
                 continue
             seen.add(uci)
-            item = candidates.setdefault(uci, {'move': move, 'weighted': 0.0, 'covered': 0.0})
+            item = candidates.setdefault(uci, {'move': move, 'weighted': 0.0,
+                                               'covered': 0.0, 'preference': 0.0,
+                                               'unsafe': False, 'mate_weight': 0.0})
             item['weighted'] += weight * max(0.0, float(move.get('probability', 0.0)))
             item['covered'] += weight
+            item['preference'] += weight / (index + 1)
     if not candidates:
         return None
+    if prefer_order and branch_boards:
+        for uci, item in candidates.items():
+            chess_move = chess.Move.from_uci(uci)
+            for (weight, _branch), board in zip(branches, branch_boards, strict=True):
+                if weight <= 0 or chess_move not in board.legal_moves:
+                    continue
+                mate, survives = _candidate_pressure(board, uci)[:2]
+                item['unsafe'] = item['unsafe'] or not survives
+                item['mate_weight'] += weight * mate
     def score(item):
         coverage = item['covered'] / total_weight
         likelihood = item['weighted'] / total_weight
         # A pre-move that disappears in another likely branch is materially
         # riskier than a normal recommendation, so coverage gets a strong penalty.
+        if prefer_order:
+            # Known immediate losses in any branch take precedence over a
+            # mate chance in another. Tactical facts never change the actual
+            # branch weights, conditional likelihood, or reported coverage.
+            return (int(not item['unsafe']), item['mate_weight'] / total_weight,
+                    coverage, item['preference'] / total_weight, likelihood)
         return likelihood - 0.65 * (1.0 - coverage), coverage, likelihood
     best = max(candidates.values(), key=score)
     likelihood, coverage = best['weighted'] / total_weight, best['covered'] / total_weight
@@ -344,23 +486,27 @@ def make_plan_messages(output: dict[str, Any]) -> list[str]:
     # visible in the native HUD, which intentionally carries only two lines.
     for hint in (output.get('tactical_hints') or []):
         messages.append('⚡ ' + str(hint))
+    for warning in (output.get('tactical_warnings') or []):
+        if str(warning).startswith('Achtung:'):
+            messages.append(str(warning))
+            break
+    repertoire = output.get('repertoire') or {}
+    adaptation = str(repertoire.get('adaptation_reason') or '')
+    if not unknown_history:
+        if output.get('play_style') == 'ragebait':
+            messages.append('Ragebait: provozierende Buchzüge und konkrete Drohungen; Matt geht vor. ' + adaptation)
+        elif adaptation:
+            messages.append(adaptation)
     selected = output.get('opening_selection') or {}
     white = selected.get('white') or {}
     black = selected.get('black') or {}
     if white.get('primary') and black.get('primary'):
         messages.append(f"Ausgewählte Eröffnungen · Weiß: {white['primary']} · Schwarz: {black['primary']}")
-    repertoire = output.get('repertoire') or {}
     if not unknown_history and output.get('move_count', 0) <= 2 and repertoire.get('primary'):
         messages.append(
             f"Standardrepertoire: {repertoire['primary']} · Alternative: {repertoire['alternative']}"
             f" · Weitere Option: {repertoire.get('additional', 'keine')}."
         )
-        if repertoire.get('expected_move'):
-            messages.append('Allie-Kandidat aus dem Repertoire: ' +
-                            str(repertoire.get('expected_san') or repertoire['expected_move']) + '.')
-    elif not unknown_history and repertoire.get('expected_move'):
-        messages.append('Ausgewähltes Repertoire folgt weiter: ' +
-                        str(repertoire.get('expected_san') or repertoire['expected_move']) + '.')
     opening = output.get('opening') or {}
     if opening.get('name'):
         eco = f" ({opening['eco']})" if opening.get('eco') else ''
@@ -442,7 +588,9 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
         last_move = moves.pop()
         board.pop()
         clocks.pop()
-    elif finished_game:
+    elif not board.legal_moves:
+        # Automatic draws can still have legal analysis moves on the visible
+        # board. Only mate/stalemate prevents current-position move arrows.
         raise ValueError('Partie beendet. Im PGN-Analysefeld die letzte Entscheidung auswerten (review_finished).')
     try:
         white_elo = int(payload.get("white_elo", 1950))
@@ -457,8 +605,8 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
     if selection not in ('allie', 'stockfish', 'both'):
         raise ValueError('analysis_source must be allie, stockfish or both')
     play_style = str(payload.get('play_style', 'normal'))
-    if play_style not in ('normal', 'aggressive'):
-        raise ValueError('play_style must be normal or aggressive')
+    if play_style not in ('normal', 'aggressive', 'ragebait'):
+        raise ValueError('play_style must be normal, aggressive or ragebait')
 
     opening = opening_for_position(board, moves)
     if opening:
@@ -472,6 +620,7 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
     prediction_top: list[dict[str, Any]] = []
     prediction_second: list[dict[str, Any]] = []
     premove_branches: list[tuple[float, list[dict[str, Any]]]] = []
+    premove_boards: list[chess.Board] = []
     warnings: list[str] = []
     allie_skip_reason: str | None = None
     player_side = str(payload.get('player_side', 'white' if board.turn else 'black')).lower()
@@ -479,21 +628,14 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
         player_side = 'white' if board.turn else 'black'
     player_to_move = player_side == ('white' if board.turn else 'black')
     requested_opening = payload.get('opening_white' if player_side == 'white' else 'opening_black')
-    repertoire: dict[str, Any] = standard_repertoire(player_side, requested_opening)
+    allow_book = (not fen_only and payload.get('show_moves', True) is not False
+                  and payload.get('history_complete', True) is not False
+                  and payload.get('turn_verified', True) is not False)
+    repertoire, _ = _repertoire_context(moves, player_side, requested_opening, allow_book=allow_book)
     opening_selection = {
         'white': standard_repertoire('white', payload.get('opening_white')),
         'black': standard_repertoire('black', payload.get('opening_black')),
     }
-    repertoire['expected_move'] = None
-    if player_to_move and not fen_only and payload.get('show_moves', True) is not False:
-        repertoire['expected_move'] = repertoire_move_for(moves, player_side, repertoire['selection'])
-    if repertoire['expected_move']:
-        try:
-            expected_move = chess.Move.from_uci(repertoire['expected_move'])
-            if expected_move in board.legal_moves:
-                repertoire['expected_san'] = board.san(expected_move)
-        except ValueError:
-            pass
     if selection in ('allie', 'both'):
         if fen_only:
             allie_skip_reason = ('Allie 2.1 benötigt die Zugfolge ab Zug 1 und kann nur '
@@ -504,21 +646,15 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                 with _model_lock:
                     result = model.analyze(moves, white_elo=white_elo, black_elo=black_elo,
                                            time_control=tc, clocks=clocks)
-                    # The public API already returns most-likely-first and keeps
-                    # its own game cache. Do not sort the probabilities again.
-                    choices = list(result['moves'].items())[:5]
-                    candidate_moves = [describe_move(board, uci, prob) for uci, prob in choices]
+                    # Preserve the full real distribution until our selection
+                    # can include supported book moves below the usual cutoff.
                     if player_to_move:
-                        candidate_moves = rank_allie_candidates(board, candidate_moves, play_style)
-                        expected_uci = repertoire.get('expected_move')
-                        if isinstance(expected_uci, str) and expected_uci:
-                            match = next((move for move in candidate_moves if move['uci'] == expected_uci), None)
-                            if match:
-                                match['repertoire'] = True
-                            if match and (not candidate_moves or
-                                          float(candidate_moves[0].get('probability', 0.0)) -
-                                          float(match.get('probability', 0.0)) <= .18):
-                                candidate_moves = [match] + [move for move in candidate_moves if move is not match]
+                        candidate_moves, repertoire = _own_move_candidates(
+                            board, moves, result['moves'], player_side, requested_opening,
+                            play_style, allow_book=allow_book)
+                    else:
+                        candidate_moves = [describe_move(board, uci, probability)
+                                           for uci, probability in list(result['moves'].items())[:5]]
                     wdl = [round(float(x), 5) for x in result['wdl']] if result.get('wdl') is not None else None
                     if result.get('think_time') is not None:
                         expected_think_time = round(float(result['think_time']), 2)
@@ -528,67 +664,6 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                     'Allie 2.1 konnte nicht geladen oder ausgefuehrt werden '
                     f'(Fehler-ID {error_id}).'
                 )
-            if candidate_moves and payload.get('preview', True):
-                try:
-                    with _model_lock:
-                        # On our turn only the top choice needs an opponent
-                        # preview. Computing a reply to our second choice is
-                        # unused and costs a complete model step.
-                        preview_choices = candidate_moves[:1 if player_to_move else 2]
-                        for index, choice in enumerate(preview_choices):
-                            after = board.copy(stack=False)
-                            after.push_uci(choice['uci'])
-                            if after.is_game_over():
-                                continue
-                            replies = list(model.predict(
-                                moves + [choice['uci']], white_elo=white_elo,
-                                black_elo=black_elo, time_control=tc,
-                                clocks=clocks + [None],
-                            ).items())[:3]
-                            shown = [describe_move(after, uci, prob) for uci, prob in replies]
-                            if not player_to_move:
-                                shown = rank_allie_candidates(after, shown, play_style)
-                            if index == 0:
-                                prediction_top = shown
-                                for legal_reply in after.legal_moves:
-                                    probe = after.copy(stack=False)
-                                    probe.push(legal_reply)
-                                    if probe.is_checkmate():
-                                        warnings.append('Achtung: Gegner kann nach dieser Wahl sofort mattsetzen: ' + after.san(legal_reply))
-                                        if len(warnings) >= 2:
-                                            break
-                                if not warnings and shown:
-                                    if 'Schach' in shown[0]['flags']:
-                                        warnings.append('Die wahrscheinlichste Gegnerantwort setzt Schach: ' + shown[0]['san'])
-                                    if 'Schlagzug' in shown[0]['flags']:
-                                        warnings.append('Die wahrscheinlichste Gegnerantwort schlaegt eine Figur: ' + shown[0]['san'])
-                            else:
-                                prediction_second = shown
-                        if player_to_move and candidate_moves and prediction_top:
-                            # The blue arrow is the best continuation after
-                            # the single most likely opponent reply. A second
-                            # speculative branch doubled latency without
-                            # changing the requested top-reply pre-move.
-                            for predicted_reply in prediction_top[:1]:
-                                after_reply = board.copy(stack=False)
-                                after_reply.push_uci(candidate_moves[0]['uci'])
-                                after_reply.push_uci(predicted_reply['uci'])
-                                if after_reply.is_game_over():
-                                    continue
-                                continuation = model.predict(
-                                    moves + [candidate_moves[0]['uci'], predicted_reply['uci']],
-                                    white_elo=white_elo, black_elo=black_elo,
-                                    time_control=tc, clocks=clocks + [None, None])
-                                ranked = list(continuation.items())[:5]
-                                described = [describe_move(after_reply, uci, prob) for uci, prob in ranked]
-                                premove_branches.append((predicted_reply['probability'], described))
-                except Exception as exc:  # noqa: BLE001 - optional prediction branch must fail soft
-                    error_id = _safe_error_id('Allie-Gegnerprognose fehlgeschlagen', exc)
-                    warnings.append(
-                        'Allie-Gegnerprognose derzeit nicht verfuegbar '
-                        f'(Fehler-ID {error_id}).'
-                    )
-
     sf = None
     if selection in ('stockfish', 'both'):
         roots = ([move['uci'] for move in candidate_moves]
@@ -602,11 +677,79 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                         'stockfish_score': evaluation.get('score'),
                         'stockfish_depth': evaluation.get('depth'),
                         'stockfish_variation': evaluation.get('variation'),
+                        'stockfish_score_mate': evaluation.get('score_mate'),
                     })
             for item in sf.get('lines', []):
                 item['explanation'] = describe_candidate(board, item['uci'])
-            if play_style == 'aggressive':
-                candidate_moves = safe_aggressive_order(candidate_moves, sf)
+            if player_to_move and play_style in ('aggressive', 'ragebait'):
+                candidate_moves = safe_aggressive_order(
+                    candidate_moves, sf, margin_cp=300 if play_style == 'ragebait' else 150)
+                # Engine annotations cannot override a directly verified mate
+                # or the available avoidance of an immediate opponent mate.
+                candidate_moves = sorted(candidate_moves, key=lambda move:
+                                         _candidate_pressure(board, move['uci'])[:2], reverse=True)
+    if player_to_move:
+        _finish_repertoire(repertoire, candidate_moves)
+
+    # All root ordering is final before any dependent reply is generated.
+    if candidate_moves and selection in ('allie', 'both') and payload.get('preview', True):
+        try:
+            with _model_lock:
+                for index, choice in enumerate(candidate_moves[:1 if player_to_move else 2]):
+                    after = board.copy(stack=False)
+                    after.push_uci(choice['uci'])
+                    if not after.legal_moves:
+                        continue
+                    reply_history = moves + [choice['uci']]
+                    replies = model.predict(
+                        reply_history, white_elo=white_elo, black_elo=black_elo,
+                        time_control=tc, clocks=clocks + [None])
+                    if player_to_move:
+                        shown = [describe_move(after, uci, probability)
+                                 for uci, probability in list(replies.items())[:3]]
+                    else:
+                        shown, reply_repertoire = _own_move_candidates(
+                            after, reply_history, replies, player_side, requested_opening,
+                            play_style, allow_book=allow_book)
+                        if index == 0:
+                            repertoire = reply_repertoire
+                            repertoire['adaptation_reason'] = (
+                                f"Nach {choice['san']}: " + repertoire['adaptation_reason'])
+                    if index == 0:
+                        prediction_top = shown
+                        if player_to_move:
+                            for legal_reply in after.legal_moves:
+                                probe = after.copy(stack=False)
+                                probe.push(legal_reply)
+                                if probe.is_checkmate():
+                                    warnings.append('Achtung: Gegner kann nach dieser Wahl sofort mattsetzen: ' + after.san(legal_reply))
+                                    if len(warnings) >= 2:
+                                        break
+                            if not warnings and shown:
+                                if 'Schach' in shown[0]['flags']:
+                                    warnings.append('Die wahrscheinlichste Gegnerantwort setzt Schach: ' + shown[0]['san'])
+                                if 'Schlagzug' in shown[0]['flags']:
+                                    warnings.append('Die wahrscheinlichste Gegnerantwort schlaegt eine Figur: ' + shown[0]['san'])
+                    else:
+                        prediction_second = shown
+                if player_to_move and prediction_top:
+                    predicted_reply = prediction_top[0]
+                    continuation_history = moves + [candidate_moves[0]['uci'], predicted_reply['uci']]
+                    after_reply = board.copy(stack=False)
+                    after_reply.push_uci(candidate_moves[0]['uci'])
+                    after_reply.push_uci(predicted_reply['uci'])
+                    if after_reply.legal_moves:
+                        continuation = model.predict(
+                            continuation_history, white_elo=white_elo, black_elo=black_elo,
+                            time_control=tc, clocks=clocks + [None, None])
+                        described, _ = _own_move_candidates(
+                            after_reply, continuation_history, continuation, player_side,
+                            requested_opening, play_style, allow_book=allow_book)
+                        premove_branches.append((predicted_reply['probability'], described))
+                        premove_boards.append(after_reply)
+        except Exception as exc:  # noqa: BLE001 - optional prediction branch must fail soft
+            error_id = _safe_error_id('Allie-Gegnerprognose fehlgeschlagen', exc)
+            warnings.append('Allie-Gegnerprognose derzeit nicht verfuegbar ' f'(Fehler-ID {error_id}).')
 
     engine_moves = []
     if selection in ('stockfish', 'both') and sf and sf.get('available'):
@@ -618,7 +761,10 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
     if player_to_move:
         my_moves = candidate_moves[:2] or engine_moves
         opponent_moves = prediction_top[:2]
-        premove = risk_weighted_premove(premove_branches)
+        premove = risk_weighted_premove(premove_branches, prefer_order=(
+            play_style != 'normal' or any(branch and branch[0].get('repertoire')
+                                         for _, branch in premove_branches)),
+                                       branch_boards=premove_boards)
     else:
         opponent_moves = candidate_moves[:2] or engine_moves
         my_moves = prediction_top[:2]
@@ -627,7 +773,14 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
             reply_branches.append((candidate_moves[0]['probability'], prediction_top))
         if len(candidate_moves) > 1:
             reply_branches.append((candidate_moves[1]['probability'], prediction_second))
-        premove = risk_weighted_premove(reply_branches)
+        for choice in candidate_moves[:2]:
+            after = board.copy(stack=False)
+            after.push_uci(choice['uci'])
+            premove_boards.append(after)
+        premove = risk_weighted_premove(reply_branches, prefer_order=(
+            play_style != 'normal' or any(branch and branch[0].get('repertoire')
+                                         for _, branch in reply_branches)),
+                                       branch_boards=premove_boards)
 
     output = {
         'model': MODEL_NAME if selection in ('allie', 'both') and not fen_only and candidate_moves else None,

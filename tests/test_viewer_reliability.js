@@ -14,7 +14,7 @@ assert.match(html, /Capture-Ausschluss bestätigt; Overlay wartet auf aktive Ana
 assert.match(html, /if\(privateOverlayRequested\(\)!==requested\)syncPrivateOverlay\(true\)/);
 assert.match(html, /function rotateViewerSession\(\)/);
 
-function loadViewer({privateRequested = false, response} = {}) {
+function loadViewer({privateRequested = false, storedSettings = {}, response} = {}) {
   const elements = new Map();
   class Element {
     constructor() {
@@ -25,9 +25,20 @@ function loadViewer({privateRequested = false, response} = {}) {
     }
     addEventListener(name, listener) { this.listeners[name] = listener; }
     removeEventListener(name) { delete this.listeners[name]; }
+    set innerHTML(value) { this.html = String(value); this.text = null; this.children = []; }
+    get innerHTML() {
+      if (this.text == null) return this.html || '';
+      return this.text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+    }
+    set textContent(value) { this.text = String(value ?? ''); this.html = ''; this.children = []; }
+    get textContent() {
+      // HTML parsing belongs to browser tests, not a lossy tag-stripping mock.
+      if (this.text === null && this.html) throw new Error('HTML parsing is outside this DOM harness; inspect innerHTML.');
+      return this.text || '';
+    }
     setAttribute(key, value) { this[key] = value; }
     getAttribute(key) { return this[key]; }
-    replaceChildren(...children) { this.children = children; }
+    replaceChildren(...children) { this.children = children; this.html = ''; this.text = ''; }
     appendChild(child) { this.children.push(child); return child; }
     checkValidity() { return true; }
     getBoundingClientRect() { return {left: 30, top: 100, width: 800, height: 600}; }
@@ -40,6 +51,7 @@ function loadViewer({privateRequested = false, response} = {}) {
   }
   const values = new Map(privateRequested === true ? [['allie-private-overlay', 'on']]
     : privateRequested === false ? [['allie-private-overlay', 'off']] : []);
+  values.set('allie21.viewer.settings.v1', JSON.stringify(storedSettings));
   const requests = [];
   const intervals = [];
   const settings = {
@@ -188,11 +200,105 @@ test('viewer hints are compact, deduplicated and independently dismissible', asy
 test('playing style is an explicit validated setting, not silent extra randomness', async () => {
   const viewer = loadViewer();
   await settle();
-  assert.equal(viewer.run('settings().play_style'), 'normal');
+  assert.equal(viewer.run('settings().play_style'), 'ragebait');
   viewer.elements.get('playStyle').value = 'aggressive';
   assert.equal(viewer.run('settings().play_style'), 'aggressive');
+  viewer.elements.get('playStyle').value = 'ragebait';
+  assert.equal(viewer.run('settings().play_style'), 'ragebait');
   viewer.elements.get('playStyle').value = 'invalid';
   assert.equal(viewer.run('settings().play_style'), 'normal');
+});
+
+test('viewer preserves remembered styles and normalizes corrupt saved styles', async () => {
+  for (const [saved, expected] of [['normal', 'normal'], ['aggressive', 'aggressive'],
+    ['ragebait', 'ragebait'], ['invalid', 'normal'], [null, 'normal']]) {
+    const viewer = loadViewer({storedSettings: {play_style: saved}});
+    await settle();
+    assert.equal(viewer.run('settings().play_style'), expected);
+  }
+});
+
+test('viewer Ragebait survives saving and reaches the analysis request', async () => {
+  const viewer = loadViewer({storedSettings: {play_style: 'normal', opening_white: 'vienna', opening_black: 'englund'}});
+  await settle();
+  viewer.elements.get('playStyle').value = 'ragebait';
+  viewer.run('persistSettings()');
+  const restored = loadViewer({storedSettings: JSON.parse(viewer.values.get('allie21.viewer.settings.v1'))});
+  await settle();
+  assert.equal(restored.elements.get('playStyle').value, 'ragebait');
+  restored.elements.get('manual').value = '1. e4';
+  await restored.elements.get('manualGo').onclick();
+  const request = restored.requests.find(item => item.url === '/analyze');
+  assert.ok(request, 'analysis must receive the restored setting');
+  const payload = JSON.parse(request.options.body);
+  assert.equal(payload.play_style, 'ragebait');
+  assert.equal(payload.opening_white, 'vienna');
+  assert.equal(payload.opening_black, 'englund');
+});
+
+test('viewer explains a compatible opening without overwriting the preferred opening', async () => {
+  const viewer = loadViewer({storedSettings: {opening_white: 'vienna', opening_black: 'englund'}});
+  await settle();
+  const saved = viewer.values.get('allie21.viewer.settings.v1');
+  viewer.context.adaptiveResult = {repertoire: {
+    selection: 'englund', primary: 'Englund Gambit',
+    active_selection: 'stafford', active_primary: 'Stafford-Gambit',
+    compatible_openings: ['Stafford-Gambit', 'Traxler-Gegenangriff'],
+    adaptation_reason: 'Nach e4 passen andere Gambits zur Stellung.',
+    expected_san: 'e5', applied: true,
+  }};
+  const result = viewer.run('format(adaptiveResult)');
+  assert.match(result, /Deine Wahl:.*Englund Gambit/);
+  assert.match(result, /Aktuell passend:.*Stafford-Gambit/);
+  assert.match(result, /Gemeinsame Fortsetzung:.*Stafford-Gambit.*Traxler-Gegenangriff/);
+  assert.match(result, /Nach e4 passen andere Gambits zur Stellung\./);
+  assert.match(result, /Repertoirezug:.*e5/);
+  assert.doesNotMatch(result, /Auswahl englund/);
+  assert.equal(viewer.elements.get('openingWhite').value, 'vienna');
+  assert.equal(viewer.elements.get('openingBlack').value, 'englund');
+  assert.equal(viewer.values.get('allie21.viewer.settings.v1'), saved);
+});
+
+test('viewer labels an unapplied repertoire move as a possibility', async () => {
+  const viewer = loadViewer();
+  await settle();
+  const result = viewer.run("format({repertoire:{primary:'Wiener Gambit',selection:'vienna',active_selection:'vienna',active_primary:'Wiener Gambit',expected_san:'f4',applied:false}})");
+  assert.match(result, /Möglicher Repertoirezug:.*f4/);
+  assert.doesNotMatch(result, /nächster Wunschzug|Nächster Repertoirezug/);
+});
+
+test('viewer distinguishes free play from a legacy response without adaptation metadata', async () => {
+  const viewer = loadViewer();
+  await settle();
+  const free = viewer.run("format({repertoire:{primary:'Grob Gambit',selection:'grob',active_selection:null,active_primary:null,compatible_openings:[],adaptation_reason:'Keine gespeicherte Eröffnung passt mehr.',applied:false}})");
+  assert.match(free, /Deine Wahl:.*Grob Gambit/);
+  assert.match(free, /Aktuell passend:.*Freies Spiel/);
+  assert.match(free, /Keine gespeicherte Eröffnung passt mehr\./);
+  const legacy = viewer.run("format({repertoire:{primary:'Wiener Gambit',selection:'vienna',expected_san:'e4'}})");
+  assert.match(legacy, /Deine Wahl:.*Wiener Gambit/);
+  assert.match(legacy, /Möglicher Repertoirezug:.*e4/);
+  assert.doesNotMatch(legacy, /Freies Spiel|undefined/);
+});
+
+test('viewer escapes all adaptive repertoire display values', async () => {
+  const viewer = loadViewer();
+  await settle();
+  const result = viewer.run("format({repertoire:{primary:'Wunsch <b>',selection:'grob',active_selection:'vienna',active_primary:'Aktiv <i>',compatible_openings:['Plan <svg>','Plan <SVG>','Plan & Angriff'],adaptation_reason:'Antwort <script> und <SCRIPT> und <ScRiPt> & Plan',expected_san:'<zug>',applied:false}})");
+  for (const escaped of ['Wunsch &lt;b&gt;', 'Aktiv &lt;i&gt;', 'Plan &lt;svg&gt;',
+    'Plan &lt;SVG&gt;', 'Plan &amp; Angriff',
+    'Antwort &lt;script&gt; und &lt;SCRIPT&gt; und &lt;ScRiPt&gt; &amp; Plan', '&lt;zug&gt;']) {
+    assert.ok(result.includes(escaped), escaped);
+  }
+  assert.doesNotMatch(result, /<\/?(?:svg|script|zug)\b/i);
+});
+
+test('viewer private mode suppresses adaptive repertoire text after reporting a current result', async () => {
+  const viewer = loadViewer({privateRequested: true});
+  await settle();
+  viewer.run("report({message:'ok',recommendations_enabled:true,history_complete:true,turn_verified:true,detection:{fen:'current',confidence:1},result:{fen:'current',repertoire:{primary:'Englund Gambit',active_selection:'stafford',active_primary:'Stafford-Gambit',adaptation_reason:'Andere Fortsetzung passt.'}}})");
+  assert.match(viewer.elements.get('analysis').textContent, /Privater Modus/);
+  assert.doesNotMatch(viewer.elements.get('analysis').innerHTML, /Stafford|Englund|Fortsetzung/);
+  assert.equal(viewer.elements.get('allieBubble').hidden, true);
 });
 
 test('viewer rejects empty and out-of-range numeric/time settings before capture starts', async () => {

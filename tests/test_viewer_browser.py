@@ -227,6 +227,9 @@ def test_local_pgn_replay_file_board_and_keyboard_navigation(browser_page):
     })
     page.wait_for_function("!document.querySelector('#replayViewer').hidden")
     assert page.locator("#replayBoard .replay-square").count() == 64
+    # FEN and piece text are inside a separate, initially closed disclosure.
+    page.locator("#replayViewer .replay-text > details > summary").click()
+    assert page.locator("#replayFen").is_visible()
     assert page.locator("#replayFen").inner_text() == FEN
     page.locator("#replayNavigation").focus()
     page.keyboard.press("ArrowRight")

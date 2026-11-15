@@ -21,10 +21,8 @@ requireSource(viewer, 'function rotateViewerSession()', 'viewer overlay session 
 requireSource(overlay, 'function selectedOpeningSettings()', 'browser overlay has no normalized opening settings helper');
 requireSource(overlay, '...openingSettings', 'browser requests do not use the selected opening snapshot');
 
-// The active selection must be visible alongside the returned repertoire so a
-// response can be audited against the GUI choice.
-requireSource(viewer, 'd.repertoire.selection', 'viewer analysis does not reflect the selected opening');
-requireSource(overlay, 'data.repertoire.selection', 'browser analysis does not reflect the selected opening');
+// Preferred and active opening names, retained settings, and legacy responses
+// are exercised through production renderers in the two reliability suites.
 
 // Keep arrow shafts inset for readability, but put the arrowhead tip exactly
 // at the destination square center. This applies to every arrow, including the

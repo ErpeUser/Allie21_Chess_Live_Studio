@@ -66,8 +66,8 @@ class LiveSession:
         if player_side not in ('white', 'black'):
             raise ValueError('Spielerfarbe muss white oder black sein')
         play_style = str(settings.get('play_style', 'normal'))
-        if play_style not in ('normal', 'aggressive'):
-            raise ValueError('Spielstil muss normal oder aggressive sein')
+        if play_style not in ('normal', 'aggressive', 'ragebait'):
+            raise ValueError('Spielstil muss normal, aggressive oder ragebait sein')
         opening_white = str(settings.get('opening_white', 'grob'))
         if opening_white not in ('grob', 'vienna', 'danish', 'bongcloud', 'halloween', 'steinitz', 'frankenstein'):
             raise ValueError('Ungültiges weißes Opening')
@@ -120,7 +120,8 @@ class LiveSession:
             self.state['analysing'] = False
             return
         board = self.tracker.board
-        if not board or not self.tracker.turn_verified or not board.is_valid() or board.is_game_over():
+        # Drawn positions still need current-board arrows while moves exist.
+        if not board or not self.tracker.turn_verified or not board.is_valid() or not board.legal_moves:
             self.state['result'] = None
             self.state['analysing'] = False
             return

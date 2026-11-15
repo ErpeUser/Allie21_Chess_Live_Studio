@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.25
+// @version      11.2.26
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
@@ -39,11 +39,11 @@
  const overlayStored=readObject(OVERLAY_STORE);
  const legacyMode = typeof overlayStored.mode==='string'||typeof stored.overlayMode==='string' ? null : ((typeof privateStored.privateMode==='boolean'?privateStored.privateMode:typeof stored.privateMode==='boolean'?stored.privateMode:true)?'private':'normal');
  const initialOverlayMode=normalizeOverlayMode(overlayStored.mode ?? stored.overlayMode ?? legacyMode);
- const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'normal',whiteOpening:'grob',blackOpening:'englund',overlayMode:initialOverlayMode,privateMode:initialOverlayMode==='private'},stored);
+ const cfg=Object.assign({elo:1950,tc:'300+0',port:8765,enabled:true,orientation:'auto',playerSide:'auto',playerSideMode:'auto',playStyle:'ragebait',whiteOpening:'grob',blackOpening:'englund',overlayMode:initialOverlayMode,privateMode:initialOverlayMode==='private'},stored);
  const normalizeElo=value=>{const number=Number(value);return Number.isFinite(number)&&number>=600&&number<=2800?Math.round(number):1950};
  const normalizeTimeControl=value=>{const match=String(value??'').trim().match(/^(\d{1,5})\+(\d{1,4})$/);if(!match)return'300+0';const base=Number(match[1]),increment=Number(match[2]);return base>=1&&base<=86400&&increment>=0&&increment<=3600?`${base}+${increment}`:'300+0'};
  const normalizeEnum=(value,allowed,fallback)=>allowed.includes(value)?value:fallback;
- cfg.elo=normalizeElo(cfg.elo);cfg.tc=normalizeTimeControl(cfg.tc);cfg.orientation=normalizeEnum(cfg.orientation,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(cfg.playerSide,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(cfg.playStyle,['normal','aggressive'],'normal');cfg.enabled=cfg.enabled!==false;cfg.overlayMode=normalizeOverlayMode(cfg.overlayMode);cfg.privateMode=cfg.overlayMode==='private';
+ cfg.elo=normalizeElo(cfg.elo);cfg.tc=normalizeTimeControl(cfg.tc);cfg.orientation=normalizeEnum(cfg.orientation,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(cfg.playerSide,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(cfg.playStyle,['normal','aggressive','ragebait'],'normal');cfg.enabled=cfg.enabled!==false;cfg.overlayMode=normalizeOverlayMode(cfg.overlayMode);cfg.privateMode=cfg.overlayMode==='private';
  if(!stored.playerSideMode){cfg.playerSide='auto';cfg.playerSideMode='auto'}
  const ARROW_COLORS=Object.freeze({ownTop1:'#16c784',ownTop2:'#7ee2b8',opponentTop1:'#ef3340',opponentTop2:'#ff9299',premove:'#2f80ed'});
  const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(cfg))}catch{}};
@@ -67,9 +67,10 @@
  <label>Lokaler Server-Port</label><input id='port' type='number' min='1024' max='65535' step='1' title='Muss mit ALLIE_PORT übereinstimmen'/>
  <div class='row'><div><label>Brettorientierung</label><select id='orientation'><option value='auto'>Automatisch</option><option value='white'>Weiss unten</option><option value='black'>Schwarz unten</option></select></div>
  <div><label>Deine Farbe</label><select id='playerSide'><option value='auto'>Automatisch</option><option value='white'>Weiss</option><option value='black'>Schwarz</option></select></div></div>
- <label>Spielstil</label><select id='playStyle'><option value='normal'>Normal · menschlich wahrscheinlich</option><option value='aggressive'>Aggressiv · Matt und Königsdruck</option></select>
- <div class='row'><div><label>Weißes Opening</label><select id='whiteOpening'><option value='grob'>Grob Gambit · Ragebait</option><option value='bongcloud'>Bongcloud</option><option value='halloween'>Halloween-Gambit</option><option value='vienna'>Wiener Gambit</option><option value='steinitz'>Steinitz-Gambit</option><option value='frankenstein'>Frankenstein-Dracula</option><option value='danish'>Dänisches Gambit</option></select></div>
-  <div><label>Schwarzes Opening</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='stafford'>Stafford-Gambit</option><option value='traxler'>Traxler-Gegenangriff</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
+ <label>Spielstil</label><select id='playStyle'><option value='normal'>Normal · menschlich wahrscheinlich</option><option value='aggressive'>Aggressiv · Matt und Königsdruck</option><option value='ragebait'>Ragebait · Gambits und Fallen</option></select>
+ <div class='row'><div><label>Bevorzugte Eröffnung · Weiß</label><select id='whiteOpening'><option value='grob'>Grob Gambit · Ragebait</option><option value='bongcloud'>Bongcloud</option><option value='halloween'>Halloween-Gambit</option><option value='vienna'>Wiener Gambit</option><option value='steinitz'>Steinitz-Gambit</option><option value='frankenstein'>Frankenstein-Dracula</option><option value='danish'>Dänisches Gambit</option></select></div>
+  <div><label>Bevorzugte Eröffnung · Schwarz</label><select id='blackOpening'><option value='englund'>Englund Gambit · Ragebait</option><option value='stafford'>Stafford-Gambit</option><option value='traxler'>Traxler-Gegenangriff</option><option value='budapest'>Budapester Gambit</option><option value='alekhine'>Aljechin-Verteidigung</option></select></div></div>
+ <p class='small'>Passt deine bevorzugte Linie nicht mehr, kombiniert Allie passende Eröffnungsideen oder folgt einer anderen vorhandenen Linie. Deine Auswahl bleibt gespeichert.</p>
  <div class='row' style='margin-top:8px'><button id='toggle'>Live-Hinweise: Ein</button><button id='now'>Jetzt analysieren</button></div>
  <label class='private-row'><input id='privateMode' type='radio' name='overlayMode'> Privater Modus (geschütztes Windows-Overlay)</label>
  <label class='private-row'><input id='shareMode' type='radio' name='overlayMode'> HUD in Bildschirmübertragung anzeigen (Viewer-Fenster teilen)</label>
@@ -96,7 +97,7 @@
  const invalidate=()=>{cancelAnalysis();busyRetries=0;lastPGN='';trackedFen='';trackedHistorySignature='';analysisKey='';currentResult=null;clearOverlay();show({});clearRemoteOverlay('stale')};
  const normalizePort=value=>{const port=Number(value);return Number.isInteger(port)&&port>=1024&&port<=65535?port:8765};
  cfg.port=normalizePort(cfg.port);
- const updateSettings=()=>{cfg.elo=normalizeElo(el('elo').value);cfg.tc=normalizeTimeControl(el('tc').value);cfg.port=normalizePort(el('port').value);cfg.orientation=normalizeEnum(el('orientation').value,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(el('playerSide').value,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(el('playStyle').value,['normal','aggressive'],'normal');persistOpeningSelection();save();setServicePort(cfg.port);try{chrome?.storage?.local?.set?.({port:cfg.port})}catch{};invalidate();scheduleTick(true)};
+ const updateSettings=()=>{cfg.elo=normalizeElo(el('elo').value);cfg.tc=normalizeTimeControl(el('tc').value);cfg.port=normalizePort(el('port').value);cfg.orientation=normalizeEnum(el('orientation').value,['auto','white','black'],'auto');cfg.playerSide=normalizeEnum(el('playerSide').value,['auto','white','black'],'auto');cfg.playerSideMode=cfg.playerSide==='auto'?'auto':'manual';cfg.playStyle=normalizeEnum(el('playStyle').value,['normal','aggressive','ragebait'],'normal');persistOpeningSelection();save();setServicePort(cfg.port);try{chrome?.storage?.local?.set?.({port:cfg.port})}catch{};invalidate();scheduleTick(true)};
  for(const field of ['elo','tc','port','orientation','playerSide','playStyle','whiteOpening','blackOpening'])el(field).addEventListener('change',updateSettings);
  // Legacy status wording retained for compatibility: Privates Overlay aktiv:
  // Capture-Ausschluss bestätigt; Methode prüfen
@@ -524,12 +525,24 @@
   wrapper.style.right='auto';wrapper.style.bottom='auto';
   el('panel').style.width=`${pos.width}px`;el('panel').style.maxHeight=`${pos.maxHeight}px`;
  }
+ function repertoireLines(repertoire){
+  if(!repertoire?.primary)return [];
+  const lines=[`Deine Wahl: ${repertoire.primary}`],hasActive=Object.hasOwn(repertoire,'active_selection');
+  if(hasActive){
+   lines.push(`Aktuell passend: ${repertoire.active_selection?(repertoire.active_primary||repertoire.primary):'Freies Spiel'}`);
+   const shared=Array.isArray(repertoire.compatible_openings)?[...new Set(repertoire.compatible_openings.filter(name=>typeof name==='string'&&name.trim()))]:[];
+   if(repertoire.active_selection&&shared.length>1)lines.push(`Gemeinsame Fortsetzung: ${shared.join(' · ')}`);
+  }
+  if(repertoire.adaptation_reason)lines.push(String(repertoire.adaptation_reason));
+  if(repertoire.expected_san&&(!hasActive||repertoire.active_selection))lines.push(`${repertoire.applied===true?'Repertoirezug':'Möglicher Repertoirezug'}: ${repertoire.expected_san}`);
+  return lines;
+ }
  function show(data){if(cfg.privateMode){el('results').replaceChildren();el('results').hidden=true;el('panel').classList.remove('open');syncBubbleVisibility();wrapper.style.display='none';return}el('results').hidden=false;wrapper.style.display='';let html='';
   if(data.allie_skip_reason)html+=`<p class='warn'>${escape(data.allie_skip_reason)}</p>`;
   const selected=data.opening_selection||{};
-  if(selected.white?.primary&&selected.black?.primary)html+=`<div class='opening-grid'><div class='opening-card'><small>Weißes Opening</small><b>${escape(selected.white.primary)}</b></div><div class='opening-card'><small>Schwarzes Opening</small><b>${escape(selected.black.primary)}</b></div></div>`;
+  if(selected.white?.primary&&selected.black?.primary)html+=`<div class='opening-grid'><div class='opening-card'><small>Deine Wahl · Weiß</small><b>${escape(selected.white.primary)}</b></div><div class='opening-card'><small>Deine Wahl · Schwarz</small><b>${escape(selected.black.primary)}</b></div></div>`;
   const planText=(data.plan_messages||[]).join(' ');for(const hint of data.tactical_hints||[])if(!planText.includes(String(hint)))html+=`<div class='tactical'>⚡ ${escape(hint)}</div>`;
-  if(data.repertoire?.primary)html+=`<p class='small'><b>Repertoire:</b> ${escape(data.repertoire.primary)}${data.repertoire.selection?` · Auswahl ${escape(data.repertoire.selection)}`:''}${data.repertoire.expected_san?` · nächster Wunschzug ${escape(data.repertoire.expected_san)}`:''}</p>`;
+  const repertoire=repertoireLines(data.repertoire);if(repertoire.length)html+=`<p class='small'>${repertoire.map(escape).join('<br>')}</p>`;
   const choices=Array.isArray(data.moves)?data.moves.slice(0,5):[];
   if(choices.length){html+='<h3>Menschliche Zugwahrscheinlichkeit</h3>';for(const choice of choices){const probability=Number(choice.probability);html+=`<div class='item'><span>${escape(choice.san||choice.uci||'')}</span><span>${Number.isFinite(probability)&&probability>=0&&probability<=1?(100*probability).toFixed(1)+' %':'unbekannt'}</span></div>`}html+="<p class='small'>Allie-Modellausgabe, keine Gewinnchance. Stil und Repertoire koennen die Reihenfolge beeinflussen.</p>";}
   const thinkTime=Number(data.expected_think_time_s);
