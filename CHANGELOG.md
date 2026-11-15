@@ -1,3 +1,9 @@
+## Noch nicht veröffentlicht — Pfeile in Remisstellungen
+
+- Aktuelle Zugpfeile bleiben auch bei automatischem Remis durch Stellungswiederholung, die 75-Züge-Regel oder unzureichendes Mattmaterial verfügbar, solange die Stellung legale Züge hat.
+- Gegnerantworten und Pre-Move-Fortsetzungen werden bei Remisstellungen weiter analysiert. Matt und Patt ohne legale Züge sowie der ausdrücklich angeforderte Rückblick auf die letzte Entscheidung behalten ihr bisheriges Verhalten.
+- Regressionstests prüfen Remisstellungen, Nullbewertungen, die Vorschau an der 75-Züge-Grenze und die Veröffentlichung durch den Live-Worker.
+
 ## v11.2.25 — Prüfbranch, native Abnahme offen
 
 - Lokaler PGN-Lernrückblick mit authentifizierter API, legaler Hauptlinie, sichtbarem Brett, Datei-/Texteingabe, Tastaturnavigation und Textalternative; ohne Engine, Modellgewichte oder zusätzliche Abhängigkeiten.

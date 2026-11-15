@@ -120,7 +120,8 @@ class LiveSession:
             self.state['analysing'] = False
             return
         board = self.tracker.board
-        if not board or not self.tracker.turn_verified or not board.is_valid() or board.is_game_over():
+        # Drawn positions still need current-board arrows while moves exist.
+        if not board or not self.tracker.turn_verified or not board.is_valid() or not board.legal_moves:
             self.state['result'] = None
             self.state['analysing'] = False
             return

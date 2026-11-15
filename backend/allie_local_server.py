@@ -442,7 +442,9 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
         last_move = moves.pop()
         board.pop()
         clocks.pop()
-    elif finished_game:
+    elif not board.legal_moves:
+        # Automatic draws can still have legal analysis moves on the visible
+        # board. Only mate/stalemate prevents current-position move arrows.
         raise ValueError('Partie beendet. Im PGN-Analysefeld die letzte Entscheidung auswerten (review_finished).')
     try:
         white_elo = int(payload.get("white_elo", 1950))
@@ -538,7 +540,7 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                         for index, choice in enumerate(preview_choices):
                             after = board.copy(stack=False)
                             after.push_uci(choice['uci'])
-                            if after.is_game_over():
+                            if not after.legal_moves:
                                 continue
                             replies = list(model.predict(
                                 moves + [choice['uci']], white_elo=white_elo,
@@ -573,7 +575,7 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                                 after_reply = board.copy(stack=False)
                                 after_reply.push_uci(candidate_moves[0]['uci'])
                                 after_reply.push_uci(predicted_reply['uci'])
-                                if after_reply.is_game_over():
+                                if not after_reply.legal_moves:
                                     continue
                                 continuation = model.predict(
                                     moves + [candidate_moves[0]['uci'], predicted_reply['uci']],
