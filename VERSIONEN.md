@@ -1,8 +1,14 @@
 # Reproduzierbare Versionen und Prüfstand
 
-## Update 11.2.24 / Edge-Erweiterung 11.2.24.0
+## Prüfbranch 11.2.25 / Edge-Erweiterung 11.2.25.0
 
-Der aktuelle `main`-Stand synchronisiert Anwendung und Userscript auf 11.2.24 sowie die Edge-Erweiterung auf 11.2.24.0/11.2.24. Der geprüfte Commit ist `15464e2` vom 14. November 2026. Der portable Build bewahrt die erforderlichen Python-Runtime-Dateien und prüft sie vor der Auslieferung. Eröffnungs-Auswahlen, Modell-Ladezustände, vorsichtige Taktik-Hinweise sowie die Session-/Overlay-Gates bleiben erhalten.
+Ausgangspunkt ist `main` bei `c5ea9a324a28f1b16fb544cfbe2ef140178213a0` vom 15. November 2026. Der separate Branch `fix/allie21-six-agent-20261115` enthält den lokalen PGN-Lernrückblick sowie reproduzierte Sicherheits-, Lifecycle-, Build- und Performancekorrekturen. Die Änderung am Userscript erfordert die neue App-/Userscript- und Extension-Version. Der Manifest-Schlüssel und die ID `omboihgfgofgmidefcpkihgglhkiielo` bleiben unverändert.
+
+`uv.lock` ändert ausschließlich die Version des lokalen virtuellen Projekts; externe Pakete, Artefakthashes und Modellrevisionen bleiben erhalten. Der aktuelle Prüfbericht steht unter [docs/six-agent-20261115](docs/six-agent-20261115/README.md). Dieser Quellstand wurde nicht auf dem Windows-Desktop installiert und ist noch keine native Abnahme oder Release-Freigabe.
+
+## Historischer Stand: Update 11.2.24 / Edge-Erweiterung 11.2.24.0
+
+Der Ausgangsstand synchronisierte Anwendung und Userscript auf 11.2.24 sowie die Edge-Erweiterung auf 11.2.24.0/11.2.24. Der damalige Prüfbericht bezog sich auf `15464e2` vom 14. November 2026; PR #10 wurde anschließend in `c5ea9a3` integriert. Der portable Build bewahrt die erforderlichen Python-Runtime-Dateien und prüft sie vor der Auslieferung. Eröffnungs-Auswahlen, Modell-Ladezustände, vorsichtige Taktik-Hinweise sowie die Session-/Overlay-Gates bleiben erhalten.
 
 ## Historischer Stand: Update 11.2.22 / Edge-Erweiterung 11.2.22.0
 
@@ -35,9 +41,9 @@ Der nachfolgende Wartungsstand basiert auf Commit `13131c8` vom 10. November
 
 Historischer Prüfstand: 9. November 2026. Abhängigkeiten sind in `pyproject.toml` direkt und im Remote-Branch zusätzlich in `uv.lock` festgelegt.
 
-## Aktueller Prüfstand
+## Historische Prüfergebnisse vor dem Sechs-Rollen-Branch
 
-Der aktuelle Quellstand ist 11.2.24/11.2.24.0; die nachfolgenden externen Windows-Gates müssen für diesen Stand erneut bestätigt werden.
+Die folgenden Zahlen stammen aus früheren Prüfungen und sind keine Testergebnisse für 11.2.25/11.2.25.0. Die externen Windows-Gates müssen für den neuen Quellstand erneut bestätigt werden.
 
 - Overlay-Modi: Privatmodus mit verifizierter Windows-Capture-Exclusion und Share-Modus mit bewusst deaktivierter Exclusion; ein Browser-HUD wird im Privatmodus nie als Rückfall verwendet.
 - Website, Userscript und Edge-Optionsseite verwenden den versionierten lokalen Overlay-Status; Viewer und Extension lösen veraltete Schreibvorgänge über Version/Zeitstempel auf.

@@ -60,7 +60,9 @@ Die Browser-Erweiterung öffnet über ihre Optionen die Einstellung „Lokaler P
 
 Der technische Checkpoint steht in `VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
 
-Die Anwendung/Userscript-Version ist 11.2.24. Die separat versionierte Edge-Erweiterung ist 11.2.24.0/11.2.24; `tools/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt.
+Die Anwendung/Userscript-Version dieses Prüfbranches ist 11.2.25. Die separat versionierte Edge-Erweiterung ist 11.2.25.0/11.2.25; `tools/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt. Dies ist noch keine Windows-/Edge-Freigabe und aktualisiert keine lokale Installation.
+
+Neu ist der [lokale PGN-Lernrückblick](docs/PGN_TRAINING_DE.md): eine bewusst importierte Partie auf einem Schachbrett schrittweise ansehen, per Tastatur navigieren und Figuren/FEN als Text lesen. Der Rückblick benötigt keine Modellgewichte und startet keine Engine. Die [Sechs-Rollen-Prüfung](docs/six-agent-20261115/README.md) enthält Fixes, Messwerte, unabhängige Gegenprüfungen und offene Abnahmen.
 
 Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `release/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben für den aktuellen Stand eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
 

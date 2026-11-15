@@ -1,3 +1,15 @@
+## v11.2.25 — Prüfbranch, native Abnahme offen
+
+- Lokaler PGN-Lernrückblick mit authentifizierter API, legaler Hauptlinie, sichtbarem Brett, Datei-/Texteingabe, Tastaturnavigation und Textalternative; ohne Engine, Modellgewichte oder zusätzliche Abhängigkeiten.
+- Pairing-Fehlversuche teilen ein atomar geprüftes Budget über Capability- und Overlay-Settings-Endpunkte.
+- Ein bestätigtes Zugrecht bleibt im Positionstracker maßgeblich; die Gegenseite wird nicht erneut als Ersatz ausprobiert.
+- Nachrichtentimer können versteckte native Frames nicht wiederherstellen. Fokus-Rückkehr verwirft alte Browserresultate und noch wartende native Updates, bevor die Stellung neu geprüft wird.
+- Übernommene private Einstellungen entfernen Viewer- und Browserinhalte sofort, auch wenn die native Kopplung verzögert ist.
+- Extension-Builds prüfen Pfadüberschneidungen, Symlinks und vorherige eigene Ausgaben. Kopie, Hash und ZIP werden vor dem Ersetzen vorbereitet.
+- Der begrenzte Taktikscan formatiert SAN erst für eine tatsächlich gefundene Fortsetzung; die ungenutzte Placement-Eröffnungsmap entfällt bei identischem vollständigem EPD-Index.
+- Vorhandene Python-Einstiege und Dateimodi entsprechen ihren Shebangs. Deutsche Nutzerdokumentation, Regressionen und Prüfbelege sind ergänzt.
+- App/Userscript 11.2.25, MV3 11.2.25.0; feste Extension-ID und Schlüssel unverändert. Keine Installation, kein Modell-Download und keine native Windows-/Edge-Abnahme durch diese Quelländerung.
+
 ## v11.2.24
 
 - Der portable Build kopiert die erforderlichen Python-Runtime-Dateien in den Runtime-Ordner und prüft `python.exe`, `pythonw.exe`, `python3.dll` und `python312.dll` vor der Auslieferung.

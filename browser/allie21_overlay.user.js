@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Allie 2.1 Live Studio v11 (Automatisches Live-Overlay)
 // @namespace    local.allie21.study
-// @version      11.2.24
+// @version      11.2.25
 // @description  Permanent Allie move, opponent and pre-move arrows on visible DOM chess boards.
 // @match        https://chess.com/play/*
 // @match        https://www.chess.com/play/*
