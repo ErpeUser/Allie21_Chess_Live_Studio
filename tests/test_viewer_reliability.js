@@ -41,6 +41,7 @@ function loadViewer({privateRequested = false, response} = {}) {
   const values = new Map(privateRequested === true ? [['allie-private-overlay', 'on']]
     : privateRequested === false ? [['allie-private-overlay', 'off']] : []);
   const requests = [];
+  const intervals = [];
   const settings = {
     white_elo: 1800, black_elo: 2000, player_side: 'white', time_control: '300+0',
     recognition_max_width: 1280, recognition_interval_ms: 750,
@@ -63,7 +64,8 @@ function loadViewer({privateRequested = false, response} = {}) {
     navigator: {}, crypto: {randomUUID: () => 'test-uuid'},
     ResizeObserver: class { observe(element) { assert.ok(element, 'ResizeObserver target must exist in HTML'); } },
     AbortController, DOMException, URL, console,
-    setTimeout, clearTimeout, setInterval: () => 1, clearInterval() {},
+    setTimeout, clearTimeout,
+    setInterval: (callback, delay) => intervals.push({callback, delay}), clearInterval() {},
     fetch: async (url, options) => {
       requests.push({url, options});
       const data = response ? await response(url, options) : url === '/health'
@@ -76,7 +78,7 @@ function loadViewer({privateRequested = false, response} = {}) {
   vm.createContext(context);
   const script = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
   vm.runInContext(script, context, {filename: 'viewer/index.html'});
-  return {context, elements, values, requests, run: code => vm.runInContext(code, context)};
+  return {context, elements, values, requests, intervals, run: code => vm.runInContext(code, context)};
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
@@ -331,4 +333,72 @@ test('failed replay replacement clears the old board and displays a local error'
   assert.equal(viewer.elements.get('replayViewer').hidden, true);
   assert.equal(viewer.elements.get('replayBoard').children.length, 0);
   assert.match(viewer.elements.get('replayStatus').textContent, /Ungültige PGN/);
+});
+
+for (const transport of ['POST', 'GET fallback']) {
+  test(`remote private settings clear an existing replay through ${transport}`, async () => {
+    let remotelyPrivate = false;
+    const viewer = loadViewer({response: async (url, options) => {
+      if (url === '/api/pgn/replay') return replayFixture();
+      if (url !== '/api/overlay/settings') return {};
+      if (remotelyPrivate && transport === 'GET fallback' && options.method === 'POST') {
+        return {ok:false, status:503, json:async()=>({error:'Synthetic unavailable POST'})};
+      }
+      return {mode:remotelyPrivate?'private':'normal', version:remotelyPrivate?2:1, updated_at:1};
+    }});
+    await settle();
+    viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+    await viewer.elements.get('replayLoad').onclick();
+    assert.equal(viewer.elements.get('replayViewer').hidden, false);
+    viewer.elements.get('replayFile').value = 'synthetic.pgn';
+    remotelyPrivate = true;
+    // Run the real settings poll without running the independent health poll.
+    const poll = viewer.intervals.find(item => item.delay === 10000 && item.callback.name !== 'checkHealth');
+    assert.ok(poll);
+    poll.callback();
+    await settle();
+    assert.equal(viewer.run('privateOverlayRequested()'), true);
+    assert.equal(viewer.elements.get('privateOverlayToggle').checked, true);
+    assert.equal(viewer.elements.get('replayViewer').hidden, true);
+    assert.equal(viewer.elements.get('replayBoard').children.length, 0);
+    assert.equal(viewer.elements.get('replayPgn').value, '');
+    assert.equal(viewer.elements.get('replayFile').value, '');
+    assert.equal(viewer.run('replayData'), null);
+    if (transport === 'GET fallback') {
+      assert.ok(viewer.requests.some(request => request.url === '/api/overlay/settings' && request.options.method !== 'POST'));
+    }
+  });
+}
+
+test('remote private settings invalidate a pending PGN reply before it can render', async () => {
+  let remotelyPrivate = false, release;
+  const viewer = loadViewer({response: async url => {
+    if (url === '/api/pgn/replay') return new Promise(resolve => {release = resolve;});
+    if (url === '/api/overlay/settings') return {mode:remotelyPrivate?'private':'normal', version:remotelyPrivate?2:1, updated_at:1};
+    return {};
+  }});
+  await settle();
+  viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+  const pending = viewer.elements.get('replayLoad').onclick();
+  await settle();
+  remotelyPrivate = true;
+  await viewer.run('syncOverlaySettings(true)');
+  release(replayFixture());
+  await pending;
+  assert.equal(viewer.elements.get('replayViewer').hidden, true);
+  assert.equal(viewer.elements.get('replayBoard').children.length, 0);
+  assert.equal(viewer.elements.get('replayPgn').value, '');
+  assert.equal(viewer.run('replayData'), null);
+});
+
+test('an older remote settings version cannot override the current replay mode', async () => {
+  const viewer = loadViewer({response: async url => url === '/api/pgn/replay' ? replayFixture()
+    : url === '/api/overlay/settings' ? {mode:'private', version:1, updated_at:1} : {}});
+  await settle();
+  viewer.run("overlayMode='normal';overlaySettingsVersion=3;overlaySettingsUpdatedAt='0';updatePrivateOverlayLabel()");
+  viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+  await viewer.elements.get('replayLoad').onclick();
+  await viewer.run('syncOverlaySettings(true)');
+  assert.equal(viewer.run('overlayMode'), 'normal');
+  assert.equal(viewer.elements.get('replayViewer').hidden, false);
 });

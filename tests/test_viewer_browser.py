@@ -289,3 +289,28 @@ def test_replay_private_mode_removes_game_and_capture_blocks_import(browser_page
     page.click("#stop")
     assert not errors
 
+
+@pytest.mark.parametrize("fallback", [False, True], ids=["post", "get-fallback"])
+def test_remote_private_settings_remove_replay_in_real_dom(browser_page, fallback):
+    page, _, errors, _, open_viewer = browser_page
+    open_viewer()
+    page.locator("#replayDetails > summary").click()
+    page.fill("#replayPgn", "1. e4 e5 *")
+    page.click("#replayLoad")
+    page.wait_for_function("!document.querySelector('#replayViewer').hidden")
+    page.evaluate("""async fallback => {
+      const originalFetch=window.fetch;
+      window.fetch=async (path,options={})=>{
+        if(path!=='/api/overlay/settings')return originalFetch(path,options);
+        if(fallback&&options.method==='POST')return new Response('{}',{status:503});
+        return new Response(JSON.stringify({mode:'private',version:99,updated_at:1}),
+          {status:200,headers:{'Content-Type':'application/json'}});
+      };
+      await syncOverlaySettings(true);
+    }""", fallback)
+    assert page.locator("#replayViewer").is_hidden()
+    assert page.locator("#replayBoard .replay-square").count() == 0
+    assert page.locator("#replayPgn").input_value() == ""
+    assert page.locator("#privateOverlayToggle").is_checked()
+    assert not errors
+

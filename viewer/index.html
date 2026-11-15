@@ -248,25 +248,31 @@ function updatePrivateOverlayLabel(status){
   $('privateOverlayStatus').className='hint '+(enabled||normalOverlayRequested()?'good':overlayRequested()?'warning':'');
   if(requested)hideBrowserHints();
 }
+function adoptOverlaySettings(remote,fallbackMode=overlayMode){
+  const version=Number(remote?.version);
+  if(!Number.isFinite(version)||version<overlaySettingsVersion)return false;
+  overlaySettingsVersion=version;
+  overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);
+  overlayMode=['private','share','normal'].includes(remote?.mode)?remote.mode:fallbackMode;
+  // Apply privacy at the same boundary as the accepted mode. A caller or
+  // separate health poll must not leave an earlier browser frame visible.
+  updatePrivateOverlayLabel();
+  try{localStorage.setItem('allie-overlay-mode.v1',JSON.stringify({mode:overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{}
+  return true;
+}
 async function syncOverlaySettings(force=false){
-  let requested=overlayMode;
+  const requested=overlayMode;
   if(!['private','share','normal'].includes(requested))return {mode:requested,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt};
   const updatedSeconds=Number(overlaySettingsUpdatedAt)||0;
   if(!force&&overlaySettingsVersion&&updatedSeconds>0&&Date.now()/1000-updatedSeconds<4)return null;
   try{
     const remote=await post('/api/overlay/settings',{mode:requested,version:overlaySettingsVersion,updated_at:Number(overlaySettingsUpdatedAt)||0,source:'viewer'});
-    const version=Number(remote?.version);
-    if(Number.isFinite(version)&&version>=overlaySettingsVersion){
-      overlaySettingsVersion=version;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);
-      const winner=['private','share','normal'].includes(remote?.mode)?remote.mode:requested;
-      if(winner!==overlayMode){overlayMode=winner;}
-      try{localStorage.setItem('allie-overlay-mode.v1',JSON.stringify({mode:overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{}
-    }
+    adoptOverlaySettings(remote,requested);
     return remote;
   }catch(error){
     try{
       const remote=await (await req('/api/overlay/settings',{timeout:6000})).json();
-      const version=Number(remote?.version);if(Number.isFinite(version)&&version>=overlaySettingsVersion){overlaySettingsVersion=version;overlaySettingsUpdatedAt=String(remote?.updated_at||overlaySettingsUpdatedAt||Date.now()/1000);if(['private','share','normal'].includes(remote?.mode))overlayMode=remote.mode;try{localStorage.setItem('allie-overlay-mode.v1',JSON.stringify({mode:overlayMode,version:overlaySettingsVersion,updated_at:overlaySettingsUpdatedAt}))}catch{};return remote}
+      if(adoptOverlaySettings(remote))return remote;
     }catch{}
     return null
   }
@@ -692,7 +698,15 @@ $('retryPrivateOverlay').onclick=async()=>{await syncPrivateOverlay();if(lastSta
  document.addEventListener('visibilitychange',()=>{if(document.hidden){$('arrows').replaceChildren();clearTransientHint();$('hud').hidden=true;overlayPublishQueued=null;clearPrivateOverlay('inactive').catch(()=>{})}else if(viewerFocused){restoreOverlayAfterVisibility()}},{passive:true});
  window.addEventListener('blur',()=>{viewerFocused=false;overlayPublishQueued=null;if(document.hidden)clearPrivateOverlay('inactive').catch(()=>{})},{passive:true});
  window.addEventListener('focus',()=>{viewerFocused=true;restoreOverlayAfterVisibility()},{passive:true});
-window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{});if(overlayOwnerToken)post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);setInterval(()=>{if(overlayRequested()&&overlayOwnerToken)post('/api/overlay/renew',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{overlayOwnerToken='';syncPrivateOverlay(true)});syncOverlaySettings(false).then(remote=>{if(remote&&['private','share','normal'].includes(remote.mode)&&remote.mode!==overlayMode){overlayMode=remote.mode;updatePrivateOverlayLabel();syncPrivateOverlay(true);if(lastState)report(lastState)}})},10000);updateSteps(null);
+window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());clearPrivateOverlay('stopped').catch(()=>{});if(overlayOwnerToken)post('/api/overlay/release',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{})});updateRecommendationLabel();syncPrivateOverlay();checkHealth();setInterval(checkHealth,10000);
+setInterval(()=>{
+  if(overlayRequested()&&overlayOwnerToken)post('/api/overlay/renew',{session_id:viewerSessionId,owner_token:overlayOwnerToken}).catch(()=>{overlayOwnerToken='';syncPrivateOverlay(true)});
+  const previousMode=overlayMode;
+  syncOverlaySettings(false).then(()=>{
+    if(overlayMode!==previousMode){syncPrivateOverlay(true);if(lastState)report(lastState)}
+  });
+},10000);
+updateSteps(null);
 </script>
 </body>
 </html>
