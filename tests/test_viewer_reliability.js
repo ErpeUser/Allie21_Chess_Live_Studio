@@ -25,10 +25,17 @@ function loadViewer({privateRequested = false, storedSettings = {}, response} = 
     }
     addEventListener(name, listener) { this.listeners[name] = listener; }
     removeEventListener(name) { delete this.listeners[name]; }
-    set innerHTML(value) { this.html = String(value); this.text = this.html.replace(/<[^>]*>/g, ''); this.children = []; }
-    get innerHTML() { return this.html || ''; }
-    set textContent(value) { this.text = String(value); this.html = this.text; this.children = []; }
-    get textContent() { return this.text || ''; }
+    set innerHTML(value) { this.html = String(value); this.text = null; this.children = []; }
+    get innerHTML() {
+      if (this.text == null) return this.html || '';
+      return this.text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+    }
+    set textContent(value) { this.text = String(value ?? ''); this.html = ''; this.children = []; }
+    get textContent() {
+      // HTML parsing belongs to browser tests, not a lossy tag-stripping mock.
+      if (this.text === null && this.html) throw new Error('HTML parsing is outside this DOM harness; inspect innerHTML.');
+      return this.text || '';
+    }
     setAttribute(key, value) { this[key] = value; }
     getAttribute(key) { return this[key]; }
     replaceChildren(...children) { this.children = children; this.html = ''; this.text = ''; }
@@ -276,12 +283,13 @@ test('viewer distinguishes free play from a legacy response without adaptation m
 test('viewer escapes all adaptive repertoire display values', async () => {
   const viewer = loadViewer();
   await settle();
-  const result = viewer.run("format({repertoire:{primary:'Wunsch <b>',selection:'grob',active_selection:'vienna',active_primary:'Aktiv <i>',compatible_openings:['Plan <svg>','Plan & Angriff'],adaptation_reason:'Antwort <script> und & Plan',expected_san:'<zug>',applied:false}})");
+  const result = viewer.run("format({repertoire:{primary:'Wunsch <b>',selection:'grob',active_selection:'vienna',active_primary:'Aktiv <i>',compatible_openings:['Plan <svg>','Plan <SVG>','Plan & Angriff'],adaptation_reason:'Antwort <script> und <SCRIPT> und <ScRiPt> & Plan',expected_san:'<zug>',applied:false}})");
   for (const escaped of ['Wunsch &lt;b&gt;', 'Aktiv &lt;i&gt;', 'Plan &lt;svg&gt;',
-    'Plan &amp; Angriff', 'Antwort &lt;script&gt; und &amp; Plan', '&lt;zug&gt;']) {
+    'Plan &lt;SVG&gt;', 'Plan &amp; Angriff',
+    'Antwort &lt;script&gt; und &lt;SCRIPT&gt; und &lt;ScRiPt&gt; &amp; Plan', '&lt;zug&gt;']) {
     assert.ok(result.includes(escaped), escaped);
   }
-  assert.doesNotMatch(result, /<svg>|<script>|<zug>/);
+  assert.doesNotMatch(result, /<\/?(?:svg|script|zug)\b/i);
 });
 
 test('viewer private mode suppresses adaptive repertoire text after reporting a current result', async () => {

@@ -154,14 +154,15 @@ test('browser escapes all adaptive repertoire display values', () => {
   const app = loadBrowser();
   app.hooks.show({repertoire: {primary: 'Wunsch <b>', selection: 'grob',
     active_selection: 'vienna', active_primary: 'Aktiv <i>',
-    compatible_openings: ['Plan <svg>', 'Plan & Angriff'],
-    adaptation_reason: 'Antwort <script> und & Plan', expected_san: '<zug>', applied: false}});
+    compatible_openings: ['Plan <svg>', 'Plan <SVG>', 'Plan & Angriff'],
+    adaptation_reason: 'Antwort <script> und <SCRIPT> und <ScRiPt> & Plan', expected_san: '<zug>', applied: false}});
   const html = app.elements.get('results').innerHTML;
   for (const escaped of ['Wunsch &lt;b&gt;', 'Aktiv &lt;i&gt;', 'Plan &lt;svg&gt;',
-    'Plan &amp; Angriff', 'Antwort &lt;script&gt; und &amp; Plan', '&lt;zug&gt;']) {
+    'Plan &lt;SVG&gt;', 'Plan &amp; Angriff',
+    'Antwort &lt;script&gt; und &lt;SCRIPT&gt; und &lt;ScRiPt&gt; &amp; Plan', '&lt;zug&gt;']) {
     assert.ok(html.includes(escaped), escaped);
   }
-  assert.doesNotMatch(html, /<svg>|<script>|<zug>/);
+  assert.doesNotMatch(html, /<\/?(?:svg|script|zug)\b/i);
 });
 
 test('browser private mode suppresses adaptive repertoire text', () => {
