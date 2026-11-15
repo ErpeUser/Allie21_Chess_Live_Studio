@@ -20,7 +20,7 @@ WEB_ORIGINS = frozenset({
 })
 EXTENSION_ORIGINS = frozenset({'chrome-extension://omboihgfgofgmidefcpkihgglhkiielo'})
 PROTECTED_PATHS = frozenset({
-    '/analyze', '/api/start', '/api/stop', '/api/frame', '/api/history',
+    '/analyze', '/api/start', '/api/stop', '/api/frame', '/api/history', '/api/pgn/replay',
     '/api/recommendations', '/api/browser-position', '/api/browser-position/reset',
     '/api/state',
     '/api/overlay/mode', '/api/overlay/update', '/api/overlay/clear',

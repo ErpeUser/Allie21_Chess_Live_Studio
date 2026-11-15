@@ -33,6 +33,7 @@ from http_boundary import EXTENSION_ORIGINS, WEB_ORIGINS, LocalBoundaryMiddlewar
 from live_session import MAX_JPEG, LiveSession
 from native_overlay import PrivateOverlayController
 from overlay_lease import OverlayLeaseConflict, OverlayLeaseManager
+from pgn_training import build_replay
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from security import (
     API_VERSION,
@@ -526,6 +527,11 @@ async def frame(request: Request):
 @app.post('/api/history')
 def history(request: HistoryRequest):
     return run(lambda: SESSION.import_pgn(request.pgn))
+
+
+@app.post('/api/pgn/replay')
+def pgn_replay(request: HistoryRequest):
+    return run(lambda: build_replay(request.pgn))
 
 
 @app.post('/api/recommendations')

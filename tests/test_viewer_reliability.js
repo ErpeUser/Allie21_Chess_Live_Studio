@@ -224,3 +224,111 @@ test('viewer refreshes capability after a server restart without a manual reload
   assert.equal(attempts.length, 2);
   assert.equal(attempts[1].options.headers.Authorization, 'Bearer fresh-token');
 });
+
+function replayFixture() {
+  return {ply_count:2, positions:[
+    {ply:0,fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',san:'',uci:'',last_move_label:'Startstellung',turn:'white',in_check:false,game_over:false},
+    {ply:1,fen:'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',san:'e4',uci:'e2e4',last_move_label:'1. e4',turn:'black',in_check:false,game_over:false},
+    {ply:2,fen:'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',san:'e5',uci:'e7e5',last_move_label:'1... e5',turn:'white',in_check:false,game_over:false},
+  ]};
+}
+
+test('PGN replay loads a local board without requesting analysis or persisting the game', async () => {
+  const viewer = loadViewer({response: async () => replayFixture()});
+  await settle();
+  assert.ok(viewer.elements.has('replayLoad'), 'PGN-Rückblick fehlt');
+  viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+  await viewer.elements.get('replayLoad').onclick();
+  const requests = viewer.requests.filter(request => request.url === '/api/pgn/replay');
+  assert.equal(requests.length, 1);
+  assert.deepEqual(JSON.parse(requests[0].options.body), {pgn:'1. e4 e5 *'});
+  assert.equal(requests[0].options.headers.Authorization, 'Bearer test');
+  assert.equal(viewer.requests.some(request => request.url === '/analyze'), false);
+  assert.equal(viewer.elements.get('replayViewer').hidden, false);
+  assert.equal(viewer.elements.get('replayBoard').children.length, 64);
+  assert.equal(viewer.elements.get('replayFirst').disabled, true);
+  assert.equal(viewer.elements.get('replayNext').disabled, false);
+  assert.equal(viewer.elements.get('replayPosition').children.length, 3);
+  assert.match(viewer.elements.get('replayPositionStatus').textContent, /Weiß am Zug/);
+  assert.equal([...viewer.values.values()].some(value => String(value).includes('1. e4')), false);
+});
+
+test('PGN replay navigation changes only the displayed board, including text and move boundaries', async () => {
+  const viewer = loadViewer({response: async () => replayFixture()});
+  await settle();
+  assert.ok(viewer.elements.has('replayLoad'), 'PGN-Rückblick fehlt');
+  viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+  await viewer.elements.get('replayLoad').onclick();
+  const count = viewer.requests.length;
+  viewer.elements.get('replayNext').onclick();
+  assert.equal(viewer.elements.get('replayFen').textContent, replayFixture().positions[1].fen);
+  assert.match(viewer.elements.get('replayPieces').textContent, /e4: weißer Bauer/);
+  assert.match(viewer.elements.get('replayPositionStatus').textContent, /Schwarz am Zug/);
+  viewer.elements.get('replayLast').onclick();
+  assert.equal(viewer.elements.get('replayNext').disabled, true);
+  viewer.elements.get('replayPosition').value = '0';
+  viewer.elements.get('replayPosition').onchange();
+  assert.equal(viewer.elements.get('replayPrev').disabled, true);
+  assert.equal(viewer.requests.length, count);
+});
+
+test('a late PGN import cannot replace a newer accepted game', async () => {
+  let releaseOld;
+  const viewer = loadViewer({response: async (url, options) => {
+    if (url !== '/api/pgn/replay') return {};
+    if (JSON.parse(options.body).pgn === '1. e4 e5 *') return new Promise(resolve => {releaseOld = resolve;});
+    const data = replayFixture();data.positions.pop();data.ply_count=1;return data;
+  }});
+  await settle();
+  assert.ok(viewer.elements.has('replayLoad'), 'PGN-Rückblick fehlt');
+  viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+  const old = viewer.elements.get('replayLoad').onclick();
+  await settle();
+  viewer.elements.get('replayPgn').value = '1. e4 *';
+  await viewer.elements.get('replayLoad').onclick();
+  releaseOld(replayFixture());await old;
+  assert.equal(viewer.elements.get('replayPosition').children.length, 2);
+  assert.match(viewer.elements.get('replayStatus').textContent, /1 Halbzug/);
+});
+
+test('clearing a pending replay invalidates the response and removes private game text', async () => {
+  let release;
+  const viewer = loadViewer({response: async url => url === '/api/pgn/replay'
+    ? new Promise(resolve => {release = resolve;}) : {}});
+  await settle();
+  assert.ok(viewer.elements.has('replayLoad'), 'PGN-Rückblick fehlt');
+  viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+  const pending = viewer.elements.get('replayLoad').onclick();
+  await settle();viewer.elements.get('replayClear').onclick();
+  release(replayFixture());await pending;
+  assert.equal(viewer.elements.get('replayViewer').hidden, true);
+  assert.equal(viewer.elements.get('replayPgn').value, '');
+  assert.equal(viewer.elements.get('replayBoard').children.length, 0);
+  assert.equal(viewer.elements.get('replayLoad').disabled, false);
+});
+
+test('replay remains unavailable in private mode or during a captured session', async () => {
+  const viewer = loadViewer({privateRequested:true});await settle();
+  assert.ok(viewer.elements.has('replayLoad'), 'PGN-Rückblick fehlt');
+  viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+  await viewer.elements.get('replayLoad').onclick();
+  assert.equal(viewer.requests.some(request => request.url === '/api/pgn/replay'), false);
+  viewer.run("overlayMode='normal';stream={};");
+  await viewer.elements.get('replayLoad').onclick();
+  assert.equal(viewer.requests.some(request => request.url === '/api/pgn/replay'), false);
+  assert.match(viewer.elements.get('replayStatus').textContent, /Bildschirm/);
+});
+
+test('failed replay replacement clears the old board and displays a local error', async () => {
+  let reject = false;
+  const viewer = loadViewer({response: async url => url === '/api/pgn/replay' && reject
+    ? {ok:false,status:400,json:async()=>({error:'Ungültige PGN'})} : replayFixture()});
+  await settle();
+  assert.ok(viewer.elements.has('replayLoad'), 'PGN-Rückblick fehlt');
+  viewer.elements.get('replayPgn').value = '1. e4 e5 *';
+  await viewer.elements.get('replayLoad').onclick();reject=true;
+  await viewer.elements.get('replayLoad').onclick();
+  assert.equal(viewer.elements.get('replayViewer').hidden, true);
+  assert.equal(viewer.elements.get('replayBoard').children.length, 0);
+  assert.match(viewer.elements.get('replayStatus').textContent, /Ungültige PGN/);
+});
