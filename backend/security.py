@@ -68,16 +68,23 @@ def regenerate_pairing_code() -> str:
         return _PAIRING_CODE
 
 
-def pairing_attempt_allowed(origin: str, now: float | None = None) -> bool:
+def verify_pairing_attempt(origin: str, value: str, now: float | None = None) -> bool:
+    """Check all pairing entry points against one atomic failure budget.
+
+    Successful settings polls neither spend nor reset the budget. Once five
+    failures are live, no caller may test another code until one expires.
+    """
     current = time.monotonic() if now is None else now
     with _PAIRING_LOCK:
         events = _PAIRING_FAILURES.setdefault(origin or 'unknown', deque())
         while events and events[0] <= current - 60:
             events.popleft()
         if len(events) >= 5:
-            return False
+            raise HTTPException(status_code=429, detail='Zu viele Pairing-Versuche')
+        if verify_pairing_code(value):
+            return True
         events.append(current)
-        return True
+        return False
 
 
 def verify_pairing_code(value: str) -> bool:

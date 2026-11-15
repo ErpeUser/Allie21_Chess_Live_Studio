@@ -42,9 +42,8 @@ from security import (
     RequestRateLimiter,
     capability_payload,
     get_pairing_code,
-    pairing_attempt_allowed,
     regenerate_pairing_code,
-    verify_pairing_code,
+    verify_pairing_attempt,
 )
 from service_status import readiness_status
 from starlette.concurrency import run_in_threadpool
@@ -430,11 +429,9 @@ def capability(request: Request):
         f'http://127.0.0.1:{PORT}', f'http://localhost:{PORT}',
         'http://127.0.0.1', 'http://localhost',
     }
-    if not local_origin and not extension_worker:
-        if not pairing_attempt_allowed(origin):
-            raise HTTPException(429, 'Zu viele Pairing-Versuche')
-        if not verify_pairing_code(request.headers.get('x-allie-pairing', '')):
-            raise HTTPException(401, 'Browser-Pairing erforderlich')
+    if (not local_origin and not extension_worker
+            and not verify_pairing_attempt(origin, request.headers.get('x-allie-pairing', ''))):
+        raise HTTPException(401, 'Browser-Pairing erforderlich')
     return capability_payload()
 
 
@@ -601,7 +598,7 @@ def _require_overlay_settings_access(request: Request) -> None:
     if local_origin or extension_worker:
         return
     if ((extension_origin or web_origin)
-            and verify_pairing_code(request.headers.get('x-allie-pairing', ''))):
+            and verify_pairing_attempt(origin, request.headers.get('x-allie-pairing', ''))):
         return
     raise HTTPException(403, 'Overlay-Einstellung benötigt eine erlaubte lokale Sitzung')
 
