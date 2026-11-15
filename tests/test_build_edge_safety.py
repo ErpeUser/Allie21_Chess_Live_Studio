@@ -16,7 +16,7 @@ from tools.build_edge import build
 def make_source(path: Path) -> Path:
     path.mkdir(parents=True)
     (path / "manifest.json").write_text('{"version":"1.2.3.0"}\n', encoding="utf-8")
-    (path / "background.js").write_text("self.ok = true;\n", encoding="utf-8")
+    (path / "background.js").write_bytes(b"self.ok = true;\n")
     return path
 
 
@@ -78,15 +78,19 @@ def test_build_rejects_source_alias_destinations(tmp_path: Path, destination: st
     assert alias.is_symlink()
 
 
-def test_build_accepts_disjoint_symlinked_source(tmp_path: Path) -> None:
+@pytest.mark.parametrize("script_bytes", [b"self.ok = true;\n", b"self.ok = true;\r\n"],
+                         ids=["lf", "crlf"])
+def test_build_accepts_disjoint_symlinked_source(tmp_path: Path, script_bytes: bytes) -> None:
     source = make_source(tmp_path / "browser")
+    (source / "background.js").write_bytes(script_bytes)
     alias = tmp_path / "alias"
     symlink(alias, source)
     output = tmp_path / "EdgeOverlay"
 
     build(alias, output, None, "test")
 
-    assert (output / "background.js").read_bytes() == b"self.ok = true;\n"
+    assert (output / "background.js").read_bytes() == script_bytes
+    assert (source / "background.js").read_bytes() == script_bytes
     assert alias.is_symlink()
 
 
