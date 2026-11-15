@@ -1138,6 +1138,10 @@ class PrivateOverlayController:
             raise ValueError("overlay mode must be private, share or normal")
         with self._render_lock:
             with self._lock:
+                if mode != self._mode:
+                    self._cancel_message_timer_locked()
+                    self._last_render_arrows = []
+                    self._last_render_bounds = None
                 self._mode = mode
             if mode == "normal":
                 self._native.hide()
@@ -1204,6 +1208,12 @@ class PrivateOverlayController:
                         != (generation, render_revision)):
                     self._state, self._reason = "stale", "stale_update_ignored"
                     return self.status()
+                # Every accepted frame supersedes the previous timer, even
+                # when this update hides the HUD or has no usable geometry.
+                # Cancelling alone cannot stop an already queued callback.
+                self._cancel_message_timer_locked()
+                self._last_render_arrows = []
+                self._last_render_bounds = None
             if self._mode not in {"private", "share"} or payload.get("mode") != self._mode:
                 self._native.hide()
                 return self.status()
