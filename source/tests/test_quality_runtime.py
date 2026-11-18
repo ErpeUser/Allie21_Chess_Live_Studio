@@ -32,12 +32,14 @@ class QualityRuntimeSelectionTests(unittest.TestCase):
             release.mkdir(parents=True)
             prefer = self.run_selector(root, state)
             self.assertEqual(prefer.returncode, 0, prefer.stderr)
-            self.assertEqual(prefer.stdout.strip().casefold(), str(source.resolve()).casefold())
+            # Windows may return an 8.3 alias (RUNNER~1) for the same directory.
+            # Compare the filesystem object, not its textual spelling.
+            self.assertTrue(Path(prefer.stdout.strip()).samefile(source))
 
             source.rmdir()
             fallback = self.run_selector(root, state)
             self.assertEqual(fallback.returncode, 0, fallback.stderr)
-            self.assertEqual(fallback.stdout.strip().casefold(), str(release.resolve()).casefold())
+            self.assertTrue(Path(fallback.stdout.strip()).samefile(release))
 
             release.rmdir()
             missing = self.run_selector(root, state)
