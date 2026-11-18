@@ -21,7 +21,12 @@ einem sichtbaren Fehler und wird nie beendet.
 Anwendung und Laufzeit und schreibt `app/release-version.json`. Dieser Nachweis
 enthält getrennte App-/Userscript- und Extension-Versionen, die Quellrevision
 und die UTC-Bauzeit. `SHA256SUMS.txt` wird nach dem Kopieren aller Dateien
-berechnet.
+berechnet. Die Release-Prüfung kontrolliert auch die vollständige Dateimenge:
+zusätzliche, doppelt gelistete und veränderte Dateien führen zum Abbruch; große
+Bibliotheksdateien werden speicherschonend gestreamt. Der Build schließt regenerierbare `__pycache__`-/Bytecode-Dateien,
+Python-Standardbibliotheks-Tests, IDLE-/Installationshilfen und ausschließlich
+für Paket-Tests bestimmte Ordner aus. Der Smoke-Test verweigert einen Release,
+falls solche Dateien versehentlich erneut im Bundle landen.
 
 `tools/release_smoke.py --bundle <bundle> --with-model` prüft Manifest,
 Stockfish-Hash, Runtime-Inventar und HTTP-Start. Der Health-Check verlangt

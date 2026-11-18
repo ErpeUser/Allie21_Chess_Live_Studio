@@ -167,11 +167,6 @@ class AdaptiveRepertoireTests(unittest.TestCase):
                     self.assertIn(line, source_lines)
                     self.assertLessEqual(len(line), 16)
 
-    def test_existing_strict_helper_does_not_silently_change_its_contract(self):
-        self.assertIsNone(chess_extras.repertoire_move_for(moves_for('e4'), 'black', 'englund'))
-        self.assertIsNone(chess_extras.repertoire_move_for(
-            moves_for('e4 e5 d4'), 'white', 'vienna'))
-
 
 class StockfishMateMetadataTests(unittest.TestCase):
     def test_zero_and_forced_mate_scores_keep_their_actual_values(self):

@@ -3,7 +3,9 @@ import platform
 from importlib import import_module
 from pathlib import Path
 
-print('Allie 2.1 Live Studio v11')
+from config import APP_VERSION
+
+print(f'Allie 2.1 Live Studio v{APP_VERSION}')
 print('System:', platform.platform(), '\nPython:', platform.python_version())
 for name in ('chess', 'fastapi', 'pydantic', 'uvicorn', 'chessvision', 'PIL',
              'rapidocr', 'onnxruntime', 'transformers', 'torch'):

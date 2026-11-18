@@ -2,9 +2,12 @@
 setlocal
 cd /d "%~dp0"
 set "PYTHONUTF8=1"
+set "PYTHONDONTWRITEBYTECODE=1"
 if "%ALLIE_PORT%"=="" set "ALLIE_PORT=8765"
-set "UV_CACHE_DIR=%~dp0.uv-cache"
-set "UV_PROJECT_ENVIRONMENT=%~dp0.allie-venv"
+if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
+set "ALLIE_STATE_DIR=%LOCALAPPDATA%\Allie21"
+set "UV_CACHE_DIR=%ALLIE_STATE_DIR%\uv-cache"
+set "UV_PROJECT_ENVIRONMENT=%ALLIE_STATE_DIR%\source-venv"
 set "UV_EXE=uv"
 
 where uv >nul 2>nul

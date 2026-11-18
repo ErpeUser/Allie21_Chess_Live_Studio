@@ -49,6 +49,10 @@ class PolicyTests(unittest.TestCase):
         self.assertFalse(m.cleanup_candidate('fix/done', True, set()))
         self.assertTrue(m.cleanup_candidate('fix/done', False, set()))
 
+    def test_maintenance_state_is_outside_checkout(self):
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'LOCALAPPDATA': folder}):
+            self.assertEqual(m.local_state_dir(), Path(folder) / 'Allie21' / 'maintenance')
+
     def test_build_fingerprint_ignores_docs_but_not_backend_or_deleted_files(self):
         with tempfile.TemporaryDirectory() as t:
             root = Path(t)

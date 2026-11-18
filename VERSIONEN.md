@@ -10,7 +10,7 @@ Anwendung, Userscript und lokale Projektmetadaten sind 11.2.26; die Extension is
 
 Ausgangspunkt ist `main` bei `c5ea9a324a28f1b16fb544cfbe2ef140178213a0` vom 15. November 2026. Der separate Branch `fix/allie21-six-agent-20261115` enthält den lokalen PGN-Lernrückblick sowie reproduzierte Sicherheits-, Lifecycle-, Build- und Performancekorrekturen. Die Änderung am Userscript erfordert die neue App-/Userscript- und Extension-Version. Der Manifest-Schlüssel und die ID `omboihgfgofgmidefcpkihgglhkiielo` bleiben unverändert.
 
-`uv.lock` ändert ausschließlich die Version des lokalen virtuellen Projekts; externe Pakete, Artefakthashes und Modellrevisionen bleiben erhalten. Der aktuelle Prüfbericht steht unter [docs/six-agent-20261115](docs/six-agent-20261115/README.md). Dieser Quellstand wurde nicht auf dem Windows-Desktop installiert und ist noch keine native Abnahme oder Release-Freigabe.
+`uv.lock` ändert ausschließlich die Version des lokalen virtuellen Projekts; externe Pakete, Artefakthashes und Modellrevisionen bleiben erhalten. Dieser Quellstand wurde nicht auf dem Windows-Desktop installiert und ist noch keine native Abnahme oder Release-Freigabe.
 
 ## Historischer Stand: Update 11.2.24 / Edge-Erweiterung 11.2.24.0
 

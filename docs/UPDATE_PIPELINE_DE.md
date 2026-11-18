@@ -1,6 +1,6 @@
 # Main, Codex und Windows aktualisieren
 
-Der Quellstand aus [PR #12](https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/12) trägt App/Userscript **11.2.26** und Extension **11.2.26.0**. Die aktuellen automatisierten Prüfergebnisse stehen am PR. Die folgenden Befehle aktualisieren die lokale Windows-Installation; sie werden durch einen Cloud-Prüflauf nicht ausgeführt. Die [frühere Sechs-Rollen-Prüfung](six-agent-20261115/README.md) dokumentiert zusätzliche native Abnahmen, die weiterhin eine Prüfung am Benutzer-PC benötigen.
+Der Quellstand aus [PR #12](https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/12) trägt App/Userscript **11.2.26** und Extension **11.2.26.0**. Die aktuellen automatisierten Prüfergebnisse stehen am PR. Die folgenden Befehle aktualisieren die lokale Windows-Installation; sie werden durch einen Cloud-Prüflauf nicht ausgeführt. Native Browser- und Windows-Abnahmen müssen weiterhin am Benutzer-PC geprüft werden.
 
 ## Einmalig auf deinem Windows-PC
 
@@ -57,7 +57,7 @@ Optionen abschaltbar. Das erste Neuladen der alten 11.2.23 bleibt manuell notwen
 5. Baut bei Bedarf in einem getrennten Verzeichnis. Gesperrte Dependencies,
    Stockfish-Hash, Runtime-Inventar, SHA256SUMS und HTTP-Serverstart werden geprueft.
    Erst dann wird der komplette portable Ordner ersetzt. Der vorige Stand bleibt
-   im Bericht genannten .build-Pfad erhalten; eine fehlgeschlagene Umbenennung
+   im Bericht genannten lokalen Zustandsordner unter `%LOCALAPPDATA%\Allie21\maintenance` erhalten; eine fehlgeschlagene Umbenennung
    stellt den alten Ordner wieder her.
 6. Aktualisiert die Desktop-Verknuepfung zur EXE im kompletten release-Ordner und
    den stabilen Edge-Ordner einschliesslich Dateiloeschungen. Eine einzelne EXE
@@ -88,14 +88,14 @@ erfolgreich ausgefuehrt wurde.
 
 ## Berichte, Wiederholung und Fehler
 
-`.build/maintenance-report.json` nennt gemergte/blockierte PRs, entfernte/erhaltene
+`%LOCALAPPDATA%\Allie21\maintenance\maintenance-report.json` nennt gemergte/blockierte PRs, entfernte/erhaltene
 Branches, Commit, Backup- und Erweiterungspfad. Exit 0: abgeschlossen, 2: blockierte
 PRs bleiben offen, 1: Fehler. Rote/nicht gestartete GitHub-Checks sind kein Pass.
 Neubau erzwingen: `UPDATE_ALLIE.cmd --force-build`.
 Nur lokalen Build aktualisieren: `python tools/maintain.py --deploy-only`.
 
 Bei gesperrten Windows-Dateien Allie beenden und erneut ausfuehren; fremde Prozesse
-werden nicht zwangsbeendet. Nach einem Absturz .build/maintenance.lock erst nach
+werden nicht zwangsbeendet. Nach einem Absturz `%LOCALAPPDATA%\Allie21\maintenance\maintenance.lock` erst nach
 Pruefung entfernen, dass kein Updater mehr laeuft. Grosse vorige Bundles bleiben
 zur Sicherheit erhalten und koennen nach eigener Abnahme manuell entfernt werden.
 Vorhandene fremde Desktop-EXEs und eigene Git-Hooks werden nicht blind geloescht.

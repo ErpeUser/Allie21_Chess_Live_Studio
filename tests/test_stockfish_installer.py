@@ -51,6 +51,22 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.target.read_bytes(), b'verified-engine')
         self.assertEqual(sorted(p.name for p in self.dest.iterdir()), ['stockfish.exe'])
 
+    @unittest.skipUnless(sys.platform == 'win32', 'Windows portable release path')
+    def test_verified_release_engine_prevents_offline_redownload_and_duplicate_copy(self):
+        root = self.dest / 'source'
+        engine = (root / 'release' / 'Allie21 Chess Live Studio' / 'app'
+                  / 'backend' / 'engines' / 'stockfish.exe')
+        engine.parent.mkdir(parents=True)
+        payload = b'verified-release-engine'
+        engine.write_bytes(payload)
+        destination = self.dest / 'empty-local-engine-cache'
+        with (patch.object(installer, 'DEST', destination),
+              patch.object(installer, '__file__', str(root / 'backend' / 'download_stockfish.py')),
+              patch.object(installer, 'EXPECTED_EXE_SHA256', hashlib.sha256(payload).hexdigest()),
+              patch.object(installer, 'urlopen', side_effect=AssertionError('must not download existing engine'))):
+            self.assertTrue(installer.download())
+            self.assertFalse(destination.exists(), 'reuse should not create a second engine directory')
+
     def test_verified_installed_executable_avoids_network(self):
         self.target.write_bytes(b'verified-engine')
         with (patch.object(installer, 'DEST', self.dest),

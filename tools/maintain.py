@@ -20,10 +20,18 @@ from urllib.parse import quote
 REPO = 'ErpeUser/Allie21_Chess_Live_Studio'
 BUNDLE_NAME = 'Allie21 Chess Live Studio'
 BUILD_DIRS = ('backend/', 'browser/', 'viewer/', 'assets/', 'beispiele/')
-BUILD_FILES = {'config.json', 'pyproject.toml', 'uv.lock', 'tools/launcher.py',
+BUILD_FILES = {'pyproject.toml', 'uv.lock', 'tools/launcher.py',
                'tools/build_exe.ps1', 'tools/release_smoke.py'}
 REQUIRED_CHECKS = {'windows-tests', 'maintenance-tests', 'Secret scan',
                    'CodeQL (javascript-typescript)', 'CodeQL (python)'}
+
+
+def local_state_dir() -> Path:
+    """Keep persistent update metadata and recoverable backups outside the checkout."""
+    base = os.environ.get('LOCALAPPDATA') or os.environ.get('XDG_STATE_HOME')
+    if base:
+        return Path(base) / 'Allie21' / 'maintenance'
+    return Path.home() / '.local' / 'state' / 'Allie21' / 'maintenance'
 
 
 def write_json(path: Path, value: object) -> None:
@@ -102,6 +110,7 @@ def replace_directory(stage: Path, target: Path, backup: Path) -> None:
 class Maintenance:
     def __init__(self, root: Path):
         self.root = root.resolve()
+        self.state_dir = local_state_dir()
         self.report: dict = {'merged': [], 'blocked': [], 'deleted': [], 'kept': []}
         self.env = {**os.environ, 'ALLIE_UPDATE_ACTIVE': '1', 'GH_PROMPT_DISABLED': '1',
                     'GIT_TERMINAL_PROMPT': '0'}
@@ -234,7 +243,7 @@ class Maintenance:
         paths = [p for p in self.git('ls-files', '-z').split('\0') if p]
         build_hash = fingerprint(self.root, paths)
         ext_hash = fingerprint(self.root, [p for p in paths if p.startswith('browser/')])
-        state_path = self.root / '.build' / 'update-state.json'
+        state_path = self.state_dir / 'update-state.json'
         try:
             state = json.loads(state_path.read_text(encoding='utf-8'))
         except (OSError, ValueError):
@@ -249,8 +258,12 @@ class Maintenance:
             except RuntimeError:
                 rebuild = True
         if rebuild:
-            self.root.joinpath('.build').mkdir(exist_ok=True)
-            stage = Path(tempfile.mkdtemp(prefix='update-', dir=self.root / '.build'))
+            work_dir = self.state_dir
+            if self.root.drive.casefold() != work_dir.drive.casefold():
+                # Directory promotion via rename requires the same Windows volume.
+                work_dir = self.root / '.build'
+            work_dir.mkdir(parents=True, exist_ok=True)
+            stage = Path(tempfile.mkdtemp(prefix='update-', dir=work_dir))
             self.run('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
                      'tools/build_exe.ps1', '-DistPath', str(stage), timeout=7200, live=True)
             candidate = stage / BUNDLE_NAME
@@ -285,12 +298,12 @@ def main(argv=None) -> int:
         return 0
     root = Path(__file__).resolve().parents[1]
     worker = Maintenance(root)
-    lock = root / '.build' / 'maintenance.lock'
+    lock = local_state_dir() / 'maintenance.lock'
     lock.parent.mkdir(exist_ok=True)
     try:
         fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
     except FileExistsError:
-        print('Another update is running. Verify no updater remains before removing .build/maintenance.lock.', file=sys.stderr)
+        print(f'Another update is running. Verify no updater remains before removing {lock}.', file=sys.stderr)
         return 1
     os.write(fd, str(os.getpid()).encode('ascii'))
     os.close(fd)
@@ -307,19 +320,19 @@ def main(argv=None) -> int:
         else:
             if worker.git('rev-parse', 'HEAD') != worker.git('rev-parse', 'origin/main'):
                 raise RuntimeError('main changed during update; run UPDATE_ALLIE.cmd again')
-            report_file = root / '.build' / 'maintenance-report.json'
+            report_file = local_state_dir() / 'maintenance-report.json'
             if report_file.exists():
                 worker.report.update(json.loads(report_file.read_text(encoding='utf-8')))
                 worker.report.pop('error', None)
         if not args.git_only:
             worker.deploy(args.force_build)
         worker.report['head'] = worker.git('rev-parse', 'HEAD')
-        write_json(root / '.build' / 'maintenance-report.json', worker.report)
+        write_json(local_state_dir() / 'maintenance-report.json', worker.report)
         print(json.dumps(worker.report, indent=2))
         return 2 if worker.report['blocked'] and not args.deploy_only else 0
     except (RuntimeError, OSError, subprocess.TimeoutExpired, ValueError, KeyError) as exc:
         worker.report['error'] = str(exc)
-        write_json(root / '.build' / 'maintenance-report.json', worker.report)
+        write_json(local_state_dir() / 'maintenance-report.json', worker.report)
         print(f'UPDATE STOPPED: {exc}', file=sys.stderr)
         return 1
     finally:

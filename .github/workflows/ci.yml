@@ -103,7 +103,7 @@ jobs:
       - name: Parse Windows deployment scripts
         shell: pwsh
         run: |
-          foreach ($file in @('tools/build_exe.ps1', 'tools/update_release.ps1', 'tools/desktop_shortcut.ps1')) {
+          foreach ($file in @('tools/build_exe.ps1', 'tools/quality_check.ps1', 'tools/find_quality_sitepackages.ps1', 'tools/desktop_shortcut.ps1')) {
             $tokens = $null; $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $file), [ref]$tokens, [ref]$errors) | Out-Null
             if ($errors.Count) { throw ($errors | Out-String) }

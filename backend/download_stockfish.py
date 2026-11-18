@@ -14,10 +14,18 @@ from urllib.request import Request, urlopen
 URL = 'https://github.com/official-stockfish/Stockfish/releases/download/sf_19/stockfish-windows-x86-64-universal.zip'
 EXPECTED_SHA256 = '3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7'
 EXPECTED_EXE_SHA256 = '45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0'
-DEST = Path(__file__).resolve().parent / 'engines'
+LOCAL_APP_DATA = os.environ.get('LOCALAPPDATA') if os.name == 'nt' else None
+DEST = (Path(LOCAL_APP_DATA) / 'Allie21' / 'engines'
+        if LOCAL_APP_DATA else Path(__file__).resolve().parent / 'engines')
 MAX_ARCHIVE_SIZE = 125_000_000
 MAX_EXE_SIZE = 175_000_000
 CHUNK_SIZE = 1024 * 1024
+
+
+def portable_engine_path(project_root: Path) -> Path:
+    """Find the pinned executable that a source checkout may already bundle."""
+    return (project_root / 'release' / 'Allie21 Chess Live Studio' / 'app'
+            / 'backend' / 'engines' / 'stockfish.exe')
 
 
 class _ReadableBinary(Protocol):
@@ -58,11 +66,15 @@ def download() -> bool:
     if os.name != 'nt':
         print('Windows x64 executable only. On other systems install stockfish with your package manager.')
         return False
-    DEST.mkdir(exist_ok=True, parents=True)
     target = DEST / 'stockfish.exe'
     if verified_executable(target):
         print('Stockfish ist verifiziert:', target)
         return True
+    bundled = portable_engine_path(Path(__file__).resolve().parents[1])
+    if verified_executable(bundled):
+        print('Nutze bereits verifiziertes Stockfish im portablen Release:', bundled)
+        return True
+    DEST.mkdir(exist_ok=True, parents=True)
     print('Pruefe und installiere die offizielle Stockfish-19-Datei ...')
     request = Request(URL, headers={'User-Agent': 'Allie21ChessLiveStudio/Stockfish19'})
     # Disk-backed archive avoids retaining the entire download in RAM. The old

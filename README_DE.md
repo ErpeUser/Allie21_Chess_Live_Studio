@@ -46,7 +46,7 @@ Die einheitliche Zeitklasse verwendet `Grundzeit + 40 × Inkrement`:
 
 ## Einstellungen
 
-Die Standardwerte stehen in `config.json`. Wichtige Felder sind `white_elo`, `black_elo`, `player_side`, `time_control`, `recognition_interval_ms`, `stability_frames`, `ocr_history`, `stockfish_threads` und `stockfish_hash_mb`. Modellkennung und Modellrevision sind absichtlich festgelegt.
+Die validierten Standardwerte stehen in `backend/config.py`. Eine optionale, nicht versionierte `config.json` im Projektstamm kann diese Werte bei Bedarf überschreiben. Wichtige Felder sind `white_elo`, `black_elo`, `player_side`, `time_control`, `recognition_interval_ms`, `stability_frames`, `ocr_history`, `stockfish_threads` und `stockfish_hash_mb`. Modellkennung und Modellrevision sind absichtlich festgelegt.
 
 Der Schalter „Live-Zugpfeile & Empfehlungen“ verwirft sofort laufende Ergebnisse. Nach Stellungs-, Einstellungs- oder Sitzungswechseln akzeptiert die Pipeline nur Antworten der aktuellen Generation.
 
@@ -55,12 +55,12 @@ Die EXE kann reproduzierbar neu gebaut werden: `powershell -ExecutionPolicy Bypa
 ## Tests und Diagnose
 
 ```powershell
-uv run --frozen python -m unittest discover -s tests -v
-uv run --frozen python backend/doctor.py
 powershell -ExecutionPolicy Bypass -File tools/quality_check.ps1
+node --test tests/*.js
+& "$env:LOCALAPPDATA\Allie21\source-venv\Scripts\python.exe" backend/doctor.py
 ```
 
-Der optionale Qualitätslauf verändert die Produktionsumgebung nicht. Er installiert Ruff, Mypy, Pytest und Playwright bei Bedarf in `.quality-venv`; mit `-InstallBrowsers` werden zusätzlich Chromium-Browserdaten geladen. Pytest verwendet die bereits geprüften Runtime-Abhängigkeiten aus `.allie-venv`. Ruff/Mypy melden bestehende Befunde mit Exitcode 1, statt sie still zu überspringen.
+Der optionale Qualitätslauf verändert die Produktionsumgebung nicht. Er installiert Ruff, Mypy, Pytest und Playwright bei Bedarf in `%LOCALAPPDATA%\Allie21\quality-venv`; mit `-InstallBrowsers` werden zusätzlich Chromium-Browserdaten geladen. Pytest verwendet die bereits geprüften Runtime-Abhängigkeiten aus `%LOCALAPPDATA%\Allie21\source-venv` oder, falls die Quell-Umgebung entfernt wurde, aus der installierten portablen Runtime unter `release/`. Torch/Vision müssen dafür nicht ein zweites Mal installiert werden. Ruff/Mypy melden bestehende Befunde mit Exitcode 1, statt sie still zu überspringen.
 
 Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begrenzt JSON und JPEG-Größen und speichert keine Videoframes. Exakte geprüfte Versionen, Modellrevisionen, Hashes und Messwerte stehen in `VERSIONEN.md`; Lizenzen in `QUELLEN_LIZENZEN.md`.
 
@@ -72,7 +72,7 @@ Der technische Checkpoint steht in `VERSIONEN.md`; ein laufender Hintergrundproz
 
 Die Anwendung/Userscript-Version ist 11.2.26. Die separat versionierte Edge-Erweiterung ist 11.2.26.0/11.2.26; `tools/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt. [PR #12](https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/12) enthält die Remis-, Eröffnungs- und Ragebait-Änderungen mit ihren aktuellen automatisierten Prüfergebnissen. Für die lokale Aktualisierung im Windows-Git-Checkout `UPDATE_ALLIE.cmd` ausführen; die [Update-Anleitung](docs/UPDATE_PIPELINE_DE.md) erklärt Voraussetzungen und PR-Prüfung.
 
-Neu ist der [lokale PGN-Lernrückblick](docs/PGN_TRAINING_DE.md): eine bewusst importierte Partie auf einem Schachbrett schrittweise ansehen, per Tastatur navigieren und Figuren/FEN als Text lesen. Der Rückblick benötigt keine Modellgewichte und startet keine Engine. Die [Sechs-Rollen-Prüfung](docs/six-agent-20261115/README.md) enthält Fixes, Messwerte, unabhängige Gegenprüfungen und offene Abnahmen.
+Neu ist der [lokale PGN-Lernrückblick](docs/PGN_TRAINING_DE.md): eine bewusst importierte Partie auf einem Schachbrett schrittweise ansehen, per Tastatur navigieren und Figuren/FEN als Text lesen. Der Rückblick benötigt keine Modellgewichte und startet keine Engine.
 
 Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `release/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben für den aktuellen Stand eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
 

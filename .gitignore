@@ -20,3 +20,7 @@ release/
 release/*.zip
 browser/allie-build.json
 .uv-tools/
+# User overrides and generated source-analysis artifacts are not project sources.
+config.json
+graphify-out/
+backend/vendor/**/.cache/

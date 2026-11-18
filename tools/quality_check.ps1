@@ -5,8 +5,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$env:UV_CACHE_DIR = Join-Path $root '.uv-quality-cache'
-$qualityVenv = Join-Path $root '.quality-venv'
+$stateRoot = Join-Path $env:LOCALAPPDATA 'Allie21'
+$env:UV_CACHE_DIR = Join-Path $stateRoot 'uv-cache'
+$env:RUFF_CACHE_DIR = Join-Path $stateRoot 'ruff-cache'
+$env:MYPY_CACHE_DIR = Join-Path $stateRoot 'mypy-cache'
+$qualityVenv = Join-Path $stateRoot 'quality-venv'
 $qualityPython = Join-Path $qualityVenv 'Scripts\python.exe'
 $uv = Get-Command uv -ErrorAction SilentlyContinue
 if (-not $uv) { throw 'uv fehlt. START_HIER.bat oder uv-Installation zuerst ausführen.' }
@@ -16,8 +19,8 @@ if (-not (Test-Path -LiteralPath $qualityPython)) {
     if ($LASTEXITCODE -ne 0) { throw "Qualitätsumgebung konnte nicht erstellt werden (Code $LASTEXITCODE)." }
 }
 
-# Install only on demand into a separate environment; the production .allie-venv
-# and the portable release remain free of lint/type/browser tooling.
+# Install only on demand into a separate environment; production dependencies
+# and the portable release stay free of lint/type/browser tooling.
 & $uv.Source pip install --python $qualityPython `
     'mypy>=1.13,<2' 'playwright>=1.50,<2' 'pytest>=8.3,<9' 'ruff>=0.8,<1'
 if ($LASTEXITCODE -ne 0) { throw "Qualitätswerkzeuge konnten nicht installiert werden (Code $LASTEXITCODE)." }
@@ -39,7 +42,8 @@ try {
     if (-not $SkipTests) {
         # Reuse the already-tested production dependencies without duplicating
         # the multi-gigabyte Torch/Vision environment in .quality-venv.
-        $productionSitePackages = Join-Path $root '.allie-venv\Lib\site-packages'
+        $selector = Join-Path $PSScriptRoot 'find_quality_sitepackages.ps1'
+        $productionSitePackages = & $selector -Root $root -StateRoot $stateRoot
         $env:PYTHONPATH = "$productionSitePackages;$(Join-Path $root 'backend')"
         & $qualityPython -m pytest -q -p no:cacheprovider
         $pytestCode = $LASTEXITCODE

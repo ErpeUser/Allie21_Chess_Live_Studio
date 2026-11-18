@@ -2,7 +2,9 @@
 setlocal
 cd /d "%~dp0"
 set "PYTHONUTF8=1"
-set "PYTHON_EXE=%~dp0.allie-venv\Scripts\python.exe"
+set "PYTHONDONTWRITEBYTECODE=1"
+if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
+set "PYTHON_EXE=%LOCALAPPDATA%\Allie21\source-venv\Scripts\python.exe"
 set "MODEL_SETUP=%~dp0backend\model_setup.py"
 if exist "%~dp0runtime\python.exe" if exist "%~dp0app\backend\model_setup.py" (
   set "PYTHON_EXE=%~dp0runtime\python.exe"

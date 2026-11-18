@@ -21,8 +21,15 @@ import chess
 import chess.engine
 import chess.pgn
 from config import CONFIG
+from download_stockfish import portable_engine_path, verified_executable
 
 BASE = Path(__file__).resolve().parent
+
+
+@functools.lru_cache(maxsize=8)
+def _verified_user_engine(path: str, size: int, mtime_ns: int) -> bool:
+    """Avoid rehashing the 100 MB pinned engine on each readiness probe."""
+    return verified_executable(Path(path))
 
 
 def _engine_error_id(exc: BaseException) -> str:
@@ -61,7 +68,7 @@ TROLL_OPENING_OPTIONS = {
 }
 # Exact continuations from the bundled c.tsv: Halloween Oldtimer, Stafford
 # Accepted (5.Nc3 and 5.d3), and Traxler King March. These extend only the
-# adaptive book; the original selected-line helpers retain their contract.
+# adaptive book without silently extending the default opening choices.
 ADAPTIVE_TRAP_LINES: dict[str, dict[str, tuple[tuple[str, ...], ...]]] = {
     'white': {
         'halloween': (
@@ -104,24 +111,6 @@ def standard_repertoire(side: str, selection: str | None = None) -> dict[str, st
     names = [name for option, (name, _line) in options.items() if option != key]
     return {'primary': options[key][0], 'alternative': names[0],
             'additional': ' · '.join(names[1:]), 'selection': key}
-
-
-def repertoire_move_for(moves: list[str], side: str, selection: str | None = None) -> str | None:
-    """Return the next move of the primary/alternative line, if history matches."""
-    normalized = str(side).lower()
-    options = OPENING_OPTIONS.get(normalized)
-    troll_options = TROLL_OPENING_OPTIONS.get(normalized, {})
-    if not options:
-        return None
-    history = tuple(moves)
-    key = str(selection or DEFAULT_OPENINGS[normalized]).lower()
-    selected_options = {**options, **troll_options}
-    if key not in selected_options:
-        key = DEFAULT_OPENINGS[normalized]
-    line = selected_options[key][1]
-    if len(history) < len(line) and line[:len(history)] == history:
-        return line[len(history)]
-    return None
 
 
 def adaptive_repertoire_candidates(
@@ -376,10 +365,18 @@ def find_stockfish() -> str | None:
         try:
             resolved = candidate.resolve()
             allowed_root = BASE.resolve()
-            # Configured and PATH-discovered binaries are trusted only from
-            # the application directory unless the user explicitly opts in.
+            # A pinned, hash-verified user-local Stockfish is also trusted.
+            local_app_data = os.environ.get('LOCALAPPDATA')
+            local_engine = (Path(local_app_data) / 'Allie21' / 'engines' / 'stockfish.exe'
+                            if os.name == 'nt' and local_app_data else None)
+            release_engine = portable_engine_path(BASE.parent) if os.name == 'nt' else None
+            trusted_roots = (local_engine, release_engine)
+            trusted_local = (any(root is not None and resolved == root.resolve()
+                                 for root in trusted_roots)
+                             and _verified_user_engine(str(resolved), resolved.stat().st_size,
+                                                       resolved.stat().st_mtime_ns))
             if (os.environ.get('ALLIE_ALLOW_EXTERNAL_STOCKFISH') != '1'
-                    and allowed_root not in resolved.parents):
+                    and allowed_root not in resolved.parents and not trusted_local):
                 return None
             if os.name != 'nt' and not os.access(resolved, os.X_OK):
                 return None
@@ -390,7 +387,12 @@ def find_stockfish() -> str | None:
     env = os.environ.get('STOCKFISH_PATH', CONFIG['stockfish_path']).strip().strip('\"')
     if env:
         return safe_candidate(env)
-    for candidate_path in [BASE / 'stockfish.exe', *(BASE / 'engines').glob('stockfish*.exe')]:
+    local_app_data = os.environ.get('LOCALAPPDATA')
+    trusted_local = ([Path(local_app_data) / 'Allie21' / 'engines' / 'stockfish.exe']
+                     if os.name == 'nt' and local_app_data else [])
+    trusted_release = ([portable_engine_path(BASE.parent)] if os.name == 'nt' else [])
+    for candidate_path in [BASE / 'stockfish.exe', *(BASE / 'engines').glob('stockfish*.exe'),
+                           *trusted_local, *trusted_release]:
         resolved = safe_candidate(candidate_path)
         if resolved:
             return resolved

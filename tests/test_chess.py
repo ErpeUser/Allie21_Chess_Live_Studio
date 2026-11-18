@@ -27,7 +27,6 @@ from allie_local_server import (
 from browser_session import BrowserTrackerPool
 from chess_extras import (
     opening_for_position,
-    repertoire_move_for,
     standard_repertoire,
     tactical_hints,
 )
@@ -274,9 +273,7 @@ class ChessTests(unittest.TestCase):
 
     def test_standard_repertoire_selection_changes_primary_line(self):
         self.assertEqual(standard_repertoire('white', 'vienna')['primary'], 'Wiener Gambit')
-        self.assertEqual(repertoire_move_for([], 'white', 'vienna'), 'e2e4')
         self.assertEqual(standard_repertoire('black', 'alekhine')['primary'], 'Aljechin-Verteidigung')
-        self.assertEqual(repertoire_move_for(['e2e4'], 'black', 'alekhine'), 'g8f6')
 
     def test_analysis_exposes_both_selected_openings(self):
         result = analyse_position({
@@ -297,37 +294,6 @@ class ChessTests(unittest.TestCase):
         mate_in_two = chess.Board('kr6/1r1N4/2Q5/8/8/8/8/K7 w - - 0 1')
         hints = tactical_hints(mate_in_two)
         self.assertTrue(any('2 Zügen' in hint for hint in hints))
-
-    def test_troll_repertoire_uses_existing_legal_opening_lines(self):
-        self.assertEqual(standard_repertoire('white', 'halloween')['primary'], 'Halloween-Gambit')
-        self.assertEqual(repertoire_move_for([], 'white', 'bongcloud'), 'e2e4')
-        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5'], 'white', 'bongcloud'), 'e1e2')
-        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'g8f6', 'f3e5'], 'black', 'stafford'), 'b8c6')
-        self.assertEqual(repertoire_move_for(['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'g8f6', 'f3g5'], 'black', 'traxler'), 'f8c5')
-
-    def test_troll_repertoire_matches_exact_wiener_branch_fixtures(self):
-        halloween = ['e2e4', 'e7e5', 'b1c3', 'g8f6', 'g1f3', 'b8c6', 'f3e5']
-        steinitz = ['e2e4', 'e7e5', 'b1c3', 'b8c6', 'f2f4', 'e5f4', 'd2d4', 'd8h4', 'e1e2']
-        frankenstein = ['e2e4', 'e7e5', 'b1c3', 'g8f6', 'f1c4', 'f6e4', 'd1h5']
-        for line, side, name in ((halloween, 'white', 'halloween'), (steinitz, 'white', 'steinitz'), (frankenstein, 'white', 'frankenstein')):
-            for index in range(len(line)):
-                self.assertEqual(repertoire_move_for(line[:index], side, name), line[index])
-        self.assertIsNone(repertoire_move_for(halloween[:2] + ['d2d4'], 'white', 'halloween'))
-
-    def test_repertoire_move_is_only_returned_for_matching_legal_history(self):
-        self.assertEqual(repertoire_move_for([], 'white'), 'g2g4')
-        self.assertIsNone(repertoire_move_for(['e2e4'], 'black'))
-        self.assertEqual(repertoire_move_for(['d2d4'], 'black'), 'e7e5')
-        self.assertIsNone(repertoire_move_for(['e2e4', 'e7e5', 'b1c3'], 'black'))
-
-    def test_repertoire_does_not_switch_to_another_line_after_deviation(self):
-        # The selected Vienna line diverges on 2.d4; Danish must not be used
-        # as an implicit fallback just because its prefix happens to match.
-        self.assertIsNone(repertoire_move_for(
-            ['e2e4', 'e7e5', 'd2d4'], 'white', 'vienna'))
-        # Likewise, Englund must not silently become Budapest after 1.d4 Nf6.
-        self.assertIsNone(repertoire_move_for(
-            ['d2d4', 'g8f6'], 'black', 'englund'))
 
     def test_aggressive_style_promotes_immediate_mate_for_player(self):
         result = analyse_position({

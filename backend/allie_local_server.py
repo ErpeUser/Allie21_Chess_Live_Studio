@@ -40,7 +40,6 @@ PORT = parse_port(os.environ.get("ALLIE_PORT", "8765"))
 MODEL_NAME = MODEL_ID
 VENDOR_DIR = Path(__file__).resolve().parent / "vendor" / "allie_model"
 VENDOR_MANIFEST = Path(__file__).resolve().parent / "vendor" / "allie_model.sha256.csv"
-MAX_BODY = 64 * 1024
 _model = None
 _ANALYSIS_CACHE: OrderedDict[str, tuple[float, dict[str, Any]]] = OrderedDict()
 _ANALYSIS_CACHE_LOCK = threading.RLock()

@@ -1,23 +1,34 @@
 param([string]$DistPath = '', [switch]$Offline)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+# The builder executes the bundled interpreter for its package inventory.
+# Prevent that verification step from regenerating bytecode in the release.
+$env:PYTHONDONTWRITEBYTECODE = '1'
 if (-not $DistPath) { $DistPath = Join-Path $root 'release' }
-$env:UV_CACHE_DIR = Join-Path $root '.uv-cache'
-$env:UV_TOOL_DIR = Join-Path $root '.uv-tools'
+$stateRoot = Join-Path $env:LOCALAPPDATA 'Allie21'
+$env:UV_CACHE_DIR = Join-Path $stateRoot 'uv-cache'
+$env:UV_TOOL_DIR = Join-Path $stateRoot 'uv-tools'
 if ($Offline) { $env:UV_OFFLINE = '1' } else { Remove-Item Env:UV_OFFLINE -ErrorAction SilentlyContinue }
 $uv = Get-Command uv -ErrorAction SilentlyContinue
 $uvx = Get-Command uvx -ErrorAction SilentlyContinue
 if (-not $uv -or -not $uvx) { throw 'uv/uvx fehlt. START_HIER.bat einmal ausfuehren, danach erneut bauen.' }
-$releaseVenv = Join-Path $root '.build\release-venv'
+$releaseVenv = Join-Path $stateRoot 'release-venv'
 $env:UV_PROJECT_ENVIRONMENT = $releaseVenv
 Push-Location $root
 try {
     & $uv.Source sync --frozen --no-dev --extra vision --python '3.12'
     if ($LASTEXITCODE -ne 0) { throw 'Locked release environment could not be synchronized. No unverified venv fallback.' }
-    $stockfish = Join-Path $root 'backend\engines\stockfish.exe'
+    $stockfish = Join-Path $stateRoot 'engines\stockfish.exe'
     if (-not (Test-Path -LiteralPath $stockfish)) {
-        & (Join-Path $releaseVenv 'Scripts\python.exe') (Join-Path $root 'backend\download_stockfish.py')
-        if ($LASTEXITCODE -ne 0) { throw 'Stockfish download failed.' }
+        # Reuse an installed, subsequently hash-checked binary before downloading.
+        $previousEngine = Join-Path $root 'release\Allie21 Chess Live Studio\app\backend\engines\stockfish.exe'
+        if (Test-Path -LiteralPath $previousEngine) {
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $stockfish) | Out-Null
+            Copy-Item -LiteralPath $previousEngine -Destination $stockfish -Force
+        } else {
+            & (Join-Path $releaseVenv 'Scripts\python.exe') (Join-Path $root 'backend\download_stockfish.py')
+            if ($LASTEXITCODE -ne 0) { throw 'Stockfish download failed.' }
+        }
     }
     $expectedStockfishSha256 = '45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0'
     $sha256 = [System.Security.Cryptography.SHA256]::Create()
@@ -40,16 +51,25 @@ try {
     & $uvx.Source --python '3.12' --from 'pyinstaller==6.22.3' --with 'pystray==0.19.5' --with 'pillow==13.0.0' pyinstaller `
         --noconfirm --clean --onedir --windowed --icon (Join-Path $root 'assets\allie21_icon.ico') `
         --hidden-import 'pystray._win32' --name 'Allie21 Chess Live Studio' --distpath $DistPath `
-        --workpath (Join-Path $root '.build\pyinstaller') --specpath (Join-Path $root '.build') `
+        --workpath (Join-Path $stateRoot 'build-work\pyinstaller') --specpath (Join-Path $stateRoot 'build-work') `
         (Join-Path $PSScriptRoot 'launcher.py')
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)." }
     $app = Join-Path $bundle 'app'
     $runtime = Join-Path $bundle 'runtime'
     New-Item -ItemType Directory -Force -Path $app, $runtime | Out-Null
+    # Copy only source assets; imported bytecode and Hugging Face download metadata
+    # are regenerated and must not become permanent release files.
     foreach ($directory in @('assets', 'backend', 'browser', 'viewer', 'beispiele')) {
-        Copy-Item -LiteralPath (Join-Path $root $directory) -Destination $app -Recurse -Force
+        $sourceDir = Join-Path $root $directory
+        $targetDir = Join-Path $app $directory
+        New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+        & robocopy.exe $sourceDir $targetDir /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XD __pycache__ .cache /XF *.pyc *.pyo | Out-Null
+        if ($LASTEXITCODE -gt 7) { throw "Source copy failed for $directory ($LASTEXITCODE)." }
     }
-    foreach ($file in @('config.json', 'pyproject.toml', 'uv.lock', 'README_DE.md', 'VERSIONEN.md', 'CHANGELOG.md', 'LICENSE.txt', 'QUELLEN_LIZENZEN.md')) {
+    $bundleEngineDir = Join-Path $app 'backend\engines'
+    New-Item -ItemType Directory -Force -Path $bundleEngineDir | Out-Null
+    Copy-Item -LiteralPath $stockfish -Destination (Join-Path $bundleEngineDir 'stockfish.exe') -Force
+    foreach ($file in @('pyproject.toml', 'uv.lock', 'README_DE.md', 'VERSIONEN.md', 'CHANGELOG.md', 'LICENSE.txt', 'QUELLEN_LIZENZEN.md')) {
         Copy-Item -LiteralPath (Join-Path $root $file) -Destination $app -Force
     }
     # Keep a machine-readable release proof beside the bundled source.  The
@@ -76,10 +96,21 @@ try {
     foreach ($item in @('DLLs', 'Lib', 'python.exe', 'pythonw.exe', 'python3.dll', 'python312.dll', 'LICENSE.txt')) {
         $source = Join-Path $basePython $item
         if (-not (Test-Path -LiteralPath $source)) { continue }
-        if ((Get-Item -LiteralPath $source).PSIsContainer) {
-            Copy-Item -LiteralPath $source -Destination (Join-Path $runtime (Split-Path $item -Leaf)) -Recurse -Force
+        $target = Join-Path $runtime (Split-Path $item -Leaf)
+        if ($item -eq 'Lib') {
+            New-Item -ItemType Directory -Force -Path $target | Out-Null
+            # Standard-library test fixtures, IDLE, installers and stale pyc files
+            # have no part in the portable chess runtime.
+            & robocopy.exe $source $target /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XD site-packages test tests idlelib turtledemo ensurepip lib2to3 __pycache__ /XF *.pyc *.pyo | Out-Null
+            if ($LASTEXITCODE -gt 7) { throw "Standard library copy failed ($LASTEXITCODE)." }
+        } elseif ($item -eq 'DLLs') {
+            New-Item -ItemType Directory -Force -Path $target | Out-Null
+            & robocopy.exe $source $target /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XF _test*.pyd | Out-Null
+            if ($LASTEXITCODE -gt 7) { throw "Python DLL copy failed ($LASTEXITCODE)." }
+        } elseif ((Get-Item -LiteralPath $source).PSIsContainer) {
+            Copy-Item -LiteralPath $source -Destination $target -Recurse -Force
         } else {
-            Copy-Item -LiteralPath $source -Destination (Join-Path $runtime (Split-Path $item -Leaf)) -Force
+            Copy-Item -LiteralPath $source -Destination $target -Force
         }
     }
     foreach ($required in @('python.exe', 'pythonw.exe', 'python3.dll', 'python312.dll')) {
@@ -95,7 +126,7 @@ try {
     # Robocopy is reliable for the large, deeply nested Windows runtime tree;
     # generated bytecode caches are not needed and can disappear while copying.
     $siteSource = Join-Path $releaseVenv 'Lib\site-packages'
-    & robocopy.exe $siteSource $site /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XD __pycache__ | Out-Null
+    & robocopy.exe $siteSource $site /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XD __pycache__ test tests /XF *.pyc *.pyo | Out-Null
     if ($LASTEXITCODE -gt 7) { throw "Runtime package copy failed ($LASTEXITCODE)." }
     $runtimePython = Join-Path $runtime 'python.exe'
     $inventory = Join-Path $app 'runtime-packages.json'

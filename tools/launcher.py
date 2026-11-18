@@ -246,14 +246,15 @@ class TrayApp:
         self.reused_existing = False
         self.owns_process = True
         hidden = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        environment = os.environ.copy()
+        environment["ALLIE_PORT"] = str(self.port)
+        environment["ALLIE_NO_BROWSER"] = "1"
+        environment["PYTHONDONTWRITEBYTECODE"] = "1"
         if is_portable_bundle(self.root):
             app_root = self.root / "app"
             runtime_python = self.root / "runtime" / "python.exe"
-            environment = os.environ.copy()
             environment["ALLIE_PROJECT_ROOT"] = str(app_root)
             environment["PYTHONPATH"] = str(app_root / "backend")
-            environment["ALLIE_PORT"] = str(self.port)
-            environment["ALLIE_NO_BROWSER"] = "1"
             self.process = self.process_factory(
                 [str(runtime_python), str(app_root / "backend" / "live_server.py")],
                 cwd=app_root,
@@ -261,9 +262,6 @@ class TrayApp:
                 creationflags=hidden,
             )
             return self.process
-        environment = os.environ.copy()
-        environment["ALLIE_PORT"] = str(self.port)
-        environment["ALLIE_NO_BROWSER"] = "1"
         self.process = self.process_factory(
             ["cmd.exe", "/d", "/c", str(self.root / "START_HIER.bat")],
             cwd=self.root,

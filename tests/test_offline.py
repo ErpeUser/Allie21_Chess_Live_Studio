@@ -1,10 +1,12 @@
 """Fast checks that need no downloads or model inference."""
 import builtins
+import hashlib
 import importlib.util
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,7 +15,9 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
+import chess_extras
 import config
+import download_stockfish as installer
 from vision import sanitize_ocr_history
 
 LAUNCHER_SPEC = importlib.util.spec_from_file_location('allie_launcher', ROOT / 'tools/launcher.py')
@@ -48,6 +52,53 @@ class StandaloneTests(unittest.TestCase):
         with patch.object(Path, 'read_text', return_value='{broken'):
             self.assertEqual(config.load_config()['time_control'], '300+0')
 
+    def test_no_config_file_uses_validated_defaults(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(config, 'PATH', Path(folder) / 'config.json'):
+            self.assertEqual(config.load_config(), config.AppConfig().model_dump())
+
+    def test_user_local_engine_requires_pinned_hash(self):
+        if os.name != 'nt':
+            self.skipTest('Windows engine paths only')
+        with tempfile.TemporaryDirectory() as folder:
+            engine = Path(folder) / 'Allie21' / 'engines' / 'stockfish.exe'
+            engine.parent.mkdir(parents=True)
+            engine.write_bytes(b'fake engine')
+            other = Path(folder) / 'untrusted.exe'
+            other.write_bytes(b'fake engine')
+            with patch.dict(os.environ, {'LOCALAPPDATA': folder,
+                                         'STOCKFISH_PATH': str(engine),
+                                         'ALLIE_ALLOW_EXTERNAL_STOCKFISH': '0'}):
+                with patch.object(chess_extras, '_verified_user_engine', return_value=True):
+                    self.assertEqual(chess_extras.find_stockfish(), str(engine.resolve()))
+                    os.environ['STOCKFISH_PATH'] = str(other)
+                    self.assertIsNone(chess_extras.find_stockfish())
+                os.environ['STOCKFISH_PATH'] = str(engine)
+                with patch.object(chess_extras, '_verified_user_engine', return_value=False):
+                    self.assertIsNone(chess_extras.find_stockfish())
+
+    @unittest.skipUnless(os.name == 'nt', 'Stockfish release binaries are Windows-only')
+    def test_source_uses_only_hash_verified_engine_from_installed_release(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            backend = root / 'backend'
+            backend.mkdir()
+            engine = (root / 'release' / 'Allie21 Chess Live Studio' / 'app'
+                      / 'backend' / 'engines' / 'stockfish.exe')
+            engine.parent.mkdir(parents=True)
+            payload = b'test-only-verified-engine'
+            engine.write_bytes(payload)
+            with (patch.object(chess_extras, 'BASE', backend),
+                  patch.object(installer, 'EXPECTED_EXE_SHA256', hashlib.sha256(payload).hexdigest()),
+                  patch.dict(os.environ, {'LOCALAPPDATA': str(root / 'local'),
+                                          'STOCKFISH_PATH': '',
+                                          'ALLIE_ALLOW_EXTERNAL_STOCKFISH': '0'}),
+                  patch.object(chess_extras.shutil, 'which', return_value=None)):
+                chess_extras._verified_user_engine.cache_clear()
+                self.assertEqual(chess_extras.find_stockfish(), str(engine.resolve()))
+                engine.write_bytes(b'corrupted-release-engine')
+                chess_extras._verified_user_engine.cache_clear()
+                self.assertIsNone(chess_extras.find_stockfish())
+
     def test_one_time_control_definition(self):
         self.assertEqual(config.time_profile('60+1'), ('Bullet', .25))
         self.assertEqual(config.time_profile('180+2'), ('Blitz', .65))
@@ -70,7 +121,7 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn('Nf3', sanitize_ocr_history('1. e4 e5 2. Nf3 Nc6'))
 
     def test_required_editable_files(self):
-        for name in ('START_HIER.bat', 'pyproject.toml', 'uv.lock', 'config.json',
+        for name in ('START_HIER.bat', 'pyproject.toml', 'uv.lock',
                      'backend/live_server.py', 'backend/live_session.py',
                      'viewer/index.html', 'browser/allie21_overlay.user.js'):
             self.assertTrue((ROOT / name).is_file(), name)
@@ -106,7 +157,8 @@ class StandaloneTests(unittest.TestCase):
     def test_single_uv_start_path_wires_stockfish(self):
         script = (ROOT / 'START_HIER.bat').read_text(encoding='utf-8')
         self.assertIn('uv 0.13.7', script)
-        self.assertIn('UV_PROJECT_ENVIRONMENT=%~dp0.allie-venv', script)
+        self.assertIn('UV_PROJECT_ENVIRONMENT=%ALLIE_STATE_DIR%\\source-venv', script)
+        self.assertNotIn('UV_PROJECT_ENVIRONMENT=%~dp0.allie-venv', script)
         self.assertIn('sync --frozen --extra vision --no-dev', script)
         self.assertIn('backend\\download_stockfish.py', script)
         self.assertIn('backend\\live_server.py', script)
@@ -170,6 +222,25 @@ class StandaloneTests(unittest.TestCase):
         app.open_viewer()
 
         self.assertEqual(opened, ['http://127.0.0.1:8765/viewer'])
+
+    def test_launcher_prevents_regenerating_bytecode_in_portable_bundle(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for relative in allie_launcher.PORTABLE_REQUIRED:
+                file = root / relative
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.touch()
+            captured = {}
+
+            def capture(_arguments, **kwargs):
+                captured.update(kwargs)
+                return SimpleNamespace(poll=lambda: None)
+
+            with (patch.object(allie_launcher, 'port_available', return_value=True),
+                  patch.dict(os.environ, {'PYTHONDONTWRITEBYTECODE': '0'})):
+                app = allie_launcher.TrayApp(root, process_factory=capture)
+                app.start()
+            self.assertEqual(captured['env'].get('PYTHONDONTWRITEBYTECODE'), '1')
 
     def test_launcher_validates_and_propagates_custom_port(self):
         with patch.dict(os.environ, {'ALLIE_PORT': '18765'}):
