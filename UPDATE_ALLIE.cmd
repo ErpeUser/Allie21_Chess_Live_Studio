@@ -3,14 +3,14 @@ setlocal
 cd /d "%~dp0"
 set "PYTHONUTF8=1"
 if "%ALLIE_UPDATE_ACTIVE%"=="1" exit /b 0
-call :python tools\maintain.py --git-only --process-prs --cleanup --install-hooks %*
+call :python source\automation\maintain.py --git-only --process-prs --cleanup --install-hooks %*
 set "SYNC_RESULT=%ERRORLEVEL%"
 if "%SYNC_RESULT%"=="1" exit /b 1
 if %SYNC_RESULT% GTR 2 exit /b %SYNC_RESULT%
 rem Start a fresh interpreter after pull so deployment uses the updated code.
-call :python tools\maintain.py --deploy-only %*
+call :python source\automation\maintain.py --deploy-only %*
 if errorlevel 1 exit /b %ERRORLEVEL%
-echo Update beendet. Bericht: %LOCALAPPDATA%\Allie21\maintenance\maintenance-report.json
+echo Update beendet. Bericht: generated\protected\maintenance\maintenance-report.json
 exit /b %SYNC_RESULT%
 :python
 where py >nul 2>&1

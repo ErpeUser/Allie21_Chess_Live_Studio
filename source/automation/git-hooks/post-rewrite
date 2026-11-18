@@ -1,0 +1,3 @@
+#!/bin/sh
+cat >/dev/null
+exec "$(git rev-parse --show-toplevel)/source/automation/git-hooks/post-merge"

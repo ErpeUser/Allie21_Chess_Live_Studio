@@ -5,17 +5,17 @@ Lokale Windows-Anwendung für menschliche Zugprognosen mit Allie 2.1 und objekti
 ## Schnellstart unter Windows
 
 1. Projekt vollständig entpacken.
-2. **`START_HIER.bat` doppelklicken** oder den portablen Onedir-Build aus `tools/build_exe.ps1` starten.
+2. **`START_HIER.bat` doppelklicken** oder den portablen Onedir-Build aus `source/automation/build_exe.ps1` starten.
 3. Warten, bis `http://127.0.0.1:8765/viewer` geöffnet wird. Mit `ALLIE_PORT=18765` wird der benutzerdefinierte Port auch in der Startmeldung verwendet.
 
-Die EXE ist ein portables Onedir: Im selben Ordner liegen `app` (Server, Viewer und Assets) und `runtime` (Python 3.12 mit den eingefrorenen Paketen). Sie benötigt für den Start weder Checkout, `uv` noch eine globale Python-Installation. Beim ersten Modellstart können die Allie-Gewichte weiterhin in den lokalen Hugging-Face-Cache geladen werden; Stockfish liegt im App-Ordner. Solange Allie läuft, erscheint rechts unten im Windows-Infobereich ein Allie-Symbol: Doppelklick oder „Allie öffnen“ öffnet den Viewer, „Allie beenden“ schließt Server und Symbol vollständig.
+Die EXE ist ein portables Onedir: Im selben Ordner liegen `app` (Server, Viewer und Assets) und `runtime` (Python 3.12 mit den eingefrorenen Paketen). Sie benötigt für den Start weder Checkout, `uv` noch eine globale Python-Installation. Beim ersten Modellstart können die Allie-Gewichte unter `generated/dependencies/models/` nachgeladen oder aus dem vorhandenen Modellcache benutzt werden; Stockfish liegt im App-Ordner. Solange Allie läuft, erscheint rechts unten im Windows-Infobereich ein Allie-Symbol: Doppelklick oder „Allie öffnen“ öffnet den Viewer, „Allie beenden“ schließt Server und Symbol vollständig.
 
 Das echte Allie-Modell wird beim Serverstart automatisch im Hintergrund mit der Startstellung vorgewärmt. Die Gewichte benötigen ungefähr 18,4 GB Speicherplatz; der CPU-Betrieb benötigt viel Arbeitsspeicher. Sobald im Viewer „Allie geladen“ steht, ist der erste Live-Zug ohne Modell-Kaltstart bereit.
 
 ## Eingabewege
 
 - **Video/Fenster:** Im Viewer „Quelle auswählen“ anklicken und in Chrome oder Edge ein sichtbares Discord-, Browser- oder Monitorfenster freigeben. `chessvision` und optional RapidOCR werden erst beim ersten Frame geladen.
-- **Browser-Overlay:** In Edge/Chrome unter `edge://extensions` bzw. `chrome://extensions` den Entwicklermodus aktivieren und den Ordner `browser/` als „Entpackte Erweiterung laden“ wählen. Die Erweiterung unterstützt gezielt Chess.com und Lichess, beobachtet DOM-Änderungen gebündelt und sendet nur an den lokalen Dienst. Für Canvas-Bretter und andere Websites den Video- oder PGN-Weg verwenden.
+- **Browser-Overlay:** In Edge/Chrome unter `edge://extensions` bzw. `chrome://extensions` den Entwicklermodus aktivieren und den Ordner `source/app/browser/` als „Entpackte Erweiterung laden“ wählen. Die Erweiterung unterstützt gezielt Chess.com und Lichess, beobachtet DOM-Änderungen gebündelt und sendet nur an den lokalen Dienst. Für Canvas-Bretter und andere Websites den Video- oder PGN-Weg verwenden.
 - **PGN/FEN:** „PGN oder FEN ohne Stream analysieren“ öffnen. Nur eine vollständige, bestätigte Partiegeschichte ab der Startstellung wird an Allie übergeben. FEN allein wird ausschließlich mit Stockfish analysiert.
 
 ## Korrektheit und Anzeigen
@@ -46,37 +46,72 @@ Die einheitliche Zeitklasse verwendet `Grundzeit + 40 × Inkrement`:
 
 ## Einstellungen
 
-Die validierten Standardwerte stehen in `backend/config.py`. Eine optionale, nicht versionierte `config.json` im Projektstamm kann diese Werte bei Bedarf überschreiben. Wichtige Felder sind `white_elo`, `black_elo`, `player_side`, `time_control`, `recognition_interval_ms`, `stability_frames`, `ocr_history`, `stockfish_threads` und `stockfish_hash_mb`. Modellkennung und Modellrevision sind absichtlich festgelegt.
+Die validierten Standardwerte stehen in `source/app/backend/config.py`. Eine optionale, nicht versionierte `generated/protected/config.json` kann diese Werte bei Bedarf überschreiben. Wichtige Felder sind `white_elo`, `black_elo`, `player_side`, `time_control`, `recognition_interval_ms`, `stability_frames`, `ocr_history`, `stockfish_threads` und `stockfish_hash_mb`. Modellkennung und Modellrevision sind absichtlich festgelegt.
 
 Der Schalter „Live-Zugpfeile & Empfehlungen“ verwirft sofort laufende Ergebnisse. Nach Stellungs-, Einstellungs- oder Sitzungswechseln akzeptiert die Pipeline nur Antworten der aktuellen Generation.
 
-Die EXE kann reproduzierbar neu gebaut werden: `powershell -ExecutionPolicy Bypass -File tools/build_exe.ps1`. PyInstaller wird dabei nur für den Build geladen und ist keine Backend-Laufzeitabhängigkeit. Die schnelle App-Ordner-Ausgabe vermeidet das langsame und auf diesem Windows unzuverlässige Selbstentpacken einer Onefile-EXE; der komplette `release\Allie21 Chess Live Studio`-Ordner muss zusammenbleiben.
+Die EXE kann reproduzierbar neu gebaut werden: `powershell -ExecutionPolicy Bypass -File source/automation/build_exe.ps1`. PyInstaller wird dabei nur für den Build geladen und ist keine Backend-Laufzeitabhängigkeit. Die schnelle App-Ordner-Ausgabe vermeidet das langsame und auf diesem Windows unzuverlässige Selbstentpacken einer Onefile-EXE; der komplette `generated/dist/win/Allie21 Chess Live Studio/`-Ordner muss zusammenbleiben.
 
 ## Tests und Diagnose
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/quality_check.ps1
-node --test tests/*.js
-& "$env:LOCALAPPDATA\Allie21\source-venv\Scripts\python.exe" backend/doctor.py
+powershell -ExecutionPolicy Bypass -File source/automation/quality_check.ps1
+node --test source/tests/*.js
+& "$PWD\generated\dist\win\Allie21 Chess Live Studio\runtime\python.exe" source/app/backend/doctor.py
 ```
 
-Der optionale Qualitätslauf verändert die Produktionsumgebung nicht. Er installiert Ruff, Mypy, Pytest und Playwright bei Bedarf in `%LOCALAPPDATA%\Allie21\quality-venv`; mit `-InstallBrowsers` werden zusätzlich Chromium-Browserdaten geladen. Pytest verwendet die bereits geprüften Runtime-Abhängigkeiten aus `%LOCALAPPDATA%\Allie21\source-venv` oder, falls die Quell-Umgebung entfernt wurde, aus der installierten portablen Runtime unter `release/`. Torch/Vision müssen dafür nicht ein zweites Mal installiert werden. Ruff/Mypy melden bestehende Befunde mit Exitcode 1, statt sie still zu überspringen.
+Der optionale Qualitätslauf verändert die Produktionsumgebung nicht. Er installiert Ruff, Mypy, Pytest und Playwright bei Bedarf in `generated/environments/quality`; mit `-InstallBrowsers` werden zusätzlich Chromium-Browserdaten geladen. Pytest verwendet die bereits geprüften Runtime-Abhängigkeiten aus `generated/environments/source` oder, falls die Quell-Umgebung entfernt wurde, aus der installierten portablen Runtime unter `generated/dist/win/`. Torch/Vision müssen dafür nicht ein zweites Mal installiert werden. Ruff/Mypy melden bestehende Befunde mit Exitcode 1, statt sie still zu überspringen.
 
-Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begrenzt JSON und JPEG-Größen und speichert keine Videoframes. Exakte geprüfte Versionen, Modellrevisionen, Hashes und Messwerte stehen in `VERSIONEN.md`; Lizenzen in `QUELLEN_LIZENZEN.md`.
+Der Server bindet ausschließlich an `127.0.0.1`, prüft Host und Herkunft, begrenzt JSON und JPEG-Größen und speichert keine Videoframes. Exakte geprüfte Versionen, Modellrevisionen, Hashes und Messwerte stehen in `source/docs/VERSIONEN.md`; Lizenzen in `source/docs/QUELLEN_LIZENZEN.md`.
 
 Die Browser-Erweiterung öffnet über ihre Optionen die Einstellung „Lokaler Port“ und speichert sie in `chrome.storage.local`; das Userscript bietet denselben Port im Allie-Menü. Beide müssen mit `ALLIE_PORT` des Servers übereinstimmen. Die Erweiterung verwendet für localhost bewusst eine Port-Wildcard und fragt den konfigurierten Port über den MV3-Service-Worker ab.
 
 ## Aktueller Quellstand und lokale Installation
 
-Der technische Checkpoint steht in `VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
+Der technische Checkpoint steht in `source/docs/VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
 
-Die Anwendung/Userscript-Version ist 11.2.26. Die separat versionierte Edge-Erweiterung ist 11.2.26.0/11.2.26; `tools/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt. [PR #12](https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/12) enthält die Remis-, Eröffnungs- und Ragebait-Änderungen mit ihren aktuellen automatisierten Prüfergebnissen. Für die lokale Aktualisierung im Windows-Git-Checkout `UPDATE_ALLIE.cmd` ausführen; die [Update-Anleitung](docs/UPDATE_PIPELINE_DE.md) erklärt Voraussetzungen und PR-Prüfung.
+Die Anwendung/Userscript-Version ist 11.2.26. Die separat versionierte Edge-Erweiterung ist 11.2.26.0/11.2.26; `source/automation/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt. [PR #12](https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/12) enthält die Remis-, Eröffnungs- und Ragebait-Änderungen mit ihren aktuellen automatisierten Prüfergebnissen. Für die lokale Aktualisierung im Windows-Git-Checkout `UPDATE_ALLIE.cmd` ausführen; die [Update-Anleitung](source/docs/UPDATE_PIPELINE_DE.md) erklärt Voraussetzungen und PR-Prüfung.
 
-Neu ist der [lokale PGN-Lernrückblick](docs/PGN_TRAINING_DE.md): eine bewusst importierte Partie auf einem Schachbrett schrittweise ansehen, per Tastatur navigieren und Figuren/FEN als Text lesen. Der Rückblick benötigt keine Modellgewichte und startet keine Engine.
+Neu ist der [lokale PGN-Lernrückblick](source/docs/PGN_TRAINING_DE.md): eine bewusst importierte Partie auf einem Schachbrett schrittweise ansehen, per Tastatur navigieren und Figuren/FEN als Text lesen. Der Rückblick benötigt keine Modellgewichte und startet keine Engine.
 
-Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `release/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben für den aktuellen Stand eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `VERSIONEN.md`.
+Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `generated/dist/win/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben für den aktuellen Stand eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `source/docs/VERSIONEN.md`.
 
 ## Grenzen
 
-Videoerkennung hängt von Größe, Design, Kompression und Sichtbarkeit des Brettes ab. Das Originalfenster wird nicht verändert; Pfeile erscheinen im Viewer oder im optionalen Overlay. Der geprüfte Allie-Python-Code liegt unter `backend/vendor/allie_model`; der Loader verwendet `trust_remote_code=False`, `local_files_only=True` und prüft das SHA-256-Manifest vor dem Start.
+Videoerkennung hängt von Größe, Design, Kompression und Sichtbarkeit des Brettes ab. Das Originalfenster wird nicht verändert; Pfeile erscheinen im Viewer oder im optionalen Overlay. Der geprüfte Allie-Python-Code liegt unter `generated/dependencies/vendor/allie_model`; der Loader verwendet `trust_remote_code=False`, `local_files_only=True` und prüft das SHA-256-Manifest vor dem Start.
 
+
+## Kanonische Git-/Codex-Arbeitsweise
+Die kanonische Quellbasis liegt in diesem Checkout unter `source/`; die
+gepruefte Vendorquelle ist ausschliesslich unter
+`generated/dependencies/vendor/` versioniert. Alle anderen Inhalte unter
+`generated/` (einschliesslich Modelle, Builds und Git-Metadaten) sind nicht
+zur Versionierung vorgesehen. Vor jeder Arbeit `AGENTS.md` lesen.
+
+Fuer Codeaenderungen gilt: Arbeitszweig und Git-Status pruefen, fremde lokale
+Aenderungen erhalten, `python source/automation/check_repository_policy.py`
+ausfuehren und die entsprechenden Struktur-, Qualitaets- und Funktionstests
+laufen lassen. `main` ist Integrationszweig, kein automatisch zu ueberschreibender
+Zustand. Ein Agent erzeugt keine Kopien, Branches, PRs, Workflows oder Links ohne
+konkreten Bedarf und Autorisierung.
+
+Die Synchronisierung ist ausschliesslich fuer sauberes `main` zulaessig:
+```powershell
+git status --porcelain=v1 -uall
+git branch --show-current
+git remote -v
+git fetch --no-tags origin main
+git merge-base --is-ancestor HEAD origin/main
+# Nur wenn diese Pruefungen erfolgreich sind und der Checkout sauber auf main ist:
+git merge --ff-only origin/main
+```
+`UPDATE_ALLIE.cmd` prueft diesen Zustand und meldet PR-/Branch-Kandidaten,
+fuehrt jedoch keine automatischen PR-Merges, Branch-Loeschungen oder PR-Updates
+aus. Offene PRs sind individuell anhand Code-Diff, Konflikten, Checks und
+Reviews zu beurteilen. `git clean -fdx` und `reset --hard` sind tabu.
+GitHub `main` ist inzwischen geschuetzt: Pull Requests, die fuenf vorhandenen
+Windows-/Wartungs-/Security-/CodeQL-Checks, die Aufloesung von Review-Konversationen
+und Fast-Forward-orientierte Integration sind verbindlich. Force-Pushes und
+Branch-Loeschungen sind untersagt, auch fuer Administratoren. Eine vorgeschriebene
+Anzahl zusaetzlicher Approvals ist nicht konfiguriert (0). Der neue Strukturcheck
+wirkt auf GitHub erst nach Integration dieser lokalen Aenderungen in `main`.

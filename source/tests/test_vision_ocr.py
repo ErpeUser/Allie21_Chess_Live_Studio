@@ -1,0 +1,80 @@
+import sys
+import types
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'app' / 'backend'))
+from vision import BoardVision, sanitize_ocr_history
+
+
+class _Crop:
+    def __init__(self, bounds):
+        self.bounds = bounds
+
+
+class _Frame:
+    size = (1920, 1080)
+
+    def crop(self, bounds):
+        return _Crop(bounds)
+
+
+class _OCR:
+    def __init__(self, expected_side):
+        self.expected_side = expected_side
+
+    def __call__(self, image):
+        # Identify the crop side from its starting coordinate.
+        left_of_board = image.bounds[0] < 500
+        match = left_of_board if self.expected_side == 'left' else not left_of_board
+        text = '1 e4 e5 2 Nf3 Nc6' if match else 'stream chat'
+        return types.SimpleNamespace(
+            boxes=[[(0, 0), (10, 0), (10, 10), (0, 10)]],
+            txts=[text],
+            scores=[0.99],
+        )
+
+
+class VisionOCRTests(unittest.TestCase):
+    def test_sanitizer_accepts_columnized_move_numbers_without_periods(self):
+        self.assertEqual(
+            sanitize_ocr_history('1 e4 e5 2 Nf3 Nc6'),
+            '1. e4 e5 2. Nf3 Nc6',
+        )
+
+    def test_sanitizer_normalizes_lichess_figurines_and_columnized_history(self):
+        self.assertEqual(
+            sanitize_ocr_history('1 e3 d5 2 d3 e5 3 f3 ♞c6 4 g3 ♞f6'),
+            '1. e3 d5 2. d3 e5 3. f3 Nc6 4. g3 Nf6',
+        )
+
+    def test_read_notation_uses_left_crop_when_board_is_on_right(self):
+        vision = BoardVision.__new__(BoardVision)
+        vision.ocr_unavailable = False
+        vision.last_ocr = -100
+        vision.ocr = _OCR('left')
+        fake_numpy = types.SimpleNamespace(asarray=lambda image: image)
+        with patch.dict(sys.modules, {'numpy': fake_numpy}):
+            actual = vision.read_notation(_Frame(), (1100, 120, 640, 640))
+        self.assertEqual(
+            actual,
+            '1. e4 e5 2. Nf3 Nc6',
+        )
+
+    def test_read_notation_uses_right_crop_when_board_is_on_left(self):
+        vision = BoardVision.__new__(BoardVision)
+        vision.ocr_unavailable = False
+        vision.last_ocr = -100
+        vision.ocr = _OCR('right')
+        fake_numpy = types.SimpleNamespace(asarray=lambda image: image)
+        with patch.dict(sys.modules, {'numpy': fake_numpy}):
+            actual = vision.read_notation(_Frame(), (120, 120, 640, 640))
+        self.assertEqual(
+            actual,
+            '1. e4 e5 2. Nf3 Nc6',
+        )
+
+
+if __name__ == '__main__':
+    unittest.main()

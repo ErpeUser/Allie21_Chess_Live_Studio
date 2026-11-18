@@ -22,24 +22,34 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
           python-version: '3.12'
+      - name: Canonical repository structure and tracked-file policy
+        run: python source/automation/check_repository_policy.py
       - name: Maintenance policy and process shutdown
         run: |
-          python -m unittest discover -s tests -p 'test_maintenance.py' -v
-          python -m unittest discover -s tests -p 'test_release_smoke_shutdown.py' -v
+          python -m unittest discover -s source/tests -p 'test_maintenance.py' -v
+          python -m unittest discover -s source/tests -p 'test_release_smoke_shutdown.py' -v
       - name: MV3 cold wake and update tests
-        run: node --test tests/test_extension_updates.js tests/test_worker_wakeup.js
+        run: node --test source/tests/test_extension_updates.js source/tests/test_worker_wakeup.js
       - name: Version and extension identity
-        run: python tools/check_versions.py
+        run: python source/automation/check_versions.py
       - name: Shell syntax
         run: |
-          sh -n .githooks/post-merge .githooks/post-rewrite
-          sh -n .codex/setup.sh .codex/maintenance.sh
+          sh -n source/automation/git-hooks/pre-commit source/automation/git-hooks/post-merge source/automation/git-hooks/post-rewrite
+          sh -n source/automation/agents/setup.sh source/automation/agents/maintenance.sh
 
   windows-tests:
     runs-on: windows-latest
     timeout-minutes: 35
     env:
       ALLIE_REQUIRE_BROWSER_TESTS: '1'
+      UV_PROJECT_ENVIRONMENT: generated/environments/quality
+      UV_CACHE_DIR: generated/cache/uv
+      RUFF_CACHE_DIR: generated/cache/ruff
+      MYPY_CACHE_DIR: generated/cache/mypy
+      PLAYWRIGHT_BROWSERS_PATH: generated/cache/browser
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPYCACHEPREFIX: generated/cache/python
+      PYTHONPATH: source/app/backend
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -63,28 +73,28 @@ jobs:
       - name: Verify vendored Allie model manifest
         shell: pwsh
         run: |
-          uv run --frozen python -c "import sys; sys.path.insert(0, 'backend'); from allie_local_server import verify_vendor_integrity; verify_vendor_integrity()"
+          uv run --frozen python -c "import sys; sys.path.insert(0, 'source/app/backend'); from allie_local_server import verify_vendor_integrity; verify_vendor_integrity()"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify lockfile consistency
         run: uv lock --check
       - name: Run Python unittest suite
-        run: uv run --frozen python -m unittest discover --start-directory tests --pattern 'test_*.py'
+        run: uv run --frozen python -m unittest discover --start-directory source/tests --pattern 'test_*.py'
       - name: Run Python pytest and real DOM browser suite
         run: uv run --frozen pytest -q
       - name: Ruff
         shell: pwsh
         run: |
-          uv run --frozen ruff check backend tools tests
+          uv run --frozen ruff check source/app/backend source/automation source/tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Mypy
         shell: pwsh
         run: |
-          uv run --frozen mypy backend --ignore-missing-imports
+          uv run --frozen mypy source/app/backend --ignore-missing-imports
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Compileall
         shell: pwsh
         run: |
-          uv run --frozen python -m compileall -q backend tools
+          uv run --frozen python -m compileall -q source/app/backend source/automation
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Check tracked JavaScript syntax
         shell: pwsh
@@ -97,13 +107,13 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
       - name: Run JavaScript tests
-        run: node --test tests/*.js
+        run: node --test source/tests/*.js
       - name: Verify application and extension versions
-        run: python tools/check_versions.py
+        run: python source/automation/check_versions.py
       - name: Parse Windows deployment scripts
         shell: pwsh
         run: |
-          foreach ($file in @('tools/build_exe.ps1', 'tools/quality_check.ps1', 'tools/find_quality_sitepackages.ps1', 'tools/desktop_shortcut.ps1')) {
+          foreach ($file in @('source/automation/build_exe.ps1', 'source/automation/quality_check.ps1', 'source/automation/find_quality_sitepackages.ps1', 'source/automation/desktop_shortcut.ps1')) {
             $tokens = $null; $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $file), [ref]$tokens, [ref]$errors) | Out-Null
             if ($errors.Count) { throw ($errors | Out-String) }

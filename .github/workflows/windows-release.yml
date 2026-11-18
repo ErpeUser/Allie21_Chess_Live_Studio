@@ -10,6 +10,11 @@ jobs:
   build:
     runs-on: windows-latest
     timeout-minutes: 90
+    env:
+      UV_CACHE_DIR: generated/cache/uv
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPYCACHEPREFIX: generated/cache/python
+      HF_HOME: generated/dependencies/models
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -24,33 +29,33 @@ jobs:
       - name: Versions and maintenance tests
         shell: pwsh
         run: |
-          python tools/check_versions.py
+          python source/automation/check_versions.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python -m unittest discover -s tests -p 'test_maintenance.py' -v
+          python -m unittest discover -s source/tests -p 'test_maintenance.py' -v
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node --test tests/test_extension_updates.js tests/test_worker_wakeup.js
+          node --test source/tests/test_extension_updates.js source/tests/test_worker_wakeup.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build locked portable bundle
         shell: pwsh
-        run: ./tools/build_exe.ps1
+        run: ./source/automation/build_exe.ps1
       - name: Verify hashes and local server startup
         shell: pwsh
-        run: python tools/release_smoke.py --bundle 'release/Allie21 Chess Live Studio' --with-model
+        run: python source/automation/release_smoke.py --bundle 'generated/dist/win/Allie21 Chess Live Studio' --with-model
       - name: Build unpacked Edge extension bundle
         shell: pwsh
-        run: python tools/build_edge.py --source browser --output 'release/Allie21-EdgeOverlay' --archive 'release/Allie21-EdgeOverlay.zip' --commit '${{ github.sha }}'
+        run: python source/automation/build_edge.py --source source/app/browser --output 'generated/dist/edge/Allie21-EdgeOverlay' --archive 'generated/dist/archives/Allie21-EdgeOverlay.zip' --commit '${{ github.sha }}'
       - name: Archive full onedir bundle
         shell: pwsh
         run: |
-          Compress-Archive -LiteralPath 'release/Allie21 Chess Live Studio' -DestinationPath 'release/Allie21-Windows.zip'
-          (Get-FileHash 'release/Allie21-Windows.zip' -Algorithm SHA256).Hash | Set-Content 'release/Allie21-Windows.zip.sha256'
+          Compress-Archive -LiteralPath 'generated/dist/win/Allie21 Chess Live Studio' -DestinationPath 'generated/dist/archives/Allie21-Windows.zip'
+          (Get-FileHash 'generated/dist/archives/Allie21-Windows.zip' -Algorithm SHA256).Hash | Set-Content 'generated/dist/archives/Allie21-Windows.zip.sha256'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: Allie21-Windows-${{ github.run_number }}
           path: |
-            release/Allie21-Windows.zip
-            release/Allie21-Windows.zip.sha256
-            release/Allie21-EdgeOverlay.zip
-            release/Allie21-EdgeOverlay/allie-build.json
+            generated/dist/archives/Allie21-Windows.zip
+            generated/dist/archives/Allie21-Windows.zip.sha256
+            generated/dist/archives/Allie21-EdgeOverlay.zip
+            generated/dist/edge/Allie21-EdgeOverlay/allie-build.json
           if-no-files-found: error
           retention-days: 7

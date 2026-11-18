@@ -1,0 +1,4 @@
+#!/bin/sh
+# Read-only verification after a merge. Never trigger PR processing or deployments.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+exec python source/automation/check_repository_policy.py

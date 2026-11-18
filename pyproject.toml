@@ -32,14 +32,17 @@ quality = [
 package = false
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["."]
+testpaths = ["source/tests"]
+pythonpath = ["source/app/backend", "source/automation"]
+cache_dir = "generated/cache/pytest"
 
 [tool.ruff]
-exclude = ["backend/vendor"]
+exclude = ["generated/dependencies/vendor"]
+cache-dir = "generated/cache/ruff"
 
 [tool.mypy]
-exclude = "^backend/vendor/"
+exclude = "^generated/dependencies/vendor/"
+cache_dir = "generated/cache/mypy"
 
 [[tool.mypy.overrides]]
 module = ["vendor.allie_model.*"]

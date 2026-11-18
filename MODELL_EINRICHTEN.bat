@@ -3,12 +3,18 @@ setlocal
 cd /d "%~dp0"
 set "PYTHONUTF8=1"
 set "PYTHONDONTWRITEBYTECODE=1"
+set "HF_HOME=%~dp0generated\dependencies\models"
 if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
-set "PYTHON_EXE=%LOCALAPPDATA%\Allie21\source-venv\Scripts\python.exe"
-set "MODEL_SETUP=%~dp0backend\model_setup.py"
+set "PYTHON_EXE=%~dp0generated\environments\source\Scripts\python.exe"
+set "MODEL_SETUP=%~dp0source\app\backend\model_setup.py"
 if exist "%~dp0runtime\python.exe" if exist "%~dp0app\backend\model_setup.py" (
   set "PYTHON_EXE=%~dp0runtime\python.exe"
   set "MODEL_SETUP=%~dp0app\backend\model_setup.py"
+)
+rem Reuse the already verified Windows bundle instead of downloading another venv.
+if exist "%~dp0generated\dist\win\Allie21 Chess Live Studio\runtime\python.exe" if exist "%~dp0generated\dist\win\Allie21 Chess Live Studio\app\backend\model_setup.py" (
+  set "PYTHON_EXE=%~dp0generated\dist\win\Allie21 Chess Live Studio\runtime\python.exe"
+  set "MODEL_SETUP=%~dp0generated\dist\win\Allie21 Chess Live Studio\app\backend\model_setup.py"
 )
 if not exist "%PYTHON_EXE%" (
   echo Die Projektumgebung fehlt. Zuerst START_HIER.bat ausfuehren.

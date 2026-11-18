@@ -36,7 +36,7 @@ account, kernel-level malware, or an intentionally internet-facing deployment.
    change instead of mixing files from different releases.
 3. Do not include browser profiles, captured frames, model caches, or local
    logs in an uploaded issue or release archive.
-4. The Allie Python implementation is vendored under `backend/vendor/` and
+4. The Allie Python implementation is vendored under `source/app/backend/vendor/` and
    loaded with `trust_remote_code=False` and `local_files_only=True`. The
    SHA-256 manifest is checked before model startup; update the pinned revision
    only after reviewing the upstream MIT-licensed source and refreshing the
