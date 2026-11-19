@@ -1,6 +1,6 @@
 # Main, Codex und Windows aktualisieren
 
-Der Quellstand aus [PR #12](https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/12) trägt App/Userscript **11.2.26** und Extension **11.2.26.0**. Die aktuellen automatisierten Prüfergebnisse stehen am PR. Die folgenden Befehle aktualisieren die lokale Windows-Installation; sie werden durch einen Cloud-Prüflauf nicht ausgeführt. Native Browser- und Windows-Abnahmen müssen weiterhin am Benutzer-PC geprüft werden.
+Der öffentliche `main`-Quellstand trägt App/Userscript **11.2.26** und Extension **11.2.26.0**. Die folgenden Befehle aktualisieren die lokale Windows-Installation; sie werden durch einen Cloud-Prüflauf nicht ausgeführt. Native Browser- und Windows-Abnahmen müssen weiterhin am Benutzer-PC geprüft werden.
 
 ## Einmalig auf deinem Windows-PC
 

@@ -70,7 +70,7 @@ Die Browser-Erweiterung öffnet über ihre Optionen die Einstellung „Lokaler P
 
 Der technische Checkpoint steht in `source/docs/VERSIONEN.md`; ein laufender Hintergrundprozess wird nicht vorausgesetzt.
 
-Die Anwendung/Userscript-Version ist 11.2.26. Die separat versionierte Edge-Erweiterung ist 11.2.26.0/11.2.26; `source/automation/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt. [PR #12](https://github.com/ErpeUser/Allie21_Chess_Live_Studio/pull/12) enthält die Remis-, Eröffnungs- und Ragebait-Änderungen mit ihren aktuellen automatisierten Prüfergebnissen. Für die lokale Aktualisierung im Windows-Git-Checkout `UPDATE_ALLIE.cmd` ausführen; die [Update-Anleitung](source/docs/UPDATE_PIPELINE_DE.md) erklärt Voraussetzungen und PR-Prüfung.
+Die Anwendung/Userscript-Version ist 11.2.26. Die separat versionierte Edge-Erweiterung ist 11.2.26.0/11.2.26; `source/automation/check_versions.py` prüft diese beiden Versionierungsverträge und die unveränderte Erweiterungs-ID getrennt. Der öffentliche `main`-Stand enthält die Remis-, Eröffnungs- und Ragebait-Änderungen. Für die lokale Aktualisierung im Windows-Git-Checkout `UPDATE_ALLIE.cmd` ausführen; die [Update-Anleitung](source/docs/UPDATE_PIPELINE_DE.md) erklärt Voraussetzungen und die Branch-/PR-Prüfung.
 
 Neu ist der [lokale PGN-Lernrückblick](source/docs/PGN_TRAINING_DE.md): eine bewusst importierte Partie auf einem Schachbrett schrittweise ansehen, per Tastatur navigieren und Figuren/FEN als Text lesen. Der Rückblick benötigt keine Modellgewichte und startet keine Engine.
 
