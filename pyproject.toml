@@ -33,7 +33,7 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["source/tests"]
-pythonpath = ["source/app/backend", "source/automation"]
+pythonpath = [".", "source/app/backend", "source/automation"]
 cache_dir = "generated/cache/pytest"
 
 [tool.ruff]

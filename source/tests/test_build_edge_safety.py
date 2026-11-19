@@ -9,7 +9,6 @@ import zipfile
 from pathlib import Path
 
 import pytest
-
 from source.automation.build_edge import build
 
 
@@ -121,7 +120,8 @@ def test_cli_does_not_resolve_away_output_symlink(tmp_path: Path) -> None:
     (target / "notes.txt").write_bytes(b"preserve user data")
     link = tmp_path / "output-link"
     symlink(link, target)
-    script = Path(__file__).resolve().parents[2] / "tools" / "build_edge.py"
+    script = Path(__file__).resolve().parents[1] / "automation" / "build_edge.py"
+    assert script.is_file(), 'The symlink safety test must invoke the real CLI'
 
     result = subprocess.run([
         sys.executable, str(script), "--source", str(source), "--output", str(link),
