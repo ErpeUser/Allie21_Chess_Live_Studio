@@ -4,9 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    # The project integrates reviewed dependency updates directly on main.
+    open-pull-requests-limit: 0
   - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    # The project integrates reviewed dependency updates directly on main.
+    open-pull-requests-limit: 0
