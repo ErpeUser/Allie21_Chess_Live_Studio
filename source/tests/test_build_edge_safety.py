@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+
 from source.automation.build_edge import build
 
 
