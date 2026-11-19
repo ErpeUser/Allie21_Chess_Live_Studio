@@ -25,6 +25,18 @@ BUILD_FILES = {'pyproject.toml', 'uv.lock', 'source/automation/launcher.py',
                'source/automation/build_exe.ps1', 'source/automation/release_smoke.py'}
 REQUIRED_CHECKS = {'windows-tests', 'maintenance-tests', 'Secret scan',
                    'CodeQL (javascript-typescript)', 'CodeQL (python)'}
+HOOK_NAMES = ('pre-commit', 'pre-push', 'post-merge', 'post-rewrite')
+
+
+def update_relation(branch: str, behind: int, ahead: int) -> str:
+    """Describe how a remote branch relates to the current main tip."""
+    if ahead == 0:
+        return 'already-integrated'
+    if behind == 0:
+        return 'candidate-newer'
+    if branch.startswith(('fix/', 'bugfix/')):
+        return 'combine-fix-with-main'
+    return 'combine-review'
 
 
 def local_state_dir() -> Path:
@@ -110,7 +122,8 @@ class Maintenance:
         self.root = root.resolve()
         self.state_dir = local_state_dir()
         self.report: dict = {'merged': [], 'blocked': [], 'deleted': [], 'kept': [],
-                             'review_candidates': [], 'cleanup_candidates': []}
+                             'review_candidates': [], 'cleanup_candidates': [],
+                             'branch_candidates': [], 'pull_requests': []}
         self.env = {**os.environ, 'ALLIE_UPDATE_ACTIVE': '1', 'GH_PROMPT_DISABLED': '1',
                     'GIT_TERMINAL_PROMPT': '0'}
 
@@ -170,10 +183,44 @@ class Maintenance:
         if not existing and any(p.is_file() and not p.name.endswith('.sample') for p in hooks.glob('*')):
             raise RuntimeError('Existing Git hooks preserved. Integrate source/automation/git-hooks manually.')
         self.git('config', '--local', 'core.hooksPath', 'source/automation/git-hooks')
-        for name in ('pre-commit', 'post-merge', 'post-rewrite'):
+        for name in HOOK_NAMES:
             (self.root / 'source' / 'automation' / 'git-hooks' / name).chmod(0o755)
 
+    def inspect_remote_branches(self):
+        """Report every non-main branch without fetching or changing refs."""
+        pull_requests = self.api('pulls?state=all&base=main&per_page=100')
+        open_heads = {p.get('head', {}).get('ref'): p.get('number')
+                      for p in pull_requests if p.get('state') == 'open'}
+        self.report['pull_requests'] = [
+            {'pr': p.get('number'), 'state': p.get('state'),
+             'branch': p.get('head', {}).get('ref'),
+             'action': ('review-candidate' if p.get('state') == 'open'
+                        else 'already-integrated' if p.get('merged_at')
+                        else 'closed-unmerged')}
+            for p in pull_requests
+        ]
+        for branch in self.api('branches?per_page=100'):
+            name = branch.get('name', '')
+            if not name or name == 'main':
+                continue
+            try:
+                comparison = self.api(f'compare/main...{quote(name, safe="")}')
+                behind = int(comparison.get('behind_by', 0))
+                ahead = int(comparison.get('ahead_by', 0))
+            except (RuntimeError, OSError, subprocess.TimeoutExpired, ValueError, KeyError) as exc:
+                self.report['blocked'].append({'branch': name, 'reason': str(exc)})
+                continue
+            self.report['branch_candidates'].append({
+                'branch': name,
+                'sha': branch.get('commit', {}).get('sha'),
+                'pull_request': open_heads.get(name),
+                'behind_main': behind,
+                'ahead_of_main': ahead,
+                'action': update_relation(name, behind, ahead),
+            })
+
     def process_prs(self):
+        self.inspect_remote_branches()
         for brief in self.api('pulls?state=open&base=main&per_page=100'):
             number = int(brief['number'])
             try:

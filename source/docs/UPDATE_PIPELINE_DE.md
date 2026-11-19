@@ -46,21 +46,22 @@ Optionen abschaltbar. Das erste Neuladen der alten 11.2.23 bleibt manuell notwen
 ## Was UPDATE_ALLIE.cmd macht
 
 1. Prueft erwartetes origin, main, sauberen Checkout und parallele Updates.
-2. Prueft alle offenen main-PRs auf vorhandene Checks, Konflikte und Reviews.
-   Es wird kein PR automatisch aktualisiert, gemergt oder geschlossen.
-   Geeignete PRs erscheinen lediglich als manuelle Review-Kandidaten.
-3. Aktualisiert ein sauberes main ausschliesslich per Fast-Forward.
+2. Liest alle Remote-Branches und alle main-PRs. Der Bericht kennzeichnet bereits
+   integrierte Branches, neuere Fassungen und divergierte Fixes zum Kombinieren.
+3. Prueft offene main-PRs auf vorhandene Checks, Konflikte und Reviews. Es wird
+   kein PR automatisch aktualisiert, gemergt oder geschlossen.
+4. Aktualisiert ein sauberes main ausschliesslich per Fast-Forward.
    Vollstaendig gemergte Branches werden nur als Loeschkandidaten berichtet;
    keine lokalen oder entfernten Branches werden automatisch geloescht.
-4. Startet fuer das Deployment einen frischen Python-Prozess, damit neue Scripts
+5. Startet fuer das Deployment einen frischen Python-Prozess, damit neue Scripts
    nach dem Pull verwendet werden. Inhalts-Hashes entscheiden ueber einen Neubau.
    Ein unveraenderter bestehender Build wird dennoch erneut geprueft.
-5. Baut bei Bedarf in einem getrennten Verzeichnis. Gesperrte Dependencies,
+6. Baut bei Bedarf in einem getrennten Verzeichnis. Gesperrte Dependencies,
    Stockfish-Hash, Runtime-Inventar, SHA256SUMS und HTTP-Serverstart werden geprueft.
    Erst dann wird der komplette portable Ordner ersetzt. Der vorige Stand bleibt
    im Bericht genannten lokalen Zustandsordner unter `generated/protected/maintenance` erhalten; eine fehlgeschlagene Umbenennung
    stellt den alten Ordner wieder her.
-6. Aktualisiert die Desktop-Verknuepfung zur EXE im kompletten release-Ordner und
+7. Aktualisiert die Desktop-Verknuepfung zur EXE im kompletten release-Ordner und
    den stabilen Edge-Ordner einschliesslich Dateiloeschungen. Eine einzelne EXE
    auf dem Desktop waere bei diesem onedir-Aufbau unvollstaendig.
 

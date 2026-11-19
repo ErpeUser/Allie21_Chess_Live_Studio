@@ -21,6 +21,31 @@ def pr(**changes):
 
 
 class PolicyTests(unittest.TestCase):
+    def test_update_relation_prefers_newer_main_or_combines_diverged_fixes(self):
+        self.assertEqual(m.update_relation('fix/security', 0, 2), 'candidate-newer')
+        self.assertEqual(m.update_relation('fix/security', 3, 2), 'combine-fix-with-main')
+        self.assertEqual(m.update_relation('feature/ui', 3, 2), 'combine-review')
+        self.assertEqual(m.update_relation('old', 3, 0), 'already-integrated')
+
+    def test_install_hooks_includes_direct_main_push_guard(self):
+        self.assertIn('pre-push', m.HOOK_NAMES)
+
+    def test_remote_branch_scan_reports_prs_and_combination_action(self):
+        worker = m.Maintenance(Path('.'))
+        def api(endpoint, method='GET', **kwargs):
+            self.assertEqual(method, 'GET')
+            if endpoint.startswith('pulls?'):
+                return [{'number': 4, 'state': 'open', 'head': {'ref': 'fix/security'}}]
+            if endpoint.startswith('branches?'):
+                return [{'name': 'fix/security', 'commit': {'sha': 'a' * 40}}]
+            if endpoint == 'compare/main...fix%2Fsecurity':
+                return {'behind_by': 3, 'ahead_by': 2}
+            raise AssertionError(endpoint)
+        with patch.object(worker, 'api', side_effect=api):
+            worker.inspect_remote_branches()
+        self.assertEqual(worker.report['pull_requests'][0]['action'], 'review-candidate')
+        self.assertEqual(worker.report['branch_candidates'][0]['action'], 'combine-fix-with-main')
+
     def test_successful_trusted_pr_is_eligible(self):
         self.assertEqual(m.pr_block_reason(pr(), ['success'], []), '')
 

@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+cd "$(git rev-parse --show-toplevel)" || exit 1
+if [ "$(git branch --show-current)" != "main" ]; then
+  echo 'Allie pushes must come from the canonical main branch.' >&2
+  exit 1
+fi
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_ref" = refs/heads/main ] || {
+    echo 'Only refs/heads/main may be pushed.' >&2
+    exit 1
+  }
+  [ "$remote_ref" = refs/heads/main ] || {
+    echo 'Only origin/main may be updated.' >&2
+    exit 1
+  }
+  [ "$local_sha" != 0000000000000000000000000000000000000000 ] || {
+    echo 'Deleting main is forbidden.' >&2
+    exit 1
+  }
+  if [ "$remote_sha" != 0000000000000000000000000000000000000000 ] && \
+     ! git merge-base --is-ancestor "$remote_sha" "$local_sha"; then
+    echo 'Non-fast-forward pushes to main are forbidden.' >&2
+    exit 1
+  fi
+done
+exec python source/automation/check_repository_policy.py

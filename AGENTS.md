@@ -46,12 +46,14 @@ checkout without Windows deployment:
 python source/automation/maintain.py --git-only --process-prs --cleanup
 ```
 
-It reports open main PRs and merged branch cleanup candidates without modifying
-PRs or deleting branches, then fast-forwards a clean local main only. Pending,
-failing, draft, fork and conflicting PRs remain open; review each separately.
-Never reset --hard, force-merge unchecked changes, delete unmerged work, replace
-existing user hooks silently, or claim a push without reading back the main SHA.
-Direct publication to main requires explicit user authorization for that task.
+It reports every remote branch and every main PR, classifies already-integrated,
+newer and combination candidates, then fast-forwards a clean local main only.
+No branch is checked out, created, merged, rebased, deleted or pushed by this
+reporting pass. Review candidates remain available for an explicit decision.
+Never reset --hard, force-merge unchecked changes, replace existing user hooks
+silently, or claim a push without reading back the main SHA. When a task calls
+for a GitHub write, commit directly on `main`, run the required checks, push
+`main`, and read back the remote SHA.
 
 ## Local Windows deployment
 Cloud tools do not update the user's Desktop or browser. UPDATE_ALLIE.cmd performs
@@ -68,9 +70,10 @@ ID omboihgfgofgmidefcpkihgglhkiielo; bump version and version_name when changing
 extension code. Deployment writes generated/build/allie-build.json and includes a stamp in the staged extension; it is not tracked.
 
 ## Permanent Git, GitHub and Codex policy
-This checkout is the single canonical project. Work in its existing branch and
-working tree; never clone/copy the project, create a nested Git repository,
-worktree, branch, PR, workflow, symlink or junction for convenience. Respect
+This checkout is the single canonical project. Work in its existing checkout
+and the standard `main` branch. Never clone/copy the project, create a nested
+Git repository, worktree, branch, PR, workflow, symlink or junction for
+convenience. Respect
 existing Step 1 rules and architecture. Do not delete real user data or
 irreplaceable files. The protected Git directory and model weights are not
 cleanup targets. Do not use symlinks/junctions to repair import resolution.
@@ -82,12 +85,12 @@ status --porcelain=v1 -uall, staged/unstaged changes, and git diff. Preserve
 all unrelated changes. State the impact on browser, server, security, models,
 build and Windows launcher. Avoid documentation and automation churn.
 
-GitHub main is the sole integration branch. Never push, merge, close or delete
-PRs/branches or bypass branch rules without explicit task authorization and
-individual review. No automatic PR updates, rebases or merges. Closed unmerged
-PRs may contain work. The updater's --process-prs and --cleanup are report-only.
-For sync: verify clean working tree AND index, verify expected origin/main,
-fetch only origin main, compare ancestry, merge --ff-only ONLY on clean main.
+GitHub `main` is the only integration branch. Agents must never create or use
+other branches, worktrees or PRs. For a GitHub write, commit directly to local
+`main` and push only `origin/main` after the full checks. For sync: verify clean
+working tree AND index, verify expected origin/main, fetch origin/main, inspect
+all remote branches and main PRs, compare ancestry, and merge --ff-only ONLY on
+clean main. The updater never auto-merges, rebases, closes or deletes candidates.
 On divergence, conflicts, dirty tree, unknown checks or failures: STOP and
 report. Never auto-stash, reset --hard, clean -fdx, force-push, or overwrite.
 Do not move the current audit branch just to sync main.
@@ -110,11 +113,9 @@ Then run applicable full Python unittest/pytest, Node tests, Ruff, Mypy,
 version check, git diff --check, Windows build and HTTP smoke/real browser tests
 as applicable. Use paths under source/app/backend and source/automation (never
 old backend/tools locations). Report every failed, skipped or unrun check.
-GitHub main requires PRs and five existing quality/security check contexts;
-force pushes, deletion and unresolved conversations are blocked for admins too.
-The local canonical-layout CI step becomes active after this migration lands in
-main. No minimum number of reviewer approvals is configured; a human must still
-check content and review requirements. Instructions alone do not enforce safe
-reasoning, user-data preservation or local behavior.
+GitHub `main` is the default public branch and is updated directly by the
+maintainer workflow. CI and security workflows still run on every push. Force
+pushes and deletion remain forbidden by the local pre-push guard. Instructions
+alone do not enforce safe reasoning, user-data preservation or local behavior.
 A new Codex session must start at repository root and independently report the
 root, main branch, generated vendor exception and pre/post-change gates.

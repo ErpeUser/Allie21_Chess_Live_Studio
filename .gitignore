@@ -21,6 +21,16 @@ graphify-out/
 node_modules/
 *.egg-info/
 .coverage*
+*.db
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
 *.swp
 *.tmp
 *.bak

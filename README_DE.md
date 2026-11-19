@@ -88,12 +88,12 @@ gepruefte Vendorquelle ist ausschliesslich unter
 `generated/` (einschliesslich Modelle, Builds und Git-Metadaten) sind nicht
 zur Versionierung vorgesehen. Vor jeder Arbeit `AGENTS.md` lesen.
 
-Fuer Codeaenderungen gilt: Arbeitszweig und Git-Status pruefen, fremde lokale
-Aenderungen erhalten, `python source/automation/check_repository_policy.py`
+Fuer Codeaenderungen gilt: ausschliesslich im bestehenden Checkout auf `main`
+arbeiten, fremde lokale Aenderungen erhalten, `python source/automation/check_repository_policy.py`
 ausfuehren und die entsprechenden Struktur-, Qualitaets- und Funktionstests
-laufen lassen. `main` ist Integrationszweig, kein automatisch zu ueberschreibender
-Zustand. Ein Agent erzeugt keine Kopien, Branches, PRs, Workflows oder Links ohne
-konkreten Bedarf und Autorisierung.
+laufen lassen. Ein Agent erzeugt keine Kopien, Nebenbranches, PRs, Workflows oder
+Links. GitHub-Aenderungen werden direkt als Commit auf `main` veroeffentlicht,
+wenn die Aufgabe einen GitHub-Schreibvorgang verlangt.
 
 Die Synchronisierung ist ausschliesslich fuer sauberes `main` zulaessig:
 ```powershell
@@ -105,13 +105,12 @@ git merge-base --is-ancestor HEAD origin/main
 # Nur wenn diese Pruefungen erfolgreich sind und der Checkout sauber auf main ist:
 git merge --ff-only origin/main
 ```
-`UPDATE_ALLIE.cmd` prueft diesen Zustand und meldet PR-/Branch-Kandidaten,
-fuehrt jedoch keine automatischen PR-Merges, Branch-Loeschungen oder PR-Updates
-aus. Offene PRs sind individuell anhand Code-Diff, Konflikten, Checks und
-Reviews zu beurteilen. `git clean -fdx` und `reset --hard` sind tabu.
-GitHub `main` ist inzwischen geschuetzt: Pull Requests, die fuenf vorhandenen
-Windows-/Wartungs-/Security-/CodeQL-Checks, die Aufloesung von Review-Konversationen
-und Fast-Forward-orientierte Integration sind verbindlich. Force-Pushes und
-Branch-Loeschungen sind untersagt, auch fuer Administratoren. Eine vorgeschriebene
-Anzahl zusaetzlicher Approvals ist nicht konfiguriert (0). Der neue Strukturcheck
-wirkt auf GitHub erst nach Integration dieser lokalen Aenderungen in `main`.
+`UPDATE_ALLIE.cmd` prueft diesen Zustand, liest bei jedem Abgleich alle
+Remote-Branches und main-PRs und schreibt fuer jeden Kandidaten eine Empfehlung
+in `generated/protected/maintenance/maintenance-report.json`. `candidate-newer`
+steht fuer eine neuere eigenstaendige Fassung, `combine-fix-with-main` fuer
+einen divergierten Fix-Branch und `combine-review` fuer andere divergierte
+Aenderungen. Der Bericht nimmt keine fremden Aenderungen automatisch auf.
+Force-Pushes, Branch-Loeschungen und Nebenbranches sind durch die lokale
+Arbeitsweise ausgeschlossen. Der neue Strukturcheck wirkt auf GitHub nach dem
+ersten Commit im oeffentlichen `main`.
