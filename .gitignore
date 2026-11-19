@@ -1,22 +1,31 @@
-.venv*/
-.allie-venv*/
-.quality-venv/
-.uv-cache/
-.uv-quality-cache/
-.build/
+# generated/ contains isolated build/runtime state and an optional separate Git database.
+# Only the PINNED and SHA-256-manifested vendored model source is versioned.
+/generated/*
+!/generated/dependencies/
+/generated/dependencies/*
+!/generated/dependencies/vendor/
+!/generated/dependencies/vendor/**
+/generated/dependencies/vendor/**/.cache/
 __pycache__/
 *.py[cod]
-backend/engines/*.exe
-!Allie21 Chess Live Studio.exe
 *.log
-tests/tmp*/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.venv/
+.venv*/
 pytest-cache-files-*/
-# The portable build is a local/release artifact; its bundled Python runtime
-# is ~1.1 GB and must be uploaded as a GitHub Release asset, not Git history.
-release/
-release/*.zip
-browser/allie-build.json
-.uv-tools/
+config.json
+/source/app/browser/allie-build.json
+graphify-out/
+node_modules/
+*.egg-info/
+.coverage*
+*.swp
+*.tmp
+*.bak
+# Legacy output paths must not be committed during migration.
+/release/
+/.build/
+.codex/
+.githooks/

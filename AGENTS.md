@@ -6,20 +6,31 @@ viewer, and an unpacked Manifest V3 extension. Preserve localhost authentication
 pairing, capture-exclusion checks and stale-position suppression. No automatic
 chess moves. A sleeping MV3 worker is not an error or proof of missing arrows.
 
+## Project layout
+All owned code, tests, automation and documentation live under `source/`.
+Only mandatory GitHub metadata and Windows bootstrap entry points stay at root.
+All build products, virtual environments, caches and downloads belong under
+`generated/`. `generated/protected/git/` contains the LOCAL Git database:
+never delete or run an unscoped `git clean -fdx` on `generated/`.
+The reviewed vendored Allie module and its SHA-256 manifest under
+`generated/dependencies/vendor/` are tracked source inputs, not disposable cache.
+Source tests use `source/tests/`; the Windows executable is deployed under
+`generated/dist/win/Allie21 Chess Live Studio/`.
+
 ## Environment and checks
-Use `.codex/setup.sh` for setup and `.codex/maintenance.sh` after cache restore.
+Use `source/automation/agents/setup.sh` for setup and `source/automation/agents/maintenance.sh` after cache restore.
 These files must be selected in the Codex environment; committing them does not
 configure a remote environment automatically.
 Use locked dependencies: `uv sync --frozen --extra quality`.
 Before declaring completion, run the full project checks:
 
 ```sh
-uv run --frozen python -m unittest discover -s tests -v
+uv run --frozen python -m unittest discover -s source/tests -v
 uv run --frozen pytest -q
-node --test tests/*.js
-uv run --frozen ruff check backend tools tests
-uv run --frozen mypy backend --ignore-missing-imports
-python tools/check_versions.py
+node --test source/tests/*.js
+uv run --frozen ruff check source/app/backend source/automation source/tests
+uv run --frozen mypy source/app/backend --ignore-missing-imports
+python source/automation/check_versions.py
 git diff --check
 ```
 
@@ -32,13 +43,12 @@ The local entry point is UPDATE_ALLIE.cmd. For an authenticated, clean main
 checkout without Windows deployment:
 
 ```sh
-python tools/maintain.py --git-only --process-prs --cleanup
+python source/automation/maintain.py --git-only --process-prs --cleanup
 ```
 
-It processes open main PRs, updates outdated trusted branches, merges only tested
-eligible heads, then pulls main and removes only fully merged/unprotected branches
-without open PRs. Pending, failing, draft, fork and conflicting PRs remain open;
-record their reasons and fix coding failures separately with tests and review.
+It reports open main PRs and merged branch cleanup candidates without modifying
+PRs or deleting branches, then fast-forwards a clean local main only. Pending,
+failing, draft, fork and conflicting PRs remain open; review each separately.
 Never reset --hard, force-merge unchecked changes, delete unmerged work, replace
 existing user hooks silently, or claim a push without reading back the main SHA.
 Direct publication to main requires explicit user authorization for that task.
@@ -49,10 +59,62 @@ the local work: source fingerprints, staged portable build when necessary, hashe
 and HTTP startup smoke test, previous-bundle backup, then Desktop shortcut and
 stable unpacked Edge folder. Never copy just the launcher EXE without app/runtime.
 Do not kill arbitrary Python/Edge processes or edit browser profile files/registry.
-Read docs/UPDATE_PIPELINE_DE.md for first-run setup and recovery.
+Read source/docs/UPDATE_PIPELINE_DE.md for first-run setup and recovery.
 
 ## Versioning
 Application version and standalone userscript version stay paired. The extension
-shell is independently versioned in browser/manifest.json. Preserve its key and
+shell is independently versioned in source/app/browser/manifest.json. Preserve its key and
 ID omboihgfgofgmidefcpkihgglhkiielo; bump version and version_name when changing
-extension code. Deployment generates browser/allie-build.json; it is not tracked.
+extension code. Deployment writes generated/build/allie-build.json and includes a stamp in the staged extension; it is not tracked.
+
+## Permanent Git, GitHub and Codex policy
+This checkout is the single canonical project. Work in its existing branch and
+working tree; never clone/copy the project, create a nested Git repository,
+worktree, branch, PR, workflow, symlink or junction for convenience. Respect
+existing Step 1 rules and architecture. Do not delete real user data or
+irreplaceable files. The protected Git directory and model weights are not
+cleanup targets. Do not use symlinks/junctions to repair import resolution.
+
+Before edits: read this file, README_DE.md, source/docs/UPDATE_PIPELINE_DE.md,
+source/tests/test_project_structure.py, source/automation/check_repository_policy.py,
+and relevant application interfaces. Check git root, branch, remotes,
+status --porcelain=v1 -uall, staged/unstaged changes, and git diff. Preserve
+all unrelated changes. State the impact on browser, server, security, models,
+build and Windows launcher. Avoid documentation and automation churn.
+
+GitHub main is the sole integration branch. Never push, merge, close or delete
+PRs/branches or bypass branch rules without explicit task authorization and
+individual review. No automatic PR updates, rebases or merges. Closed unmerged
+PRs may contain work. The updater's --process-prs and --cleanup are report-only.
+For sync: verify clean working tree AND index, verify expected origin/main,
+fetch only origin main, compare ancestry, merge --ff-only ONLY on clean main.
+On divergence, conflicts, dirty tree, unknown checks or failures: STOP and
+report. Never auto-stash, reset --hard, clean -fdx, force-push, or overwrite.
+Do not move the current audit branch just to sync main.
+
+Only files under source/, approved root entrypoints/configs, approved .github/
+files and the pinned manifest-checked vendor in generated/dependencies/vendor/
+may be tracked. All other generated/ contents, test reports, logs, caches,
+model weights and local credentials remain untracked and ignored. The local
+Git metadata under generated/protected/git/ must remain intact. No user data
+or irreplaceable files may be removed by agents.
+
+Before and after code changes run:
+```sh
+python source/automation/check_repository_policy.py
+python -m unittest discover -s source/tests -p 'test_repository_policy.py' -v
+python -m unittest discover -s source/tests -p 'test_project_structure.py' -v
+python -m unittest discover -s source/tests -p 'test_maintenance.py' -v
+```
+Then run applicable full Python unittest/pytest, Node tests, Ruff, Mypy,
+version check, git diff --check, Windows build and HTTP smoke/real browser tests
+as applicable. Use paths under source/app/backend and source/automation (never
+old backend/tools locations). Report every failed, skipped or unrun check.
+GitHub main requires PRs and five existing quality/security check contexts;
+force pushes, deletion and unresolved conversations are blocked for admins too.
+The local canonical-layout CI step becomes active after this migration lands in
+main. No minimum number of reviewer approvals is configured; a human must still
+check content and review requirements. Instructions alone do not enforce safe
+reasoning, user-data preservation or local behavior.
+A new Codex session must start at repository root and independently report the
+root, main branch, generated vendor exception and pre/post-change gates.

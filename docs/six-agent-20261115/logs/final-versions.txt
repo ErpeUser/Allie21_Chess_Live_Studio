@@ -1,5 +1,0 @@
-{
-  "application": "11.2.25",
-  "extension": "11.2.25.0",
-  "extension_id": "omboihgfgofgmidefcpkihgglhkiielo"
-}

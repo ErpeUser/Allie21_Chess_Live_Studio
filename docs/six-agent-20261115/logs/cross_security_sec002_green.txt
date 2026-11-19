@@ -1,1 +1,0 @@
-{"requestedMode":"private","privateRequested":true,"replayVisible":false,"boardCells":0,"pgnStillPresent":false}

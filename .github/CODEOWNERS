@@ -1,5 +1,6 @@
 # Keep runtime, browser permissions and release workflows under maintainer review.
 * @ErpeUser
 /.github/ @ErpeUser
-/backend/ @ErpeUser
-/browser/ @ErpeUser
+/source/app/backend/ @ErpeUser
+/generated/dependencies/vendor/ @ErpeUser
+/source/app/browser/ @ErpeUser

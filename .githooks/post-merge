@@ -1,9 +1,0 @@
-#!/bin/sh
-# Opt-in via UPDATE_ALLIE.cmd / tools/maintain.py --install-hooks.
-[ "${ALLIE_UPDATE_ACTIVE:-}" = "1" ] && exit 0
-cd "$(git rev-parse --show-toplevel)" || exit 1
-[ "$(git branch --show-current)" = "main" ] || exit 0
-case "$(uname -s)" in
-  MINGW*|MSYS*|CYGWIN*) MSYS2_ARG_CONV_EXCL='*' exec cmd.exe /d /c UPDATE_ALLIE.cmd --after-pull ;;
-  *) exec python3 tools/maintain.py --git-only --process-prs --cleanup --after-pull ;;
-esac

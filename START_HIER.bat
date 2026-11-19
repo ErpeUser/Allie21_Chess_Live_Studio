@@ -2,10 +2,16 @@
 setlocal
 cd /d "%~dp0"
 set "PYTHONUTF8=1"
+set "PYTHONDONTWRITEBYTECODE=1"
 if "%ALLIE_PORT%"=="" set "ALLIE_PORT=8765"
-set "UV_CACHE_DIR=%~dp0.uv-cache"
-set "UV_PROJECT_ENVIRONMENT=%~dp0.allie-venv"
+if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
+set "ALLIE_GENERATED_DIR=%~dp0generated"
+set "UV_CACHE_DIR=%ALLIE_GENERATED_DIR%\cache\uv"
+set "UV_PROJECT_ENVIRONMENT=%ALLIE_GENERATED_DIR%\environments\source"
 set "UV_EXE=uv"
+set "UV_TOOL_DIR=%ALLIE_GENERATED_DIR%\toolchains\uv"
+set "PLAYWRIGHT_BROWSERS_PATH=%ALLIE_GENERATED_DIR%\cache\browser"
+set "HF_HOME=%~dp0generated\dependencies\models"
 
 where uv >nul 2>nul
 if errorlevel 1 (
@@ -21,11 +27,11 @@ echo [Allie] Pruefe die reproduzierbare Python-Umgebung ...
 if errorlevel 1 goto :setup_error
 
 echo [Allie] Pruefe Stockfish 19 gegen den offiziellen SHA-256 ...
-"%UV_EXE%" run --frozen python backend\download_stockfish.py
+"%UV_EXE%" run --frozen python source\app\backend\download_stockfish.py
 if errorlevel 1 goto :stockfish_error
 
 echo [Allie] Starte http://127.0.0.1:%ALLIE_PORT%/viewer
-"%UV_EXE%" run --frozen python backend\live_server.py
+"%UV_EXE%" run --frozen python source\app\backend\live_server.py
 if errorlevel 1 goto :server_error
 exit /b 0
 

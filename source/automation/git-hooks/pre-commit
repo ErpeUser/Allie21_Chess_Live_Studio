@@ -1,0 +1,4 @@
+#!/bin/sh
+# Read-only pre-commit: reject unapproved indexed paths and generated artifacts.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+exec python source/automation/check_repository_policy.py
