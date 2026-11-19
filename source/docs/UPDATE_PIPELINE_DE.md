@@ -55,7 +55,11 @@ Optionen abschaltbar. Das erste Neuladen der alten 11.2.23 bleibt manuell notwen
    keine lokalen oder entfernten Branches werden automatisch geloescht.
 5. Startet fuer das Deployment einen frischen Python-Prozess, damit neue Scripts
    nach dem Pull verwendet werden. Inhalts-Hashes entscheiden ueber einen Neubau.
-   Ein unveraenderter bestehender Build wird dennoch erneut geprueft.
+   Ein unveraenderter bestehender Build wird mit dem Release-Smoke-Test erneut
+   geprueft. Die Erweiterung wird nur bei geaendertem Browser-Hash oder fehlendem
+   gueltigem Erweiterungsstempel kopiert. Die Desktop-Verknuepfung wird nur bei
+   einem neuen EXE-Bundle, einer fehlenden oder falsch verknuepften Verknuepfung
+   oder bei einem erzwungenen Build neu geschrieben.
 6. Baut bei Bedarf in einem getrennten Verzeichnis. Gesperrte Dependencies,
    Stockfish-Hash, Runtime-Inventar, SHA256SUMS und HTTP-Serverstart werden geprueft.
    Erst dann wird der komplette portable Ordner ersetzt. Der vorige Stand bleibt

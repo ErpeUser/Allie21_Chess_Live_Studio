@@ -76,6 +76,12 @@ Neu ist der [lokale PGN-Lernrückblick](source/docs/PGN_TRAINING_DE.md): eine be
 
 Der Onedir-Build ist reproduzierbar, erzeugt die Ausgabe aber absichtlich nur lokal unter `generated/dist/win/`; dieser Ordner ist per `.gitignore` ausgeschlossen und wird nicht als unveränderliches GitHub-Artefakt versioniert. Echte Windows-Capture-Proben (HWND, OBS, getDisplayMedia) bleiben für den aktuellen Stand eine externe Abnahme. Hashes und der genaue Prüfstand stehen in `source/docs/VERSIONEN.md`.
 
+Nach einem Pull entscheidet der Wartungslauf getrennt ueber EXE, Edge-Erweiterung
+und Desktop-Verknuepfung. Ein unveraendertes Bundle wird per Smoke-Test geprueft.
+Die Erweiterung wird nur bei geaendertem Browser-Hash oder fehlendem Stempel neu
+kopiert. Die Verknuepfung wird nur bei einem neuen oder fehlenden/falsch
+verknuepften Bundle neu geschrieben.
+
 ## Grenzen
 
 Videoerkennung hängt von Größe, Design, Kompression und Sichtbarkeit des Brettes ab. Das Originalfenster wird nicht verändert; Pfeile erscheinen im Viewer oder im optionalen Overlay. Der geprüfte Allie-Python-Code liegt unter `generated/dependencies/vendor/allie_model`; der Loader verwendet `trust_remote_code=False`, `local_files_only=True` und prüft das SHA-256-Manifest vor dem Start.

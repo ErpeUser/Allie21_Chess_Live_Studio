@@ -341,6 +341,8 @@ class StandaloneTests(unittest.TestCase):
         self.assertIn("/readyz?source=both", smoke)
         shortcut = (ROOT / "source/automation/desktop_shortcut.ps1").read_text(encoding="utf-8")
         self.assertIn("release-version.json", shortcut)
+        self.assertIn("[switch]$Check", shortcut)
+        self.assertIn("$link.TargetPath", shortcut)
 
     def test_quality_tooling_is_declared_on_demand(self):
         project = (ROOT / 'pyproject.toml').read_text(encoding='utf-8')

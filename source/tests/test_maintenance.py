@@ -21,6 +21,31 @@ def pr(**changes):
 
 
 class PolicyTests(unittest.TestCase):
+    def test_deployment_decisions_refresh_only_stale_outputs(self):
+        unchanged = m.deployment_decisions(
+            force=False, rebuild=False, state={'fingerprint': 'build',
+                                                'extension_revision': 'ext'},
+            extension_hash='ext',
+            stamp_matches=True, extension_matches=True, shortcut_matches=True)
+        self.assertEqual(unchanged, {
+            'rebuild': False, 'write_stamp': False,
+            'update_extension': False, 'update_shortcut': False,
+        })
+        rebuilt = m.deployment_decisions(
+            force=False, rebuild=True, state={},
+            extension_hash='ext', stamp_matches=False,
+            extension_matches=False, shortcut_matches=True)
+        self.assertTrue(rebuilt['rebuild'])
+        self.assertTrue(rebuilt['write_stamp'])
+        self.assertTrue(rebuilt['update_extension'])
+        self.assertTrue(rebuilt['update_shortcut'])
+        docs_only = m.deployment_decisions(
+            force=False, rebuild=False, state={'extension_revision': 'ext'},
+            extension_hash='ext', stamp_matches=False,
+            extension_matches=True, shortcut_matches=True)
+        self.assertFalse(docs_only['update_extension'])
+        self.assertFalse(docs_only['update_shortcut'])
+
     def test_update_relation_prefers_newer_main_or_combines_diverged_fixes(self):
         self.assertEqual(m.update_relation('fix/security', 0, 2), 'candidate-newer')
         self.assertEqual(m.update_relation('fix/security', 3, 2), 'combine-fix-with-main')

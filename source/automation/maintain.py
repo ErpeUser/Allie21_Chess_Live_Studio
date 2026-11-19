@@ -39,6 +39,20 @@ def update_relation(branch: str, behind: int, ahead: int) -> str:
     return 'combine-review'
 
 
+def deployment_decisions(*, force: bool, rebuild: bool, state: dict,
+                         extension_hash: str, stamp_matches: bool,
+                         extension_matches: bool,
+                         shortcut_matches: bool) -> dict[str, bool]:
+    """Return the smallest safe set of local outputs to refresh after a pull."""
+    return {
+        'rebuild': force or rebuild,
+        'write_stamp': force or rebuild or not stamp_matches,
+        'update_extension': force or rebuild or not extension_matches
+        or state.get('extension_revision') != extension_hash,
+        'update_shortcut': force or rebuild or not shortcut_matches,
+    }
+
+
 def local_state_dir() -> Path:
     """Keep persistent update metadata and recoverable backups outside the checkout."""
     return Path(__file__).resolve().parents[2] / 'generated' / 'protected' / 'maintenance'
@@ -300,7 +314,34 @@ class Maintenance:
                 self.run(sys.executable, 'source/automation/release_smoke.py', '--bundle', str(bundle), timeout=120, live=True)
             except RuntimeError:
                 rebuild = True
-        if rebuild:
+        stamp_path = self.root / 'generated' / 'build' / 'allie-build.json'
+        stamp_matches = False
+        try:
+            stamp_matches = json.loads(stamp_path.read_text(encoding='utf-8')) == stamp
+        except (OSError, ValueError):
+            pass
+        extension_target = Path(os.environ['LOCALAPPDATA']) / 'Allie21' / 'EdgeOverlay'
+        extension_stamp = extension_target / 'allie-build.json'
+        extension_matches = False
+        try:
+            extension_stamp_value = json.loads(extension_stamp.read_text(encoding='utf-8'))
+            extension_matches = (extension_stamp_value.get('revision') == ext_hash
+                                 and extension_stamp_value.get('version') == manifest['version'])
+        except (OSError, ValueError):
+            pass
+        shortcut_matches = False
+        if not rebuild:
+            try:
+                self.run('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                         'source/automation/desktop_shortcut.ps1', '-Bundle', str(bundle), '-Check')
+                shortcut_matches = True
+            except RuntimeError:
+                shortcut_matches = False
+        decisions = deployment_decisions(
+            force=force, rebuild=rebuild, state=state,
+            extension_hash=ext_hash, stamp_matches=stamp_matches,
+            extension_matches=extension_matches, shortcut_matches=shortcut_matches)
+        if decisions['rebuild']:
             work_dir = self.root / 'generated' / 'build' / 'staging'
             work_dir.mkdir(parents=True, exist_ok=True)
             stage = Path(tempfile.mkdtemp(prefix='update-', dir=work_dir))
@@ -311,18 +352,27 @@ class Maintenance:
             replace_directory(candidate, bundle, stage / 'previous-release')
             self.report['previous_bundle'] = str(stage / 'previous-release')
         # Announce a finished deployment only after the server bundle passes.
-        write_json(self.root / 'generated' / 'build' / 'allie-build.json', stamp)
-        target = Path(os.environ['LOCALAPPDATA']) / 'Allie21' / 'EdgeOverlay'
-        target.parent.mkdir(parents=True, exist_ok=True)
-        stage = Path(tempfile.mkdtemp(prefix='edge-update-', dir=target.parent))
-        shutil.copytree(self.root / 'source' / 'app' / 'browser', stage / 'extension', ignore=shutil.ignore_patterns('__pycache__'))
-        write_json(stage / 'extension' / 'allie-build.json', stamp)
-        replace_directory(stage / 'extension', target, stage / 'previous-extension')
-        self.run('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
-                 'source/automation/desktop_shortcut.ps1', '-Bundle', str(bundle), live=True)
+        if decisions['write_stamp']:
+            write_json(stamp_path, stamp)
+        if decisions['update_extension']:
+            extension_target.parent.mkdir(parents=True, exist_ok=True)
+            stage = Path(tempfile.mkdtemp(prefix='edge-update-', dir=extension_target.parent))
+            shutil.copytree(self.root / 'source' / 'app' / 'browser', stage / 'extension',
+                            ignore=shutil.ignore_patterns('__pycache__'))
+            write_json(stage / 'extension' / 'allie-build.json', stamp)
+            replace_directory(stage / 'extension', extension_target, stage / 'previous-extension')
+        if decisions['update_shortcut']:
+            self.run('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                     'source/automation/desktop_shortcut.ps1', '-Bundle', str(bundle), live=True)
         write_json(state_path, {'fingerprint': build_hash, 'commit': revision,
-                               'extension': str(target), 'updated_at': time.time()})
-        self.report.update({'commit': revision, 'rebuilt': rebuild, 'extension': str(target)})
+                               'extension': str(extension_target),
+                               'extension_revision': ext_hash,
+                               'updated_at': time.time()})
+        self.report.update({'commit': revision, 'rebuilt': decisions['rebuild'],
+                            'stamp_updated': decisions['write_stamp'],
+                            'extension_updated': decisions['update_extension'],
+                            'shortcut_updated': decisions['update_shortcut'],
+                            'extension': str(extension_target)})
 
 
 def main(argv=None) -> int:
