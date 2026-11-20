@@ -372,13 +372,16 @@ async function publishPrivateOverlay(state){
     while(overlayPublishQueued && overlayEnabled()){
       const current=overlayPublishQueued;overlayPublishQueued=null;
       const det=current?.detection,result=current?.result;
-      if(!det||!result||result.fen!==det.fen||current.history_complete!==true||current.turn_verified!==true){
+      if(!det||!result||result.fen!==det.fen){
         await clearPrivateOverlay('stale');continue;
       }
       const geometry=overlayGeometry(det);if(!geometry)continue;
       const arrows=[];
-      const groups=[[result.opponent_moves||[],[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],
-        [result.my_moves||[],[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],
+      const engine=(result.engine_moves||[]).slice(0,2);
+      const own=(result.my_moves?.length?result.my_moves:(result.player_to_move===true?engine:[])).slice(0,2);
+      const opponent=(result.opponent_moves?.length?result.opponent_moves:(result.player_to_move===false?engine:[])).slice(0,2);
+      const groups=[[opponent,[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],
+        [own,[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],
         [[result.premove].filter(Boolean),[ARROW_COLORS.premove]]];
       for(const [items,colors] of groups)for(const [index,item] of items.slice(0,2).entries()){
         arrows.push({uci:item.uci,color:colors[index]||colors[0]});
@@ -574,12 +577,12 @@ function format(d){
   return h||'<div class="empty">Keine Analysedaten.</div>';
 }
 function arrowPoints(uci,box,orientation){if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci||''))return null;const[x,y,w,h]=box;function pt(s){let file=s.charCodeAt(0)-97,rank=+s[1]-1;const col=orientation==='black'?7-file:file,row=orientation==='black'?rank:7-rank;return[x+(col+.5)*w/8,y+(row+.5)*h/8]}return[pt(uci.slice(0,2)),pt(uci.slice(2,4))]}
-function drawArrows(state){const svg=$('arrows');svg.replaceChildren();if(privateOverlayRequested()||!recommendationsEnabled(state))return;const det=state?.detection,result=state?.result;if(!det||!result||result.fen!==det.fen||state.history_complete!==true||state.turn_verified!==true)return;const[width,height]=det.frame;svg.setAttribute('viewBox',`0 0 ${width} ${height}`);const groups=[[(result.opponent_moves||[]).slice(0,2),[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[(result.my_moves||[]).slice(0,2),[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[result.premove].filter(Boolean),[ARROW_COLORS.premove]]];for(const[items,colors]of groups)for(const[index,item]of items.entries()){const coords=arrowPoints(item.uci,det.box,det.orientation);if(!coords)continue;const[[sx,sy],[ex,ey]]=coords,dx=ex-sx,dy=ey-sy,len=Math.max(Math.hypot(dx,dy),1),nx=dx/len,ny=dy/len,side=det.box[2],end=[ex-nx*side/19,ey-ny*side/19],start=[sx+nx*side/24,sy+ny*side/24],color=colors[index]||colors[0],arrow=document.createElementNS('http://www.w3.org/2000/svg','line');for(const[k,v]of Object.entries({x1:start[0],y1:start[1],x2:end[0],y2:end[1],stroke:color,'stroke-width':Math.max(5,side/(index?40:30)),'stroke-linecap':'round',opacity:index?.65:.96}))arrow.setAttribute(k,v);svg.appendChild(arrow);const size=side/(index?18:15),angle=Math.atan2(dy,dx),tip=[ex,ey],arrowhead=document.createElementNS('http://www.w3.org/2000/svg','polygon');arrowhead.setAttribute('points',[[tip[0],tip[1]],[tip[0]-size*Math.cos(angle-.52),tip[1]-size*Math.sin(angle-.52)],[tip[0]-size*Math.cos(angle+.52),tip[1]-size*Math.sin(angle+.52)]].map(p=>p.join(',')).join(' '));arrowhead.setAttribute('fill',color);arrowhead.setAttribute('opacity',index?.65:.96);svg.appendChild(arrowhead)}}
+function drawArrows(state){const svg=$('arrows');svg.replaceChildren();if(privateOverlayRequested()||!recommendationsEnabled(state))return;const det=state?.detection,result=state?.result;if(!det||!result||result.fen!==det.fen)return;const[width,height]=det.frame;svg.setAttribute('viewBox',`0 0 ${width} ${height}`);const engine=(result.engine_moves||[]).slice(0,2),own=(result.my_moves?.length?result.my_moves:(result.player_to_move===true?engine:[])).slice(0,2),opponent=(result.opponent_moves?.length?result.opponent_moves:(result.player_to_move===false?engine:[])).slice(0,2),groups=[[opponent,[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[own,[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[result.premove].filter(Boolean),[ARROW_COLORS.premove]]];for(const[items,colors]of groups)for(const[index,item]of items.entries()){const coords=arrowPoints(item.uci,det.box,det.orientation);if(!coords)continue;const[[sx,sy],[ex,ey]]=coords,dx=ex-sx,dy=ey-sy,len=Math.max(Math.hypot(dx,dy),1),nx=dx/len,ny=dy/len,side=det.box[2],end=[ex-nx*side/19,ey-ny*side/19],start=[sx+nx*side/24,sy+ny*side/24],color=colors[index]||colors[0],arrow=document.createElementNS('http://www.w3.org/2000/svg','line');for(const[k,v]of Object.entries({x1:start[0],y1:start[1],x2:end[0],y2:end[1],stroke:color,'stroke-width':Math.max(5,side/(index?40:30)),'stroke-linecap':'round',opacity:index?.65:.96}))arrow.setAttribute(k,v);svg.appendChild(arrow);const size=side/(index?18:15),angle=Math.atan2(dy,dx),tip=[ex,ey],arrowhead=document.createElementNS('http://www.w3.org/2000/svg','polygon');arrowhead.setAttribute('points',[[tip[0],tip[1]],[tip[0]-size*Math.cos(angle-.52),tip[1]-size*Math.sin(angle-.52)],[tip[0]-size*Math.cos(angle+.52),tip[1]-size*Math.sin(angle+.52)]].map(p=>p.join(',')).join(' '));arrowhead.setAttribute('fill',color);arrowhead.setAttribute('opacity',index?.65:.96);svg.appendChild(arrowhead)}}
 function updateAllieBubble(result,detection,state=lastState){
   if(privateOverlayRequested()||!stream||!detection){clearTransientHint();return}
   const raw=(result?.tactical_hints||[])[0]||(result?.plan_messages||[])[0]||(!state?.turn_verified?'Zugrecht noch unbekannt.':'');
   let message=String(raw||'').replace(/^⚡\s*/,'').trim();
-  if(message.startsWith('Verlauf unbekannt'))message='Zugfolge fehlt. Importiere die Partie als PGN.';
+  if(message.startsWith('Verlauf unbekannt'))message='Stockfish-Pfeile bleiben sichtbar; importiere die Partie als PGN für Allie-Prognosen.';
   else if(message.startsWith('Startstellung erkannt'))message='Entwickle die Figuren und sichere den König.';
   else if(message.length>110)message=`${message.slice(0,107).replace(/[\s,:;.-]+$/,'')}…`;
   if(!message){clearTransientHint();return}

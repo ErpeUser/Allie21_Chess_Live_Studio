@@ -418,7 +418,7 @@ class ChessTests(unittest.TestCase):
         self.assertFalse(result['opponent_moves'])
         self.assertTrue(result['allie_skip_reason'])
 
-    def test_incomplete_history_can_analyse_but_cannot_publish_concrete_moves(self):
+    def test_incomplete_history_publishes_safe_stockfish_arrows_without_premove(self):
         with patch('allie_local_server.stockfish_lines', return_value={
             'available': True, 'engine': 'Stockfish', 'scope': 'position',
             'lines': [{'san': 'e4', 'uci': 'e2e4', 'score': '+0.20', 'variation': '1. e4'}],
@@ -429,6 +429,7 @@ class ChessTests(unittest.TestCase):
             })
         self.assertFalse(result['my_moves'])
         self.assertFalse(result['opponent_moves'])
+        self.assertEqual([move['uci'] for move in result['engine_moves']], ['e2e4'])
         self.assertIsNone(result['premove'])
         self.assertEqual(result['uncertainty']['level'], 'warning')
 

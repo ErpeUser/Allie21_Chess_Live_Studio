@@ -29,5 +29,30 @@ vm.runInContext(source.slice(arrowStart, arrowEnd) + '\nresult=drawArrow(svg, {l
 assert.ok(nodes.some(node => node.tag === 'line'));
 assert.ok(nodes.some(node => node.tag === 'polygon'));
 
+const visualStart = source.indexOf('function visualArrows(data)');
+const visualEnd = source.indexOf('function overlayMode()', visualStart);
+assert.ok(visualStart >= 0 && visualEnd > visualStart);
+const visualContext = {
+  ARROW_COLORS: {
+    ownTop1: '#16c784', ownTop2: '#7ee2b8',
+    opponentTop1: '#ef3340', opponentTop2: '#ff9299', premove: '#2f80ed',
+  },
+};
+vm.createContext(visualContext);
+vm.runInContext(source.slice(visualStart, visualEnd) + `
+result=visualArrows({
+  fen_only:true, show_moves:false, history_complete:false, turn_verified:false,
+  my_moves:[], opponent_moves:[], engine_moves:[{uci:'e2e4'}],
+  player_to_move:true, premove:null,
+});
+resultBlack=visualArrows({
+  fen_only:true, show_moves:false, history_complete:false, turn_verified:false,
+  my_moves:[], opponent_moves:[], engine_moves:[{uci:'e7e5'}],
+  player_to_move:false, premove:null,
+});
+`, visualContext);
+assert.deepEqual(JSON.parse(JSON.stringify(visualContext.result)).map(item => item.uci), ['e2e4']);
+assert.deepEqual(JSON.parse(JSON.stringify(visualContext.resultBlack)).map(item => item.uci), ['e7e5']);
+
 assert.match(source, /function structuralMoveRoot\(\)[\s\S]*movesFromRoot\(root\)/);
 console.log('lichess arrow tests passed');

@@ -487,7 +487,7 @@ def make_plan_messages(output: dict[str, Any]) -> list[str]:
     messages: list[str] = []
     unknown_history = (output.get('uncertainty') or {}).get('level') == 'warning'
     if unknown_history:
-        messages.append('Verlauf unbekannt: Pfeile bleiben ausgeblendet; PGN ab Zug 1 importieren.')
+        messages.append('Verlauf unbekannt: sichere Stockfish-Pfeile bleiben aktiv; PGN ab Zug 1 importieren für Allie-Prognosen.')
     # Tactical bubbles are the most time-sensitive context and must remain
     # visible in the native HUD, which intentionally carries only two lines.
     for hint in (output.get('tactical_hints') or []):
@@ -801,7 +801,8 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
         'repertoire': repertoire,
         'opening_selection': opening_selection,
         'tactical_hints': tactical,
-        'my_moves': my_moves, 'opponent_moves': opponent_moves, 'premove': premove,
+        'my_moves': my_moves, 'opponent_moves': opponent_moves, 'engine_moves': engine_moves,
+        'premove': premove,
         'tactical_warnings': warnings,
         'stockfish': sf,
         'allie_skip_reason': allie_skip_reason,
@@ -809,6 +810,9 @@ def _analyse_position_uncached(payload: dict[str, Any], model=None) -> dict[str,
                  'Stockfish liefert Varianten und Bewertungen, aber keine menschlichen Zugwahrscheinlichkeiten.'),
     }
     if not bool(payload.get('show_moves', True)):
+        # A FEN/partial-history position cannot support human-history claims or
+        # a dependent pre-move. Keep objective Stockfish lines separate so the
+        # renderers can draw them without exposing them as Allie predictions.
         output['my_moves'] = []
         output['opponent_moves'] = []
         output['premove'] = None

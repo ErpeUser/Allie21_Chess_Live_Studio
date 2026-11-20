@@ -377,12 +377,14 @@
  function visualSource(){return /(^|\.)lichess\.org$/.test(location.hostname)?'lichess_dom':/\.chess\.com$/.test('.'+location.hostname)?'chesscom_dom':'unknown'}
  function shortAnalysisKey(value){let hash=2166136261;for(const char of String(value||'')){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619)}return (hash>>>0).toString(16).padStart(8,'0')}
  function visualArrows(data){
-  // Never publish concrete arrows for a FEN/partial-history position.  This
-  // guard covers both the board-local SVG and the native screen overlay.
-  const historyKnown=data?.fen_only!==true&&data?.show_moves!==false&&data?.history_complete!==false&&data?.turn_verified!==false;
-  if(!historyKnown)return [];
+  // Stockfish supplies legal current-position arrows for FEN and partial
+  // history fallbacks.  Stale-position checks happen before this payload is
+  // built, so valid UCI arrows remain visible while history is still loading.
+  const engine=(data?.engine_moves||[]).slice(0,2);
+  const own=(data?.my_moves?.length?data.my_moves:(data?.player_to_move===true?engine:[])).slice(0,2);
+  const opponent=(data?.opponent_moves?.length?data.opponent_moves:(data?.player_to_move===false?engine:[])).slice(0,2);
   const out=[];
-  for(const [items,color] of [[(data?.opponent_moves||[]).slice(0,2),[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[(data?.my_moves||[]).slice(0,2),[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[data?.premove].filter(Boolean),[ARROW_COLORS.premove]]])for(const [index,item] of items.entries())if(/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(item?.uci||''))out.push({uci:item.uci,color:color[index]||color[0],opacity:index?0.65:0.96});
+  for(const [items,color] of [[opponent,[ARROW_COLORS.opponentTop1,ARROW_COLORS.opponentTop2]],[own,[ARROW_COLORS.ownTop1,ARROW_COLORS.ownTop2]],[[data?.premove].filter(Boolean),[ARROW_COLORS.premove]]])for(const [index,item] of items.entries())if(/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(item?.uci||''))out.push({uci:item.uci,color:color[index]||color[0],opacity:index?0.65:0.96});
   return out.slice(0,8);
  }
  function overlayMode(){return normalizeOverlayMode(cfg.overlayMode)}
@@ -467,10 +469,10 @@
  function atHistoryEnd(){
    return currentHistoryCursor().atEnd;
  }
- // Legacy private-history plumbing marker retained for compatibility:
- // cfg.privateMode||!atHistoryEnd() is intentionally fail-closed only for
- // page-owned rendering; selected review positions are now synchronized.
- function paint(data){currentResult=data;if(data?.reviewed_finished_game||data?.fen_only===true||data?.show_moves===false||data?.history_complete===false||data?.turn_verified===false||!cfg.enabled||cfg.privateMode){clearOverlay();sendVisualUpdate(cfg.privateMode?'private':'stale',data);return}
+ // History completeness controls which analyzer is used, not whether
+ // already-validated current-position arrows can be painted.
+ // Legacy private-history marker retained for compatibility: cfg.privateMode||!atHistoryEnd()
+ function paint(data){currentResult=data;if(!cfg.enabled||cfg.privateMode){clearOverlay();sendVisualUpdate(cfg.privateMode?'private':'stale',data);return}
    const board=boardElement();if(!board)return clearOverlay();observeBoardGeometry(board);const rect=board.getBoundingClientRect();
   if(rect.width<130||rect.height<130)return clearOverlay();
   // Render in board-local pixels instead of a viewport-sized SVG.  A global
@@ -484,8 +486,11 @@
   // the resolver without pieces falls back to white on boards without an
   // explicit CSS orientation marker and mirrors arrows on black boards.
   let ori=boardOrientation(board,pieceNodes(board));
-  (data.opponent_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,svgRect,ori,m.uci,i===0?ARROW_COLORS.opponentTop1:ARROW_COLORS.opponentTop2,i===0?.96:.62));
-  (data.my_moves||[]).slice(0,2).forEach((m,i)=>drawArrow(svg,svgRect,ori,m.uci,i===0?ARROW_COLORS.ownTop1:ARROW_COLORS.ownTop2,i===0?.96:.65));
+  const engine=(data.engine_moves||[]).slice(0,2);
+  const own=(data.my_moves?.length?data.my_moves:(data.player_to_move===true?engine:[])).slice(0,2);
+  const opponent=(data.opponent_moves?.length?data.opponent_moves:(data.player_to_move===false?engine:[])).slice(0,2);
+  opponent.forEach((m,i)=>drawArrow(svg,svgRect,ori,m.uci,i===0?ARROW_COLORS.opponentTop1:ARROW_COLORS.opponentTop2,i===0?.96:.62));
+  own.forEach((m,i)=>drawArrow(svg,svgRect,ori,m.uci,i===0?ARROW_COLORS.ownTop1:ARROW_COLORS.ownTop2,i===0?.96:.65));
   if(data.premove)drawArrow(svg,svgRect,ori,data.premove.uci,ARROW_COLORS.premove,.96);
    layer.style.display='';layer.replaceChildren();
    if(renderedSvg?.isConnected)renderedSvg.remove();
@@ -552,7 +557,7 @@
   for(const message of messages)html+=`<div class='insight'>${escape(message)}</div>`;
   if(data.stockfish){html+='<h3>Stockfish: objektiv</h3>';if(!data.stockfish.available)html+=`<p>${escape(data.stockfish.error||'Engine fehlt')}</p>`;else for(const m of data.stockfish.lines||[])html+=`<div class='item'><span>${escape(m.san)} | ${escape(m.variation)}</span><span>${escape(m.score)}</span></div>`}
   el('results').innerHTML=html;
-  if(messages.length){let hint=String(messages[0]).replace(/^⚡\s*/,'').trim();if(hint.startsWith('Verlauf unbekannt'))hint='Zugfolge fehlt. Importiere die Partie als PGN.';else if(hint.length>110)hint=`${hint.slice(0,107).replace(/[\s,:;.-]+$/,'')}…`;showTransientHint(hint,`${analysisSerial}:${data.fen||''}:${hint}`)}else clearTransientHint();
+  if(messages.length){let hint=String(messages[0]).replace(/^⚡\s*/,'').trim();if(hint.startsWith('Verlauf unbekannt'))hint='Stockfish-Pfeile bleiben sichtbar; importiere die Partie als PGN für Allie-Prognosen.';else if(hint.length>110)hint=`${hint.slice(0,107).replace(/[\s,:;.-]+$/,'')}…`;showTransientHint(hint,`${analysisSerial}:${data.fen||''}:${hint}`)}else clearTransientHint();
   // Keep the compact hint closed by default; the detailed panel opens only on click.
   syncBubbleVisibility();
  }

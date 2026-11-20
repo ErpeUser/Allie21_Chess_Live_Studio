@@ -142,6 +142,27 @@ test('private failure preserves request and suppresses browser fallback', async 
   assert.equal(viewer.elements.get('arrows').children.length, 0);
 });
 
+test('viewer draws FEN fallback arrows before history flags settle', async () => {
+  const viewer = loadViewer({privateRequested: false});
+  await settle();
+  viewer.run("drawArrows({recommendations_enabled:true,detection:{fen:'x',frame:[800,800],box:[0,0,800,800],orientation:'white'},result:{fen:'x',engine_moves:[{uci:'e2e4'},{uci:'d2d4'}],player_to_move:true},history_complete:false,turn_verified:false})");
+  assert.equal(viewer.elements.get('arrows').children.length, 4);
+});
+
+test('private overlay publishes FEN fallback arrows before history flags settle', async () => {
+  const viewer = loadViewer({privateRequested: true, response: async url => url === '/health'
+    ? {ready: true, instance_id: 'instance'}
+    : url === '/api/overlay/update'
+      ? {mode: 'private', available: true, capture_excluded: true, state: 'visible'}
+      : {mode: 'private', available: true, capture_excluded: true, state: 'ready'}});
+  await settle();
+  viewer.run("privateOverlayAvailable=true;privateOverlayPending=false;overlayOwnerToken='owner';stream={};");
+  await viewer.run("publishPrivateOverlay({generation:4,detection:{fen:'x',frame:[800,800],box:[0,0,800,800],orientation:'white'},result:{fen:'x',engine_moves:[{uci:'e2e4'},{uci:'d2d4'}],player_to_move:true},history_complete:false,turn_verified:false})");
+  const update = viewer.requests.find(item => item.url === '/api/overlay/update');
+  assert.ok(update, 'private overlay update was not sent');
+  assert.equal(JSON.parse(update.options.body).arrows.length, 2);
+});
+
 test('verified private overlay is shown as ready while waiting for capture', async () => {
   const viewer = loadViewer({privateRequested: true, response: async url => url === '/health'
     ? {ready: true, instance_id: 'instance'}
